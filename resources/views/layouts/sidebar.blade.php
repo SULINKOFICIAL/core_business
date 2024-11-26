@@ -18,12 +18,7 @@
                     <div class="menu-item here">
                         <span class="menu-link">
                             <span class="menu-icon">
-                                <i class="ki-duotone ki-element-11 fs-2">
-                                    <span class="path1"></span>
-                                    <span class="path2"></span>
-                                    <span class="path3"></span>
-                                    <span class="path4"></span>
-                                </i>
+                                <i class="fa-solid fa-house text-white"></i>
                             </span>
                             <span class="menu-title">Dashboards</span>
                         </span>

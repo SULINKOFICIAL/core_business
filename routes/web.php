@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Route;
 // Paínel de administração
 Route::middleware(['auth'])->group(function () {
 
-    Route::get('/', [DashboardController::class, 'index'])->name('index');
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::prefix('clientes')->group(function () {
         Route::name('clients.')->group(function () {
