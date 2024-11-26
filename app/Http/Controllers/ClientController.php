@@ -27,10 +27,10 @@ class ClientController extends Controller
     public function index()
     {
 
-        // GET ALL DATA
+        // Obtém dados
         $contents = $this->repository->orderBy('name', 'ASC')->get();
 
-        // RETURN VIEW WITH DATA
+        // Retorna a página
         return view('pages.clients.index')->with([
             'contents' => $contents,
         ]);
@@ -45,7 +45,7 @@ class ClientController extends Controller
     public function create()
     {
 
-        // GET ALL DATA
+        // Retorna a página
         return view('pages.clients.create');
 
     }
@@ -59,19 +59,39 @@ class ClientController extends Controller
     public function store(Request $request)
     {
 
-        // GET FORM DATA
+        // Obtém dados
         $data = $request->all();
 
-        // CREATED BY
+        // Autor
         $data['created_by'] = Auth::id();
 
-        // SEND DATA
+        // Insere no banco de dados
         $insertTable = $this->repository->create($data);
 
-        // REDIRECT AND MESSAGES
+        // Retorna a página
         return redirect()
                 ->route('clients.index')
                 ->with('message', 'Cliente <b>'. $insertTable->name . '</b> adicionado com sucesso.');
+
+    }
+
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id)
+    {
+
+        // Obtém dados do Lead
+        $contents = $this->repository->find($id);
+
+        // Retorna a página
+        return view('pages.clients.show')->with([
+            'contents' => $contents,
+        ]);
 
     }
 
@@ -83,14 +103,16 @@ class ClientController extends Controller
      */
     public function edit($id)
     {
-        // GET ALL DATA
+        // Obtém dados
         $content = $this->repository->find($id);
 
-        // VERIFY IF EXISTS
+        // Verifica se existe
         if(!$content) return redirect()->back();
 
-        // GENERATES DISPLAY WITH DATA
-        return view('pages.clients.edit')->with(['content' => $content]);
+        // Retorna a página
+        return view('pages.clients.edit')->with([
+            'content' => $content
+        ]);
     }
 
     /**
@@ -102,20 +124,19 @@ class ClientController extends Controller
      */
     public function update(Request $request, $id)
     {
-        // VERIFY IF EXISTS
-        if(!$content = $this->repository->find($id))
-        return redirect()->back();
+        // Verifica se existe
+        if(!$content = $this->repository->find($id)) return redirect()->back();
 
-        // GET FORM DATA
+        // Obtém dados
         $data = $request->all();
 
-        // UPDATE BY
+        // Autor
         $data['updated_by'] = Auth::id();
 
-        // STORING NEW DATA
+        // Atualiza dados
         $content->update($data);
 
-        // REDIRECT AND MESSAGES
+        // Retorna a página
         return redirect()
                 ->route('clients.index', $id)
                 ->with('message', 'Cliente <b>'. $request->name . '</b> atualizado com sucesso.');
@@ -131,10 +152,10 @@ class ClientController extends Controller
     public function destroy($id)
     {
 
-        // GET DATA
+        // Obtém dados
         $content = $this->repository->find($id);
 
-        // STORING NEW DATA
+        // Atualiza status
         if($content->status == 1){
             $this->repository->where('id', $id)->update(['status' => false, 'filed_by' => Auth::id()]);
             $message = 'desabilitado';
@@ -143,8 +164,7 @@ class ClientController extends Controller
             $message = 'habilitado';
         }
 
-
-        // REDIRECT AND MESSAGES
+        // Retorna a página
         return redirect()
                 ->route('clients.index')
                 ->with('message', 'Cliente <b>'. $content->name . '</b> '. $message .' com sucesso.');

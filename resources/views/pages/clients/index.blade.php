@@ -19,9 +19,14 @@
                             {{ $client->domain }}
                         </p>
                     </div>
-                    <a href="{{ route('clients.edit', $client->id) }}" class="btn btn-sm btn-light w-100 mt-2 text-gray-600">
-                        Acessar Cliente
-                    </a>
+                    <div class="d-flex">
+                        <a href="{{ route('clients.show', $client->id) }}" class="btn btn-sm btn-light-primary w-100 mt-2 ">
+                            Acessar Cliente
+                        </a>
+                        <a href="{{ route('clients.edit', $client->id) }}" class="btn btn-sm btn-light-danger btn-icon ms-2 mt-2 text-gray-600 w-45px">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </a>
+                    </div>
                 </div>
                 <div class="card-footer p-2">
                     <p class="text-gray-600 text-center m-0 fs-8">

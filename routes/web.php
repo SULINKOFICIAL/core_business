@@ -16,6 +16,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', [ClientController::class, 'index'])->name('index');
             Route::get('/adicionar', [ClientController::class, 'create'])->name('create');
             Route::post('/adicionar', [ClientController::class, 'store'])->name('store');
+            Route::get('/visualizar/{id}', [ClientController::class, 'show'])->name('show');
             Route::get('/editar/{id}', [ClientController::class, 'edit'])->name('edit');
             Route::put('/editar/{id}', [ClientController::class, 'update'])->name('update');
             Route::get('/desabilitar/{id}', [ClientController::class, 'destroy'])->name('destroy');
