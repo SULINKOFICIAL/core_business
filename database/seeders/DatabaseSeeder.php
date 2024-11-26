@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Client;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -21,6 +22,24 @@ class DatabaseSeeder extends Seeder
             'name' => 'Jeandreo Furquim',
             'email' => 'jeandreo@sulink.com.br',
             'password' => Hash::make('@Sucesso1243'),
+        ]);
+
+        Client::create([
+            'name' => 'Sulink',
+            'domain' => 'www.sulink.com.br',
+            'created_by' => 1,
+        ]);
+
+        Client::create([
+            'name' => 'Coca Cola',
+            'domain' => 'www.cocacola.com.br',
+            'created_by' => 1,
+        ]);
+
+        Client::create([
+            'name' => 'Porsche',
+            'domain' => 'www.porscheerp.com.br',
+            'created_by' => 1,
         ]);
     }
 }

@@ -3,7 +3,7 @@
         <div class="w-100">
             <div class="row align-items-center">
                 <div class="col-2">
-                    <a href="{{ route('dashboard') }}" class="d-flex align-items-center">
+                    <a href="{{ route('index') }}" class="d-flex align-items-center">
                         <img src="{{ asset('assets/media/logos/sulink-core.svg') }}" class="w-200px">
                     </a>
                 </div>

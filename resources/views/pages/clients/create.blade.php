@@ -1,14 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Editar - Cliente')
+@section('title', 'Adicionar - Cliente')
 
 @section('content')
 <p class="text-center fw-bold text-gray-700 fs-2 mb-4 text-uppercase">
-    Editar Cliente
+    Adicionar Cliente
 </p>
-<form action="{{ route('clients.update', $content->id) }}" method="POST" enctype="multipart/form-data">
+<form action="{{ route('clients.store') }}" method="POST" enctype="multipart/form-data">
     @csrf
-    @method('PUT')
     <div class="card">
         <div class="card-body">
                 @include('pages.clients._form')
@@ -19,7 +18,7 @@
             Voltar
         </a>
         <button type="submit" class="btn btn-primary btn-active-danger">
-            Atualizar
+        Cadastrar
         </button>
     </div>
 </form>

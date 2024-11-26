@@ -70,7 +70,7 @@ class ClientController extends Controller
 
         // REDIRECT AND MESSAGES
         return redirect()
-                ->route('core.clients.index')
+                ->route('clients.index')
                 ->with('message', 'Cliente <b>'. $insertTable->name . '</b> adicionado com sucesso.');
 
     }
@@ -117,7 +117,7 @@ class ClientController extends Controller
 
         // REDIRECT AND MESSAGES
         return redirect()
-                ->route('core.clients.edit', $id)
+                ->route('clients.index', $id)
                 ->with('message', 'Cliente <b>'. $request->name . '</b> atualizado com sucesso.');
 
     }
@@ -146,7 +146,7 @@ class ClientController extends Controller
 
         // REDIRECT AND MESSAGES
         return redirect()
-                ->route('core.clients.index')
+                ->route('clients.index')
                 ->with('message', 'Cliente <b>'. $content->name . '</b> '. $message .' com sucesso.');
 
     }
