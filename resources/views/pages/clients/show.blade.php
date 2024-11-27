@@ -12,7 +12,7 @@
             <a href="{{ route('clients.index') }}" class="btn btn-lg btn-light mx-4">
                 Voltar
             </a>
-            <a href="#" class="btn btn-lg btn-primary mx-4">
+            <a href="{{ route('commands.pull') }}" class="btn btn-lg btn-primary mx-4">
                 Efetuar Git Pull
             </a>
             <a href="#" class="btn btn-lg btn-danger mx-4">

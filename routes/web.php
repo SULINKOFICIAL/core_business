@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GitController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -20,6 +21,12 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/editar/{id}', [ClientController::class, 'edit'])->name('edit');
             Route::put('/editar/{id}', [ClientController::class, 'update'])->name('update');
             Route::get('/desabilitar/{id}', [ClientController::class, 'destroy'])->name('destroy');
+        });
+    });
+
+    Route::prefix('comandos')->group(function () {
+        Route::name('commands.')->group(function () {
+            Route::get('/git-pull', [GitController::class, 'pull'])->name('pull');
         });
     });
 
