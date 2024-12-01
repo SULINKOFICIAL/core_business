@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -27,10 +26,6 @@ class ClientController extends Controller
      */
     public function index()
     {
-
-
-        // gk3RawCERe3uk6EmSdtJOMFtvnRQGS7N16M0l3K98c012484
-
         // Obtém dados
         $contents = $this->repository->orderBy('name', 'ASC')->get();
 

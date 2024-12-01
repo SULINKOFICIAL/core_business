@@ -13,7 +13,13 @@
                     <div class="my-2">
                         <div class="d-flex align-items-center justify-content-center">
                             <p class="fw-bolder text-gray-700 m-0 fs-3 text-center">{{ $client->name }}</p>
-                            <span class="badge badge-light-success ms-2">Ativo</span>
+                            @if ($client->systemStatus() === 'OK')
+                                <span class="badge badge-light-success ms-2">Ativo</span>
+                            @elseif ($client->systemStatus() === 'Error')
+                                <span class="badge badge-light-danger ms-2">Inativo</span>
+                            @elseif ($client->systemStatus() === 'Token Empty')
+                                <span class="badge badge-light-warning ms-2">Token não configurado</span>
+                            @endif
                         </div>
                         <p class="text-gray-600 m-0 text-center">
                             {{ $client->domain }}
@@ -27,9 +33,6 @@
                             <i class="fa-solid fa-pen-to-square"></i>
                         </a>
                     </div>
-                    <a href="{{ route('actions.status', $client->id) }}" class="btn btn-sm btn-light-info w-100 mt-2 ">
-                        Obter Status
-                    </a>
                 </div>
                 <div class="card-footer p-2">
                     <p class="text-gray-600 text-center m-0 fs-8">
