@@ -27,6 +27,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('comandos')->group(function () {
         Route::name('commands.')->group(function () {
             Route::get('/git-pull', [GitController::class, 'pull'])->name('pull');
+            Route::get('/manutencao', [GitController::class, 'maintenanceDown'])->name('maintenance');
         });
     });
 

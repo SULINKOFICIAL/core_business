@@ -15,6 +15,9 @@
             <a href="{{ route('commands.pull') }}" class="btn btn-lg btn-primary mx-4">
                 Efetuar Git Pull
             </a>
+            <a href="{{ route('commands.maintenance') }}" class="btn btn-lg btn-primary mx-4">
+                Modo manutancao
+            </a>
             <a href="#" class="btn btn-lg btn-danger mx-4">
                 Desativar Site
             </a>
