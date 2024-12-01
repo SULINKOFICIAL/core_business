@@ -21,5 +21,48 @@
 		<script>var hostUrl = "assets/";</script>
 		<script src="{{ asset('assets/plugins/global/plugins.bundle.js') }}"></script>
 		<script src="{{ asset('assets/js/scripts.bundle.js') }}"></script>
+        <script>
+
+            // Configura Toaster
+            toastr.options = {
+                "closeButton": false,
+                "debug": false,
+                "newestOnTop": false,
+                "progressBar": false,
+                "positionClass": "toastr-bottom-right",
+                "preventDuplicates": false,
+                "onclick": null,
+                "showDuration": "300",
+                "hideDuration": "1000",
+                "timeOut": "5000",
+                "extendedTimeOut": "1000",
+                "showEasing": "swing",
+                "hideEasing": "linear",
+                "showMethod": "fadeIn",
+                "hideMethod": "fadeOut"
+            };
+
+            // Verifica se existe um alerta a exibir
+			var message = '{!! session("message") !!}';
+            var type = "{!! session('type') !!}";
+
+            // Exibe o alerta
+            if(message){
+                switch (type) {
+                    case 'success':
+                        toastr.success(message);
+                        break;
+                    case 'error':
+                        toastr.success(message);
+                        break;
+                    case 'warning':
+                        toastr.success(message);
+                        break;
+                    default:
+                        toastr.info(message);
+                        break;
+                }
+            }
+        </script>
 	</body>
 </html>

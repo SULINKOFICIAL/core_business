@@ -27,6 +27,9 @@
                             <i class="fa-solid fa-pen-to-square"></i>
                         </a>
                     </div>
+                    <a href="{{ route('actions.status', $client->id) }}" class="btn btn-sm btn-light-info w-100 mt-2 ">
+                        Obter Status
+                    </a>
                 </div>
                 <div class="card-footer p-2">
                     <p class="text-gray-600 text-center m-0 fs-8">

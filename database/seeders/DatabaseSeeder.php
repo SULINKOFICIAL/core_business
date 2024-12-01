@@ -26,19 +26,20 @@ class DatabaseSeeder extends Seeder
 
         Client::create([
             'name' => 'Sulink',
-            'domain' => 'www.sulink.com.br',
+            'domain' => 'sulink.com.br',
+            'token' => 'gk3RawCERe3uk6EmSdtJOMFtvnRQGS7N16M0l3K98c012484',
             'created_by' => 1,
         ]);
 
         Client::create([
             'name' => 'Coca Cola',
-            'domain' => 'www.cocacola.com.br',
+            'domain' => 'cocacola.com.br',
             'created_by' => 1,
         ]);
 
         Client::create([
             'name' => 'Porsche',
-            'domain' => 'www.porscheerp.com.br',
+            'domain' => 'porscheerp.com.br',
             'created_by' => 1,
         ]);
     }

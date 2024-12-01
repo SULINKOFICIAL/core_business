@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\ClientsActionsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GitController;
 use App\Http\Controllers\ProfileController;
@@ -24,10 +25,9 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
-    Route::prefix('comandos')->group(function () {
-        Route::name('commands.')->group(function () {
-            Route::get('/git-pull', [GitController::class, 'pull'])->name('pull');
-            Route::get('/manutencao', [GitController::class, 'maintenanceDown'])->name('maintenance');
+    Route::prefix('acoes')->group(function () {
+        Route::name('actions.')->group(function () {
+            Route::get('/status/{id}', [ClientsActionsController::class, 'status'])->name('status');
         });
     });
 
