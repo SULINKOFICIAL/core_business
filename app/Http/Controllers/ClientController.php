@@ -65,12 +65,15 @@ class ClientController extends Controller
         $data['created_by'] = Auth::id();
 
         // Insere no banco de dados
-        $insertTable = $this->repository->create($data);
+        $created = $this->repository->create($data);
+
+        // Salva logo
+        $this->saveLogo($data['logo'], $created);
 
         // Retorna a página
         return redirect()
                 ->route('clients.index')
-                ->with('message', 'Cliente <b>'. $insertTable->name . '</b> adicionado com sucesso.');
+                ->with('message', 'Cliente <b>'. $created->name . '</b> adicionado com sucesso.');
 
     }
 
@@ -87,9 +90,13 @@ class ClientController extends Controller
         // Obtém dados do Lead
         $contents = $this->repository->find($id);
 
+        // Obtém módulos
+        $modules = $this->modules();
+
         // Retorna a página
         return view('pages.clients.show')->with([
             'contents' => $contents,
+            'modules' => $modules,
         ]);
 
     }
@@ -135,11 +142,31 @@ class ClientController extends Controller
         // Atualiza dados
         $content->update($data);
 
+        // Salva logo
+        $this->saveLogo($data['fileLogo'], $content);
+
         // Retorna a página
         return redirect()
-                ->route('clients.index', $id)
+                ->route('clients.index')
                 ->with('message', 'Cliente <b>'. $request->name . '</b> atualizado com sucesso.');
 
+    }
+
+    /**
+     * Salva a logo do cliente, caso enviada.
+     *
+     * @param  \Illuminate\Http\UploadedFile|null  $logo
+     * @param  \App\Models\Client  $client
+     * @param  string  $filename
+     * @return void
+     */
+    public function saveLogo($logo, $client, $filename = 'logo.png')
+    {
+        if ($logo && $logo->isValid()) {
+            $logo->storeAs("clientes/{$client->id}", $filename, 'public');
+            $client->logo = true;
+            $client->save();
+        }
     }
 
     /**
@@ -167,6 +194,42 @@ class ClientController extends Controller
         return redirect()
                 ->route('clients.index')
                 ->with('message', 'Cliente <b>'. $content->name . '</b> '. $message .' com sucesso.');
+
+    }
+
+    public function modules() {
+
+        // Gera lista de módulos disponíveis no sistema
+        $packages = [];
+
+        $module = [
+            'Módulo' => 'Financeiro',
+            'Recursos' => [
+                'Básico' => [
+                    'Carteiras',
+                    'Categorias',
+                    'Fornecedores',
+                ],
+                'Contas a Pagar' => [
+                    'name' => 'Contas a Pagar',
+                    'features' => [
+                        'Gerenciar Despesas',
+                        'Gerar Relatórios',
+                    ],
+                ],
+                'Contas a Receber' => [
+                    'name' => 'Contas a Receber',
+                    'features' => [
+                        'Gerenciar Receitas',
+                    ],
+                ],
+            ],
+        ];
+
+        // Pacotes
+        $packages = $module;
+
+        dd($packages);
 
     }
 }

@@ -13,6 +13,6 @@
     </div>
     <div class="col-12 col-md-6 mb-4">
         <label class="form-label fs-6 fw-bold text-gray-700 mb-2">Logo</label>
-        <input type="file" name="logo" class="form-control form-control-solid">
+        <input type="file" name="fileLogo" class="form-control form-control-solid">
     </div>
 </div>
