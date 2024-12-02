@@ -200,36 +200,43 @@ class ClientController extends Controller
     public function modules() {
 
         // Gera lista de módulos disponíveis no sistema
-        $packages = [];
+        $modules = [];
 
-        $module = [
-            'Módulo' => 'Financeiro',
-            'Recursos' => [
-                'Básico' => [
+        // Módulo Financeiro
+        $modules[] = [
+            'nome' => 'Financeiro',
+            'frase' => 'Gestão financeira',
+            'recursos' => [
+                'básico' => [
                     'Carteiras',
                     'Categorias',
                     'Fornecedores',
                 ],
                 'Contas a Pagar' => [
-                    'name' => 'Contas a Pagar',
-                    'features' => [
-                        'Gerenciar Despesas',
-                        'Gerar Relatórios',
-                    ],
+                    'Gerenciar Despesas',
+                    'Gerar Relatórios',
                 ],
                 'Contas a Receber' => [
-                    'name' => 'Contas a Receber',
-                    'features' => [
-                        'Gerenciar Receitas',
-                    ],
+                    'Gerenciar Receitas',
                 ],
             ],
         ];
 
-        // Pacotes
-        $packages = $module;
+        // Módulo Usuários
+        $modules[] = [
+            'nome' => 'Usuários',
+            'frase' => 'Gerenciamento de pessoas',
+            'recursos' => [
+                'básico' => [
+                    'Gerenciar',
+                    'Permissões',
+                    'Grupo de usuários',
+                ],
+            ],
+        ];
 
-        dd($packages);
+        // Retorna pacotes
+        return $modules;
 
     }
 }

@@ -2,6 +2,21 @@ body {
   font-family: "Jost", sans-serif;
 }
 
+.app-default {
+    background-color: #f5f5f5;
+}
+
 .slk-dark {
     background-color: #1c283e;
 }
+:root {
+    --bs-primary: #3498db;
+    --bs-primary-active: #087ecc;
+}
+
+.form-check-input:checked {
+    background-color: #3498db;
+    border-color: #3498db;
+}
+
+
