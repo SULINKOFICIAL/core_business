@@ -7,8 +7,23 @@
                         <img src="{{ asset('assets/media/logos/sulink-core.svg') }}" class="w-200px">
                     </a>
                 </div>
-                <div class="col">
+                <div class="col-8">
                     <div class="app-header-menu app-header-mobile-drawer align-items-center justify-content-center" data-kt-drawer="true" data-kt-drawer-name="app-header-menu" data-kt-drawer-activate="{default: true, lg: false}" data-kt-drawer-overlay="true" data-kt-drawer-width="250px" data-kt-drawer-direction="end" data-kt-drawer-toggle="#kt_app_header_menu_toggle" data-kt-swapper="true" data-kt-swapper-mode="{default: 'append', lg: 'prepend'}" data-kt-swapper-parent="{default: '#kt_app_body', lg: '#kt_app_header_wrapper'}">
+                        <a href="{{ route('packages.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
+                            Pacotes
+                        </a>
+                        <a href="{{ route('sectors.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
+                            Setores
+                        </a>
+                        <a href="{{ route('groups.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
+                            Grupo de Recursos
+                        </a>
+                        <a href="{{ route('listings.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
+                            Lista de Recursos
+                        </a>
+                        <a href="{{ route('clients.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
+                            Clientes
+                        </a>
                         <a href="#" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
                             Dashboard
                         </a>
@@ -36,8 +51,8 @@
                                             <img alt="Logo" src="{{ asset('assets/media/images/blank.png') }}" />
                                         </div>
                                         <div class="d-flex flex-column">
-                                            <div class="fw-bold d-flex align-items-center fs-5">Jeandreo C. Furquim</div>
-                                            <a href="#" class="fw-semibold text-muted text-hover-primary fs-7">jeandreo@sulink.com.br</a>
+                                            <div class="fw-bold d-flex align-items-center fs-5">{{ Auth::user()->name }}</div>
+                                            <a href="#" class="fw-semibold text-muted text-hover-primary fs-7">{{ Str::limit(Auth::user()->email, 21) }}</a>
                                         </div>
                                     </div>
                                 </div>

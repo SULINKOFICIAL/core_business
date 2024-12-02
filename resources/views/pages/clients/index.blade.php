@@ -35,7 +35,7 @@
                         <a href="{{ route('clients.show', $client->id) }}" class="btn btn-sm btn-light-primary w-100">
                             Acessar Cliente
                         </a>
-                        <a href="{{ route('clients.edit', $client->id) }}" class="btn btn-sm btn-light-danger btn-icon ms-2 text-gray-600 w-45px">
+                        <a href="{{ route('clients.edit', $client->id) }}" class="btn btn-sm btn-light-danger btn-icon ms-2 text-gray-600 w-45px" title="Editar">
                             <i class="fa-solid fa-pen-to-square"></i>
                         </a>
                     </div>

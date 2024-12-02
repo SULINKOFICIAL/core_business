@@ -24,6 +24,12 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('@Sucesso1243'),
         ]);
 
+        User::create([
+            'name' => 'Cauã Teixeira',
+            'email' => 'caua.teixeira@sulink.com.br',
+            'password' => Hash::make('@Ca11924180'),
+        ]);
+
         Client::create([
             'name' => 'Sulink',
             'domain' => 'sulink.com.br',
