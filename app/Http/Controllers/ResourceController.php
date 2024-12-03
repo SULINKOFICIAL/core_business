@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Listing;
+use App\Models\Resource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class ListingController extends Controller
+class ResourceController extends Controller
 {
     protected $request;
     private $repository;
 
-    public function __construct(Request $request, Listing $content)
+    public function __construct(Request $request, Resource $content)
     {
 
         $this->request = $request;
@@ -22,11 +22,11 @@ class ListingController extends Controller
     public function index()
     {
         // Obtém dados
-        $listings = $this->repository->all();
+        $resources = $this->repository->all();
         
         // Retorna a página
-        return view('pages.listings.index')->with([
-            'listings' => $listings,
+        return view('pages.resources.index')->with([
+            'resources' => $resources,
         ]);
     }
 
@@ -34,7 +34,7 @@ class ListingController extends Controller
     {   
 
         // Retorna a página
-        return view('pages.listings.create')->with([
+        return view('pages.resources.create')->with([
         ]);
 
     }
@@ -52,7 +52,7 @@ class ListingController extends Controller
 
             // Retorna a página
             return redirect()
-                    ->route('listings.index')
+                    ->route('resources.index')
                     ->with('message', 'Setor <b>'. $created->name . '</b> adicionado com sucesso.');
 
     }
@@ -61,14 +61,14 @@ class ListingController extends Controller
     {
 
             // Obtém dados
-            $listings = $this->repository->find($id);
+            $resources = $this->repository->find($id);
 
             // Verifica se existe
-            if(!$listings) return redirect()->back();
+            if(!$resources) return redirect()->back();
     
             // Retorna a página
-            return view('pages.listings.edit')->with([
-                'listings' => $listings
+            return view('pages.resources.edit')->with([
+                'resources' => $resources
             ]);
 
     }
@@ -77,10 +77,10 @@ class ListingController extends Controller
     {
 
         // Verifica se existe
-        if(!$listings = $this->repository->find($id)) return redirect()->back();
+        if(!$resources = $this->repository->find($id)) return redirect()->back();
 
         // Armazena o nome antigo
-        $oldName = $listings->name;
+        $oldName = $resources->name;
 
         // Obtém dados
         $data = $request->all();
@@ -89,12 +89,12 @@ class ListingController extends Controller
         $data['updated_by'] = Auth::id();
 
         // Atualiza dados
-        $listings->update($data);
+        $resources->update($data);
 
         // Retorna a página
         return redirect()
-        ->route('listings.index')
-        ->with('message', 'Setor <b>'. $oldName . '</b> atualizado para <b>'. $listings->name .'</b> com sucesso.');
+        ->route('resources.index')
+        ->with('message', 'Setor <b>'. $oldName . '</b> atualizado para <b>'. $resources->name .'</b> com sucesso.');
         
     }
 
@@ -102,10 +102,10 @@ class ListingController extends Controller
     {
 
         // Obtém dados
-        $listings = $this->repository->find($id);
+        $resources = $this->repository->find($id);
 
         // Atualiza status
-        if($listings->status == 1){
+        if($resources->status == 1){
             $this->repository->where('id', $id)->update(['status' => false, 'filed_by' => Auth::id()]);
             $message = 'desabilitado';
         } else {
@@ -115,9 +115,8 @@ class ListingController extends Controller
 
         // Retorna a página
         return redirect()
-            ->route('listings.index')
-            ->with('message', 'Setor <b>'. $listings->name . '</b> '. $message .' com sucesso.');
+            ->route('resources.index')
+            ->with('message', 'Setor <b>'. $resources->name . '</b> '. $message .' com sucesso.');
 
     }
 }
-

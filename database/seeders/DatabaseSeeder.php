@@ -24,29 +24,27 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('@Sucesso1243'),
         ]);
 
+        // Cria usuário Cauã
         User::create([
             'name' => 'Cauã Teixeira',
             'email' => 'caua.teixeira@sulink.com.br',
             'password' => Hash::make('@Ca11924180'),
         ]);
 
-        Client::create([
-            'name' => 'Sulink',
-            'domain' => 'sulink.com.br',
-            'token' => 'gk3RawCERe3uk6EmSdtJOMFtvnRQGS7N16M0l3K98c012484',
-            'created_by' => 1,
-        ]);
+        // Seeder para fornecedores
+        $this->call(PackageSeeder::class);
 
-        Client::create([
-            'name' => 'Coca Cola',
-            'domain' => 'cocacola.com.br',
-            'created_by' => 1,
-        ]);
+        // Seeder para fornecedores
+        $this->call(ClientSeeder::class);
 
-        Client::create([
-            'name' => 'Porsche',
-            'domain' => 'porscheerp.com.br',
-            'created_by' => 1,
-        ]);
+        // Seeder para fornecedores
+        $this->call(GroupSeeder::class);
+
+        // Seeder para fornecedores
+        $this->call(ResourceSeeder::class);
+
+        // Seeder para fornecedores
+        $this->call(SectorSeeder::class);
+
     }
 }

@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Listing extends Model
+class Resource extends Model
 {
     protected $fillable = [
         'name',
@@ -14,4 +14,10 @@ class Listing extends Model
         'created_by',
         'updated_by',
     ];
+
+    // Relacionamento com Group
+    public function groups()
+    {
+        return $this->belongsToMany(Group::class, 'group_resource');
+    }
 }

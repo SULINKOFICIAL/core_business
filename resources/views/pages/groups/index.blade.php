@@ -12,8 +12,13 @@
                 <div class="card h-60 mb-5">
                     <div class="card-body text-center d-flex flex-column justify-content-between py-0">
                         <div class="my-5">
-                            <div class="d-flex align-items-center justify-content-center">
+                            <div class="">
                                 <p class="fw-bolder text-gray-700 m-0 fs-3 text-center">{{ $group->name }}</p>
+                                @foreach ($group->resources as $resource)
+                                <div class="">
+                                    <p class=" text-gray-700 m-0 fs-7 ">{{ $resource->name }}</p>
+                                </div>
+                                @endforeach
                             </div>
                         </div>
                         <div class="d-flex">

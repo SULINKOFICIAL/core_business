@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Lista de Recursos')
+@section('title', 'Recursos')
 
 @section('content')
     <p class="text-center fw-bold text-gray-700 fs-2 mb-4 text-uppercase">
-        Lista de Recursos
+        Recursos
     </p>
     <div class="card">
         <div class="card-body">
@@ -19,20 +19,20 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($listings as $listing)
+                    @foreach ($resources as $resource)
                         <tr>
-                            <td>{{ $listing->name }}</td>
-                            <td class="text-center">{{ $listing->slug }}</td>
-                            <td class="text-center">{{ $listing->created_at->format('d/m/Y')}}</td>
+                            <td>{{ $resource->name }}</td>
+                            <td class="text-center">{{ $resource->slug }}</td>
+                            <td class="text-center">{{ $resource->created_at->format('d/m/Y')}}</td>
                             <td class="text-center">
-                                @if ($listing->status == 0)
+                                @if ($resource->status == 0)
                                     <span class="badge badge-light-danger">Desabilitado</span>  
                                     @else
                                     <span class="badge badge-light-success">Habilitado</span>
                                 @endif
                             </td>
                             <td class="text-center">
-                                <a href="{{ route('listings.edit', $listing->id) }}" class="btn btn-sm btn-icon ms-0 text-gray-600 w-45px" title="Editar">
+                                <a href="{{ route('resources.edit', $resource->id) }}" class="btn btn-sm btn-icon ms-0 text-gray-600 w-45px" title="Editar">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </a>
                             </td>
@@ -43,8 +43,8 @@
         </div>
     </div>    
 <div class="d-flex mt-4">
-    <a href="{{ route('listings.create') }}" class="btn btn-sm btn-primary btn-active-success">
-        Criar Lista
+    <a href="{{ route('resources.create') }}" class="btn btn-sm btn-primary btn-active-success">
+        Criar Recurso
     </a>
 </div>
 @endsection

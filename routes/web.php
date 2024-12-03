@@ -10,6 +10,7 @@ use App\Http\Controllers\ListingController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\PackagesController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\SectorController;
 use Illuminate\Support\Facades\Route;
 
@@ -67,15 +68,15 @@ Route::middleware(['auth'])->group(function () {
         });
     });
     
-    Route::prefix('listas')->group(function () {
-        Route::name('listings.')->group(function () {
-            Route::get('/', [ListingController::class, 'index'])->name('index');
-            Route::get('/adicionar', [ListingController::class, 'create'])->name('create');
-            Route::post('/adicionar', [ListingController::class, 'store'])->name('store');
-            Route::get('/visualizar/{id}', [ListingController::class, 'show'])->name('show');
-            Route::get('/editar/{id}', [ListingController::class, 'edit'])->name('edit');
-            Route::put('/editar/{id}', [ListingController::class, 'update'])->name('update');
-            Route::get('/desabilitar/{id}', [ListingController::class, 'destroy'])->name('destroy');
+    Route::prefix('recursos')->group(function () {
+        Route::name('resources.')->group(function () {
+            Route::get('/', [ResourceController::class, 'index'])->name('index');
+            Route::get('/adicionar', [ResourceController::class, 'create'])->name('create');
+            Route::post('/adicionar', [ResourceController::class, 'store'])->name('store');
+            Route::get('/visualizar/{id}', [ResourceController::class, 'show'])->name('show');
+            Route::get('/editar/{id}', [ResourceController::class, 'edit'])->name('edit');
+            Route::put('/editar/{id}', [ResourceController::class, 'update'])->name('update');
+            Route::get('/desabilitar/{id}', [ResourceController::class, 'destroy'])->name('destroy');
         });
     });
 

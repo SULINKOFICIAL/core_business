@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Group;
+use App\Models\Resource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -33,8 +34,12 @@ class GroupController extends Controller
     public function create()
     {   
 
+        $resources = Resource::all();
+        
+
         // Retorna a página
         return view('pages.groups.create')->with([
+            'resources' => $resources,
         ]);
 
     }
@@ -46,9 +51,14 @@ class GroupController extends Controller
 
         // Autor
         $data['created_by'] = Auth::id();
-
+        
+        // Atualiza dados
+        
+        
         // Insere no banco de dados
         $created = $this->repository->create($data);
+
+        $created->resources()->sync($data['resources']);
 
             // Retorna a página
             return redirect()
@@ -60,16 +70,19 @@ class GroupController extends Controller
     public function edit($id)
     {
 
-            // Obtém dados
-            $groups = $this->repository->find($id);
+        $resources = Resource::all();
 
-            // Verifica se existe
-            if(!$groups) return redirect()->back();
-    
-            // Retorna a página
-            return view('pages.groups.edit')->with([
-                'groups' => $groups
-            ]);
+        // Obtém dados
+        $groups = $this->repository->find($id);
+
+        // Verifica se existe
+        if(!$groups) return redirect()->back();
+
+        // Retorna a página
+        return view('pages.groups.edit')->with([
+            'groups' => $groups,
+            'resources' => $resources
+        ]);
 
     }
 
@@ -91,6 +104,8 @@ class GroupController extends Controller
         // Atualiza dados
         $groups->update($data);
 
+        $groups->resources()->sync($data['resources']);
+        
         // Retorna a página
         return redirect()
         ->route('groups.index')

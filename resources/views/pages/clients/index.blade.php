@@ -56,7 +56,7 @@
     </div>
 </div>
 @endif
-<div class="d-flex justify-content-end mt-4">
+<div class="d-flex mt-4">
     <a href="{{ route('clients.create') }}" class="btn btn-sm btn-primary btn-active-success">
         Adicionar Cliente
     </a>

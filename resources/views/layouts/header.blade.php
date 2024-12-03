@@ -18,23 +18,11 @@
                         <a href="{{ route('groups.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
                             Grupo de Recursos
                         </a>
-                        <a href="{{ route('listings.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
-                            Lista de Recursos
+                        <a href="{{ route('resources.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
+                            Recursos
                         </a>
                         <a href="{{ route('clients.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
                             Clientes
-                        </a>
-                        <a href="#" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
-                            Dashboard
-                        </a>
-                        <a href="#" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
-                            Contas
-                        </a>
-                        <a href="#" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
-                            Relatorio
-                        </a>
-                        <a href="#" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
-                            Politica
                         </a>
                     </div>
                 </div>
