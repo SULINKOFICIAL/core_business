@@ -15,8 +15,14 @@ class Group extends Model
         'updated_by',
     ];
 
+    // Relacionamento com resources
     public function resources(): BelongsToMany
     {
        return $this->belongsToMany(Resource::class, 'group_resource');
+    }
+    // Relacionamento com sectors
+    public function sectors()
+    {
+        return $this->belongsToMany(Sector::class, 'sector_group');
     }
 }

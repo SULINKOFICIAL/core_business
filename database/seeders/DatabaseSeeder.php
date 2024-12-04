@@ -30,12 +30,12 @@ class DatabaseSeeder extends Seeder
             'email' => 'caua.teixeira@sulink.com.br',
             'password' => Hash::make('@Ca11924180'),
         ]);
-
-        // Seeder para fornecedores
-        $this->call(PackageSeeder::class);
-
+        
         // Seeder para fornecedores
         $this->call(ClientSeeder::class);
+        
+        /* // Seeder para fornecedores
+        $this->call(PackageSeeder::class);
 
         // Seeder para fornecedores
         $this->call(GroupSeeder::class);
@@ -44,7 +44,7 @@ class DatabaseSeeder extends Seeder
         $this->call(ResourceSeeder::class);
 
         // Seeder para fornecedores
-        $this->call(SectorSeeder::class);
+        $this->call(SectorSeeder::class); */
 
     }
 }

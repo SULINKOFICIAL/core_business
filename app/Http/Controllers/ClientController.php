@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\Sector;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use GuzzleHttp\Client as Guzzle;
@@ -87,6 +88,8 @@ class ClientController extends Controller
      */
     public function show($id)
     {
+        // Obtém dados dos Setores ativos
+        $sectors = Sector::where('status', true)->get();
 
         // Obtém dados do Lead
         $client = $this->repository->find($id);
@@ -103,13 +106,22 @@ class ClientController extends Controller
         }
 
         // Transforma em uma coleção
-        $actualFeatures = collect($actualFeatures['permissions']);
+        $actualFeatures = $actualFeatures['permissions'];
+
+        // Inicia Array
+        $allowFeatures = [];
+
+        // Separa variáveis
+        foreach ($actualFeatures as $value) {
+            $allowFeatures[$value['name']] = $value['status'];
+        }
 
         // Retorna a página
         return view('pages.clients.show')->with([
             'client' => $client,
             'modules' => $modules,
-            'actualFeatures' => $actualFeatures,
+            'sectors' => $sectors,
+            'allowFeatures' => $allowFeatures,
         ]);
 
     }

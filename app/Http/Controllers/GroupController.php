@@ -33,9 +33,8 @@ class GroupController extends Controller
 
     public function create()
     {   
-
-        $resources = Resource::all();
-        
+        // Obtém dados dos Setores ativos
+        $resources = Resource::where('status', true)->get();        
 
         // Retorna a página
         return view('pages.groups.create')->with([
@@ -52,14 +51,12 @@ class GroupController extends Controller
         // Autor
         $data['created_by'] = Auth::id();
         
-        // Atualiza dados
-        
-        
         // Insere no banco de dados
         $created = $this->repository->create($data);
 
-        $created->resources()->sync($data['resources']);
-
+        if (isset($data['resources'])) {
+            $created->resources()->sync($data['resources']);
+        }
             // Retorna a página
             return redirect()
                     ->route('groups.index')
@@ -69,8 +66,8 @@ class GroupController extends Controller
 
     public function edit($id)
     {
-
-        $resources = Resource::all();
+        // Obtém dados dos Setores ativos
+        $resources = Resource::where('status', true)->get();       
 
         // Obtém dados
         $groups = $this->repository->find($id);
@@ -104,8 +101,10 @@ class GroupController extends Controller
         // Atualiza dados
         $groups->update($data);
 
-        $groups->resources()->sync($data['resources']);
-        
+        if (isset($data['resources'])) {
+            $groups->resources()->sync($data['resources']);
+        }
+
         // Retorna a página
         return redirect()
         ->route('groups.index')

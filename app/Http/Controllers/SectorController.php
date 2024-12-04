@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Group;
 use App\Models\Sector;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -39,9 +40,12 @@ class SectorController extends Controller
 
     public function create()
     {   
+        // Obtém dados dos Grupos ativos
+        $groups = Group::where('status', true)->get(); 
 
         // Retorna a página
         return view('pages.sectors.create')->with([
+            'groups' => $groups,
         ]);
 
     }
@@ -57,6 +61,10 @@ class SectorController extends Controller
         // Insere no banco de dados
         $created = $this->repository->create($data);
 
+        if (isset($data['groups'])) {
+            $created->groups()->sync($data['groups']);
+        }
+
             // Retorna a página
             return redirect()
                     ->route('sectors.index')
@@ -66,17 +74,20 @@ class SectorController extends Controller
 
     public function edit($id)
     {
+        // Obtém dados dos Grupos ativos
+        $groups = Group::where('status', true)->get();        
 
-            // Obtém dados
-            $sectors = $this->repository->find($id);
+        // Obtém dados
+        $sectors = $this->repository->find($id);
 
-            // Verifica se existe
-            if(!$sectors) return redirect()->back();
-    
-            // Retorna a página
-            return view('pages.sectors.edit')->with([
-                'sectors' => $sectors
-            ]);
+        // Verifica se existe
+        if(!$sectors) return redirect()->back();
+
+        // Retorna a página
+        return view('pages.sectors.edit')->with([
+            'sectors' => $sectors,
+            'groups' => $groups
+        ]);
 
     }
     
@@ -97,6 +108,10 @@ class SectorController extends Controller
 
         // Atualiza dados
         $sectors->update($data);
+
+        if (isset($data['groups'])) {
+            $sectors->groups()->sync($data['groups']);
+        }
 
         // Retorna a página
         return redirect()

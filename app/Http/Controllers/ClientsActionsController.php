@@ -23,7 +23,7 @@ class ClientsActionsController extends Controller
 
         // Obtém dados do formulário
         $data = $request->all();
-
+        
         // Encontra o cliente
         $client = $this->repository->find($data['client_id']);
 
@@ -31,7 +31,7 @@ class ClientsActionsController extends Controller
         $data['status']  = filter_var($data['status'], FILTER_VALIDATE_BOOLEAN);
 
         // Realiza solicitação
-        $response = $this->guzzle('put', 'sistema/configurar-permissao', $client, ['name' => 'Arquivos Gerais', 'status' => $data['status']]);
+        $response = $this->guzzle('put', 'sistema/configurar-permissao', $client, ['name' => $data['name'], 'status' => $data['status']]);
 
         // Retorna resposta
         return $response;
