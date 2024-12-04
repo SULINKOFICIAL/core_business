@@ -2,14 +2,8 @@
 
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ClientsActionsController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\GitController;
 use App\Http\Controllers\GroupController;
-use App\Http\Controllers\GroupsResourceController;
-use App\Http\Controllers\ListingController;
 use App\Http\Controllers\PackageController;
-use App\Http\Controllers\PackagesController;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\SectorController;
 use Illuminate\Support\Facades\Route;
@@ -31,7 +25,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/desabilitar/{id}', [ClientController::class, 'destroy'])->name('destroy');
         });
     });
-    
+
     Route::prefix('pacotes')->group(function () {
         Route::name('packages.')->group(function () {
             Route::get('/', [PackageController::class, 'index'])->name('index');
@@ -67,7 +61,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/desabilitar/{id}', [GroupController::class, 'destroy'])->name('destroy');
         });
     });
-    
+
     Route::prefix('recursos')->group(function () {
         Route::name('resources.')->group(function () {
             Route::get('/', [ResourceController::class, 'index'])->name('index');
@@ -80,9 +74,9 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
-    Route::prefix('acoes')->group(function () {
-        Route::name('actions.')->group(function () {
-            Route::get('/status/{id}', [ClientsActionsController::class, 'status'])->name('status');
+    Route::prefix('sistemas')->group(function () {
+        Route::name('systems.')->group(function () {
+            Route::get('/recurso', [ClientsActionsController::class, 'feature'])->name('feature');
         });
     });
 

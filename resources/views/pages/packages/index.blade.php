@@ -20,20 +20,15 @@
                             </p>
                         </div>
                         <div class="d-flex">
-                            <a href="#" class="btn btn-sm btn-light-primary w-100">
+                            <a href="{{ route('packages.edit', $package->id) }}" class="btn btn-sm btn-light-primary w-100">
                                 Acessar Pacote
                             </a>
-                            <a href="{{ route('packages.edit', $package->id) }}" class="btn btn-sm btn-light-danger btn-icon ms-2 text-gray-600 w-45px" title="Editar">
-                                <i class="fa-solid fa-pen-to-square"></i>
-                            </a>
                         </div>
-                        <div>
-                            @if ($package->status == 0)
-                                <a class="btn btn-outline btn-outline-dashed btn-outline-danger btn-active-light-danger btn-sm m-3 disabled">Desativado</a>
-                                @else
-                                <a class="btn btn-outline btn-outline-dashed btn-outline-success btn-active-light-success btn-sm m-3 disabled">Ativado</a>
-                            @endif
-                        </div>
+                        @if ($package->status == 0)
+                            <span class="btn btn-outline btn-outline-dashed btn-outline-danger px-4 py-1 disabled my-3">Desativado</span>
+                            @else
+                            <span class="btn btn-outline btn-outline-dashed btn-outline-success px-4 py-1 disabled my-3">Ativado</span>
+                        @endif
                     </div>
                     <div class="card-footer p-2">
                         <p class="text-gray-600 text-center m-0 fs-8">
@@ -43,7 +38,7 @@
                 </div>
             </div>
         @endforeach
-    </div>    
+    </div>
 <div class="d-flex mt-4">
     <a href="{{ route('packages.create') }}" class="btn btn-sm btn-primary btn-active-success">
         Criar Pacote

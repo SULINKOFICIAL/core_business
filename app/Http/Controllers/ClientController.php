@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use GuzzleHttp\Client as Guzzle;
 
 class ClientController extends Controller
 {
@@ -88,18 +89,76 @@ class ClientController extends Controller
     {
 
         // Obtém dados do Lead
-        $contents = $this->repository->find($id);
+        $client = $this->repository->find($id);
 
         // Obtém módulos
         $modules = $this->modules();
 
+        // Realiza consulta
+        $actualFeatures = $this->guzzle('get', 'sistema/permissoes', $client);
+
+        // Se ocorreu um erro
+        if($actualFeatures == 'Error' || $actualFeatures == null){
+            return 'Tratar erro';
+        }
+
+        // Transforma em uma coleção
+        $actualFeatures = collect($actualFeatures['permissions']);
+
         // Retorna a página
         return view('pages.clients.show')->with([
-            'contents' => $contents,
+            'client' => $client,
             'modules' => $modules,
+            'actualFeatures' => $actualFeatures,
         ]);
 
     }
+
+    /**
+     * Realiza uma solicitação Guzzle com autenticação Bearer
+     *
+     * @param string $method Método HTTP (get, post, etc)
+     * @param string $url URL para a solicitação
+     * @param object $client Objeto cliente contendo informações do cliente
+     * @param array|null $data Dados opcionais para incluir na requisição
+     * @return array Resposta da API
+     */
+    public function guzzle($method, $url, $client, $data = null)
+    {
+        try {
+            // Instancia o Guzzle
+            $guzzle = new Guzzle();
+
+            // Inicializa os parâmetros da requisição
+            $options = [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $client->token,
+                ]
+            ];
+
+            // Se houver dados, adiciona ao corpo da requisição
+            if ($data !== null) {
+                $options['json'] = $data;
+            }
+
+            // Realiza a solicitação
+            $response = $guzzle->$method("https://$client->domain/api/$url", $options);
+
+            // Obtém o corpo da resposta
+            $response = $response->getBody()->getContents();
+
+            // Decodifica o JSON
+            $response = json_decode($response, true);
+
+            // Retorna a resposta
+            return $response;
+
+
+        } catch (\Exception $e) {
+            return 'Error';
+        }
+    }
+
 
     /**
      * Show the form for editing the specified resource.

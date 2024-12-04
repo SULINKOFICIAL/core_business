@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
+use GuzzleHttp\Client as Guzzle;
 
 class ClientsActionsController extends Controller
 {
@@ -18,45 +18,63 @@ class ClientsActionsController extends Controller
         $this->repository = $content;
     }
 
+    // Obtém permissões do usuário
+    public function feature(Request $request){
 
-    public function status($id){
+        // Obtém dados do formulário
+        $data = $request->all();
 
-        // Obtém o cliente
-        $client = $this->repository->find($id);
+        // Encontra o cliente
+        $client = $this->repository->find($data['client_id']);
 
-        // Verifica o token do cliente
-        if(!$client->token){
-            return redirect()
-                    ->route('clients.index')
-                    ->with('message', 'O cliente não possui o Token configurado.');
-        }
+        // Converte 'status' para booleano (true ou false)
+        $data['status']  = filter_var($data['status'], FILTER_VALIDATE_BOOLEAN);
 
-        // Realiza consulta
-        $response = Http::withToken($client->token)->get("https://$client->domain/api/sistema/status");
+        // Realiza solicitação
+        $response = $this->guzzle('put', 'sistema/configurar-permissao', $client, ['name' => 'Arquivos Gerais', 'status' => $data['status']]);
 
-        // Se conseguiu realizar a solicitação
-        if ($response->successful()) {
+        // Retorna resposta
+        return $response;
 
-            // Se retornou sucesso
-            if($response->json()){
-
-                // Obtem JSON
-                $json = $response->json();
-
-                // Se encontrou a mensagem
-                if($json['status'] === 'ok'){
-                    return response()->json('OK');
-                } else {
-                    return response()->json('Error');
-                }
-
-            } else {
-                return response()->json(['error' => 'Not Found'], 404);
-            }
-
-        } else {
-            // Tratar erro
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
     }
+
+    /**
+     * Realiza uma solicitação Guzzle com autenticação Bearer
+     *
+     * @param string $method Método HTTP (get, post, etc)
+     * @param string $url URL para a solicitação
+     * @param object $client Objeto cliente contendo informações do cliente
+     * @param array|null $data Dados opcionais para incluir na requisição
+     * @return array Resposta da API
+     */
+    public function guzzle($method, $url, $client, $data = null)
+    {
+        // Instancia o Guzzle
+        $guzzle = new guzzle();
+
+        // Inicializa os parâmetros da requisição
+        $options = [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $client->token,
+            ]
+        ];
+
+        // Se houver dados, adiciona ao corpo da requisição
+        if ($data !== null) {
+            $options['json'] = $data;
+        }
+
+        // Realiza a solicitação
+        $response = $guzzle->$method("https://$client->domain/api/$url", $options);
+
+        // Obtém o corpo da resposta
+        $response = $response->getBody()->getContents();
+
+        // Decodifica o JSON
+        $response = json_decode($response, true);
+
+        // Retorna a resposta
+        return $response;
+    }
+
 }
