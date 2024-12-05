@@ -70,7 +70,7 @@ class ClientController extends Controller
         $created = $this->repository->create($data);
 
         // Salva logo
-        $this->saveLogo($data['logo'], $created);
+        $this->saveLogo($created, $data['fileLogo']);
 
         // Retorna a página
         return redirect()
@@ -214,7 +214,7 @@ class ClientController extends Controller
         $content->update($data);
 
         // Salva logo
-        $this->saveLogo($data['fileLogo'], $content);
+        $this->saveLogo($content, $data['fileLogo']);
 
         // Retorna a página
         return redirect()
@@ -231,7 +231,7 @@ class ClientController extends Controller
      * @param  string  $filename
      * @return void
      */
-    public function saveLogo($logo, $client, $filename = 'logo.png')
+    public function saveLogo($client, $logo = null, $filename = 'logo.png')
     {
         if ($logo && $logo->isValid()) {
             $logo->storeAs("clientes/{$client->id}", $filename, 'public');
