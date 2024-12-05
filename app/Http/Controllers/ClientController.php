@@ -70,7 +70,7 @@ class ClientController extends Controller
         $created = $this->repository->create($data);
 
         // Salva logo
-        $this->saveLogo($created, $data['fileLogo']);
+        if(isset($data['fileLogo'])) $this->saveLogo($created, $data['fileLogo']);
 
         // Retorna a página
         return redirect()
@@ -214,7 +214,7 @@ class ClientController extends Controller
         $content->update($data);
 
         // Salva logo
-        $this->saveLogo($content, $data['fileLogo']);
+        if(isset($data['fileLogo'])) $this->saveLogo($content, $data['fileLogo']);
 
         // Retorna a página
         return redirect()
