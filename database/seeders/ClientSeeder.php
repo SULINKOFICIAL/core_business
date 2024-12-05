@@ -20,22 +20,22 @@ class ClientSeeder extends Seeder
             'created_by' => 1,
         ]);
 
-        Client::create([
-            'name' => 'Coca Cola',
-            'domain' => 'cocacola.com.br',
-            'created_by' => 1,
-        ]);
+        // Client::create([
+        //     'name' => 'Coca Cola',
+        //     'domain' => 'cocacola.com.br',
+        //     'created_by' => 1,
+        // ]);
 
-        Client::create([
-            'name' => 'Porsche',
-            'domain' => 'porscheerp.com.br',
-            'created_by' => 1,
-        ]);
+        // Client::create([
+        //     'name' => 'Porsche',
+        //     'domain' => 'porscheerp.com.br',
+        //     'created_by' => 1,
+        // ]);
 
-        Client::create([
-            'name' => 'Stanley',
-            'domain' => 'stanley1913.com.br',
-            'created_by' => 1,
-        ]);
+        // Client::create([
+        //     'name' => 'Stanley',
+        //     'domain' => 'stanley1913.com.br',
+        //     'created_by' => 1,
+        // ]);
     }
 }

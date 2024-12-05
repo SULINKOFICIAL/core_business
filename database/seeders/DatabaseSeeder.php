@@ -19,6 +19,12 @@ class DatabaseSeeder extends Seeder
 
         // Cria usuário Jeandreo
         User::create([
+            'name' => 'Ramon Piekarski',
+            'email' => 'ramon@sulink.com.br',
+            'password' => Hash::make('290192'),
+        ]);
+
+        User::create([
             'name' => 'Jeandreo Furquim',
             'email' => 'jeandreo@sulink.com.br',
             'password' => Hash::make('@Sucesso1243'),
@@ -30,10 +36,12 @@ class DatabaseSeeder extends Seeder
             'email' => 'caua.teixeira@sulink.com.br',
             'password' => Hash::make('@Ca11924180'),
         ]);
-        
+
+
+
         // Seeder para fornecedores
         $this->call(ClientSeeder::class);
-        
+
         /* // Seeder para fornecedores
         $this->call(PackageSeeder::class);
 

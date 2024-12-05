@@ -70,9 +70,6 @@
     <a href="{{ route('clients.index') }}" class="btn btn-lg btn-primary mx-4">
         Voltar
     </a>
-    <a href="#" class="btn btn-lg btn-danger mx-4">
-        Desativar Site
-    </a>
 </div>
 @endsection
 
@@ -93,7 +90,7 @@ console.log(name)
                 data: {
                     status: checked,
                     client_id: "{{ $client->id }}",
-                     name: name, 
+                     name: name,
                 },
                 success: function(response) {
                     toastr.success('Sucesso');
