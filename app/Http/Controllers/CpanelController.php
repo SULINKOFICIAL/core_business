@@ -6,103 +6,81 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use GuzzleHttp\Client;
 
-
 class CpanelController extends Controller
 {
     protected $request;
     private $client;
+    private $cpanelPrefix;
+    private $cpanelUrl;
+    private $cpanelUser;
+    private $cpanelPass;
 
     public function __construct(Request $request, Client $client)
     {
         $this->request = $request;
         $this->client = $client;
+
+        // Centraliza configurações
+        $this->cpanelPrefix = "centralofsystem_";
+        $this->cpanelUrl = "https://central.sulink.com.br:2083";
+        $this->cpanelUser = env('CPANEL_USER');
+        $this->cpanelPass = env('CPANEL_PASS');
     }
 
     public function make()
     {
-        // Gera um subdomínio aleatório
+        // Gera um subdomínio
         $subdominio = 123;
-        $rootDomain = "central.sulink.com.br";
+        // $subdominio = Str::random(8);
 
         // Cria o subdomínio
-        // $this->makeSubdomain($subdominio, $rootDomain);
+        $this->makeSubdomain($subdominio);
+
+        // Gera nomes de banco, usuário e senha com o prefixo correto
+        // $banco = $this->cpanelPrefix . Str::random(5);
+        // $usuario = $this->cpanelPrefix . "usr_" . Str::random(5);
+        // $senha = Str::random(12);
 
         // Criar banco de dados e usuário
-        $database = $this->makeTable($subdominio);
+        // $database = $this->makeTable($banco, $usuario, $senha);
 
         return response()->json([
-            // 'message' => 'Subdomínio e banco criados com sucesso!',
-            'database' => $database,
-            // 'subdominio' => "http://{$subdominio}.{$rootDomain}"
+            'message' => 'Subdomínio e banco criados com sucesso!',
+            // 'database' => $database,
+            'subdominio' => "http://{$subdominio}.central.sulink.com.br"
         ]);
     }
 
-    private function makeSubdomain($subdominio, $rootDomain)
+    private function makeSubdomain($subdominio)
     {
         $documentRoot = "/home/centralofsystem/{$subdominio}";
 
-        // Credenciais do cPanel via .env
-        $cpanelUser = env('CPANEL_USER');
-        $cpanelPass = env('CPANEL_PASS');
-        $cpanelUrl  = "https://central.sulink.com.br:2083";
-
-        // Faz a requisição para criar o subdomínio
-        return $this->guzzle('GET', "{$cpanelUrl}/json-api/cpanel", $cpanelUser, $cpanelPass, [
-            "cpanel_jsonapi_version" => 2,
-            "cpanel_jsonapi_module" => "SubDomain",
-            "cpanel_jsonapi_func" => "addsubdomain",
+        // Chamada da API UAPI para criar subdomínio
+        return $response = $this->guzzle('GET', "{$this->cpanelUrl}/execute/SubDomain/addsubdomain", $this->cpanelUser, $this->cpanelPass, [
             "domain" => $subdominio,
-            "rootdomain" => $rootDomain,
+            "rootdomain" => "central.sulink.com.br",
             "dir" => $documentRoot
         ]);
     }
 
-    private function makeTable()
+    private function makeTable($banco, $usuario, $senha)
     {
-        // Credenciais do cPanel via .env
-        $cpanelUser = env('CPANEL_USER');
-        $cpanelPass = env('CPANEL_PASS');
-        $cpanelUrl  = "https://central.sulink.com.br:2083";
+        // 1. Criar Banco de Dados
+        $this->guzzle('GET', "{$this->cpanelUrl}/execute/Mysql/create_database", $this->cpanelUser, $this->cpanelPass, [
+            "name" => $banco
+        ]);
 
-        // Gera nomes de banco, usuário e senha
-        $banco = "central_" . Str::random(5);
-        $usuario = "usr_" . Str::random(5);
-        $senha = Str::random(12);
-
-        // 1. Criar um novo usuário no cPanel
-        $this->guzzle('GET', "{$cpanelUrl}/json-api/cpanel", $cpanelUser, $cpanelPass, [
-            "cpanel_jsonapi_version" => 2,
-            "cpanel_jsonapi_module" => "Passwd",
-            "cpanel_jsonapi_func" => "passwd",
-            "user" => $usuario,
+        // 2. Criar Usuário do Banco
+        $this->guzzle('GET', "{$this->cpanelUrl}/execute/Mysql/create_user", $this->cpanelUser, $this->cpanelPass, [
+            "name" => $usuario,
             "password" => $senha
         ]);
 
-        // 2. Criar Banco de Dados
-        $this->guzzle('GET', "{$cpanelUrl}/json-api/cpanel", $cpanelUser, $cpanelPass, [
-            "cpanel_jsonapi_version" => 2,
-            "cpanel_jsonapi_module" => "Mysql",
-            "cpanel_jsonapi_func" => "adddb",
-            "db" => $banco
-        ]);
-
-        // 3. Criar Usuário do Banco
-        $this->guzzle('GET', "{$cpanelUrl}/json-api/cpanel", $cpanelUser, $cpanelPass, [
-            "cpanel_jsonapi_version" => 2,
-            "cpanel_jsonapi_module" => "Mysql",
-            "cpanel_jsonapi_func" => "adduser",
-            "user" => $usuario,
-            "password" => $senha
-        ]);
-
-        // 4. Associar Usuário ao Banco
-        $this->guzzle('GET', "{$cpanelUrl}/json-api/cpanel", $cpanelUser, $cpanelPass, [
-            "cpanel_jsonapi_version" => 2,
-            "cpanel_jsonapi_module" => "Mysql",
-            "cpanel_jsonapi_func" => "adduserdb",
+        // 3. Associar Usuário ao Banco com Permissões
+        $this->guzzle('GET', "{$this->cpanelUrl}/execute/Mysql/set_privileges_on_database", $this->cpanelUser, $this->cpanelPass, [
             "user" => $usuario,
             "database" => $banco,
-            "privileges" => "ALL"
+            "privileges" => "ALL PRIVILEGES"
         ]);
 
         return [
