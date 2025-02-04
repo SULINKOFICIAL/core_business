@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ClientsActionsController;
+use App\Http\Controllers\CpanelController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\ResourceController;
@@ -77,6 +78,12 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('sistemas')->group(function () {
         Route::name('systems.')->group(function () {
             Route::get('/recurso', [ClientsActionsController::class, 'feature'])->name('feature');
+        });
+    });
+
+    Route::prefix('cpanel')->group(function () {
+        Route::name('cpanel.')->group(function () {
+            Route::get('/gerar', [CpanelController::class, 'make'])->name('make');
         });
     });
 
