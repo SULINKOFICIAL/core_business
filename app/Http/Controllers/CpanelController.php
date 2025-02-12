@@ -22,7 +22,7 @@ class CpanelController extends Controller
 
         // Centraliza configurações
         $this->cpanelPrefix = "centralofsystem_";
-        $this->cpanelUrl = "https://central.sulink.com.br:2083";
+        $this->cpanelUrl = "https://micore.com.br:2083";
         $this->cpanelUser = env('CPANEL_USER');
         $this->cpanelPass = env('CPANEL_PASS');
     }
@@ -30,11 +30,14 @@ class CpanelController extends Controller
     public function make()
     {
         // Gera um subdomínio
-        $subdominio = 123;
-        // $subdominio = Str::random(8);
+        $subdominio = 'core' . 123;
+        // $subdominio = 'core_' . Str::random(8);
+
+        // Clona o repositório no subdomínio criado
+        return $this->cloneGitRepository($subdominio);
 
         // Cria o subdomínio
-        $this->makeSubdomain($subdominio);
+        // $this->makeSubdomain($subdominio);
 
         // Gera nomes de banco, usuário e senha com o prefixo correto
         // $banco = $this->cpanelPrefix . Str::random(5);
@@ -47,18 +50,68 @@ class CpanelController extends Controller
         return response()->json([
             'message' => 'Subdomínio e banco criados com sucesso!',
             // 'database' => $database,
-            'subdominio' => "http://{$subdominio}.central.sulink.com.br"
+            'subdominio' => "http://{$subdominio}.micore.com.br"
         ]);
     }
 
+        // private function createTestFileCpanel()
+    // {
+        
+    //     $path = "/home/micorecom";
+    //     $content = "Arquivo de teste criado via API em " . date('Y-m-d H:i:s');
+
+    //     $response = $this->guzzle('POST', "{$this->cpanelUrl}/execute/Fileman/save_file_content", $this->cpanelUser, $this->cpanelPass, [
+    //         "dir" => $path,
+    //         "file" => "teste.txt", // Alterado de 'filename' para 'file'
+    //         "content" => $content,
+    //     ]);
+
+    //     return $response;
+    // }
+
+    private function cloneDirectory($subdominio)
+    {
+        $sourceDir = "/home/micorecom/core_template"; // Diretório de origem
+        $targetDir = "/home/micorecom/{$subdominio}"; // Novo diretório de destino
+
+        // 1. Verificar se o diretório de destino já existe. Se não, criá-lo.
+        if (!is_dir($targetDir)) {
+            mkdir($targetDir, 0755, true);
+        }
+
+        // 2. Chamar a API Fileman para copiar o conteúdo do diretório de origem para o destino
+        $this->copyDirectory($sourceDir, $targetDir);
+
+        return response()->json([
+            'message' => 'Diretório clonado com sucesso!',
+            'source' => $sourceDir,
+            'target' => $targetDir
+        ]);
+    }
+
+    private function copyDirectory($source, $destination)
+    {
+        // Chama a API Fileman para copiar o diretório
+        $response = $this->guzzle('POST', "{$this->cpanelUrl}/execute/Fileman/copy_file", $this->cpanelUser, $this->cpanelPass, [
+            'dir' => dirname($source),
+            'file' => basename($source),
+            'to_dir' => $destination
+        ]);
+
+        // Retorna a resposta da API
+        return $response;
+    }
+
+
+
     private function makeSubdomain($subdominio)
     {
-        $documentRoot = "/home/centralofsystem/{$subdominio}";
+        $documentRoot = "/home/micorecom/{$subdominio}";
 
         // Chamada da API UAPI para criar subdomínio
         return $response = $this->guzzle('GET', "{$this->cpanelUrl}/execute/SubDomain/addsubdomain", $this->cpanelUser, $this->cpanelPass, [
             "domain" => $subdominio,
-            "rootdomain" => "central.sulink.com.br",
+            "rootdomain" => "micore.com.br",
             "dir" => $documentRoot
         ]);
     }
@@ -90,6 +143,7 @@ class CpanelController extends Controller
         ];
     }
 
+
     private function guzzle($method, $url, $user, $pass, $data = null)
     {
         $options = [
@@ -101,7 +155,10 @@ class CpanelController extends Controller
         }
 
         $response = $this->client->request($method, $url, $options);
+        $responseBody = json_decode($response->getBody()->getContents(), true);
+        dd($responseBody);
 
-        return json_decode($response->getBody()->getContents(), true);
+        return $responseBody;
+
     }
 }
