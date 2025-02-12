@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use GuzzleHttp\Client;
+use phpseclib3\Net\SSH2;
 
 class CpanelController extends Controller
 {
@@ -34,7 +36,7 @@ class CpanelController extends Controller
         // $subdominio = 'core_' . Str::random(8);
 
         // Clona o repositório no subdomínio criado
-        return $this->cloneGitRepository($subdominio);
+        return $this->cloneRepository($subdominio);
 
         // Cria o subdomínio
         // $this->makeSubdomain($subdominio);
@@ -54,39 +56,38 @@ class CpanelController extends Controller
         ]);
     }
 
-        // private function createTestFileCpanel()
-    // {
-        
-    //     $path = "/home/micorecom";
-    //     $content = "Arquivo de teste criado via API em " . date('Y-m-d H:i:s');
-
-    //     $response = $this->guzzle('POST', "{$this->cpanelUrl}/execute/Fileman/save_file_content", $this->cpanelUser, $this->cpanelPass, [
-    //         "dir" => $path,
-    //         "file" => "teste.txt", // Alterado de 'filename' para 'file'
-    //         "content" => $content,
-    //     ]);
-
-    //     return $response;
-    // }
-
-    private function cloneDirectory($subdominio)
+    private function cloneRepository($subdominio)
     {
-        $sourceDir = "/home/micorecom/core_template"; // Diretório de origem
-        $targetDir = "/home/micorecom/{$subdominio}"; // Novo diretório de destino
+        $repoUrl = 'https://github.com/SULINKOFICIAL/coresulink.git';
+        $path = "/home/micorecom/{$subdominio}";
 
-        // 1. Verificar se o diretório de destino já existe. Se não, criá-lo.
-        if (!is_dir($targetDir)) {
-            mkdir($targetDir, 0755, true);
+        $ssh = new SSH2('micore.com.br');
+        if (!$ssh->login('micorecom', 'V4Hr2u$Y5wJe')) {
+            throw new Exception('Falha na autenticação SSH');
         }
 
-        // 2. Chamar a API Fileman para copiar o conteúdo do diretório de origem para o destino
-        $this->copyDirectory($sourceDir, $targetDir);
+        // Comando para clonar o repositório
+        $command = "git clone {$repoUrl} {$path}";
 
-        return response()->json([
-            'message' => 'Diretório clonado com sucesso!',
-            'source' => $sourceDir,
-            'target' => $targetDir
+        // Executando o comando
+        $output = $ssh->exec($command);
+
+        return $output;
+    }
+
+    private function createTestFileCpanel()
+    {
+        
+        $path = "/home/micorecom";
+        $content = "Arquivo de teste criado via API em " . date('Y-m-d H:i:s');
+
+        $response = $this->guzzle('POST', "{$this->cpanelUrl}/execute/Fileman/save_file_content", $this->cpanelUser, $this->cpanelPass, [
+            "dir" => $path,
+            "file" => "teste.txt", // Alterado de 'filename' para 'file'
+            "content" => $content,
         ]);
+
+        return $response;
     }
 
     private function copyDirectory($source, $destination)
