@@ -12,12 +12,14 @@ class ClientController extends Controller
 {
     protected $request;
     private $repository;
+    private $cpanelMiCore;
 
     public function __construct(Request $request, Client $content)
     {
 
         $this->request = $request;
         $this->repository = $content;
+        $this->cpanelMiCore = new CpanelController();
 
     }
 
@@ -66,8 +68,23 @@ class ClientController extends Controller
         // Autor
         $data['created_by'] = Auth::id();
 
+        // Gera um domínio permitido
+        $data['domain'] = $this->verifyIfAllow($data['name']);
+
+        // Gera um nome de tabela permitido
+        $data['table'] = str_replace('-', '_', $data['domain']);
+
+        // Insere prefixo do miCore
+        $data['table'] = 'micorecom_' . $data['table'];
+
+        // Gera token para API
+        $data['token'] = hash('sha256', $data['name'] . microtime(true));
+
         // Insere no banco de dados
         $created = $this->repository->create($data);
+
+        // Gera subdomínio, banco de dados e usuário no Cpanel miCore.com.br
+        $this->cpanelMiCore->make($data['domain'], $data['table']);
 
         // Salva logo
         if(isset($data['fileLogo'])) $this->saveLogo($created, $data['fileLogo']);
@@ -78,6 +95,32 @@ class ClientController extends Controller
                 ->with('message', 'Cliente <b>'. $created->name . '</b> adicionado com sucesso.');
 
     }
+
+    /**
+     * Verifica se o domínio está disponível e gera um novo se necessário.
+     *
+     * @param  string  $domain
+     * @return string
+     */
+    public function verifyIfAllow($domain)
+    {
+        // Remover "www." caso o usuário tenha inserido
+        $domain = preg_replace('/^www\./', '', strtolower($domain));
+
+        // Verifica se já existe no banco de dados
+        $originalDomain = $domain;
+        $counter = 1;
+
+        while ($this->repository->where('domain', $domain)->exists()) {
+            // Adiciona um número incremental ao domínio
+            $domain = $originalDomain . '-' . $counter;
+            $counter++;
+        }
+
+        return $domain;
+    }
+
+
 
 
     /**

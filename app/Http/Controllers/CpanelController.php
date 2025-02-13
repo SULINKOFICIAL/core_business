@@ -11,114 +11,73 @@ use phpseclib3\Net\SSH2;
 class CpanelController extends Controller
 {
     protected $request;
-    private $client;
     private $cpanelPrefix;
     private $cpanelUrl;
     private $cpanelUser;
     private $cpanelPass;
 
-    public function __construct(Request $request, Client $client)
+    public function __construct()
     {
-        $this->request = $request;
-        $this->client = $client;
-
-        // Centraliza configurações
+        // Define as configurações do cPanel
         $this->cpanelPrefix = "centralofsystem_";
         $this->cpanelUrl = "https://micore.com.br:2083";
         $this->cpanelUser = env('CPANEL_USER');
         $this->cpanelPass = env('CPANEL_PASS');
     }
 
-    public function make()
+    /**
+     * Cria um subdomínio e um banco de dados associado.
+     *
+     * @param string $domain Nome do subdomínio
+     * @param string $table Nome da tabela (não utilizada atualmente)
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function make($domain, $table)
     {
-        // Gera um subdomínio
-        $subdominio = 'core' . 123;
-        // $subdominio = 'core_' . Str::random(8);
 
-        // Clona o repositório no subdomínio criado
-        return $this->cloneRepository($subdominio);
+        // 1. Cria o subdomínio
+        $this->makeSubdomain($domain);
 
-        // Cria o subdomínio
-        // $this->makeSubdomain($subdominio);
-
-        // Gera nomes de banco, usuário e senha com o prefixo correto
-        // $banco = $this->cpanelPrefix . Str::random(5);
-        // $usuario = $this->cpanelPrefix . "usr_" . Str::random(5);
-        // $senha = Str::random(12);
-
-        // Criar banco de dados e usuário
-        // $database = $this->makeTable($banco, $usuario, $senha);
+        // 2. Cria o banco de dados
+        $this->makeTable($table);
 
         return response()->json([
             'message' => 'Subdomínio e banco criados com sucesso!',
-            // 'database' => $database,
-            'subdominio' => "http://{$subdominio}.micore.com.br"
+            'subdominio' => "http://{$domain}.micore.com.br"
         ]);
     }
 
-    private function cloneRepository($subdominio)
+    /**
+     * Cria um subdomínio via API do cPanel.
+     *
+     * @param string $domain Nome do subdomínio a ser criado
+     * @return array Resposta da API do cPanel
+     */
+    private function makeSubdomain($domain)
     {
-        $repoUrl = 'https://github.com/SULINKOFICIAL/coresulink.git';
-        $path = "/home/micorecom/{$subdominio}";
+        $documentRoot = "/home/micorecom/public_html";
 
-        $ssh = new SSH2('micore.com.br');
-        if (!$ssh->login('micorecom', 'V4Hr2u$Y5wJe')) {
-            throw new Exception('Falha na autenticação SSH');
-        }
-
-        // Comando para clonar o repositório
-        $command = "git clone {$repoUrl} {$path}";
-
-        // Executando o comando
-        $output = $ssh->exec($command);
-
-        return $output;
-    }
-
-    private function createTestFileCpanel()
-    {
-        
-        $path = "/home/micorecom";
-        $content = "Arquivo de teste criado via API em " . date('Y-m-d H:i:s');
-
-        $response = $this->guzzle('POST', "{$this->cpanelUrl}/execute/Fileman/save_file_content", $this->cpanelUser, $this->cpanelPass, [
-            "dir" => $path,
-            "file" => "teste.txt", // Alterado de 'filename' para 'file'
-            "content" => $content,
-        ]);
-
-        return $response;
-    }
-
-    private function copyDirectory($source, $destination)
-    {
-        // Chama a API Fileman para copiar o diretório
-        $response = $this->guzzle('POST', "{$this->cpanelUrl}/execute/Fileman/copy_file", $this->cpanelUser, $this->cpanelPass, [
-            'dir' => dirname($source),
-            'file' => basename($source),
-            'to_dir' => $destination
-        ]);
-
-        // Retorna a resposta da API
-        return $response;
-    }
-
-
-
-    private function makeSubdomain($subdominio)
-    {
-        $documentRoot = "/home/micorecom/{$subdominio}";
-
-        // Chamada da API UAPI para criar subdomínio
-        return $response = $this->guzzle('GET', "{$this->cpanelUrl}/execute/SubDomain/addsubdomain", $this->cpanelUser, $this->cpanelPass, [
-            "domain" => $subdominio,
+        $this->guzzle('GET', "{$this->cpanelUrl}/execute/SubDomain/addsubdomain", $this->cpanelUser, $this->cpanelPass, [
+            "domain" => $domain,
             "rootdomain" => "micore.com.br",
             "dir" => $documentRoot
         ]);
     }
 
-    private function makeTable($banco, $usuario, $senha)
+    /**
+     * Cria um banco de dados e um usuário no cPanel.
+     *
+     * @param string $banco Nome do banco de dados
+     * @return array Informações do banco criado
+     */
+    private function makeTable($banco)
     {
+        // Gera nome do usuário com base no banco e um identificador único
+        $usuario = $banco . "_usr";
+
+        // Gera uma senha segura aleatória
+        $senha = Str::random(12);
+
         // 1. Criar Banco de Dados
         $this->guzzle('GET', "{$this->cpanelUrl}/execute/Mysql/create_database", $this->cpanelUser, $this->cpanelPass, [
             "name" => $banco
@@ -136,17 +95,22 @@ class CpanelController extends Controller
             "database" => $banco,
             "privileges" => "ALL PRIVILEGES"
         ]);
-
-        return [
-            'database' => $banco,
-            'user' => $usuario,
-            'password' => $senha
-        ];
     }
 
-
+    /**
+     * Faz requisições HTTP para a API do cPanel usando Guzzle.
+     *
+     * @param string $method Método HTTP (GET, POST, etc.)
+     * @param string $url URL da API do cPanel
+     * @param string $user Usuário do cPanel
+     * @param string $pass Senha do cPanel
+     * @param array|null $data Parâmetros da requisição
+     * @return array Resposta da API
+     */
     private function guzzle($method, $url, $user, $pass, $data = null)
     {
+        $client = new Client(); // Instanciando a classe Client diretamente
+
         $options = [
             'auth' => [$user, $pass],
         ];
@@ -155,11 +119,47 @@ class CpanelController extends Controller
             $options['query'] = $data;
         }
 
-        $response = $this->client->request($method, $url, $options);
-        $responseBody = json_decode($response->getBody()->getContents(), true);
-        dd($responseBody);
+        $response = $client->request($method, $url, $options);
+        return json_decode($response->getBody()->getContents(), true);
+    }
 
-        return $responseBody;
 
+    /**
+     * Clona o repositório Laravel para o subdomínio via SSH.
+     *
+     * @param string $domain Nome do subdomínio
+     * @return string Saída do comando SSH
+     * @throws Exception Se a autenticação SSH falhar
+     */
+    private function cloneRepository($domain)
+    {
+        $repoUrl = 'https://github.com/SULINKOFICIAL/coresulink.git';
+        $path = "/home/micorecom/{$domain}";
+
+        $ssh = new SSH2('micore.com.br');
+        if (!$ssh->login($this->cpanelUser, $this->cpanelPass)) {
+            throw new Exception('Falha na autenticação SSH');
+        }
+
+        // Comando para clonar o repositório
+        $command = "git clone {$repoUrl} {$path}";
+        return $ssh->exec($command);
+    }
+
+    /**
+     * Cria um arquivo de teste no servidor via API do cPanel.
+     *
+     * @return array Resposta da API do cPanel
+     */
+    private function createTestFileCpanel()
+    {
+        $path = "/home/micorecom";
+        $content = "Arquivo de teste criado via API em " . date('Y-m-d H:i:s');
+
+        return $this->guzzle('POST', "{$this->cpanelUrl}/execute/Fileman/save_file_content", $this->cpanelUser, $this->cpanelPass, [
+            "dir" => $path,
+            "file" => "teste.txt",
+            "content" => $content,
+        ]);
     }
 }

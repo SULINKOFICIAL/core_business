@@ -48,8 +48,6 @@ function loadTables(seletor = '.datatables', items = 25, order = undefined) {
 }
 
 
-
-
 $(document).ready(function(){
     loadTables()
 })
