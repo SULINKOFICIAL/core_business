@@ -32,21 +32,18 @@ class CpanelController extends Controller
      * @param string $table Nome da tabela (não utilizada atualmente)
      * @return \Illuminate\Http\JsonResponse
      */
-    public function make($domain = null, $table = null)
+    public function make($domain, $table)
     {
+        // 1. Cria o subdomínio
+        $this->makeSubdomain($domain);
 
-        $this->cloneDatabase('aaaaaaa');
+        // 2. Cria o banco de dados
+        $this->cloneDatabase($table);
 
-        // // // 1. Cria o subdomínio
-        // // $this->makeSubdomain($domain);
-
-        // // // 2. Cria o banco de dados
-        // // $this->makeTable($table);
-
-        // // return response()->json([
-        // //     'message' => 'Subdomínio e banco criados com sucesso!',
-        // //     'subdominio' => "http://{$domain}.micore.com.br"
-        // // ]);
+        return response()->json([
+            'message' => 'Subdomínio e banco criados com sucesso!',
+            'subdominio' => "http://{$domain}.micore.com.br"
+        ]);
     }
 
     /**
@@ -75,6 +72,7 @@ class CpanelController extends Controller
      */
     private function cloneDatabase($novoBanco)
     {
+        // Banco modelo
         $templateBanco = 'micorecom_template';
 
         // Criar o novo banco de dados
@@ -91,9 +89,7 @@ class CpanelController extends Controller
         // Comando para clonar o banco de dados usando mysqldump
         $dumpCommand = "mysqldump -u {$this->cpanelUser} -p'{$this->cpanelPass}' {$templateBanco} | mysql -u {$this->cpanelUser} -p'{$this->cpanelPass}' {$novoBanco}";
 
-        $result = $ssh->exec($dumpCommand);
-
-        dd($result);
+        $ssh->exec($dumpCommand);
 
         // Criar um usuário para o banco clonado
         $usuario = $novoBanco . "_usr";
