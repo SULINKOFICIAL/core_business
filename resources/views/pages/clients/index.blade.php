@@ -7,7 +7,7 @@
     <div class="row">
         @foreach ($contents as $client)
         <div class="col-3">
-            <div class="card">
+            <div class="card mb-4">
                 <div class="card-body text-center">
                     @if ($client->logo)
                     <img src="{{ asset('storage/clientes/' . $client->id . '/logo.png') }}" alt="Logo do Cliente" class="img-fluid h-50px">
@@ -27,9 +27,9 @@
                                 <span class="badge badge-light-warning ms-2">Token não configurado</span>
                             @endif
                         </div>
-                        <p class="text-gray-600 m-0 text-center">
-                            {{ $client->domain }}
-                        </p>
+                        <a href="https://{{ $client->domain }}.micore.com.br" target="_blank" class="text-gray-600 text-hover-danger m-0 text-center">
+                            {{ $client->domain }}.micore.com.br
+                        </a>
                     </div>
                     <div class="d-flex">
                         <a href="{{ route('clients.show', $client->id) }}" class="btn btn-sm btn-light-primary w-100">

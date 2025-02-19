@@ -32,7 +32,7 @@ class ClientController extends Controller
     public function index()
     {
         // Obtém dados
-        $contents = $this->repository->orderBy('name', 'ASC')->get();
+        $contents = $this->repository->orderBy('id', 'DESC')->get();
 
         // Retorna a página
         return view('pages.clients.index')->with([
@@ -84,6 +84,9 @@ class ClientController extends Controller
         // Gera token para API
         $data['token'] = hash('sha256', $data['name'] . microtime(true));
 
+        // Gera nome curto
+        $data['user']['short_name'] = $this->generateShortName($data['user']['name']);
+
         // Insere no banco de dados
         $created = $this->repository->create($data);
 
@@ -94,7 +97,7 @@ class ClientController extends Controller
         ];
 
         // Gera subdomínio, banco de dados e usuário no Cpanel miCore.com.br
-        $this->cpanelMiCore->make($data['domain'], $database);
+        $this->cpanelMiCore->make($data['domain'], $database, $data['user']);
 
         // Salva logo
         if(isset($data['fileLogo'])) $this->saveLogo($created, $data['fileLogo']);
@@ -104,6 +107,14 @@ class ClientController extends Controller
                 ->route('clients.index')
                 ->with('message', 'Cliente <b>'. $created->name . '</b> adicionado com sucesso.');
 
+    }
+
+    function generateShortName($fullName) {
+        $parts = explode(' ', trim($fullName));
+        if (count($parts) > 1) {
+            return $parts[0] . ' ' . end($parts); // Primeiro nome + último sobrenome
+        }
+        return $parts[0]; // Caso só tenha um nome
     }
 
     /**
@@ -116,6 +127,9 @@ class ClientController extends Controller
     {
         // Remover "www." caso o usuário tenha inserido
         $domain = preg_replace('/^www\./', '', strtolower($domain));
+
+        // Gera um nome de tabela permitido
+        $domain = str_replace(' ', '-', $domain);
 
         // Verifica se já existe no banco de dados
         $originalDomain = $domain;

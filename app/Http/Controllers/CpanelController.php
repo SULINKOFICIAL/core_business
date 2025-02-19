@@ -6,13 +6,13 @@ use Exception;
 use Illuminate\Support\Str;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use mysqli;
 use phpseclib3\Net\SSH2;
 
 class CpanelController extends Controller
 {
     protected $request;
-    private $cpanelPrefix;
     private $cpanelHost;
     private $cpanelUrl;
     private $cpanelUser;
@@ -21,7 +21,6 @@ class CpanelController extends Controller
     public function __construct()
     {
         // Define as configurações do cPanel
-        $this->cpanelPrefix = "centralofsystem_";
         $this->cpanelHost = env('CPANEL_HOST');
         $this->cpanelUrl  = env('CPANEL_URL');
         $this->cpanelUser = env('CPANEL_USER');
@@ -35,7 +34,7 @@ class CpanelController extends Controller
      * @param string $table Nome da tabela (não utilizada atualmente)
      * @return \Illuminate\Http\JsonResponse
      */
-    public function make($domain, $datatable)
+    public function make($domain, $datatable, $user)
     {
         // // 1. Cria o subdomínio
         $this->makeSubdomain($domain);
@@ -44,7 +43,7 @@ class CpanelController extends Controller
         $this->cloneDatabase($datatable);
 
         // // 3. Adiciona registros únicos no cliente
-        $this->addTokenAndUser($datatable);
+        $this->addTokenAndUser($datatable, $user);
 
         // return response()->json([
         //     'message' => 'Subdomínio e banco clonado com sucesso!',
@@ -56,27 +55,21 @@ class CpanelController extends Controller
     /**
      * Adiciona token e usuário no banco de dados do cliente.
      */
-    private function addTokenAndUser($datatable)
+    private function addTokenAndUser($datatable, $user)
     {
         // Conectar ao banco recém-criado
         $this->connectDatabase($datatable);
 
         // Gerar senha hashada e token de API
-        $senhaPadrao = bcrypt('senha123');
+        $userPassword = Hash::make($user['password']);
         $apiToken = Str::random(60);
 
         // Inserir usuário padrão
         DB::connection('mysql_cliente')->table('users')->insert([
-            'name'             => 'Admin',
-            'password'         => $senhaPadrao,
-            'show_store_id'    => null,
-            'bio'              => 'Administrador padrão',
-            'full_name'        => 'Administrador',
-            'email'            => 'admin@gmail.com',
-            'id_master'        => 1,
-            'role'             => 1,
-            'dashboard_active' => 1,
-            'api_token'        => $apiToken,
+            'name'             => $user['short_name'],
+            'password'         => $userPassword,
+            'full_name'        => $user['name'],
+            'email'            => $user['email'],
             'created_by'       => 1,
         ]);
 
@@ -138,7 +131,7 @@ class CpanelController extends Controller
      */
     private function makeSubdomain($domain)
     {
-        $documentRoot = "/home/micorecom/public_html";
+        $documentRoot = "/home/micorecom/core";
 
         $this->guzzle('GET', "{$this->cpanelUrl}/execute/SubDomain/addsubdomain", $this->cpanelUser, $this->cpanelPass, [
             "domain" => $domain,
@@ -171,7 +164,7 @@ class CpanelController extends Controller
         }
 
         // Comando para clonar o banco de dados usando mysqldump
-        $dumpCommand = "mysqldump -u {$this->cpanelUser} -p'{$this->cpanelPass}' {$templateBanco} | mysql -u {$this->cpanelUser} -p'{$this->cpanelPass}' {$novoBanco}";
+        $dumpCommand = "mysqldump -u {$this->cpanelUser} -p'{$this->cpanelPass}' {$templateBanco} | mysql -u {$this->cpanelUser} -p'{$this->cpanelPass}' {$database['name']}";
 
         $ssh->exec($dumpCommand);
 
