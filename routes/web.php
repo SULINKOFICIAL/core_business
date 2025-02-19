@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ClientsActionsController;
 use App\Http\Controllers\CpanelController;
@@ -7,7 +8,6 @@ use App\Http\Controllers\GroupController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\SectorController;
-use Illuminate\Support\Facades\Route;
 
 
 // Paínel de administração
@@ -90,3 +90,4 @@ Route::middleware(['auth'])->group(function () {
 });
 
 require __DIR__.'/auth.php';
+require __DIR__.'/api.php';
