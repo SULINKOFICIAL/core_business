@@ -18,6 +18,7 @@ class Client extends Model
         'domain',
         'logo',
         'table',
+        'password',
         'token',
         'status',
         'filed_by',

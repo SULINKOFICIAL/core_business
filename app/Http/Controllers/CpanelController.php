@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use Exception;
-use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\DB;
 use phpseclib3\Net\SSH2;
 
 class CpanelController extends Controller
@@ -20,7 +20,7 @@ class CpanelController extends Controller
     {
         // Define as configurações do cPanel
         $this->cpanelPrefix = "centralofsystem_";
-        $this->cpanelUrl = "https://micore.com.br:2083";
+        $this->cpanelUrl = env('CPANEL_URL');
         $this->cpanelUser = env('CPANEL_USER');
         $this->cpanelPass = env('CPANEL_PASS');
     }
@@ -32,19 +32,84 @@ class CpanelController extends Controller
      * @param string $table Nome da tabela (não utilizada atualmente)
      * @return \Illuminate\Http\JsonResponse
      */
-    public function make($domain, $table)
+    public function make($domain, $table, $password)
     {
         // 1. Cria o subdomínio
         $this->makeSubdomain($domain);
 
         // 2. Cria o banco de dados
-        $this->cloneDatabase($table);
+        $this->cloneDatabase($table, $password);
+
+        // 3. Adiciona registros únicos no cliente
+        $this->addTokenAndUser($table, $table . "_usr", $password);
 
         return response()->json([
-            'message' => 'Subdomínio e banco criados com sucesso!',
+            'message' => 'Subdomínio e banco clonado com sucesso!',
             'subdominio' => "http://{$domain}.micore.com.br"
         ]);
     }
+   
+    private function addTokenAndUser($dbName, $dbUser, $dbPassword)
+    {
+        // Conectar ao banco recém-criado
+        $this->conectarAoBancoDoCliente($dbName, $dbUser, $dbPassword);
+
+        // Gerar senha hashada e token de API
+        $senhaPadrao = bcrypt('senha123'); // Defina a senha inicial do usuário
+        $apiToken = Str::random(60);
+
+        // Inserir usuário padrão
+        DB::connection('mysql_cliente')->table('users')->insert([
+            'name'             => 'Admin',
+            'password'         => $senhaPadrao,
+            'show_store_id'    => null,
+            'bio'              => 'Administrador padrão',
+            'full_name'        => 'Administrador',
+            'email'            => 'admin@' . $dbName . '.com',
+            'id_master'        => 1,
+            'role'             => 'admin',
+            'dashboard_active' => 1,
+            'api_token'        => $apiToken,
+            'sac_attendence'   => 1,
+            'sac_order'        => 1,
+            'visible_website'  => 1,
+            'status'           => 'active',
+            'created_by'       => 'system',
+        ]);
+
+        // Inserir o token na tabela `configs_api`
+        DB::connection('mysql_cliente')->table('configs_api')->insert([
+            'plataform'    => 'micore',
+            'option_name'  => 'api_token',
+            'option_value' => $apiToken,
+            'updated_by'   => 'system',
+        ]);
+
+        return $apiToken;
+    }
+
+
+    private function conectarAoBancoDoCliente($dbName, $dbUser, $dbPassword)
+    {
+        config([
+            'database.connections.mysql_cliente' => [
+                'driver'    => 'mysql',
+                'host'      => env('DB_HOST', 'localhost'),
+                'database'  => $dbName,
+                'username'  => $dbUser,
+                'password'  => $dbPassword,
+                'charset'   => 'utf8mb4',
+                'collation' => 'utf8mb4_unicode_ci',
+                'prefix'    => '',
+                'strict'    => false,
+            ]
+        ]);
+
+        DB::purge('mysql_cliente'); // Limpa conexões antigas
+        DB::reconnect('mysql_cliente'); // Reconecta ao banco correto
+    }
+
+
 
     /**
      * Cria um subdomínio via API do cPanel.
@@ -70,7 +135,7 @@ class CpanelController extends Controller
      * @return void
      * @throws Exception Se a clonagem falhar
      */
-    private function cloneDatabase($novoBanco)
+    private function cloneDatabase($novoBanco, $password)
     {
         // Banco modelo
         $templateBanco = 'micorecom_template';
@@ -93,11 +158,10 @@ class CpanelController extends Controller
 
         // Criar um usuário para o banco clonado
         $usuario = $novoBanco . "_usr";
-        $senha = Str::random(12);
 
         $this->guzzle('GET', "{$this->cpanelUrl}/execute/Mysql/create_user", $this->cpanelUser, $this->cpanelPass, [
             "name" => $usuario,
-            "password" => $senha
+            "password" => $password
         ]);
 
         // Conceder permissões ao novo usuário no banco clonado
@@ -110,7 +174,7 @@ class CpanelController extends Controller
         return response()->json([
             'message' => "Banco de dados {$novoBanco} clonado com sucesso!",
             'usuario' => $usuario,
-            'senha' => $senha
+            'password' => $password
         ]);
     }
 

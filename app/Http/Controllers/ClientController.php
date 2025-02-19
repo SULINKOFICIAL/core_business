@@ -7,6 +7,7 @@ use App\Models\Sector;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use GuzzleHttp\Client as Guzzle;
+use Illuminate\Support\Str;
 
 class ClientController extends Controller
 {
@@ -76,6 +77,9 @@ class ClientController extends Controller
 
         // Insere prefixo do miCore
         $data['table'] = 'micorecom_' . $data['table'];
+        
+        // Gera senha
+        $data['password'] = Str::random(12);
 
         // Gera token para API
         $data['token'] = hash('sha256', $data['name'] . microtime(true));
@@ -84,7 +88,7 @@ class ClientController extends Controller
         $created = $this->repository->create($data);
 
         // Gera subdomínio, banco de dados e usuário no Cpanel miCore.com.br
-        $this->cpanelMiCore->make($data['domain'], $data['table']);
+        $this->cpanelMiCore->make($data['domain'], $data['table'], $data['password']);
 
         // Salva logo
         if(isset($data['fileLogo'])) $this->saveLogo($created, $data['fileLogo']);
