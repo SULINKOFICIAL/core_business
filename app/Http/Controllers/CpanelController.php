@@ -123,7 +123,6 @@ class CpanelController extends Controller
     
         // Tente
         try {
-            DB::connection('mysql_cliente')->getPdo();
             echo "Conectado ao banco {$datatable['name']} com sucesso!";
         } catch (\Exception $e) {
             die("Erro ao conectar: " . $e->getMessage());
