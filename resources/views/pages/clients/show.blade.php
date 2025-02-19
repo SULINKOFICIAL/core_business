@@ -82,8 +82,8 @@
             var checked = $(this).is(':checked');
 
             var name = $(this).val();
-console.log(name)
-           // Busca OS
+
+            // Busca OS
            $.ajax({
                 type:'GET',
                 url: "{{ route('systems.feature') }}",

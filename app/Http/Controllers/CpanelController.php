@@ -13,6 +13,7 @@ class CpanelController extends Controller
 {
     protected $request;
     private $cpanelPrefix;
+    private $cpanelHost;
     private $cpanelUrl;
     private $cpanelUser;
     private $cpanelPass;
@@ -21,7 +22,8 @@ class CpanelController extends Controller
     {
         // Define as configurações do cPanel
         $this->cpanelPrefix = "centralofsystem_";
-        $this->cpanelUrl = env('CPANEL_URL');
+        $this->cpanelHost = env('CPANEL_HOST');
+        $this->cpanelUrl  = env('CPANEL_URL');
         $this->cpanelUser = env('CPANEL_USER');
         $this->cpanelPass = env('CPANEL_PASS');
     }
@@ -33,53 +35,34 @@ class CpanelController extends Controller
      * @param string $table Nome da tabela (não utilizada atualmente)
      * @return \Illuminate\Http\JsonResponse
      */
-    public function make($domain, $table, $password)
+    public function make($domain, $datatable)
     {
-        $host = 'mysqli.micore.com.br';
-        $db   = 'micorecom_teste';
-        $user = 'micorecom_teste_usr';
-        $pass = 'spaS2Ug2wkxn';
-
-        $conn = new mysqli($host, $user, $pass, $db);
-        if ($conn->connect_error) {
-            die("Falha na conexão: " . $conn->connect_error);
-        } else {
-            echo "Conectado com sucesso!";
-        }
-
-
-
         // // 1. Cria o subdomínio
-        // $this->makeSubdomain($domain);
+        $this->makeSubdomain($domain);
 
         // // 2. Cria o banco de dados
-        // $this->cloneDatabase($table, $password);
+        $this->cloneDatabase($datatable);
 
         // // 3. Adiciona registros únicos no cliente
-        // $this->addTokenAndUser('micorecom_teste', 'micorecom_teste_usr', 'spaS2Ug2wkxn');
+        $this->addTokenAndUser($datatable);
 
         // return response()->json([
         //     'message' => 'Subdomínio e banco clonado com sucesso!',
         //     'subdominio' => "http://{$domain}.micore.com.br"
         // ]);
     }
-   
-    private function addTokenAndUser($dbName, $dbUser, $dbPassword)
+
+
+    /**
+     * Adiciona token e usuário no banco de dados do cliente.
+     */
+    private function addTokenAndUser($datatable)
     {
         // Conectar ao banco recém-criado
-        $this->conectarAoBancoDoCliente($dbName, $dbUser, $dbPassword);
-
-        try {
-            DB::connection('mysql_cliente')->getPdo();
-            echo "Conexão bem-sucedida!";
-        } catch (\Exception $e) {
-            die("Erro ao conectar: " . $e->getMessage());
-        }
-
-        dd(123);
+        $this->connectDatabase($datatable);
 
         // Gerar senha hashada e token de API
-        $senhaPadrao = bcrypt('senha123'); // Defina a senha inicial do usuário
+        $senhaPadrao = bcrypt('senha123');
         $apiToken = Str::random(60);
 
         // Inserir usuário padrão
@@ -89,16 +72,12 @@ class CpanelController extends Controller
             'show_store_id'    => null,
             'bio'              => 'Administrador padrão',
             'full_name'        => 'Administrador',
-            'email'            => 'admin@' . $dbName . '.com',
+            'email'            => 'admin@gmail.com',
             'id_master'        => 1,
-            'role'             => 'admin',
+            'role'             => 1,
             'dashboard_active' => 1,
             'api_token'        => $apiToken,
-            'sac_attendence'   => 1,
-            'sac_order'        => 1,
-            'visible_website'  => 1,
-            'status'           => 'active',
-            'created_by'       => 'system',
+            'created_by'       => 1,
         ]);
 
         // Inserir o token na tabela `configs_api`
@@ -112,19 +91,20 @@ class CpanelController extends Controller
         return $apiToken;
     }
 
-
-    private function conectarAoBancoDoCliente($dbName, $dbUser, $dbPassword)
+    /**
+     * Conecta ao banco de dados do cliente.
+     */
+    private function connectDatabase($datatable)
     {
-        
-        // dd($dbName, $dbUser, $dbPassword);
-
+     
+        // Configura conexão
         config([
             'database.connections.mysql_cliente' => [
                 'driver'    => 'mysql',
-                'host'      => env('DB_HOST', 'localhost'),
-                'database'  => $dbName,
-                'username'  => $dbUser,
-                'password'  => $dbPassword,
+                'host'      => $this->cpanelHost,
+                'database'  => $datatable['name'],
+                'username'  => $datatable['name'] . '_usr',
+                'password'  => $datatable['password'],
                 'charset'   => 'utf8mb4',
                 'collation' => 'utf8mb4_unicode_ci',
                 'prefix'    => '',
@@ -132,12 +112,24 @@ class CpanelController extends Controller
             ]
         ]);
 
-        DB::purge('mysql_cliente'); // Limpa conexões antigas
-        DB::reconnect('mysql_cliente'); // Reconecta ao banco correto
+        // Limpa conexões antigas
+        DB::purge('mysql_cliente'); 
+
+        // Força desconexão anterior
+        DB::disconnect('mysql_cliente');
+
+         // Reconecta ao novo banco
+        DB::reconnect('mysql_cliente');
+    
+        // Tente
+        try {
+            DB::connection('mysql_cliente')->getPdo();
+            echo "Conectado ao banco {$datatable['name']} com sucesso!";
+        } catch (\Exception $e) {
+            die("Erro ao conectar: " . $e->getMessage());
+        }
         
     }
-
-
 
     /**
      * Cria um subdomínio via API do cPanel.
@@ -163,14 +155,14 @@ class CpanelController extends Controller
      * @return void
      * @throws Exception Se a clonagem falhar
      */
-    private function cloneDatabase($novoBanco, $password)
+    private function cloneDatabase($database)
     {
         // Banco modelo
         $templateBanco = 'micorecom_template';
 
         // Criar o novo banco de dados
         $this->guzzle('GET', "{$this->cpanelUrl}/execute/Mysql/create_database", $this->cpanelUser, $this->cpanelPass, [
-            "name" => $novoBanco
+            "name" => $database['name']
         ]);
 
         // Conectar via SSH para clonar o banco
@@ -185,24 +177,24 @@ class CpanelController extends Controller
         $ssh->exec($dumpCommand);
 
         // Criar um usuário para o banco clonado
-        $usuario = $novoBanco . "_usr";
+        $usuario = $database['name'] . "_usr";
 
         $this->guzzle('GET', "{$this->cpanelUrl}/execute/Mysql/create_user", $this->cpanelUser, $this->cpanelPass, [
             "name" => $usuario,
-            "password" => $password
+            "password" => $database['password']
         ]);
 
         // Conceder permissões ao novo usuário no banco clonado
         $this->guzzle('GET', "{$this->cpanelUrl}/execute/Mysql/set_privileges_on_database", $this->cpanelUser, $this->cpanelPass, [
             "user" => $usuario,
-            "database" => $novoBanco,
+            "database" => $database['name'],
             "privileges" => "ALL PRIVILEGES"
         ]);
 
         return response()->json([
-            'message' => "Banco de dados {$novoBanco} clonado com sucesso!",
+            'message' => "Banco de dados {$database['name']} clonado com sucesso!",
             'usuario' => $usuario,
-            'password' => $password
+            'password' => $database['password']
         ]);
     }
 

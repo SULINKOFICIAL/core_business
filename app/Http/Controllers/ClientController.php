@@ -87,8 +87,14 @@ class ClientController extends Controller
         // Insere no banco de dados
         $created = $this->repository->create($data);
 
+        // Gera dado do banco de dados
+        $database = [
+            'name' => $data['table'],
+            'password' => $data['password']
+        ];
+
         // Gera subdomínio, banco de dados e usuário no Cpanel miCore.com.br
-        $this->cpanelMiCore->make($data['domain'], $data['table'], $data['password']);
+        $this->cpanelMiCore->make($data['domain'], $database);
 
         // Salva logo
         if(isset($data['fileLogo'])) $this->saveLogo($created, $data['fileLogo']);
