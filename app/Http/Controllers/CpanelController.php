@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Support\Str;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\DB;
+use mysqli;
 use phpseclib3\Net\SSH2;
 
 class CpanelController extends Controller
@@ -34,25 +35,48 @@ class CpanelController extends Controller
      */
     public function make($domain, $table, $password)
     {
-        // 1. Cria o subdomínio
-        $this->makeSubdomain($domain);
+        $host = 'mysqli.micore.com.br';
+        $db   = 'micorecom_teste';
+        $user = 'micorecom_teste_usr';
+        $pass = 'spaS2Ug2wkxn';
 
-        // 2. Cria o banco de dados
-        $this->cloneDatabase($table, $password);
+        $conn = new mysqli($host, $user, $pass, $db);
+        if ($conn->connect_error) {
+            die("Falha na conexão: " . $conn->connect_error);
+        } else {
+            echo "Conectado com sucesso!";
+        }
 
-        // 3. Adiciona registros únicos no cliente
-        $this->addTokenAndUser($table, $table . "_usr", $password);
 
-        return response()->json([
-            'message' => 'Subdomínio e banco clonado com sucesso!',
-            'subdominio' => "http://{$domain}.micore.com.br"
-        ]);
+
+        // // 1. Cria o subdomínio
+        // $this->makeSubdomain($domain);
+
+        // // 2. Cria o banco de dados
+        // $this->cloneDatabase($table, $password);
+
+        // // 3. Adiciona registros únicos no cliente
+        // $this->addTokenAndUser('micorecom_teste', 'micorecom_teste_usr', 'spaS2Ug2wkxn');
+
+        // return response()->json([
+        //     'message' => 'Subdomínio e banco clonado com sucesso!',
+        //     'subdominio' => "http://{$domain}.micore.com.br"
+        // ]);
     }
    
     private function addTokenAndUser($dbName, $dbUser, $dbPassword)
     {
         // Conectar ao banco recém-criado
         $this->conectarAoBancoDoCliente($dbName, $dbUser, $dbPassword);
+
+        try {
+            DB::connection('mysql_cliente')->getPdo();
+            echo "Conexão bem-sucedida!";
+        } catch (\Exception $e) {
+            die("Erro ao conectar: " . $e->getMessage());
+        }
+
+        dd(123);
 
         // Gerar senha hashada e token de API
         $senhaPadrao = bcrypt('senha123'); // Defina a senha inicial do usuário
@@ -91,6 +115,9 @@ class CpanelController extends Controller
 
     private function conectarAoBancoDoCliente($dbName, $dbUser, $dbPassword)
     {
+        
+        // dd($dbName, $dbUser, $dbPassword);
+
         config([
             'database.connections.mysql_cliente' => [
                 'driver'    => 'mysql',
@@ -107,6 +134,7 @@ class CpanelController extends Controller
 
         DB::purge('mysql_cliente'); // Limpa conexões antigas
         DB::reconnect('mysql_cliente'); // Reconecta ao banco correto
+        
     }
 
 
