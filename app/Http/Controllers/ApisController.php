@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Client;
+use App\Models\ErrorMiCore;
 
 class ApisController extends Controller
 {
@@ -35,8 +36,25 @@ class ApisController extends Controller
     }
 
     public function notifyErrors(Request $request){
+        
+        // Recebe dados
+        $data = $request->all();
 
-        return 'Chegou aqui';
+        // Verificar se a requisição é segura
+        if(!isset($data['token'])) {
+            return response()->json('Token não encontrado', 409);
+        }  
+
+        // Verificar se a requisição é segura
+        if ($data['token'] !== env('CENTRAL_CORE_TOKEN')){
+            return response()->json('Token não autorizado', 409);
+        }
+
+        // Registra erro que veio através do MiCore
+        ErrorMiCore::create($data);
+
+        // Retornar resposta
+        return response()->json('Registrou o erro', 201);
 
     }
 

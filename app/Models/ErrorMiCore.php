@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ErrorMiCore extends Model
 {
+    protected $table = 'errors_micore';
     protected $fillable = [
         'client_id',
         'url',
