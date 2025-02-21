@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('errors_micore', function (Blueprint $table) {
             $table->id();
             $table->foreignId('client_id')->constrained('clients');
-            $table->string('url')->nullable();
+            $table->longText('url')->nullable();
             $table->string('ip_address')->nullable(); 
             $table->longText('message');
             $table->longText('stack_trace');
