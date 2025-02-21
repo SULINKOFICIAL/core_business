@@ -100,6 +100,9 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('cpanel')->group(function () {
         Route::name('cpanel.')->group(function () {
             Route::get('/gerar', [CpanelController::class, 'make'])->name('make');
+            Route::get('/subdominio/{id}', [CpanelController::class, 'clientMakeDomain'])->name('subdomain');
+            Route::get('/clonar-banco/{id}', [CpanelController::class, 'cloneDatabase'])->name('clone');
+            Route::get('/insere-token/{id}', [CpanelController::class, 'addTokenAndUser'])->name('token');
         });
     });
 

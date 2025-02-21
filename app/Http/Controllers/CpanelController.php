@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
 use Exception;
 use Illuminate\Support\Str;
-use GuzzleHttp\Client;
+use GuzzleHttp\Client as Guzzle;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use mysqli;
@@ -129,15 +130,39 @@ class CpanelController extends Controller
      * @param string $domain Nome do subdomínio a ser criado
      * @return array Resposta da API do cPanel
      */
+    public function clientMakeDomain($id)
+    {
+
+        // Obtém cliente
+        $client = Client::find($id);
+
+        // Envia a solicitação para criar o subdomínio
+        $response = $this->makeSubdomain($client->domain);
+
+        // Retorna a resposta da API
+        return $response;
+
+    }
+
+    /**
+     * Cria um subdomínio via API do cPanel.
+     *
+     * @param string $domain Nome do subdomínio a ser criado
+     * @return array Resposta da API do cPanel
+     */
     private function makeSubdomain($domain)
     {
         $documentRoot = "/home/micorecom/core";
 
-        $this->guzzle('GET', "{$this->cpanelUrl}/execute/SubDomain/addsubdomain", $this->cpanelUser, $this->cpanelPass, [
+        // Envia a solicitação para criar o subdomínio
+        $response = $this->guzzle('GET', "{$this->cpanelUrl}/execute/SubDomain/addsubdomain", $this->cpanelUser, $this->cpanelPass, [
             "domain" => $domain,
             "rootdomain" => "micore.com.br",
             "dir" => $documentRoot
         ]);
+
+        // Retorna a resposta da API
+        return $response;
     }
 
     /**
@@ -236,7 +261,7 @@ class CpanelController extends Controller
      */
     private function guzzle($method, $url, $user, $pass, $data = null)
     {
-        $client = new Client(); // Instanciando a classe Client diretamente
+        $client = new Guzzle(); // Instanciando a classe Client diretamente
 
         $options = [
             'auth' => [$user, $pass],

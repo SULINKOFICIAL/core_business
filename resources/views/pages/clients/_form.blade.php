@@ -6,14 +6,14 @@
     <div class="col-12 col-md-12 mb-4">
         <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Domínio</label>
         <div class="input-group mb-5">
-            <input type="text" class="form-control form-control-solid" name="domain" placeholder="dominio" style="border-right: solid 1px #dbdfe9"/>
+            <input type="text" class="form-control form-control-solid" name="domain" placeholder="dominio" value="{{ $content->domain ?? old('domain') }}" style="border-right: solid 1px #dbdfe9"/>
             <span class="input-group-text">.micore.com.br</span>
         </div>
     </div>
     @if (!isset($content))
     <div class="col-12 col-md-12 mb-4">
         <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Email</label>
-        <input type="text" class="form-control form-control-solid" placeholder="Email" name="user[email]" value="{{ $content->name ?? old('name') }}" maxlength="255" required>
+        <input type="email" class="form-control form-control-solid" placeholder="Email" name="user[email]" value="{{ $content->name ?? old('name') }}" maxlength="255" required>
     </div>
     <div class="col-12 col-md-12 mb-4">
         <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Primeiro Usuário</label>
