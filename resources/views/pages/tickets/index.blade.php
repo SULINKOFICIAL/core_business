@@ -27,7 +27,7 @@
                         <td>{{ $content->title }}</td>
                         <td class="text-start">{{ $content->description }}</td>
                         <td class="text-center">{{ $content->created_at->format('d/m/Y')}}</td>
-                        <td class="text-center">
+                        <td class="text-center ticket-progress">
                             @if ($content->progress == 'aberto')
                             <span class="badge badge-light-warning">Aberto</span>
                             @elseif ($content->progress == 'em andamento')
@@ -44,11 +44,11 @@
                             @endif
                         </td>
                         <td>
-                            <select name="progress" class="form-select form-select-solid" data-control="select2" data-placeholder="Selecione">
+                            <select name="progress" class="form-select form-select-solid" data-control="select2" data-placeholder="Selecione" data-id="{{ $content->id }}">
                                 <option></option>
-                                <option value="aberto">Aberto</option>
-                                <option value="em andamento">Em Andamento</option>
-                                <option value="fechado">Finalizado</option>
+                                <option value="aberto" {{ $content->progress == 'aberto' ? 'selected' : '' }}>Aberto</option>
+                                <option value="em andamento" {{ $content->progress == 'em andamento' ? 'selected' : '' }}>Em Andamento</option>
+                                <option value="fechado" {{ $content->progress == 'fechado' ? 'selected' : '' }}>Finalizado</option>
                             </select>
                         </td>
                     </tr>
@@ -57,4 +57,46 @@
         </table>
     </div>
 </div>
+@endsection
+
+@section('custom-footer')
+@parent
+<script>
+    $(document).ready(function() {
+        // Detecta a alteração no select
+        $('select[name="progress"]').on('change', function() {
+            var progress = $(this).val();
+            var id = $(this).data('id');
+            var url = "{{ route('tickets.update', '') }}/" + id;
+
+            // Envia a requisição AJAX
+            $.ajax({
+                url: url,
+                method: 'PUT',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    id: id,
+                    progress: progress
+                },
+                success: function(response) {
+                // Atualiza o conteúdo do progresso na tabela
+                var progressBadge = '';
+                    if (progress == 'aberto') {
+                        progressBadge = '<span class="badge badge-light-warning">Aberto</span>';
+                    } else if (progress == 'em andamento') {
+                        progressBadge = '<span class="badge badge-light-info">Em Andamento</span>';
+                    } else if (progress == 'fechado') {
+                        progressBadge = '<span class="badge badge-light-danger">Fechado</span>';
+                    }
+
+                    // Atualiza o progresso na linha da tabela
+                    $('tr').find('select[data-id="' + id + '"]').closest('tr').find('.ticket-progress').html(progressBadge);
+
+                    // Exibe mensagem de sucesso
+                    toastr.success(response.message);
+                },
+            });
+        });
+    });
+</script>
 @endsection

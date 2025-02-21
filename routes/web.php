@@ -81,6 +81,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('tickets')->group(function () {
         Route::name('tickets.')->group(function () {
             Route::get('/', [TicketController::class, 'index'])->name('index');
+            Route::put('/editar/{id}', [TicketController::class, 'update'])->name('update');
         });
     });
 
