@@ -27,8 +27,8 @@
                                 <span class="badge badge-light-warning ms-2">Token não configurado</span>
                             @endif
                         </div>
-                        <a href="https://{{ $client->domain }}.micore.com.br" target="_blank" class="text-gray-600 text-hover-danger m-0 text-center">
-                            {{ $client->domain }}.micore.com.br
+                        <a href="https://{{ $client->domain }}" target="_blank" class="text-gray-600 text-hover-danger m-0 text-center">
+                            {{ $client->domain }}
                         </a>
                     </div>
                     <div class="d-flex">

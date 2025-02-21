@@ -45,10 +45,10 @@ class CpanelController extends Controller
         // // 3. Adiciona registros únicos no cliente
         $this->addTokenAndUser($datatable, $user);
 
-        // return response()->json([
-        //     'message' => 'Subdomínio e banco clonado com sucesso!',
-        //     'subdominio' => "http://{$domain}.micore.com.br"
-        // ]);
+        return response()->json([
+            'message' => 'Subdomínio e banco clonado com sucesso!',
+            'subdominio' => "$domain"
+        ]);
     }
 
 
