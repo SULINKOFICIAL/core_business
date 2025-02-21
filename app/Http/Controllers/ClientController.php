@@ -87,6 +87,9 @@ class ClientController extends Controller
         // Gera nome curto
         $data['user']['short_name'] = $this->generateShortName($data['user']['name']);
 
+        // Adiciona o sufixo dos domínios Core
+        $data['domain'] = $data['domain'] . '.micore.com.br';
+
         // Insere no banco de dados
         $created = $this->repository->create($data);
 

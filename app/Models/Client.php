@@ -29,6 +29,8 @@ class Client extends Model
     public function systemStatus()
     {
 
+        return 'OK';
+        
         // Verifica se possui Token
         if (!$this->token) {
             return 'Token Empty';

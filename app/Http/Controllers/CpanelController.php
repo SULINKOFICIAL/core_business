@@ -45,10 +45,10 @@ class CpanelController extends Controller
         // // 3. Adiciona registros únicos no cliente
         $this->addTokenAndUser($datatable, $user);
 
-        // return response()->json([
-        //     'message' => 'Subdomínio e banco clonado com sucesso!',
-        //     'subdominio' => "http://{$domain}.micore.com.br"
-        // ]);
+        return response()->json([
+            'message' => 'Subdomínio e banco clonado com sucesso!',
+            'subdominio' => "$domain"
+        ]);
     }
 
 
@@ -158,7 +158,7 @@ class CpanelController extends Controller
         ]);
 
         // Conectar via SSH para clonar o banco
-        $ssh = new SSH2('micore.com.br');
+        $ssh = new SSH2(env('WHM_IP'));
         if (!$ssh->login($this->cpanelUser, $this->cpanelPass)) {
             throw new Exception('Falha na autenticação SSH');
         }
@@ -263,7 +263,7 @@ class CpanelController extends Controller
         $repoUrl = 'https://github.com/SULINKOFICIAL/coresulink.git';
         $path = "/home/micorecom/{$domain}";
 
-        $ssh = new SSH2('micore.com.br');
+        $ssh = new SSH2(env('WHM_IP'));
         if (!$ssh->login($this->cpanelUser, $this->cpanelPass)) {
             throw new Exception('Falha na autenticação SSH');
         }
