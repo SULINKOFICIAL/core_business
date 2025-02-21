@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Client;
 use App\Models\ErrorMiCore;
+use App\Models\Ticket;
 
 class ApisController extends Controller
 {
@@ -55,6 +56,29 @@ class ApisController extends Controller
 
         // Retornar resposta
         return response()->json('Registrou o erro', 201);
+
+    }
+
+    public function tickets(Request $request) {
+
+        // Recebe dados
+        $data = $request->all();
+
+        // Verificar se a requisição é segura
+        if(!isset($data['token'])) {
+            return response()->json('Token não encontrado', 409);
+        }  
+
+        // Verificar se a requisição é segura
+        if ($data['token'] !== env('CENTRAL_CORE_TOKEN')){
+            return response()->json('Token não autorizado', 409);
+        }
+        
+        // Registra o ticket no banco de dados
+        Ticket::create($data);
+
+        // Retorna resposta
+        return response()->json('Ticket criado com sucesso!', 201);
 
     }
 

@@ -13,5 +13,6 @@ class ErrorMiCore extends Model
         'ip_address',
         'message',
         'stack_trace',
+        'status_code',
     ];
 }

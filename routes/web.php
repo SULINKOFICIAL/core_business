@@ -4,11 +4,14 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ClientsActionsController;
 use App\Http\Controllers\CpanelController;
+use App\Http\Controllers\ErrorMiCoreController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\SectorController;
-
+use App\Http\Controllers\TicketController;
+use App\Http\Controllers\TicketsController;
+use App\Models\ErrorMiCore;
 
 // Paínel de administração
 Route::middleware(['auth'])->group(function () {
@@ -72,6 +75,18 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/editar/{id}', [ResourceController::class, 'edit'])->name('edit');
             Route::put('/editar/{id}', [ResourceController::class, 'update'])->name('update');
             Route::get('/desabilitar/{id}', [ResourceController::class, 'destroy'])->name('destroy');
+        });
+    });
+
+    Route::prefix('tickets')->group(function () {
+        Route::name('tickets.')->group(function () {
+            Route::get('/', [TicketController::class, 'index'])->name('index');
+        });
+    });
+
+    Route::prefix('errors')->group(function () {
+        Route::name('errors.')->group(function () {
+            Route::get('/', [ErrorMiCoreController::class, 'index'])->name('index');
         });
     });
 

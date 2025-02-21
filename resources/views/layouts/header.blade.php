@@ -2,12 +2,12 @@
     <div class="app-container container-fluid d-flex align-items-center slk-dark shadow-lg" id="kt_app_header_container">
         <div class="w-100">
             <div class="row align-items-center">
-                <div class="col-2">
+                <div class="col-3">
                     <a href="{{ route('index') }}" class="d-flex align-items-center">
                         <img src="{{ asset('assets/media/logos/sulink-core.svg') }}" class="w-200px">
                     </a>
                 </div>
-                <div class="col-8">
+                <div class="col-6 d-flex align-items-center justify-content-center">
                     <div class="app-header-menu app-header-mobile-drawer align-items-center justify-content-center" data-kt-drawer="true" data-kt-drawer-name="app-header-menu" data-kt-drawer-activate="{default: true, lg: false}" data-kt-drawer-overlay="true" data-kt-drawer-width="250px" data-kt-drawer-direction="end" data-kt-drawer-toggle="#kt_app_header_menu_toggle" data-kt-swapper="true" data-kt-swapper-mode="{default: 'append', lg: 'prepend'}" data-kt-swapper-parent="{default: '#kt_app_body', lg: '#kt_app_header_wrapper'}">
                         <a href="{{ route('clients.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
                             Clientes
@@ -26,7 +26,17 @@
                         </a>
                     </div>
                 </div>
-                <div class="col-2">
+                <div class="col-2 d-flex align-items-end justify-content-end">
+                    <a href="{{ route('tickets.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
+                        <i class="fa-solid fa-ticket-simple"></i>
+                        Tickets
+                    </a>
+                    <a href="{{ route('errors.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
+                        <i class="fa-solid fa-bug-slash"></i>
+                        Erros
+                    </a>
+                </div>
+                <div class="col-1">
                     <div class="app-navbar flex-shrink-0 justify-content-end">
                         <div class="app-navbar-item ms-1 ms-md-4" id="kt_header_user_menu_toggle">
                             <div class="cursor-pointer symbol symbol-35px" data-kt-menu-trigger="{default: 'click', lg: 'hover'}" data-kt-menu-attach="parent" data-kt-menu-placement="bottom-end">
