@@ -158,7 +158,7 @@ class CpanelController extends Controller
         ]);
 
         // Conectar via SSH para clonar o banco
-        $ssh = new SSH2('micore.com.br');
+        $ssh = new SSH2(env('WHM_IP'));
         if (!$ssh->login($this->cpanelUser, $this->cpanelPass)) {
             throw new Exception('Falha na autenticação SSH');
         }
@@ -263,7 +263,7 @@ class CpanelController extends Controller
         $repoUrl = 'https://github.com/SULINKOFICIAL/coresulink.git';
         $path = "/home/micorecom/{$domain}";
 
-        $ssh = new SSH2('micore.com.br');
+        $ssh = new SSH2(env('WHM_IP'));
         if (!$ssh->login($this->cpanelUser, $this->cpanelPass)) {
             throw new Exception('Falha na autenticação SSH');
         }
