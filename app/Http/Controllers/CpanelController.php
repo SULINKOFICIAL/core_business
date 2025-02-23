@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 use GuzzleHttp\Client as Guzzle;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use mysqli;
 use phpseclib3\Net\SSH2;
 
@@ -37,19 +38,72 @@ class CpanelController extends Controller
      */
     public function make($domain, $datatable, $user)
     {
+
+        // Registra tempo
+        Log::info("Inicio a criação do domínio: " . $domain);
+
         // // 1. Cria o subdomínio
         $this->makeSubdomain($domain);
+        
+        // Registra tempo
+        Log::info("Finalizou a criação do domínio: " . $domain);
+
+        // Separador
+        Log::info("======================================");
+        
+        // Registra tempo
+        Log::info("Iniciou a clonagem do banco : " . $datatable['name']);
 
         // // 2. Cria o banco de dados
         $this->cloneDatabase($datatable);
+        
+        // Registra tempo
+        Log::info("Finalizou a clonagem do banco : " . $datatable['name']);
+
+        // Separador
+        Log::info("======================================");
+        
+        // Registra tempo
+        Log::info("Iniciou a inserção dos usuário e token no banco : " . $datatable['name']);
 
         // // 3. Adiciona registros únicos no cliente
         $this->addTokenAndUser($datatable, $user);
+
+        // Registra tempo
+        Log::info("Finalizou a inserção dos usuário e token no banco : " . $datatable['name']);
 
         return response()->json([
             'message' => 'Subdomínio e banco clonado com sucesso!',
             'subdominio' => "$domain"
         ]);
+    }
+    
+
+
+    /**
+     * Cria um subdomínio via API do cPanel.
+     *
+     * @param string $domain Nome do subdomínio a ser criado
+     * @return array Resposta da API do cPanel
+     */
+    public function clientAddTokenAndUser($id)
+    {
+
+        // Obtém cliente
+        $client = Client::find($id);
+        
+        // Obtém banco de dados
+        $database = [
+            'name' => $client->table,
+            'password' => $client->password,
+        ];
+
+        // Envia a solicitação para criar o subdomínio
+        $response = $this->cloneDatabase($database, $client->name);
+
+        // Retorna a resposta da API
+        return $response;
+
     }
 
 
@@ -152,6 +206,7 @@ class CpanelController extends Controller
      */
     private function makeSubdomain($domain)
     {
+
         $documentRoot = "/home/micorecom/core";
 
         // Envia a solicitação para criar o subdomínio
@@ -163,6 +218,34 @@ class CpanelController extends Controller
 
         // Retorna a resposta da API
         return $response;
+
+    }
+
+
+    /**
+     * Cria um subdomínio via API do cPanel.
+     *
+     * @param string $domain Nome do subdomínio a ser criado
+     * @return array Resposta da API do cPanel
+     */
+    public function clientMakeDatabase($id)
+    {
+
+        // Obtém cliente
+        $client = Client::find($id);
+        
+        // Obtém banco de dados
+        $database = [
+            'name' => $client->table,
+            'password' => $client->password,
+        ];
+
+        // Envia a solicitação para criar o subdomínio
+        $response = $this->cloneDatabase($database);
+
+        // Retorna a resposta da API
+        return $response;
+
     }
 
     /**
