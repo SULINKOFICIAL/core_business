@@ -58,9 +58,6 @@ class ApisController extends Controller
         // Gera token para API
         $data['token'] = hash('sha256', $data['name'] . microtime(true));
 
-        // Gera nome curto
-        $data['user']['short_name'] = generateShortName($data['name']);
-
         // Adiciona o sufixo dos domínios Core
         $data['domain'] = $data['domain'] . '.micore.com.br';
 
@@ -73,8 +70,15 @@ class ApisController extends Controller
             'password' => $data['password']
         ];
 
+        // Gera usuário
+        $user = [
+            'name' => $data['name'],
+            'password' => $request->password,
+            'short_name' => generateShortName($data['name']),
+        ];
+
         // Gera subdomínio, banco de dados e usuário no Cpanel miCore.com.br
-        $this->cpanelMiCore->make($data['domain'], $database, $data['user']);
+        $this->cpanelMiCore->make($data['domain'], $database, $user);
 
         // Retorna a página
         return response([
