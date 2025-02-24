@@ -59,7 +59,7 @@ class ApisController extends Controller
         $data['token'] = hash('sha256', $data['name'] . microtime(true));
 
         // Gera nome curto
-        $data['user']['short_name'] = generateShortName($data['user']['name']);
+        $data['user']['short_name'] = generateShortName($data['name']);
 
         // Adiciona o sufixo dos domínios Core
         $data['domain'] = $data['domain'] . '.micore.com.br';
