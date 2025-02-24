@@ -121,11 +121,12 @@ class CpanelController extends Controller
 
         // Inserir usuário padrão
         DB::connection('mysql_cliente')->table('users')->insert([
-            'name'             => $user['short_name'],
-            'password'         => $userPassword,
-            'full_name'        => $user['name'],
-            'email'            => $user['email'],
-            'created_by'       => 1,
+            'name'       => $user['short_name'],
+            'password'   => $userPassword,
+            'full_name'  => $user['name'],
+            'email'      => $user['email'],
+            'role'       => 1,
+            'created_by' => 1,
         ]);
 
         // Inserir o token na tabela `configs_api`
