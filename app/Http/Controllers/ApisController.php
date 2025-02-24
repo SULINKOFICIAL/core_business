@@ -41,7 +41,7 @@ class ApisController extends Controller
         $data = $request->all();
 
         // Autor
-        $data['created_by'] = 0;
+        $data['created_by'] = 1;
 
         // Gera um domínio permitido
         $data['domain'] = verifyIfAllow($data['name']);
