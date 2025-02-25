@@ -62,8 +62,6 @@ class CpanelController extends Controller
         // // 3. Adiciona registros únicos no cliente
         $this->addTokenAndUser($datatable, $user);
 
-        return 3333;
-
         // Registra tempo
         Log::info("Finalizou a inserção dos usuário e token no banco : " . $datatable['name']);
 
@@ -132,6 +130,9 @@ class CpanelController extends Controller
             'option_value' => $apiToken,
             'updated_by'   => 'system',
         ]);
+
+
+        return 3333;
 
         return $apiToken;
     }
