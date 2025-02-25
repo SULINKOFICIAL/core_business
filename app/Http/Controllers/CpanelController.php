@@ -39,8 +39,6 @@ class CpanelController extends Controller
     public function make($domain, $datatable, $user)
     {
 
-        return 123;
-
         // Registra tempo
         Log::info("Criando subdomínio: " . $domain);
 
@@ -49,6 +47,8 @@ class CpanelController extends Controller
         
         // Registra tempo
         Log::info("Clonando banco template para : " . $datatable['name']);
+
+        return 11111;
 
         // // 2. Cria o banco de dados
         $this->cloneDatabase($datatable);
