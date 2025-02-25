@@ -37,6 +37,8 @@ class ApisController extends Controller
 
     public function newClient(Request $request){
         
+        return '123';
+
         // Obtém dados
         $data = $request->all();
 
