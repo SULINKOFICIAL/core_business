@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Route;
  */
 Route::prefix('micore')->group(function () {
     Route::post('/cadastrar-se', [ApisController::class, 'newClient']);
-    
 });
 
 /**
