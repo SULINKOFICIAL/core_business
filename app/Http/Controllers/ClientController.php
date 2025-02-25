@@ -70,7 +70,7 @@ class ClientController extends Controller
         $data['created_by'] = Auth::id();
 
         // Gera um domínio permitido
-        $data['domain'] = $this->verifyIfAllow($data['name']);
+        $data['domain'] = verifyIfAllow($data['name']);
 
         // Gera um nome de tabela permitido
         $data['table'] = str_replace('-', '_', $data['domain']);
@@ -85,7 +85,7 @@ class ClientController extends Controller
         $data['token'] = hash('sha256', $data['name'] . microtime(true));
 
         // Gera nome curto
-        $data['user']['short_name'] = $this->generateShortName($data['user']['name']);
+        $data['user']['short_name'] = generateShortName($data['user']['name']);
 
         // Adiciona o sufixo dos domínios Core
         $data['domain'] = $data['domain'] . '.micore.com.br';
@@ -93,7 +93,7 @@ class ClientController extends Controller
         // Insere no banco de dados
         $created = $this->repository->create($data);
 
-        // Gera dado do banco de dados
+         // Gera dado do banco de dados
         $database = [
             'name' => $data['table'],
             'password' => $data['password']
@@ -111,43 +111,6 @@ class ClientController extends Controller
                 ->with('message', 'Cliente <b>'. $created->name . '</b> adicionado com sucesso.');
 
     }
-
-    function generateShortName($fullName) {
-        $parts = explode(' ', trim($fullName));
-        if (count($parts) > 1) {
-            return $parts[0] . ' ' . end($parts); // Primeiro nome + último sobrenome
-        }
-        return $parts[0]; // Caso só tenha um nome
-    }
-
-    /**
-     * Verifica se o domínio está disponível e gera um novo se necessário.
-     *
-     * @param  string  $domain
-     * @return string
-     */
-    public function verifyIfAllow($domain)
-    {
-        // Remover "www." caso o usuário tenha inserido
-        $domain = preg_replace('/^www\./', '', strtolower($domain));
-
-        // Gera um nome de tabela permitido
-        $domain = str_replace(' ', '-', $domain);
-
-        // Verifica se já existe no banco de dados
-        $originalDomain = $domain;
-        $counter = 1;
-
-        while ($this->repository->where('domain', $domain)->exists()) {
-            // Adiciona um número incremental ao domínio
-            $domain = $originalDomain . '-' . $counter;
-            $counter++;
-        }
-
-        return $domain;
-    }
-
-
 
 
     /**

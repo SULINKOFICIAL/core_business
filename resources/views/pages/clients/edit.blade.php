@@ -11,7 +11,20 @@
     @method('PUT')
     <div class="card">
         <div class="card-body">
-                @include('pages.clients._form')
+            @include('pages.clients._form')
+        </div>
+    </div>
+    <div class="card mt-6">
+        <div class="card-body">
+            <a href="{{ route('cpanel.subdomain', $content->id) }}" class="btn btn-primary btn-active-success me-4">
+                Gerar Subdomínio
+            </a>
+            <a href="{{ route('cpanel.clone', $content->id) }}" class="btn btn-success btn-active-success me-4">
+                Clona Banco de Dados
+            </a>
+            <a href="{{ route('cpanel.token', $content->id) }}" class="btn btn-danger btn-active-success me-4">
+                Gerar Token e Usuário
+            </a>
         </div>
     </div>
     <div class="d-flex justify-content-end mt-4">
