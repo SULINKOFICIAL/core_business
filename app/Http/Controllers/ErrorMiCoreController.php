@@ -25,11 +25,17 @@ class ErrorMiCoreController extends Controller
      */
     public function index()
     {
+        // Retorna a página
+        return view('pages.errors.index');
+    }
+
+    public function show()
+    {
         // Obtém dados
         $contents = $this->repository->all();
 
         // Retorna a página
-        return view('pages.errors.index')->with([
+        return view('pages.errors.show')->with([
             'contents' => $contents,
         ]);
     }

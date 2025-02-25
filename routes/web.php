@@ -88,6 +88,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('errors')->group(function () {
         Route::name('errors.')->group(function () {
             Route::get('/', [ErrorMiCoreController::class, 'index'])->name('index');
+            Route::get('/visualizar', [ErrorMiCoreController::class, 'show'])->name('show');
         });
     });
 

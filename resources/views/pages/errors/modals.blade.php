@@ -9,7 +9,7 @@
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <textarea class="form-control form-control-solid" rows="30" cols="12" id="stack-trace-text" readonly>{{ $content->stack_trace }}</textarea>
+                    <textarea class="form-control form-control-solid" rows="30" cols="12" id="stack-trace-text" readonly></textarea>
                 </div>
             </div>
         </div>
