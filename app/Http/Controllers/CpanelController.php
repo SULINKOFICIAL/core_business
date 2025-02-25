@@ -39,6 +39,8 @@ class CpanelController extends Controller
     public function make($domain, $datatable, $user)
     {
 
+        return 123;
+
         // Registra tempo
         Log::info("Criando subdomínio: " . $domain);
 
