@@ -65,9 +65,10 @@ class CpanelController extends Controller
         // Registra tempo
         Log::info("Finalizou a inserção dos usuário e token no banco : " . $datatable['name']);
 
+        // Retorna a página
         return response()->json([
-            'message' => 'Subdomínio e banco clonado com sucesso!',
-            'subdominio' => "$domain"
+            'url' => "https://" . $domain,
+            'message' => 'Conta criada com sucesso',
         ]);
     }
     
