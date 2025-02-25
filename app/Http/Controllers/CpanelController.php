@@ -113,9 +113,6 @@ class CpanelController extends Controller
         $userPassword = Hash::make($user['password']);
         $apiToken = Str::random(60);
 
-
-        return 3333;
-
         // Inserir usuário padrão
         DB::connection('mysql_cliente')->table('users')->insert([
             'name'       => $user['short_name'],
@@ -167,12 +164,7 @@ class CpanelController extends Controller
          // Reconecta ao novo banco
         DB::reconnect('mysql_cliente');
     
-        // Tente
-        try {
-            echo "Conectado ao banco {$datatable['name']} com sucesso!";
-        } catch (\Exception $e) {
-            die("Erro ao conectar: " . $e->getMessage());
-        }
+        return true;
         
     }
 
