@@ -73,6 +73,7 @@ class ApisController extends Controller
         // Gera usuário
         $user = [
             'name' => $data['name'],
+            'email' => $data['email'],
             'password' => $request->password,
             'short_name' => generateShortName($data['name']),
         ];
