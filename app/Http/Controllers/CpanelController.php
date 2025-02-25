@@ -113,6 +113,9 @@ class CpanelController extends Controller
         $userPassword = Hash::make($user['password']);
         $apiToken = Str::random(60);
 
+
+        return 3333;
+
         // Inserir usuário padrão
         DB::connection('mysql_cliente')->table('users')->insert([
             'name'       => $user['short_name'],
@@ -130,9 +133,6 @@ class CpanelController extends Controller
             'option_value' => $apiToken,
             'updated_by'   => 'system',
         ]);
-
-
-        return 3333;
 
         return $apiToken;
     }
