@@ -48,8 +48,6 @@ class CpanelController extends Controller
         // Registra tempo
         Log::info("Clonando banco template para : " . $datatable['name']);
 
-        return 11111;
-
         // // 2. Cria o banco de dados
         $this->cloneDatabase($datatable);
         
@@ -63,6 +61,8 @@ class CpanelController extends Controller
 
         // // 3. Adiciona registros únicos no cliente
         $this->addTokenAndUser($datatable, $user);
+
+        return 3333;
 
         // Registra tempo
         Log::info("Finalizou a inserção dos usuário e token no banco : " . $datatable['name']);
