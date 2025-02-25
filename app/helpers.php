@@ -22,7 +22,7 @@ function verifyIfAllow($domain)
     $originalDomain = $domain;
     $counter = 1;
 
-    while (Client::where('domain', $domain)->exists()) {
+    while (Client::where('domain', $domain . '.micore.com.br')->exists()) {
         // Adiciona um número incremental ao domínio
         $domain = $originalDomain . '-' . $counter;
         $counter++;
