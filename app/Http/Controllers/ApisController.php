@@ -36,8 +36,6 @@ class ApisController extends Controller
     }
 
     public function newClient(Request $request){
-        
-        return '123';
 
         // Obtém dados
         $data = $request->all();
@@ -79,6 +77,8 @@ class ApisController extends Controller
             'password' => $request->password,
             'short_name' => generateShortName($data['name']),
         ];
+        
+        return 'CHEGOU AQUI';
 
         // Gera subdomínio, banco de dados e usuário no Cpanel miCore.com.br
         $this->cpanelMiCore->make($data['domain'], $database, $user);
