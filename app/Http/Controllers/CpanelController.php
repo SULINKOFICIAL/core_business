@@ -40,31 +40,24 @@ class CpanelController extends Controller
     {
 
         // Registra tempo
-        Log::info("Inicio a criação do domínio: " . $domain);
+        Log::info("Criando subdomínio: " . $domain);
 
         // // 1. Cria o subdomínio
         $this->makeSubdomain($domain);
         
         // Registra tempo
-        Log::info("Finalizou a criação do domínio: " . $domain);
-
-        // Separador
-        Log::info("======================================");
-        
-        // Registra tempo
-        Log::info("Iniciou a clonagem do banco : " . $datatable['name']);
+        Log::info("Clonando banco template para : " . $datatable['name']);
 
         // // 2. Cria o banco de dados
         $this->cloneDatabase($datatable);
         
         // Registra tempo
-        Log::info("Finalizou a clonagem do banco : " . $datatable['name']);
+        Log::info("Inserindo usuário e token no banco : " . $datatable['name']);
 
         // Separador
         Log::info("======================================");
-        
-        // Registra tempo
-        Log::info("Iniciou a inserção dos usuário e token no banco : " . $datatable['name']);
+        Log::info("================ FIM =================");
+        Log::info("======================================");
 
         // // 3. Adiciona registros únicos no cliente
         $this->addTokenAndUser($datatable, $user);

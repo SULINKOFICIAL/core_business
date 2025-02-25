@@ -82,10 +82,14 @@ class ApisController extends Controller
         $this->cpanelMiCore->make($data['domain'], $database, $user);
 
         // Retorna a página
-        return response([
+        return response()->json([
             'url' => "https://" . $data['domain'],
             'message' => 'Conta criada com sucesso',
-        ]);
+        ])
+        ->header('Access-Control-Allow-Origin', '*')
+        ->header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+        ->header('Access-Control-Allow-Headers', 'Content-Type, X-Requested-With');
+        
 
     }
 
