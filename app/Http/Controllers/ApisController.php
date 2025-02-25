@@ -44,7 +44,7 @@ class ApisController extends Controller
         $data['created_by'] = 1;
 
         // Gera um domínio permitido
-        $data['domain'] = verifyIfAllow($data['name']);
+        $data['domain'] = verifyIfAllow($data['name'] . '.micore.com.br');
 
         // Gera um nome de tabela permitido
         $data['table'] = str_replace('-', '_', $data['domain']);
@@ -59,7 +59,7 @@ class ApisController extends Controller
         $data['token'] = hash('sha256', $data['name'] . microtime(true));
 
         // Adiciona o sufixo dos domínios Core
-        $data['domain'] = $data['domain'] . '.micore.com.br';
+        $data['domain'] = $data['domain'];
 
         // Insere no banco de dados
         $this->repository->create($data);
