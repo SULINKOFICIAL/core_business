@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Editar - Setores')
+@section('title', 'Editar - Módulos')
 
 @section('content')
 <p class="text-center fw-bold text-gray-700 fs-2 mb-4 text-uppercase">

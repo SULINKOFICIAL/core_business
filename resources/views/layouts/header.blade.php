@@ -16,7 +16,7 @@
                             Pacotes
                         </a> --}}
                         <a href="{{ route('sectors.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
-                            Setores
+                            Módulos
                         </a>
                         <a href="{{ route('groups.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
                             Grupo de Recursos

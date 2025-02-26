@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Setores')
+@section('title', 'Módulos')
 
 @section('content')
 <p class="text-center fw-bold text-gray-700 fs-2 mb-4 text-uppercase">
-    Setores
+    Módulos
 </p>
 <div class="row">
     @foreach ($sectors as $sector)
