@@ -12,8 +12,8 @@
         <div class="card w-100 mb-6">
             <div class="card-body text-center d-flex flex-column justify-content-between py-0">
                 <div class="my-5 flex-grow-1">
-                    <div class="d-flex align-items-center justify-content-center">
-                        <p class="fw-bolder text-gray-700 m-0 fs-3 text-center">{{ $sector->name }}</p>
+                    <p class="fw-bolder text-gray-700 m-0 fs-3 text-center">{{ $sector->name }}</p>
+                    <div>
                         @if ($sector->groups->count())
                             <p class="fw-bolder text-gray-700 m-0 fs-6 text-center">Grupos associados</p>
                             @foreach ($sector->groups as $group)
