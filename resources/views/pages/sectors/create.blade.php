@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Adicionar - Setor')
+@section('title', 'Adicionar - Módulo')
 
 @section('content')
 <p class="text-center fw-bold text-gray-700 fs-2 mb-4 text-uppercase">
-    Adicionar Setor
+    Adicionar Módulo
 </p>
 <form action="{{ route('sectors.store') }}" method="POST" enctype="multipart/form-data">
     @csrf

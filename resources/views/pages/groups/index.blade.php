@@ -9,17 +9,21 @@
     <div class="row">
         @foreach ($groups as $group)
             <div class="col-3 d-flex">
-                <div class="card w-100 mb-6"> <!-- Card ocupa toda a largura da coluna -->
+                <div class="card w-100 mb-6">
                     <div class="card-body d-flex flex-column pb-0">
-                        <!-- Conteúdo principal -->
                         <div class="flex-grow-1">
                             <p class="fw-bolder text-gray-700 m-0 fs-3 text-center">{{ $group->name }}</p>
-                            @foreach ($group->resources as $resource)
-                            <p class="text-gray-700 m-0 fs-7 text-center">{{ $resource->name }}</p>
-                            @endforeach
+                            @if ($group->resources->count())
+                                <p class="fw-bolder text-gray-700 m-0 fs-6 text-center">Recursos associados</p>
+                                @foreach ($group->resources as $resource)
+                                <p class="text-gray-700 m-0 fs-7 text-center">{{ $resource->name }}</p>
+                                @endforeach
+                            @else
+                                <span class="badge badge-light">
+                                    Sem Recursos
+                                </span>
+                            @endif
                         </div>
-    
-                        <!-- Botões fixados na parte inferior -->
                         <div class="mt-3">
                             <div class="d-flex">
                                 <a href="{{ route('groups.edit', $group->id)}}" class="btn btn-sm btn-light-primary w-100">

@@ -14,11 +14,21 @@
                 <div class="my-5 flex-grow-1">
                     <div class="d-flex align-items-center justify-content-center">
                         <p class="fw-bolder text-gray-700 m-0 fs-3 text-center">{{ $sector->name }}</p>
+                            @if ($sector->groups->count())
+                                <p class="fw-bolder text-gray-700 m-0 fs-6 text-center">Grupos associados</p>
+                                @foreach ($sector->groups as $group)
+                                <p class="text-gray-700 m-0 fs-7 text-center">{{ $group->name }}</p>
+                                @endforeach
+                            @else
+                                <span class="badge badge-light">
+                                    Sem Grupos
+                                </span>
+                            @endif
                     </div>
                 </div>
                 <div class="d-flex">
                     <a href="{{ route('sectors.edit', $sector->id) }}" class="btn btn-sm btn-light-primary w-100">
-                        Acessar Setor
+                        Acessar Módulo
                     </a>
                 </div>
                     @if ($sector->status == 0)
@@ -38,7 +48,7 @@
 </div>
     <div class="d-flex mt-4">
         <a href="{{ route('sectors.create') }}" class="btn btn-sm btn-primary btn-active-success">
-            Criar Setor
+            Criar Módulo
         </a>
     </div>
 @endsection
