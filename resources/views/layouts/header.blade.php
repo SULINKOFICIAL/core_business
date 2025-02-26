@@ -12,9 +12,9 @@
                         <a href="{{ route('clients.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
                             Clientes
                         </a>
-                        {{-- <a href="{{ route('packages.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
+                        <a href="{{ route('packages.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
                             Pacotes
-                        </a> --}}
+                        </a>
                         <a href="{{ route('sectors.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
                             Módulos
                         </a>
