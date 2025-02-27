@@ -31,6 +31,9 @@
                             {{ $client->domain }}
                         </a>
                     </div>
+                    <a href="{{ route('clients.show', $client->id) }}" class="btn btn-sm btn-light-primary w-100 mb-2">
+                        Visualizar
+                    </a>
                     <a href="{{ route('clients.edit', $client->id) }}" class="btn btn-sm btn-light-primary w-100">
                         Editar
                     </a>
