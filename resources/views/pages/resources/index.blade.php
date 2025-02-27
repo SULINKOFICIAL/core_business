@@ -21,7 +21,9 @@
                 <tbody>
                     @foreach ($resources as $resource)
                         <tr>
-                            <td>{{ $resource->name }}</td>
+                            <td>
+                                <a href="{{ route('resources.edit', $resource->id) }}" class="text-gray-700 text-hover-primary">{{ $resource->name }}</a>
+                            </td>
                             <td class="text-center">{{ $resource->slug }}</td>
                             <td class="text-center">{{ $resource->created_at->format('d/m/Y')}}</td>
                             <td class="text-center">
@@ -32,7 +34,7 @@
                                 @endif
                             </td>
                             <td class="text-center">
-                                <a href="{{ route('resources.edit', $resource->id) }}" class="btn btn-sm btn-icon ms-0 text-gray-600 w-45px" title="Editar">
+                                <a href="{{ route('resources.edit', $resource->id) }}" class="text-gray-600 w-45px" title="Editar">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </a>
                             </td>

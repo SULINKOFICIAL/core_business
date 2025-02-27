@@ -8,42 +8,30 @@
     </p>
     <div class="row">
         @foreach ($groups as $group)
-            <div class="col-3 d-flex">
-                <div class="card w-100 mb-6">
-                    <div class="card-body d-flex flex-column pb-0">
-                        <div class="flex-grow-1">
-                            <p class="fw-bolder text-gray-700 m-0 fs-3 text-center">{{ $group->name }}</p>
-                            @if ($group->resources->count())
-                                <p class="fw-bolder text-gray-700 m-0 fs-6 text-center">Recursos associados</p>
-                                @foreach ($group->resources as $resource)
-                                <p class="text-gray-700 m-0 fs-7 text-center">{{ $resource->name }}</p>
-                                @endforeach
-                            @else
-                                <span class="badge badge-light">
-                                    Sem Recursos
-                                </span>
-                            @endif
-                        </div>
-                        <div class="mt-3">
-                            <div class="d-flex">
-                                <a href="{{ route('groups.edit', $group->id)}}" class="btn btn-sm btn-light-primary w-100">
-                                    Acessar Grupo
-                                </a>
-                            </div>
-                            @if ($group->status == 0)
-                                <span class="btn btn-outline btn-outline-dashed btn-outline-danger px-4 py-1 disabled my-3 w-100">Desativado</span>
-                            @else
-                                <span class="btn btn-outline btn-outline-dashed btn-outline-success px-4 py-1 disabled my-3 w-100">Ativado</span>
-                            @endif
-                        </div>
+        <div class="col-3 d-flex">
+            <div class="card w-100 mb-6">
+                <div class="card-header d-flex align-items-center justify-content-between min-h-60px px-6">
+                    <div class="w-75">
+                        <a href="{{ route('groups.edit', $group->id) }}" class="mb-0 fw-bolder @if ($group->status == 0) text-danger @else text-gray-700 @endif text-hover-primary m-0 fs-5 text-uppercase lh-1">{{ Str::limit($group->name, 18) }}</a>
+                        <p class="text-gray-500 mb-0 fw-semibold fs-7 lh-1">Recursos</p>
                     </div>
-                    <div class="card-footer p-2">
-                        <p class="text-gray-600 text-center m-0 fs-8">
-                            <span class="fw-bold">Criado: </span>{{ $group->created_at->format('d/m/Y') }} às {{ $group->created_at->format('H:i') }}
+                    <a href="{{ route('groups.edit', $group->id) }}" class="btn btn-sm btn-icon btn-light-primary">
+                        <i class="fa-solid fa-gear"></i>
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if ($group->resources->count())
+                        @foreach ($group->resources as $key => $resource)
+                        <p class="text-gray-700 m-0 fs-7"><span class="fw-bolder">{{ $key + 1 }}.</span> {{ $resource->name }}</p>
+                        @endforeach
+                    @else
+                        <p class="text-gray-500 text-center fs-7 fw-bold mb-0">
+                            Sem Grupos
                         </p>
-                    </div>
+                    @endif
                 </div>
             </div>
+        </div>
         @endforeach
     </div>
           

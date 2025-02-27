@@ -10,16 +10,19 @@
     @foreach ($sectors as $sector)
     <div class="col-3 d-flex">
         <div class="card w-100 mb-6">
-            <div class="card-header d-flex align-items-center justify-content-between min-h-50px">
-                <p class="fw-bolder @if ($sector->status == 0) text-danger @else text-gray-700 @endif  m-0 fs-3 text-center text-uppercase">{{ $sector->name }}</p>
+            <div class="card-header d-flex align-items-center justify-content-between min-h-60px px-6">
+                <div class="w-75">
+                    <a href="{{ route('sectors.edit', $sector->id) }}" class="mb-0 fw-bolder @if ($sector->status == 0) text-danger @else text-gray-700 @endif text-hover-primary m-0 fs-5 text-uppercase lh-1">{{ Str::limit($sector->name, 18) }}</a>
+                    <p class="text-gray-500 mb-0 fw-semibold fs-7 lh-1">Grupo de Recursos</p>
+                </div>
                 <a href="{{ route('sectors.edit', $sector->id) }}" class="btn btn-sm btn-icon btn-light-primary">
-                    A
+                    <i class="fa-solid fa-gear"></i>
                 </a>
             </div>
-            <div class="card-body text-center">
+            <div class="card-body">
                 @if ($sector->groups->count())
-                    @foreach ($sector->groups as $group)
-                    <span class="badge badge-light-primary mb-2">{{ $group->name }}</span>
+                    @foreach ($sector->groups as $key => $group)
+                    <p class="text-gray-700 m-0 fs-7"><span class="fw-bolder">{{ $key + 1 }}.</span> {{ $group->name }}</p>
                     @endforeach
                 @else
                     <p class="text-gray-500 text-center fs-7 fw-bold mb-0">
@@ -27,11 +30,6 @@
                     </p>
                 @endif
             </div>
-            {{-- <div class="card-footer p-2 border-0">
-                <p class="text-gray-600 text-center m-0 fs-8">
-                    <span class="fw-bold">Criado: </span>{{ $sector->created_at->format('d/m/Y') }} às {{ $sector->created_at->format('H:i') }}
-                </p>
-            </div> --}}
         </div>
     </div>
     @endforeach
