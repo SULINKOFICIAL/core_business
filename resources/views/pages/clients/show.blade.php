@@ -3,6 +3,9 @@
 @section('title', $client->name)
 
 @section('content')
+@if ($responseApi)
+    <P>ERRO NA API</P>
+@endif
 <div class="card mb-4">
     <div class="card-body">
         <div class="d-flex align-items-center">

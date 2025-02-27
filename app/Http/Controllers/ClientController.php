@@ -133,10 +133,12 @@ class ClientController extends Controller
         // Realiza consulta
         $actualFeatures = $this->guzzle('get', 'sistema/permissoes', $client);
 
+        // Reposta da API
+        $responseApi = true;
+        
         // Se ocorreu um erro
         if ($actualFeatures == 'Error' || $actualFeatures == null) {
-            // Se ocorrer erro na resposta, podemos retornar a mensagem real do erro
-            return $actualFeatures;
+            $responseApi = false;
         }
 
         // Transforma em uma coleção
@@ -156,6 +158,7 @@ class ClientController extends Controller
             'modules' => $modules,
             'sectors' => $sectors,
             'allowFeatures' => $allowFeatures,
+            'responseApi' => $responseApi,
         ]);
 
     }
@@ -189,8 +192,6 @@ class ClientController extends Controller
 
             // Realiza a solicitação
             $response = $guzzle->$method("https://$client->domain/api/$url", $options);
-
-            dd($response, "https://$client->domain/api/$url");
 
             // Obtém o corpo da resposta
             $response = $response->getBody()->getContents();
