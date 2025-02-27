@@ -190,6 +190,8 @@ class ClientController extends Controller
             // Realiza a solicitação
             $response = $guzzle->$method("https://$client->domain/api/$url", $options);
 
+            dd($response, "https://$client->domain/api/$url");
+
             // Obtém o corpo da resposta
             $response = $response->getBody()->getContents();
 
