@@ -130,6 +130,9 @@ class ClientController extends Controller
         // Obtém módulos
         $modules = $this->modules();
 
+        // Inicia vazio as permissões
+        $actualFeatures['permissions'] = [];
+
         // Realiza consulta
         $actualFeatures = $this->guzzle('get', 'sistema/permissoes', $client);
 
