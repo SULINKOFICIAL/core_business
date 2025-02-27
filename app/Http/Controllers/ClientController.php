@@ -136,12 +136,8 @@ class ClientController extends Controller
         // Se ocorreu um erro
         if ($actualFeatures == 'Error' || $actualFeatures == null) {
             // Se ocorrer erro na resposta, podemos retornar a mensagem real do erro
-            return response()->json([
-                'error' => 'Erro ao buscar permissões ou a resposta foi nula.',
-                'details' => $actualFeatures,
-            ], 500);
+            return $actualFeatures;
         }
-
 
         // Transforma em uma coleção
         $actualFeatures = $actualFeatures['permissions'];
