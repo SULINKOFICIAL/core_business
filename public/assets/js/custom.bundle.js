@@ -35,8 +35,8 @@ function loadTables(seletor = '.datatables', items = 25, order = undefined) {
         },
         dom:
             "<'row'" +
-            "<'col-sm-6 d-flex align-items-center justify-content-start'l>" +
-            "<'col-sm-6 d-flex align-items-center justify-content-end'f>" +
+                "<'col-sm-6 d-flex align-items-center justify-content-start'l>" +
+                "<'col-sm-6 d-flex align-items-center justify-content-end'f>" +
             '>' +
             "<'table-responsive'tr>" +
             "<'row'" +

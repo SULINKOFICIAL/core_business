@@ -19,4 +19,8 @@ body {
     border-color: #3498db;
 }
 
-
+.table-responsive {
+    border-radius: 5px;
+    box-shadow: 5px 5px 30px rgb(0 0 0 / 5%) !important;
+    border: solid 1px #f8f4f4;
+}

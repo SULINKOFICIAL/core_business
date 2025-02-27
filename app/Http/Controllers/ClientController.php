@@ -130,9 +130,6 @@ class ClientController extends Controller
         // Obtém módulos
         $modules = $this->modules();
 
-        // Inicia vazio as permissões
-        $actualFeatures['permissions'] = [];
-
         // Realiza consulta
         $actualFeatures = $this->guzzle('get', 'sistema/permissoes', $client);
 
@@ -144,15 +141,20 @@ class ClientController extends Controller
             $responseApi = false;
         }
 
-        // Transforma em uma coleção
-        $actualFeatures = $actualFeatures['permissions'];
-
         // Inicia Array
         $allowFeatures = [];
 
-        // Separa variáveis
-        foreach ($actualFeatures as $value) {
-            $allowFeatures[$value['name']] = $value['status'];
+        // Se foi tudo bem sucedido
+        if($responseApi){
+            
+            // Transforma em uma coleção
+            $actualFeatures = $actualFeatures['permissions'];
+    
+            // Separa variáveis
+            foreach ($actualFeatures as $value) {
+                $allowFeatures[$value['name']] = $value['status'];
+            }
+
         }
 
         // Retorna a página

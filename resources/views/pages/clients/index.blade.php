@@ -3,57 +3,50 @@
 @section('title', 'Painel')
 
 @section('content')
-@if ($contents->count())
-    <div class="row">
-        @foreach ($contents as $client)
-        <div class="col-3">
-            <div class="card mb-4">
-                <div class="card-body text-center">
-                    @if ($client->logo)
-                    <img src="{{ asset('storage/clientes/' . $client->id . '/logo.png') }}" alt="Logo do Cliente" class="img-fluid h-50px">
-                    @else
-                    <div class="h-50px d-flex align-items-center justify-content-center">
-                        <p class="m-0 fs-2x fw-bolder text-gray-300 text-uppercase">Sem logo</p>
-                    </div>
-                    @endif
-                    <div class="my-5">
-                        <div class="d-flex align-items-center justify-content-center">
-                            <p class="fw-bolder text-gray-700 m-0 fs-3 text-center">{{ $client->name }}</p>
-                            @if ($client->systemStatus() === 'OK')
-                                <span class="badge badge-light-success ms-2">Ativo</span>
-                            @elseif ($client->systemStatus() === 'Error')
-                                <span class="badge badge-light-danger ms-2">Inativo</span>
-                            @elseif ($client->systemStatus() === 'Token Empty')
-                                <span class="badge badge-light-warning ms-2">Token não configurado</span>
-                            @endif
-                        </div>
-                        <a href="https://{{ $client->domain }}" target="_blank" class="text-gray-600 text-hover-danger m-0 text-center">
-                            {{ $client->domain }}
-                        </a>
-                    </div>
-                    <a href="{{ route('clients.show', $client->id) }}" class="btn btn-sm btn-light-primary w-100 mb-2">
-                        Visualizar
-                    </a>
-                    <a href="{{ route('clients.edit', $client->id) }}" class="btn btn-sm btn-light-primary w-100">
-                        Editar
-                    </a>
-                </div>
-                <div class="card-footer p-2">
-                    <p class="text-gray-600 text-center m-0 fs-8">
-                       <span class="fw-bold">Criado: </span>{{ $client->created_at->format('d/m/Y') }} às {{ $client->created_at->format('H:i') }}
-                    </p>
-                </div>
-            </div>
-        </div>
-        @endforeach
-    </div>
-@else
 <div class="card">
     <div class="card-body">
-        <p class="text-center m-0">Sem contas cadastradas</p>
+        <table class="table table-striped table-row-bordered gy-2 gs-7 align-middle datatables">
+            <thead class="rounded" style="background: #1c283e">
+                <tr class="fw-bold fs-6 text-white px-7">
+                    <th class="">Nome do Cliente</th>
+                    <th class="text-center px-0">Domínio</th>
+                    <th class="text-center px-0">Plano</th>
+                    <th class="text-center px-0">Criado Em</th>
+                    <th class="text-center px-0">Status</th>
+                    <th class="text-end pe-12"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($contents as $client)
+                    <tr>
+                        <td>{{ $client->name }}</td>
+                        <td class="text-center">
+                            <a href="https://{{ $client->domain }}" target="_blank" class="text-gray-600 text-hover-danger m-0 text-center">
+                                {{ $client->domain }}
+                            </a>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge badge-light-success">Free Trial</span>
+                        </td>
+                        <td class="text-center text-gray-600">{{ $client->created_at->format('d/m/Y')}}</td>
+                        <td class="text-center">
+                            @if ($client->status == 0)
+                                <span class="badge badge-light-danger">Desabilitado</span>  
+                                @else
+                                <span class="badge badge-light-success">Habilitado</span>
+                            @endif
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ route('clients.show', $client->id) }}" class="btn btn-sm btn-primary btn-active-success fw-bolder text-uppercase py-2">
+                                Visualizar
+                            </a>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
     </div>
 </div>
-@endif
 <div class="d-flex mt-4">
     <a href="{{ route('clients.create') }}" class="btn btn-sm btn-primary btn-active-success">
         Adicionar Cliente

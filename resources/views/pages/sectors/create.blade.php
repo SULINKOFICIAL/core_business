@@ -14,7 +14,7 @@
         </div>
     </div>
     <div class="d-flex justify-content-end mt-4">
-        <a href="{{ route('sectors.index') }}" class="btn btn-light text-muted me-2">
+        <a href="{{ url()->previous() ?? route('sectors.index') }}" class="btn btn-light text-muted me-2">
             Voltar
         </a>
         <button type="submit" class="btn btn-primary btn-active-danger">
