@@ -1,6 +1,7 @@
 <?php
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\ClientPurchaseController;
 use App\Http\Controllers\ClientsActionsController;
 use App\Http\Controllers\CpanelController;
 use App\Http\Controllers\ErrorMiCoreController;
@@ -24,8 +25,18 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/editar/{id}', [ClientController::class, 'edit'])->name('edit');
             Route::put('/editar/{id}', [ClientController::class, 'update'])->name('update');
             Route::get('/desabilitar/{id}', [ClientController::class, 'destroy'])->name('destroy');
+
+
+            // Compras
+            Route::prefix('compras')->group(function () {
+                Route::name('purchases.')->group(function () {
+                    Route::post('/adicionar/{id}', [ClientPurchaseController::class, 'store'])->name('store');
+                });
+            });
+            
         });
     });
+
 
     Route::prefix('pacotes')->group(function () {
         Route::name('packages.')->group(function () {

@@ -1,6 +1,5 @@
 <button id="drawer_upgrade" class="btn btn-primary position-fixed" style="right: 50px; bottom: 50px">Modificar Plano</button>
-
-<form action="#" enctype="multipart/form-data">
+<form action="{{ route('clients.purchases.store', $client->id) }}" enctype="multipart/form-data">
     @csrf
     <div
         class="bg-white"
