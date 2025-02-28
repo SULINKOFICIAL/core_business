@@ -8,7 +8,7 @@ use App\Http\Controllers\ErrorMiCoreController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\ResourceController;
-use App\Http\Controllers\SectorController;
+use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\TicketsController;
 use App\Models\ErrorMiCore;
@@ -42,15 +42,15 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
-    Route::prefix('setores')->group(function () {
-        Route::name('sectors.')->group(function () {
-            Route::get('/', [SectorController::class, 'index'])->name('index');
-            Route::get('/adicionar', [SectorController::class, 'create'])->name('create');
-            Route::post('/adicionar', [SectorController::class, 'store'])->name('store');
-            Route::get('/visualizar/{id}', [SectorController::class, 'show'])->name('show');
-            Route::get('/editar/{id}', [SectorController::class, 'edit'])->name('edit');
-            Route::put('/editar/{id}', [SectorController::class, 'update'])->name('update');
-            Route::get('/desabilitar/{id}', [SectorController::class, 'destroy'])->name('destroy');
+    Route::prefix('modulos')->group(function () {
+        Route::name('modules.')->group(function () {
+            Route::get('/', [ModuleController::class, 'index'])->name('index');
+            Route::get('/adicionar', [ModuleController::class, 'create'])->name('create');
+            Route::post('/adicionar', [ModuleController::class, 'store'])->name('store');
+            Route::get('/visualizar/{id}', [ModuleController::class, 'show'])->name('show');
+            Route::get('/editar/{id}', [ModuleController::class, 'edit'])->name('edit');
+            Route::put('/editar/{id}', [ModuleController::class, 'update'])->name('update');
+            Route::get('/desabilitar/{id}', [ModuleController::class, 'destroy'])->name('destroy');
         });
     });
 

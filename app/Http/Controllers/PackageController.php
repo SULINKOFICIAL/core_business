@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Package;
-use App\Models\Sector;
+use App\Models\Module;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -44,7 +44,7 @@ class PackageController extends Controller
     {
         
         // Obtém módulos
-        $modules = Sector::where('status', true)->get(); 
+        $modules = Module::where('status', true)->get(); 
 
         // Retorna a página
         return view('pages.packages.create')->with([
@@ -77,7 +77,7 @@ class PackageController extends Controller
     {
         // Obtém dados
         $packages = $this->repository->find($id);
-        $modules = Sector::where('status', true)->get(); 
+        $modules = Module::where('status', true)->get(); 
 
         // Verifica se existe
         if(!$packages) return redirect()->back();

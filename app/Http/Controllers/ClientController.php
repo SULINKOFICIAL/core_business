@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
-use App\Models\Sector;
+use App\Models\Module;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use GuzzleHttp\Client as Guzzle;
@@ -122,13 +122,10 @@ class ClientController extends Controller
     public function show($id)
     {
         // Obtém dados dos Setores ativos
-        $sectors = Sector::where('status', true)->get();
+        $modules = Module::where('status', true)->get();
 
         // Obtém dados do Lead
         $client = $this->repository->find($id);
-
-        // Obtém módulos
-        $modules = $this->modules();
 
         // Realiza consulta
         $actualFeatures = $this->guzzle('get', 'sistema/permissoes', $client);
@@ -161,7 +158,6 @@ class ClientController extends Controller
         return view('pages.clients.show')->with([
             'client' => $client,
             'modules' => $modules,
-            'sectors' => $sectors,
             'allowFeatures' => $allowFeatures,
             'responseApi' => $responseApi,
         ]);
@@ -310,46 +306,4 @@ class ClientController extends Controller
 
     }
 
-    public function modules() {
-
-        // Gera lista de módulos disponíveis no sistema
-        $modules = [];
-
-        // Módulo Financeiro
-        $modules[] = [
-            'nome' => 'Financeiro',
-            'frase' => 'Gestão financeira',
-            'recursos' => [
-                'básico' => [
-                    'Carteiras',
-                    'Categorias',
-                    'Fornecedores',
-                ],
-                'Contas a Pagar' => [
-                    'Gerenciar Despesas',
-                    'Gerar Relatórios',
-                ],
-                'Contas a Receber' => [
-                    'Gerenciar Receitas',
-                ],
-            ],
-        ];
-
-        // Módulo Usuários
-        $modules[] = [
-            'nome' => 'Usuários',
-            'frase' => 'Gerenciamento de pessoas',
-            'recursos' => [
-                'básico' => [
-                    'Gerenciar',
-                    'Permissões',
-                    'Grupo de usuários',
-                ],
-            ],
-        ];
-
-        // Retorna pacotes
-        return $modules;
-
-    }
 }

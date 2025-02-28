@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Sector;
+use App\Models\Module;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -13,25 +13,25 @@ class SectorSeeder extends Seeder
      */
     public function run(): void
     {
-        Sector::create([
+        Module::create([
             'name' => 'Financeiro',
             'status' => 1,
             'created_by' => 1,
         ]);
 
-        Sector::create([
+        Module::create([
             'name' => 'Usuários',
             'status' => 1,
             'created_by' => 2,
         ]);
 
-        Sector::create([
+        Module::create([
             'name' => 'Blog',
             'status' => 1,
             'created_by' => 2,
         ]);
 
-        Sector::create([
+        Module::create([
             'name' => 'Vendas',
             'status' => 1,
             'created_by' => 1,

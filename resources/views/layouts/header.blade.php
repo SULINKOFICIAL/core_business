@@ -15,7 +15,7 @@
                         <a href="{{ route('packages.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
                             Pacotes
                         </a>
-                        <a href="{{ route('sectors.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
+                        <a href="{{ route('modules.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
                             Módulos
                         </a>
                         <a href="{{ route('groups.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">

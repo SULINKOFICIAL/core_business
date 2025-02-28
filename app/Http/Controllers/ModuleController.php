@@ -3,17 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Group;
-use App\Models\Sector;
+use App\Models\Module;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class SectorController extends Controller
+class ModuleController extends Controller
 {
 
     protected $request;
     private $repository;
 
-    public function __construct(Request $request, Sector $content)
+    public function __construct(Request $request, Module $content)
     {
 
         $this->request = $request;
@@ -30,11 +30,11 @@ class SectorController extends Controller
     public function index()
     {
         // Obtém dados
-        $sectors = Sector::all();
+        $modules = Module::all();
 
         // Retorna a página
-        return view('pages.sectors.index')->with([
-            'sectors' => $sectors,
+        return view('pages.modules.index')->with([
+            'modules' => $modules,
         ]);
     }
 
@@ -44,7 +44,7 @@ class SectorController extends Controller
         $groups = Group::where('status', true)->get(); 
 
         // Retorna a página
-        return view('pages.sectors.create')->with([
+        return view('pages.modules.create')->with([
             'groups' => $groups,
         ]);
 
@@ -67,7 +67,7 @@ class SectorController extends Controller
 
             // Retorna a página
             return redirect()
-                    ->route('sectors.index')
+                    ->route('modules.index')
                     ->with('message', 'Setor <b>'. $created->name . '</b> adicionado com sucesso.');
 
     }
@@ -78,14 +78,14 @@ class SectorController extends Controller
         $groups = Group::where('status', true)->get();        
 
         // Obtém dados
-        $sectors = $this->repository->find($id);
+        $modules = $this->repository->find($id);
 
         // Verifica se existe
-        if(!$sectors) return redirect()->back();
+        if(!$modules) return redirect()->back();
 
         // Retorna a página
-        return view('pages.sectors.edit')->with([
-            'sectors' => $sectors,
+        return view('pages.modules.edit')->with([
+            'modules' => $modules,
             'groups' => $groups
         ]);
 
@@ -95,10 +95,10 @@ class SectorController extends Controller
     {
 
         // Verifica se existe
-        if(!$sectors = $this->repository->find($id)) return redirect()->back();
+        if(!$modules = $this->repository->find($id)) return redirect()->back();
 
         // Armazena o nome antigo
-        $oldName = $sectors->name;
+        $oldName = $modules->name;
 
         // Obtém dados
         $data = $request->all();
@@ -107,16 +107,16 @@ class SectorController extends Controller
         $data['updated_by'] = Auth::id();
 
         // Atualiza dados
-        $sectors->update($data);
+        $modules->update($data);
 
         if (isset($data['groups'])) {
-            $sectors->groups()->sync($data['groups']);
+            $modules->groups()->sync($data['groups']);
         }
 
         // Retorna a página
         return redirect()
-        ->route('sectors.index')
-        ->with('message', 'Setor <b>'. $oldName . '</b> atualizado para <b>'. $sectors->name .'</b> com sucesso.');
+        ->route('modules.index')
+        ->with('message', 'Setor <b>'. $oldName . '</b> atualizado para <b>'. $modules->name .'</b> com sucesso.');
         
     }
 
@@ -124,10 +124,10 @@ class SectorController extends Controller
     {
 
         // Obtém dados
-        $sectors = $this->repository->find($id);
+        $modules = $this->repository->find($id);
 
         // Atualiza status
-        if($sectors->status == 1){
+        if($modules->status == 1){
             $this->repository->where('id', $id)->update(['status' => false, 'filed_by' => Auth::id()]);
             $message = 'desabilitado';
         } else {
@@ -137,8 +137,8 @@ class SectorController extends Controller
 
         // Retorna a página
         return redirect()
-            ->route('sectors.index')
-            ->with('message', 'Setor <b>'. $sectors->name . '</b> '. $message .' com sucesso.');
+            ->route('modules.index')
+            ->with('message', 'Setor <b>'. $modules->name . '</b> '. $message .' com sucesso.');
 
     }
 

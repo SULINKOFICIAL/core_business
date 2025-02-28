@@ -21,8 +21,8 @@ class Group extends Model
        return $this->belongsToMany(Resource::class, 'group_resource');
     }
     // Relacionamento com sectors
-    public function sectors()
+    public function modules()
     {
-        return $this->belongsToMany(Sector::class, 'sector_group');
+        return $this->belongsToMany(Module::class, 'module_group');
     }
 }

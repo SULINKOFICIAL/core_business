@@ -49,7 +49,7 @@
     </div>
 @endif
 <div class="row">
-@foreach ($sectors as $sector)
+@foreach ($modules as $module)
     <div class="col-6">
         <div class="card mb-4">
             <div class="card-header">
@@ -58,13 +58,13 @@
                         <i class="flaticon2-line-chart text-primary"></i>
                     </span>
                     <h3 class="card-label">
-                        {{ $sector->name }}
+                        {{ $module->name }}
                     </h3>
                 </div>
             </div>
             <div class="card-body">
-                @if ($sector->groups->count())
-                    @foreach ($sector->groups as $group)
+                @if ($module->groups->count())
+                    @foreach ($module->groups as $group)
                     <div class="rounded mb-4 p-4 bg-light">
                         <p class="text-capitalize mb-2 fw-bold text-gray-700">{{ $group->name }}</p>
                         <div class="d-flex flex-wrap gap-3">
@@ -100,7 +100,7 @@
                     </i>
                     <div class="d-flex flex-column">
                         <h4 class="mb-1 text-primary">Sem Grupo de Recursos</h4>
-                        <span>Nesse setor não foi cadastrado nenhum grupo de recursos, <a href="{{ route('sectors.edit', $sector->id) }}" class="fw-bold text-hover-danger">clique aqui</a> para adicionar.</span>
+                        <span>Nesse setor não foi cadastrado nenhum grupo de recursos, <a href="{{ route('modules.edit', $module->id) }}" class="fw-bold text-hover-danger">clique aqui</a> para adicionar.</span>
                     </div>
                 </div>
                 @endif

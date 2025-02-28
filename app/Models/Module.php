@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-class Sector extends Model
+class Module extends Model
 {
     protected $fillable = [
         'name',
@@ -18,6 +18,6 @@ class Sector extends Model
     // Relacionamento com groups
     public function groups(): BelongsToMany
     {
-        return $this->belongsToMany(Group::class, 'sector_group');
+        return $this->belongsToMany(Group::class, 'modules_group');
     }
 }
