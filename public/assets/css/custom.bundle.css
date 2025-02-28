@@ -1,3 +1,8 @@
+:root {
+    --bs-success: #68c617;
+    --bs-text-success: #68c617;
+}
+
 body {
   font-family: "Jost", sans-serif;
 }

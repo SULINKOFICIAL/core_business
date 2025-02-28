@@ -1,5 +1,5 @@
-<button id="drawer_upgrade" class="btn btn-primary position-fixed" style="right: 50px; bottom: 50px">Modificar Plano</button>
-<form action="{{ route('clients.purchases.store', $client->id) }}" enctype="multipart/form-data">
+<button id="drawer_upgrade" class="btn btn-primary btn-active-success position-fixed" style="right: 50px; bottom: 50px">Modificar Plano</button>
+<form action="{{ route('clients.purchases.store', $client->id) }}" method="POST" enctype="multipart/form-data">
     @csrf
     <div
         class="bg-white"
@@ -29,7 +29,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-3 bg-light p-4 rounded">
                     <div>
                         <p class="m-0 fw-bold text-gray-700">
-                            {{ $module->name }} - <span class="value-module">R$ {{ number_format($module->value, 2, ',', '.') }}</span>
+                            {{ $module->name }} - <span class="text-success value-module">R$ {{ number_format($module->value, 2, ',', '.') }}</span>
                         </p>
                         <span class="text-gray-600">
                             @if ($module->description)
@@ -42,24 +42,29 @@
                     @if ($key != 0)
                     <div class="ms-8">
                         <label class="form-check form-switch form-check-custom form-check-solid me-6">
-                            <input class="form-check-input cursor-pointer input-features-upgrade" type="checkbox" value="{{ $module->slug }}" @if(rand(true, false)) checked @endif/>
+                            <input class="form-check-input cursor-pointer input-features-upgrade" name="modules[]" type="checkbox" value="{{ $module->id }}" @if(in_array($module->id, $client->modules->pluck('id')->toArray())) checked @endif/>
                         </label>
                     </div>
                     @endif
                 </div>
                 @endforeach
             </div>
-            <div class="card-footer">
+            <div class="card-footer bg-light py-6">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="d-flex align-items-center fs-5 text-gray-600 mb-0 gap-2">
-                            Módulos <span class="fw-bolder text-gray-700" id="base-price">R$ 0,00</span> x <input type="number" class="form-control p-0 form-control-solid w-30px text-center h-30px border shadow" id="qnt-users" value="3" min="3"> usuários
+                            Módulos <span class="fw-bolder text-gray-700" id="base-price">R$ 0,00</span> x <input type="number" class="form-control p-0 form-control-solid w-30px text-center h-30px border shadow" name="users_limit" id="qnt-users" value="{{ $client->users_limit }}" min="3" required> usuários
                         </div>
                         <p class="m-0 text-primary fs-8">A partir de 3 usuários R$ 29,90 por usuário</p>
                     </div>
-                    <span class="fs-2 fw-bolder text-gray-700" id="total-upgrade">
-                        R$ 0,00
-                    </span>
+                    <div class="d-flex align-items-center">
+                        <span class="fs-2x fw-bolder text-gray-700 me-12" id="total-upgrade">
+                            R$ 0,00
+                        </span>
+                        <button type="submit" class="btn btn-icon btn-success btn-active-danger">
+                            <i class="fa-solid fa-circle-check fs-2"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

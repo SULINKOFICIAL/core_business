@@ -19,14 +19,22 @@
             <tbody>
                 @foreach ($contents as $client)
                     <tr>
-                        <td>{{ $client->name }}</td>
+                        <td>
+                            <a href="{{ route('clients.show', $client->id) }}" class="text-gray-700 text-hover-primary fw-bold">
+                                {{ $client->name }}
+                            </a>
+                        </td>
                         <td class="text-center">
                             <a href="https://{{ $client->domain }}" target="_blank" class="text-gray-600 text-hover-danger m-0 text-center">
                                 {{ $client->domain }}
                             </a>
                         </td>
                         <td class="text-center">
-                            <span class="badge badge-light-success">Free Trial</span>
+                            @if ($client->package)
+                            <span class="badge badge-light-success">{{ $client->package->name }}</span>
+                            @else
+                            <span class="badge badge-light">Erro no pacote</span>
+                            @endif
                         </td>
                         <td class="text-center text-gray-600">{{ $client->created_at->format('d/m/Y')}}</td>
                         <td class="text-center">

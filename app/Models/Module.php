@@ -10,7 +10,7 @@ class Module extends Model
     protected $fillable = [
         'name',
         'description',
-        'price',
+        'value',
         'status',
         'filed_by',
         'created_by',

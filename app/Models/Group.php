@@ -20,6 +20,7 @@ class Group extends Model
     {
        return $this->belongsToMany(Resource::class, 'group_resource');
     }
+    
     // Relacionamento com sectors
     public function modules()
     {

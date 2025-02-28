@@ -58,6 +58,9 @@ class ModuleController extends Controller
         // Autor
         $data['created_by'] = Auth::id();
 
+        // Autor
+        $data['value'] = toDecimal($data['value']);
+
         // Insere no banco de dados
         $created = $this->repository->create($data);
 
@@ -105,6 +108,9 @@ class ModuleController extends Controller
 
         // Autor
         $data['updated_by'] = Auth::id();
+        
+        // Autor
+        $data['value'] = toDecimal($data['value']);
 
         // Atualiza dados
         $modules->update($data);
@@ -115,8 +121,8 @@ class ModuleController extends Controller
 
         // Retorna a página
         return redirect()
-        ->route('modules.index')
-        ->with('message', 'Setor <b>'. $oldName . '</b> atualizado para <b>'. $modules->name .'</b> com sucesso.');
+            ->route('modules.index')
+            ->with('message', 'Setor <b>'. $oldName . '</b> atualizado para <b>'. $modules->name .'</b> com sucesso.');
         
     }
 

@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Http;
 
 class Client extends Model
@@ -16,6 +18,7 @@ class Client extends Model
     protected $fillable = [
         'name',
         'domain',
+        'package_id',
         'users_limit',
         'current_value',
         'logo',
@@ -27,6 +30,18 @@ class Client extends Model
         'created_by',
         'updated_by',
     ];
+    
+    // Relacionamento com resources
+    public function package(): HasOne
+    {
+       return $this->hasOne(Package::class, 'id', 'package_id');
+    }
+    
+    // Relacionamento com resources
+    public function modules(): BelongsToMany
+    {
+       return $this->belongsToMany(Module::class, 'clients_modules', 'client_id', 'module_id');
+    }
 
     public function systemStatus()
     {
