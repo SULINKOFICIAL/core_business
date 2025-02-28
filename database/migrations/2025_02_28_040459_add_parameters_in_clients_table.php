@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('clients', function (Blueprint $table) {
+            $table->decimal('current_value')->default(0)->after('domain');
             $table->integer('users_limit')->default(3)->after('domain');
-            $table->decimal('current_value')->nullable()->after('domain');
         });
     }
 
