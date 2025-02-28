@@ -7,9 +7,9 @@
         <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Valor no Upgrade</label>
         <input type="text" class="form-control form-control-solid input-money" name="value" value="R$ {{ number_format(($packages->value ?? 0), 2, ',', '.') }}" required>
     </div>
-    <div class="col-6 mb-4">
+    <div class="col-12 mb-4">
         <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Descrição</label>
-        <input type="text" maxlength="170" class="form-control form-control-solid" name="description" value="{{ $modules->description ?? old('description') }}" required>
+        <textarea maxlength="170" class="form-control form-control-solid" name="description" required>{{ $modules->description ?? old('description') }}</textarea>
     </div>
     <div class="col-12 mb-4">
         <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Grupos de Recursos</label>
