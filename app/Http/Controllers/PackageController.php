@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Package;
+use App\Models\Sector;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -29,6 +30,7 @@ class PackageController extends Controller
     public function index()
     {
 
+        // Obtém pacotes
         $packages = $this->repository->all();
 
         // Retorna a página
@@ -40,15 +42,24 @@ class PackageController extends Controller
 
     public function create()
     {
+        
+        // Obtém módulos
+        $modules = Sector::where('status', true)->get(); 
+
         // Retorna a página
         return view('pages.packages.create')->with([
+            'modules' => $modules,
         ]);
+
     }
 
     public function store(Request $request)
     {
         // Obtém dados
         $data = $request->all();
+
+        // Autor
+        $data['value'] = toDecimal($data['value']);
 
         // Autor
         $data['created_by'] = Auth::id();
@@ -66,14 +77,16 @@ class PackageController extends Controller
     {
         // Obtém dados
         $packages = $this->repository->find($id);
+        $modules = Sector::where('status', true)->get(); 
 
-            // Verifica se existe
-            if(!$packages) return redirect()->back();
-    
-            // Retorna a página
-            return view('pages.packages.edit')->with([
-                'packages' => $packages
-            ]);
+        // Verifica se existe
+        if(!$packages) return redirect()->back();
+
+        // Retorna a página
+        return view('pages.packages.edit')->with([
+            'packages' => $packages,
+            'modules' => $modules,
+        ]);
     }
 
     public function update(Request $request, $id)
@@ -85,6 +98,9 @@ class PackageController extends Controller
         $data = $request->all();
 
         $oldName = $packages->name;
+
+        // Autor
+        $data['value'] = toDecimal($data['value']);
 
         // Autor
         $data['updated_by'] = Auth::id();

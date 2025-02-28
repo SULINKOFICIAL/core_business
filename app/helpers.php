@@ -55,7 +55,22 @@ function cleanString($text) {
     return preg_replace(array_keys($utf8), array_values($utf8), $text);
 }
 
+// Decimal
+if (!function_exists('toDecimal')) {
+    function toDecimal($value) {
+        // Remove espaços extras e "R$" (ou qualquer caractere não numérico, exceto ponto e vírgula)
+        $value = trim($value);
+        $value = preg_replace('/[^\d,\.]/', '', $value);
 
+        // Se o número tiver separador de milhar (ex: 1.000,00), removemos os pontos
+        if (strpos($value, ',') !== false) {
+            $value = str_replace('.', '', $value); // Remove separadores de milhar
+            $value = str_replace(',', '.', $value); // Troca vírgula decimal por ponto
+        }
+        // Converte para float e formata com 2 casas decimais
+        return number_format(floatval($value), 2, '.', '');
+    }
+}
 
 function generateShortName($fullName) {
     $parts = explode(' ', trim($fullName));

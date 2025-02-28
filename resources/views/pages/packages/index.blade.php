@@ -16,7 +16,7 @@
                                 <p class="fw-bolder text-gray-700 m-0 fs-3 text-center">{{ $package->name }}</p>
                             </div>
                             <p class="text-gray-600 m-0 text-center">
-                                {{ $package->value }}
+                                R$ {{ number_format($package->value, 2, ',', '.') }}
                             </p>
                         </div>
                         <div class="d-flex">

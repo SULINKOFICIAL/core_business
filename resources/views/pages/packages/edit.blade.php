@@ -11,7 +11,7 @@
     @method('PUT')
     <div class="card">
         <div class="card-body">
-                @include('pages.packages._form')
+            @include('pages.packages._form')
         </div>
     </div>
     <div class="d-flex justify-content-between mt-4">
@@ -24,14 +24,14 @@
                 Ativar Pacote
             </a>
         @endif  
-            <div>
-                <a href="{{ route('packages.index') }}" class="btn btn-light text-muted me-2">
+        <div>
+            <a href="{{ route('packages.index') }}" class="btn btn-light text-muted me-2">
                 Voltar
-                </a>
-                <button type="submit" class="btn btn-primary btn-active-danger">
+            </a>
+            <button type="submit" class="btn btn-primary btn-active-danger">
                 Atualizar
-                </button>
-            </div>
+            </button>
+        </div>
     </div>
 </form>
 @endsection

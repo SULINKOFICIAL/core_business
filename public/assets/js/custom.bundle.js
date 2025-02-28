@@ -48,7 +48,99 @@ function loadTables(seletor = '.datatables', items = 25, order = undefined) {
 }
 
 
-$(document).ready(function(){
-    loadTables()
-})
+/**
+ * Função responsável por configurar as mascaras dentro dos inputs
+ * Metronic: https://preview.keenthemes.com/html/metronic/docs/forms/inputmask
+ * GitHub:   https://github.com/RobinHerbots/Inputmask
+ */
+function generateMasks(){
+    Inputmask(["(99) 9999-9999", "(99) 9 9999-9999"], {
+        "clearIncomplete": true,
+    }).mask(".input-phone");
 
+    Inputmask(["9999 9999 9999 9999"], {
+        "placeholder": "",
+        "clearIncomplete": true,
+    }).mask(".input-card");
+
+    Inputmask(["9999"], {
+        "placeholder": "",
+        "numericInput": true,
+    }).mask(".input-year");
+
+    Inputmask(["99/99"], {
+    }).mask(".input-month-year");
+
+    Inputmask(["999"], {
+        "placeholder": "",
+        "numericInput": true,
+    }).mask(".input-ccv");
+
+    Inputmask(["99.999.999/9999-99"], {
+        "clearIncomplete": true,
+    }).mask(".input-cnpj");
+
+    Inputmask(["999.999.999-99"], {
+        "clearIncomplete": true,
+    }).mask(".input-cpf");
+
+    Inputmask(["99999-999"], {
+        "clearIncomplete": true,
+    }).mask(".input-cep");
+
+    Inputmask(["99/99/9999"], {
+        "clearIncomplete": true,
+    }).mask(".input-date");
+
+    Inputmask(["99/99/9999 99:99:99"], {
+        "clearIncomplete": true,
+    }).mask(".input-date-time");
+
+    Inputmask(["99:99:99"], {
+        "clearIncomplete": true,
+    }).mask(".input-duration");
+
+    Inputmask(["99:99"], {
+        "clearIncomplete": true,
+    }).mask(".input-time");
+
+    Inputmask(["9999.99.99"], {
+        "clearIncomplete": true,
+    }).mask(".input-ncm");
+
+    Inputmask(["9.99", "99.99"], {
+        "numericInput": true,
+        "clearIncomplete": true,
+    }).mask(".input-comission");
+
+    Inputmask(["9.999kg", "99.999kg", "999.999kg"], {
+        "numericInput": true,
+        "clearIncomplete": true,
+    }).mask(".input-weight");
+
+    Inputmask(["9.99cm", "99.99cm", "999.99cm"], {
+        "numericInput": true,
+        "clearIncomplete": true,
+    }).mask(".input-cm");
+
+    Inputmask(["R$ 9", "R$ 99", "R$ 9,99", "R$ 99,99", "R$ 999,99", "R$ 9.999,99", "R$ 99.999,99", "R$ 999.999,99", "R$ 9.999.999,99"], {
+        "numericInput": true,
+        "clearIncomplete": true,
+    }).mask(".input-money");
+
+    Inputmask(["$ 9", "$ 99", "$ 9.99", "$ 99.99", "$ 999.99", "$ 9,999.99", "$ 99,999.99", "$ 999,999.99", "$ 9,999,999.99"], {
+        "numericInput": true,
+        "clearIncomplete": true,
+    }).mask(".input-money-usd");
+
+    Inputmask(["99"]).mask(".input-decimal");
+
+    Inputmask(["9.99m", "99.99m", "999.99m", "9999.99m", "99999.99m"], {
+        "clearIncomplete": true,
+    }).mask(".input-metter");
+}
+
+$(document).ready(function(){
+    loadTables();
+    generateMasks();
+})
