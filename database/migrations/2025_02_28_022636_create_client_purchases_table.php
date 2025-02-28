@@ -11,19 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('clients_packages', function (Blueprint $table) {
+        Schema::create('client_purchases', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('client_id');
-            $table->unsignedBigInteger('package_id');
-            $table->date('start_date');
-            $table->date('end_date');
+            $table->foreignId('client_id')->constrained('clients');
+            $table->dateTime('purchase_date');
+            $table->decimal('total_value', 10, 2);
+            $table->string('method');
             $table->boolean('status')->default(true);
             $table->timestamps();
-        
-            $table->foreign('client_id')->references('id')->on('clients');
-            $table->foreign('package_id')->references('id')->on('packages');
         });
-        
     }
 
     /**
@@ -31,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('client_packages');
+        Schema::dropIfExists('client_purchases');
     }
 };

@@ -26,13 +26,6 @@ class Client extends Model
         'updated_by',
     ];
 
-    public function packages()
-    {
-        return $this->belongsToMany(Package::class, 'clients_packages')
-                    ->withPivot('start_date', 'end_date', 'status')
-                    ->withTimestamps();
-    }
-
     public function systemStatus()
     {
 

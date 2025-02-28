@@ -9,6 +9,7 @@ class Module extends Model
 {
     protected $fillable = [
         'name',
+        'price',
         'status',
         'filed_by',
         'created_by',

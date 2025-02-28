@@ -128,7 +128,8 @@ class ClientController extends Controller
         $client = $this->repository->find($id);
 
         // Realiza consulta
-        $actualFeatures = $this->guzzle('get', 'sistema/permissoes', $client);
+        // $actualFeatures = $this->guzzle('get', 'sistema/permissoes', $client);
+        $actualFeatures = null;
 
         // Reposta da API
         $responseApi = true;

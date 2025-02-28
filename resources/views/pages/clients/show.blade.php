@@ -8,13 +8,13 @@
         <div class="d-flex align-items-center">
             <div class="me-12">
                 <div class="h-150px w-150px rounded bg-light d-flex align-items-center justify-content-center p-2">
-                    @if ($client->logo)
-                        <img src="{{ asset('storage/clientes/' . $client->id . '/logo.png') }}" alt="Logo do Cliente" class="img-fluid w-100 object-fit-contain">
-                    @else
-                        <div class="h-50px d-flex align-items-center justify-content-center">
-                            <p class="m-0 fs-2x fw-bolder text-gray-300 text-uppercase">Sem logo</p>
-                        </div>
-                    @endif
+                @if ($client->logo)
+                    <img src="{{ asset('storage/clientes/' . $client->id . '/logo.png') }}" alt="Logo do Cliente" class="img-fluid w-100 object-fit-contain">
+                @else
+                    <div class="h-50px d-flex align-items-center justify-content-center">
+                        <p class="m-0 fs-2x fw-bolder text-gray-300 text-uppercase">Sem logo</p>
+                    </div>
+                @endif
                 </div>
             </div>
             <div>
@@ -29,9 +29,12 @@
                 <p class="text-gray-600 mb-0">
                     Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
                 </p>
-                <div class="btn btn-sm btn-primary mt-2">
-                    Ver contrato
-                </div>
+                <button class="btn btn-sm btn-primary mt-2" data-show="resources">
+                    Histórico de Compras
+                </button>
+                <button class="btn btn-sm btn-primary mt-2" data-show="resources">
+                    Ver Recursos
+                </button>
             </div>
         </div>
     </div>
@@ -48,72 +51,94 @@
         </div>
     </div>
 @endif
-<div class="row">
-@foreach ($modules as $module)
-    <div class="col-6">
-        <div class="card mb-4">
-            <div class="card-header">
-                <div class="card-title">
-                    <span class="card-icon">
-                        <i class="flaticon2-line-chart text-primary"></i>
-                    </span>
-                    <h3 class="card-label">
-                        {{ $module->name }}
-                    </h3>
-                </div>
-            </div>
-            <div class="card-body">
-                @if ($module->groups->count())
-                    @foreach ($module->groups as $group)
-                    <div class="rounded mb-4 p-4 bg-light">
-                        <p class="text-capitalize mb-2 fw-bold text-gray-700">{{ $group->name }}</p>
-                        <div class="d-flex flex-wrap gap-3">
-                            @if ($group->resources->count())
-                                @foreach ($group->resources as $item)
-                                    <label class="form-check form-switch form-check-custom form-check-solid me-6">
-                                        <input class="form-check-input cursor-pointer input-features" type="checkbox" value="{{ $item->name }}" @if(isset($allowFeatures[$item->name]) && $allowFeatures[$item->name] == true) checked @endif/>
-                                        <span class="form-check-label fw-semibold text-gray-700 cursor-pointer">
-                                            {{ $item->name }}
-                                        </span>
-                                    </label>
-                                @endforeach
-                            @else
-                                <div class="alert alert-info d-flex align-items-center p-5 mb-0">
-                                    <i class="ki-duotone ki-shield-tick fs-2hx text-info me-4">
-                                        <span class="path1"></span>
-                                        <span class="path2"></span>
-                                    </i>
-                                    <div class="d-flex flex-column">
-                                        <h4 class="mb-1 text-info">Sem Recursos no Grupo</h4>
-                                        <span>Não foram atribuidos recursos a esse grupo, <a href="{{ route('groups.edit', $group->id) }}" class="fw-bold text-hover-danger">clique aqui</a> para atribuir.</span>
-                                    </div>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                    @endforeach
-                @else
-                <div class="alert alert-primary d-flex align-items-center p-5 mb-0">
-                    <i class="ki-duotone ki-shield-tick fs-2hx text-primary me-4">
-                        <span class="path1"></span>
-                        <span class="path2"></span>
-                    </i>
-                    <div class="d-flex flex-column">
-                        <h4 class="mb-1 text-primary">Sem Grupo de Recursos</h4>
-                        <span>Nesse setor não foi cadastrado nenhum grupo de recursos, <a href="{{ route('modules.edit', $module->id) }}" class="fw-bold text-hover-danger">clique aqui</a> para adicionar.</span>
-                    </div>
-                </div>
-                @endif
-            </div>
+<div class="div">
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-striped table-row-bordered gy-2 gs-7 align-middle datatables">
+                <thead class="rounded" style="background: #1c283e">
+                    <tr class="fw-bold fs-6 text-white px-7">
+                        <th>Pacote/Upgrade</th>
+                        <th>Descrição</th>
+                        <th class="text-center px-0">Inicio</th>
+                        <th class="text-center px-0">Fim</th>
+                        <th class="text-center px-0">Comprado em</th>
+                        <th class="text-center px-0">Valor por usuário</th>
+                        <th class="text-center px-0">Valor da Assinatura</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <span class="badge badge-light-danger">Usuários adicionais</span>
+                        </td>
+                        <td>5</td>
+                        <td>
+                            15/01/2025
+                        </td>
+                        <td class="text-center">
+                            -
+                        </td>
+                        <td class="text-center">
+                            -
+                        </td>
+                        <td class="text-center">
+                            R$ 23,40
+                        </td>
+                        <td class="text-center">
+                            R$ 187,00
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="badge badge-light-primary">Módulos adicionais</span>
+                        </td>
+                        <td>Chat</td>
+                        <td>
+                            15/01/2025
+                        </td>
+                        <td class="text-center">
+                            -
+                        </td>
+                        <td class="text-center">
+                            -
+                        </td>
+                        <td class="text-center">
+                            25,40
+                        </td>
+                        <td class="text-center">
+                            R$ 127,00
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="badge badge-light-success">Pacote Free Trial - Até 5 usuários</span>
+                        </td>
+                        <td>Módulo Base - Financeiro - Vendas</td>
+                        <td>
+                            01/01/2025
+                        </td>
+                        <td class="text-center">
+                            29/01/2025
+                        </td>
+                        <td class="text-center">
+                            01/01/2025
+                        </td>
+                        <td class="text-center">
+                            R$ 19,80
+                        </td>
+                        <td class="text-center">
+                            R$ 97,00
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
-   </div>
-@endforeach
+    </div>
 </div>
-<div class="d-flex justify-content-center">
-    <a href="{{ route('clients.index') }}" class="btn btn-lg btn-primary mx-4">
-        Voltar
-    </a>
+<div class="div-resources" style="display: none;">
+    @include('pages.clients._resources')
 </div>
+@include('pages.clients._upgrade')
 @endsection
 
 @section('custom-footer')
