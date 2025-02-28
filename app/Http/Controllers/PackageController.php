@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Package;
 use App\Models\Module;
+use App\Models\PackageModule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -67,6 +68,15 @@ class PackageController extends Controller
         // Insere no banco de dados
         $created = $this->repository->create($data);
 
+        // Insere módulos no pacote
+        foreach ($data['modules'] as $moduleId) {
+            PackageModule::create([
+                'module_id'  => $moduleId,
+                'package_id' => $created->id,
+                'created_by' => Auth::id(),
+            ]);
+        }
+
         // Retorna a página
         return redirect()
                 ->route('packages.index')
@@ -109,10 +119,22 @@ class PackageController extends Controller
         // Atualiza dados
         $packages->update($data);
 
+        // Remove pacotes anteriores
+        PackageModule::where('package_id', $id)->delete();
+
+        // Insere módulos no pacote
+        foreach ($data['modules'] as $moduleId) {
+            PackageModule::create([
+                'module_id'  => $moduleId,
+                'package_id' => $id,
+                'created_by' => Auth::id(),
+            ]);
+        }
+
         // Retorna a página
         return redirect()
-        ->route('packages.index')
-        ->with('message', 'Pacote <b>'. $oldName . '</b> atualizado para <b>'. $packages->name .'</b> com sucesso.');
+            ->route('packages.edit', $id)
+            ->with('message', 'Pacote <b>'. $oldName . '</b> atualizado para <b>'. $packages->name .'</b> com sucesso.');
     }
 
     public function destroy($id)

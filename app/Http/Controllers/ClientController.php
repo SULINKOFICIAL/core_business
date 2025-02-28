@@ -121,7 +121,7 @@ class ClientController extends Controller
      */
     public function show($id)
     {
-        // Obtém dados dos Setores ativos
+        // Obtém dados dos Modulos ativos
         $modules = Module::where('status', true)->get();
 
         // Obtém dados do Lead

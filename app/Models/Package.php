@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Package extends Model
 {
@@ -23,4 +24,10 @@ class Package extends Model
                     ->withPivot('start_date', 'end_date', 'status')
                     ->withTimestamps();
     }
+
+    public function modules(): BelongsToMany
+    {
+        return $this->belongsToMany(Module::class, 'packages_modules', 'package_id', 'module_id');
+    }
+
 }

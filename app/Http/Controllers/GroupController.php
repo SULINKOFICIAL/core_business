@@ -33,7 +33,7 @@ class GroupController extends Controller
 
     public function create()
     {   
-        // Obtém dados dos Setores ativos
+        // Obtém dados dos Modulos ativos
         $resources = Resource::where('status', true)->get();        
 
         // Retorna a página
@@ -66,7 +66,7 @@ class GroupController extends Controller
 
     public function edit($id)
     {
-        // Obtém dados dos Setores ativos
+        // Obtém dados dos Modulos ativos
         $resources = Resource::where('status', true)->get();       
 
         // Obtém dados

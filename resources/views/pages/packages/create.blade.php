@@ -10,7 +10,7 @@
     @csrf
     <div class="card">
         <div class="card-body">
-                @include('pages.packages._form')
+            @include('pages.packages._form')
         </div>
     </div>
     <div class="d-flex justify-content-end mt-4">
