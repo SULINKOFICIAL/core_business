@@ -12,7 +12,7 @@
                     <img src="{{ asset('storage/clientes/' . $client->id . '/logo.png') }}" alt="Logo do Cliente" class="img-fluid w-100 object-fit-contain">
                 @else
                     <div class="h-50px d-flex align-items-center justify-content-center">
-                        <p class="m-0 fs-2x fw-bolder text-gray-300 text-uppercase">Sem logo</p>
+                        <p class="m-0 fs-2x fw-bolder text-gray-300 text-uppercase text-center">Sem logo</p>
                     </div>
                 @endif
                 </div>
@@ -26,8 +26,8 @@
                         <i class="fa-solid fa-gear"></i>
                     </a>
                 </div>
-                <p class="text-gray-600 mb-0">
-                    Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
+                <p class="text-gray-600 my-2">
+                    Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially  in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
                 </p>
                 <button class="btn btn-sm btn-primary mt-2" data-show="resources">
                     Histórico de Compras

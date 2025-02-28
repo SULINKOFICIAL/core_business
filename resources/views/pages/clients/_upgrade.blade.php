@@ -53,9 +53,9 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="d-flex align-items-center fs-5 text-gray-600 mb-0 gap-2">
-                            Módulos <span class="fw-bolder text-gray-700" id="base-price">R$ 0,00</span> x <input type="number" class="form-control p-0 form-control-solid w-30px text-center h-30px border shadow" id="qnt-users" value="5" min="5"> usuários
+                            Módulos <span class="fw-bolder text-gray-700" id="base-price">R$ 0,00</span> x <input type="number" class="form-control p-0 form-control-solid w-30px text-center h-30px border shadow" id="qnt-users" value="3" min="3"> usuários
                         </div>
-                        <p class="m-0 text-primary fs-8">A partir de 5 usuários R$ 29,90 por usuário</p>
+                        <p class="m-0 text-primary fs-8">A partir de 3 usuários R$ 29,90 por usuário</p>
                     </div>
                     <span class="fs-2 fw-bolder text-gray-700" id="total-upgrade">
                         R$ 0,00
@@ -81,10 +81,10 @@
             // Quantidade de usuários
             let users = parseInt($('#qnt-users').val());
 
-            // Se houver mais de 5 usuários, cobrar R$ 29,90 por cada usuário adicional
+            // Se houver mais de 3 usuários, cobrar R$ 29,90 por cada usuário adicional
             let additionalUsersPrice = 0;
-            if (users > 5) {
-                additionalUsersPrice = (users - 5) * 29.90; // Preço adicional por usuário
+            if (users > 3) {
+                additionalUsersPrice = (users - 3) * 29.90; // Preço adicional por usuário
             }
 
             // Valor total dos módulos selecionados
