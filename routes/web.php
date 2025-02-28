@@ -1,5 +1,4 @@
 <?php
-
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ClientsActionsController;
@@ -10,8 +9,6 @@ use App\Http\Controllers\PackageController;
 use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\TicketController;
-use App\Http\Controllers\TicketsController;
-use App\Models\ErrorMiCore;
 
 // Paínel de administração
 Route::middleware(['auth'])->group(function () {

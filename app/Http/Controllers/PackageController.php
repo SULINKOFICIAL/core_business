@@ -67,10 +67,11 @@ class PackageController extends Controller
         // Insere no banco de dados
         $created = $this->repository->create($data);
 
-            // Retorna a página
-            return redirect()
-                    ->route('packages.index')
-                    ->with('message', 'Pacote <b>'. $created->name . '</b> adicionado com sucesso.');
+        // Retorna a página
+        return redirect()
+                ->route('packages.index')
+                ->with('message', 'Pacote <b>'. $created->name . '</b> adicionado com sucesso.');
+                
     }
 
     public function edit($id)

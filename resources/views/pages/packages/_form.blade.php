@@ -17,10 +17,10 @@
     </div>
     <div class="col-12 mb-4">
         <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Setores</label>
-        <select name="groups[]" class="form-select form-select-solid" data-control="select2" data-placeholder="Selecione" multiple>
+        <select name="modules[]" class="form-select form-select-solid" data-control="select2" data-placeholder="Selecione" multiple required>
             <option value=""></option>
-            @foreach ($groups as $group)
-            <option value="{{ $group->id }}" @if(isset($sectors) && in_array($group->id, $sectors->groups->pluck('id')->toArray())) selected @endif>{{ $group->name }}</option>
+            @foreach ($modules as $module)
+            <option value="{{ $module->id }}" @if(isset($sectors) && in_array($module->id, $sectors->modules->pluck('id')->toArray())) selected @endif>{{ $module->name }}</option>
             @endforeach
         </select>
     </div>
