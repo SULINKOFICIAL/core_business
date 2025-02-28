@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\Module;
+use App\Models\Package;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use GuzzleHttp\Client as Guzzle;
@@ -155,10 +156,14 @@ class ClientController extends Controller
 
         }
 
+        // Obtém pacotes
+        $packages = Package::where('status', true)->get();
+
         // Retorna a página
         return view('pages.clients.show')->with([
             'client' => $client,
             'modules' => $modules,
+            'packages' => $packages,
             'allowFeatures' => $allowFeatures,
             'responseApi' => $responseApi,
         ]);

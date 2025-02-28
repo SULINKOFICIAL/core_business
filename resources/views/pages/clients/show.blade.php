@@ -20,7 +20,7 @@
             <div>
                 <div class="d-flex align-items-center justify-content-between">
                     <p class="fw-bold text-gray-700 fs-2x mb-2 text-uppercase lh-1 d-flex">
-                        {{ $client->name }}
+                        {{ $client->name }} - <span class="text-success">R$ {{ number_format($client->current_value, 2, ',', '.') }}</span>
                     </p>
                     <a href="{{ route('clients.edit', $client->id) }}" class="text-hover-primary">
                         <i class="fa-solid fa-gear"></i>
@@ -138,6 +138,7 @@
 <div class="div-resources" style="display: none;">
     @include('pages.clients._resources')
 </div>
+@include('pages.clients._add_package')
 @include('pages.clients._upgrade')
 @endsection
 

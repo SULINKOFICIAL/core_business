@@ -4,7 +4,7 @@
         <input type="text" class="form-control form-control-solid" placeholder="Nome" name="name" value="{{ $modules->name ?? old('name') }}" required>
     </div>
     <div class="col-6 mb-4">
-        <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Valor no Upgrade</label>
+        <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Valor</label>
         <input type="text" class="form-control form-control-solid input-money" name="value" value="R$ {{ number_format(($packages->value ?? 0), 2, ',', '.') }}" required>
     </div>
     <div class="col-12 mb-4">

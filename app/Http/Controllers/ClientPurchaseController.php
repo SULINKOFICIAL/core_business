@@ -20,10 +20,11 @@ class ClientPurchaseController extends Controller
       */
      public function store(Request $request, $id)
      {
+          
           // Inicia configurações
           $limitUsers = null;
           $moduleChange = null;
-          $totalValue = 0;
+          $totalValue = 29.90;
 
           // Obtém o cliente
           $client = Client::find($id);
@@ -74,6 +75,7 @@ class ClientPurchaseController extends Controller
                $purchase = ClientPurchase::create([
                     'client_id' => $id,
                     'purchase_date' => now(),
+                    'previous_value' => $client->current_value,
                     'total_value' => 0,
                     'method' => 1,
                ]);
@@ -97,6 +99,8 @@ class ClientPurchaseController extends Controller
                     // Atualiza no cliente
                     $client->users_limit = $data['users_limit'];
 
+                    // Soma ao total
+                    $totalValue += $priceLimitUsers;
                }
 
                // Adiciona módulos como Upgrade
@@ -111,6 +115,9 @@ class ClientPurchaseController extends Controller
                          'start_date' => now(),
                          'end_date' => now()->addYear(),
                     ]);
+                    
+                    // Soma ao total
+                    $totalValue += $module->value;
                }
 
                // Remove módulos como Downgrade
@@ -121,12 +128,17 @@ class ClientPurchaseController extends Controller
                          'item_type' => 'Downgrade',
                          'item_name' => $module->id,
                          'quantity' => 1,
-                         'item_value' => $module->value,
+                         'item_value' => -$module->value, // Deduz o valor do total
                          'start_date' => now(),
                          'end_date' => now()->addYear(),
                     ]);
+                    
+                    // Subtrai do total
+                    $totalValue -= $module->value;
                }
+
                // Atualiza no cliente
+               $client->current_value = $totalValue;
                $client->save();
 
                // Atualiza o total da compra
@@ -134,11 +146,11 @@ class ClientPurchaseController extends Controller
                
           }
 
-
           // Retorna a página
           return redirect()
                ->route('clients.show', $id)
                ->with('message', 'Configurações da conta do cliente atualizadas com sucesso.');
+
      }
 
 
