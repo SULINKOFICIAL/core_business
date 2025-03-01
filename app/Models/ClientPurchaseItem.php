@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class ClientPurchaseItem extends Model
 {
@@ -11,9 +12,17 @@ class ClientPurchaseItem extends Model
         'purchase_id',
         'item_type',
         'item_name',
+        'item_key',
         'quantity',
         'item_value',
         'start_date',
         'end_date',
     ];
+
+    // Relacionamento com resources
+    public function module(): HasOne
+    {
+       return $this->hasOne(Module::class, 'id', 'item_key');
+    }
+
 }

@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class ClientPurchase extends Model
 {
     protected $table = 'clients_purchases';
+    protected $casts = [
+        'purchase_date' => 'datetime',
+    ];
     protected $fillable = [
         'client_id',
         'purchase_date',
@@ -14,4 +17,9 @@ class ClientPurchase extends Model
         'method',
         'status',
     ];
+
+    public function items()
+    {
+        return $this->hasMany(ClientPurchaseItem::class, 'purchase_id');
+    }
 }

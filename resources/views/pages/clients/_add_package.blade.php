@@ -7,7 +7,7 @@
         data-kt-drawer-activate="true"
         data-kt-drawer-toggle="#drawer_package"
         data-kt-drawer-close="#kt_drawer_example_basic_close"
-        data-kt-drawer-width="700px">
+        data-kt-drawer-width="500px">
         <div class="card w-100 rounded-0">
             <div class="card-header pe-5">
                 <div class="card-title">
@@ -61,58 +61,3 @@
         </div>
     </div>
 </form>
-
-@section('custom-footer')
-    @parent
-    <script>
-    $(document).ready(function() {
-        /**
-         * Função para calcular o valor total dos módulos selecionados.
-         */
-        function sumUpgrade() {
-
-            // Preço base do plano (sem considerar os módulos adicionais)
-            let basePrice = 49.00;
-
-            // Quantidade de usuários
-            let users = parseInt($('#qnt-users').val());
-
-            // Se houver mais de 3 usuários, cobrar R$ 29,90 por cada usuário adicional
-            let additionalUsersPrice = 0;
-            if (users > 3) {
-                additionalUsersPrice = (users - 3) * 29.90; // Preço adicional por usuário
-            }
-
-            // Valor total dos módulos selecionados
-            let packagesTotal = 0;
-            $('.input-features-upgrade:checked').each(function() {
-                // Pega o valor do módulo correspondente e converte para número
-                let valor = $(this).closest('.d-flex').find('.value-package').text().replace('R$', '').replace('.', '').replace(',', '.');
-                packagesTotal += parseFloat(valor); // Soma o valor do módulo
-            });
-
-            // Calculando o valor total (preço base + módulos adicionais + usuários adicionais)
-            let total = basePrice + packagesTotal + additionalUsersPrice;
-
-            // Exibe o total
-            $('#total-upgrade').text('R$ ' + total.toFixed(2).replace('.', ','));
-            $('#base-price').text('R$ ' + (basePrice + packagesTotal).toFixed(2).replace('.', ','));
-
-        }
-
-        // Quando um checkbox for alterado (marcado/desmarcado), recalcular o total
-        $('.input-features-upgrade').change(function() {
-            sumUpgrade();
-        });
-
-        // Quando o número de usuários for alterado, recalcular o total
-        $('#qnt-users').change(function() {
-            sumUpgrade();
-        });
-
-        // Realiza cálculo inicial
-        sumUpgrade();
-
-    });
-    </script>
-@endsection

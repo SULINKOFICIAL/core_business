@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Http;
 
@@ -41,6 +42,12 @@ class Client extends Model
     public function modules(): BelongsToMany
     {
        return $this->belongsToMany(Module::class, 'clients_modules', 'client_id', 'module_id');
+    }
+    
+    // Relacionamento com resources
+    public function purchases(): HasMany
+    {
+       return $this->hasMany(ClientPurchase::class, 'client_id', 'id');
     }
 
     public function systemStatus()

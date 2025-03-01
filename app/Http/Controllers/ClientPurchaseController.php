@@ -20,6 +20,13 @@ class ClientPurchaseController extends Controller
       */
      public function store(Request $request, $id)
      {
+          // Remove compras do cliente
+          $purchases = ClientPurchase::where('client_id', $id)->get();
+          foreach ($purchases as $purchase) {
+               // Remove os itens da compra
+               ClientPurchaseItem::where('purchase_id', $purchase->id)->delete();
+               $purchase->delete();
+          }
           
           // Inicia configurações
           $limitUsers = null;
@@ -88,12 +95,13 @@ class ClientPurchaseController extends Controller
 
                     // Cria item 
                     ClientPurchaseItem::create([
-                         'purchase_id' => $purchase->id,
-                         'item_type' => 'Upgrade',
-                         'item_name' => 'Usuários',
-                         'quantity' => 1,
-                         'item_value' => $priceLimitUsers,
-                         'start_date' => now(),
+                         'purchase_id'  => $purchase->id,
+                         'item_type'    => 'Upgrade',
+                         'item_name'    => 'Usuários',
+                         'item_key'     => $data['users_limit'],
+                         'quantity'     => 1,
+                         'item_value'   => $priceLimitUsers,
+                         'start_date'   => now(),
                     ]);
 
                     // Atualiza no cliente
@@ -107,13 +115,14 @@ class ClientPurchaseController extends Controller
                foreach ($modulesAdded as $moduleId) {
                     $module = Module::find($moduleId);
                     ClientPurchaseItem::create([
-                         'purchase_id' => $purchase->id,
-                         'item_type' => 'Upgrade',
-                         'item_name' => $module->id,
-                         'quantity' => 1,
-                         'item_value' => $module->value,
-                         'start_date' => now(),
-                         'end_date' => now()->addYear(),
+                         'purchase_id'  => $purchase->id,
+                         'item_type'    => 'Upgrade',
+                         'item_name'    => 'Modulo',
+                         'item_key'     => $module->id,
+                         'quantity'     => 1,
+                         'item_value'   => $module->value,
+                         'start_date'   => now(),
+                         'end_date'     => now()->addYear(),
                     ]);
                     
                     // Soma ao total
@@ -126,7 +135,8 @@ class ClientPurchaseController extends Controller
                     ClientPurchaseItem::create([
                          'purchase_id' => $purchase->id,
                          'item_type' => 'Downgrade',
-                         'item_name' => $module->id,
+                         'item_name' => 'Modulo',
+                         'item_key' => $module->id,
                          'quantity' => 1,
                          'item_value' => -$module->value, // Deduz o valor do total
                          'start_date' => now(),

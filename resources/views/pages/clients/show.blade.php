@@ -39,6 +39,71 @@
         </div>
     </div>
 </div>
+<div class="div">
+    <div class="card mb-4">
+        <div class="card-body">
+            <table class="table table-striped table-row-bordered gy-2 gs-7 align-middle datatables">
+                <thead class="rounded" style="background: #1c283e">
+                    <tr class="fw-bold fs-6 text-white px-7">
+                        <th class="w-100px text-start">ID</th>
+                        <th>Data</th>
+                        <th class="text-start">Descrição das alterações</th>
+                        <th class="text-start">Valor</th>
+                        <th class="text-center">Método</th>
+                    </tr>
+                </thead>
+                <tbody class="text-start">
+                    @foreach ($client->purchases as $purchase)
+                    <tr>
+                        <td class="w-100px text-start">
+                            <span class="text-gray-700 fw-bolder">
+                                #{{ str_pad($purchase->id, 4, '0', STR_PAD_LEFT) }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="text-gray-600">
+                                {{ $purchase->purchase_date->format('d/m/Y') }} às {{ $purchase->purchase_date->format('H:i:s') }}
+                            </span>
+                        </td>
+                        <td class="text-start">-</td>
+                        <td class="text-start">
+                            <span class="text-gray-700 fw-bold">R$ {{ number_format($purchase->total_value, 2, ',', '.') }}</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="text-gray-700 fw-bold">{{ $purchase->method }}</span>
+                        </td>
+                    </tr>
+                    @foreach ($purchase->items as $item)
+                    <tr class="text-muted bg-light">
+                        <td></td>
+                        <td>
+                            @if ($item->item_name == 'Modulo')
+                            <span class="fw-bold text-gray-700">
+                                {{ $item->item_name }}: {{ $item->module->name }}
+                            </span>
+                            @else
+                                {{ $item->item_name }}
+                            @endif
+                        </td>
+                        <td class="text-start">
+                            @if ($item->item_type == 'Upgrade')
+                                <span class="badge badge-light-success">Upgrade</span>
+                            @else
+                                <span class="badge badge-light-danger">Downgrade</span>
+                            @endif
+                        </td>
+                        <td class="text-start">
+                            <span class="text-gray-700">R$ {{ number_format($item->item_value, 2, ',', '.') }}</span>
+                        </td>
+                        <td></td>
+                    </tr>
+                    @endforeach
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 @if (!$responseApi)
     <div class="alert alert-danger d-flex align-items-center p-5 mb-5">
         <i class="ki-duotone ki-shield-tick fs-2hx text-danger me-4">
@@ -51,90 +116,6 @@
         </div>
     </div>
 @endif
-<div class="div">
-    <div class="card">
-        <div class="card-body">
-            <table class="table table-striped table-row-bordered gy-2 gs-7 align-middle datatables">
-                <thead class="rounded" style="background: #1c283e">
-                    <tr class="fw-bold fs-6 text-white px-7">
-                        <th>Pacote/Upgrade</th>
-                        <th>Descrição</th>
-                        <th class="text-center px-0">Inicio</th>
-                        <th class="text-center px-0">Fim</th>
-                        <th class="text-center px-0">Comprado em</th>
-                        <th class="text-center px-0">Valor por usuário</th>
-                        <th class="text-center px-0">Valor da Assinatura</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>
-                            <span class="badge badge-light-danger">Usuários adicionais</span>
-                        </td>
-                        <td>5</td>
-                        <td>
-                            15/01/2025
-                        </td>
-                        <td class="text-center">
-                            -
-                        </td>
-                        <td class="text-center">
-                            -
-                        </td>
-                        <td class="text-center">
-                            R$ 23,40
-                        </td>
-                        <td class="text-center">
-                            R$ 187,00
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <span class="badge badge-light-primary">Módulos adicionais</span>
-                        </td>
-                        <td>Chat</td>
-                        <td>
-                            15/01/2025
-                        </td>
-                        <td class="text-center">
-                            -
-                        </td>
-                        <td class="text-center">
-                            -
-                        </td>
-                        <td class="text-center">
-                            25,40
-                        </td>
-                        <td class="text-center">
-                            R$ 127,00
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <span class="badge badge-light-success">Pacote Free Trial - Até 5 usuários</span>
-                        </td>
-                        <td>Módulo Base - Financeiro - Vendas</td>
-                        <td>
-                            01/01/2025
-                        </td>
-                        <td class="text-center">
-                            29/01/2025
-                        </td>
-                        <td class="text-center">
-                            01/01/2025
-                        </td>
-                        <td class="text-center">
-                            R$ 19,80
-                        </td>
-                        <td class="text-center">
-                            R$ 97,00
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
 <div class="div-resources" style="display: none;">
     @include('pages.clients._resources')
 </div>
