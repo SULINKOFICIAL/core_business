@@ -39,68 +39,87 @@
         </div>
     </div>
 </div>
-<div class="div">
-    <div class="card mb-4">
-        <div class="card-body">
-            <table class="table table-striped table-row-bordered gy-2 gs-7 align-middle datatables">
-                <thead class="rounded" style="background: #1c283e">
-                    <tr class="fw-bold fs-6 text-white px-7">
-                        <th class="w-100px text-start">ID</th>
-                        <th>Data</th>
-                        <th class="text-start">Descrição das alterações</th>
-                        <th class="text-start">Valor</th>
-                        <th class="text-center">Método</th>
-                    </tr>
-                </thead>
-                <tbody class="text-start">
-                    @foreach ($client->purchases as $purchase)
-                    <tr>
-                        <td class="w-100px text-start">
-                            <span class="text-gray-700 fw-bolder">
-                                #{{ str_pad($purchase->id, 4, '0', STR_PAD_LEFT) }}
-                            </span>
-                        </td>
-                        <td>
-                            <span class="text-gray-600">
-                                {{ $purchase->purchase_date->format('d/m/Y') }} às {{ $purchase->purchase_date->format('H:i:s') }}
-                            </span>
-                        </td>
-                        <td class="text-start">-</td>
-                        <td class="text-start">
-                            <span class="text-gray-700 fw-bold">R$ {{ number_format($purchase->total_value, 2, ',', '.') }}</span>
-                        </td>
-                        <td class="text-center">
-                            <span class="text-gray-700 fw-bold">{{ $purchase->method }}</span>
-                        </td>
-                    </tr>
-                    @foreach ($purchase->items as $item)
-                    <tr class="text-muted bg-light">
-                        <td></td>
-                        <td>
-                            @if ($item->item_name == 'Modulo')
-                            <span class="fw-bold text-gray-700">
-                                {{ $item->item_name }}: {{ $item->module->name }}
-                            </span>
-                            @else
-                                {{ $item->item_name }}
-                            @endif
-                        </td>
-                        <td class="text-start">
-                            @if ($item->item_type == 'Upgrade')
-                                <span class="badge badge-light-success">Upgrade</span>
-                            @else
-                                <span class="badge badge-light-danger">Downgrade</span>
-                            @endif
-                        </td>
-                        <td class="text-start">
-                            <span class="text-gray-700">R$ {{ number_format($item->item_value, 2, ',', '.') }}</span>
-                        </td>
-                        <td></td>
-                    </tr>
-                    @endforeach
-                    @endforeach
-                </tbody>
-            </table>
+<div class="row">
+    <div class="col-2">
+        <div class="card mb-4">
+            <div class="card-body p-6">
+                <p class="fw-bolder text-gray-700 fs-3 text-uppercase">Configuração</p>
+                @foreach ($modules as $module)
+                <div class="mb-1 d-flex align-items-center justify-content-between">
+                    <p class="text-gray-700 mb-0">{{ Str::limit($module->name, 25) }}</p>
+                    @if (in_array($module->id, $client->modules->pluck('id')->toArray()))
+                        <i class="fa-solid fa-circle-check text-success"></i>
+                    @else
+                        <i class="fa-solid fa-circle-check text-danger"></i>
+                    @endif
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+    <div class="col-10">
+        <div class="card mb-4">
+            <div class="card-body">
+                <table class="table table-striped table-row-bordered gy-2 gs-7 align-middle datatables">
+                    <thead class="rounded" style="background: #1c283e">
+                        <tr class="fw-bold fs-6 text-white px-7">
+                            <th class="w-100px text-start">ID</th>
+                            <th>Data</th>
+                            <th class="text-start">Descrição das alterações</th>
+                            <th class="text-start">Valor</th>
+                            <th class="text-center">Método</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-start">
+                        @foreach ($client->purchases as $purchase)
+                        <tr>
+                            <td class="w-100px text-start">
+                                <span class="text-gray-700 fw-bolder">
+                                    #{{ str_pad($purchase->id, 4, '0', STR_PAD_LEFT) }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="text-gray-600">
+                                    {{ $purchase->purchase_date->format('d/m/Y') }} às {{ $purchase->purchase_date->format('H:i:s') }}
+                                </span>
+                            </td>
+                            <td class="text-start">-</td>
+                            <td class="text-start">
+                                <span class="text-gray-700 fw-bold">R$ {{ number_format($purchase->total_value, 2, ',', '.') }}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="text-gray-700 fw-bold">{{ $purchase->method }}</span>
+                            </td>
+                        </tr>
+                        @foreach ($purchase->items as $item)
+                        <tr class="text-muted bg-light">
+                            <td></td>
+                            <td>
+                                @if ($item->item_name == 'Modulo')
+                                <span class="fw-bold text-gray-700">
+                                    {{ $item->item_name }}: {{ $item->module->name }}
+                                </span>
+                                @else
+                                    {{ $item->item_name }}
+                                @endif
+                            </td>
+                            <td class="text-start">
+                                @if ($item->item_type == 'Upgrade')
+                                    <span class="badge badge-light-success">Upgrade</span>
+                                @else
+                                    <span class="badge badge-light-danger">Downgrade</span>
+                                @endif
+                            </td>
+                            <td class="text-start">
+                                <span class="text-gray-700">R$ {{ number_format($item->item_value, 2, ',', '.') }}</span>
+                            </td>
+                            <td></td>
+                        </tr>
+                        @endforeach
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
