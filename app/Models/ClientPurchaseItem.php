@@ -15,8 +15,6 @@ class ClientPurchaseItem extends Model
         'item_key',
         'quantity',
         'item_value',
-        'start_date',
-        'end_date',
     ];
 
     // Relacionamento com resources

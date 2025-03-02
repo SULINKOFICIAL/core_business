@@ -42,17 +42,17 @@ class DatabaseSeeder extends Seeder
         // Seeder para fornecedores
         $this->call(ClientSeeder::class);
 
-        /* // Seeder para fornecedores
-        $this->call(PackageSeeder::class);
+        // Seeder para fornecedores
+        $this->call(ResourceSeeder::class);
 
         // Seeder para fornecedores
         $this->call(GroupSeeder::class);
 
         // Seeder para fornecedores
-        $this->call(ResourceSeeder::class);
+        $this->call(ModuleSeeder::class);
 
         // Seeder para fornecedores
-        $this->call(SectorSeeder::class); */
+        $this->call(PackageSeeder::class);
 
     }
 }

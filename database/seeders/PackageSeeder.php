@@ -2,8 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\Module;
 use App\Models\Package;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\PackageModule;
 use Illuminate\Database\Seeder;
 
 class PackageSeeder extends Seeder
@@ -14,17 +15,26 @@ class PackageSeeder extends Seeder
     public function run(): void
     {
         Package::create([
-            'name' => 'Pacote Básico',
-            'status' => 1,
-            'value' => '100.00',
-            'order' => 1,
-            'created_by' => 1,
+            'name'          => 'Free Trial',
+            'value'         => 0,
+            'duration_days' => 30,
+            'order'         => 1,
+            'created_by'    => 1,
+        ]);
+        
+        Package::create([
+            'name'          => 'Premium Trial',
+            'value'         => 149,
+            'duration_days' => 30,
+            'order'         => 1,
+            'created_by'    => 1,
         ]);
 
         Package::create([
             'name' => 'Vendas Full',
             'status' => 1,
             'value' => '250.00',
+            'duration_days' => 30,
             'order' => 1,
             'created_by' => 2,
         ]);
@@ -33,6 +43,7 @@ class PackageSeeder extends Seeder
             'name' => 'Financeiro',
             'status' => 1,
             'value' => '10.00',
+            'duration_days' => 30,
             'order' => 1,
             'created_by' => 2,
         ]);
@@ -40,11 +51,26 @@ class PackageSeeder extends Seeder
         Package::create([
             'name' => 'Atendimento ao Cliente',
             'value' => '199.90',
+            'duration_days' => 30,
             'status' => 1,
             'order' => 1,
             'created_by' => 1,
         ]);
+ 
+        // Obtém os recuros e adiciona aos grupos
+        $packages = Package::get();
+        $modules = Module::get();
 
+        // Adiciona os grupos
+        foreach ($packages as $package) {
+            foreach ($modules as $module) {
+                PackageModule::create([
+                    'module_id' => $module->id,
+                    'package_id' => $package->id,
+                    'created_by' => 1,
+               ]);
+            }
+        }
 
     }
 }

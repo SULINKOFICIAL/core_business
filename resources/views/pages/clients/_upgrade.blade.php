@@ -39,13 +39,11 @@
                             @endif
                         </span>
                     </div>
-                    @if ($key != 0)
                     <div class="ms-8">
                         <label class="form-check form-switch form-check-custom form-check-solid me-6">
                             <input class="form-check-input cursor-pointer input-features-upgrade" name="modules[]" type="checkbox" value="{{ $module->id }}" @if(in_array($module->id, $client->modules->pluck('id')->toArray())) checked @endif/>
                         </label>
                     </div>
-                    @endif
                 </div>
                 @endforeach
             </div>

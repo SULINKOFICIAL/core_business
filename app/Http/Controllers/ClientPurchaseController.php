@@ -31,7 +31,7 @@ class ClientPurchaseController extends Controller
           // Inicia configurações
           $limitUsers = null;
           $moduleChange = null;
-          $totalValue = 29.90;
+          $totalValue = 0;
 
           // Obtém o cliente
           $client = Client::find($id);

@@ -1,5 +1,5 @@
-<button id="drawer_package" class="btn btn-success btn-active-success position-fixed" style="right: 200px; bottom: 50px">Adicionar Pacote</button>
-<form action="{{ route('clients.purchases.store', $client->id) }}" method="POST" enctype="multipart/form-data">
+<button id="drawer_package" class="btn btn-success btn-active-success position-fixed" style="right: 200px; bottom: 50px">Atribuir Pacote</button>
+<form action="{{ route('packages.assign', $client->id) }}" method="POST" enctype="multipart/form-data">
     @csrf
     <div
         class="bg-white"
@@ -12,7 +12,7 @@
             <div class="card-header pe-5">
                 <div class="card-title">
                     <div class="d-flex justify-content-center flex-column me-3">
-                        <span class="fs-4 fw-bold text-gray-700 me-1 lh-1">Adicionar Pacote: <span class="text-danger">{{ $client->name }}</span></span>
+                        <span class="fs-4 fw-bold text-gray-700 me-1 lh-1">Atribuir Pacote: <span class="text-danger">{{ $client->name }}</span></span>
                     </div>
                 </div>
                 <div class="card-toolbar">
@@ -36,7 +36,7 @@
                                 <span class="fw-bolder text-primary">{{ $package->duration_days }}</span> dias - <span class="text-success value-module">R$ {{ number_format($package->value, 2, ',', '.') }}</span>
                             </div>
                             <div class="form-check form-check-custom form-check-success form-check-solid">
-                                <input class="form-check-input" name="package_id" type="radio" @if($package->id == $client->package_id) checked @endif id="package-{{ $package->id }}"/>
+                                <input class="form-check-input" name="package_id" value="{{ $package->id }}" type="radio" @if($package->id == $client->package_id) checked @endif id="package-{{ $package->id }}" required/>
                             </div>
                         </div>
                         @if ($package->modules->count())

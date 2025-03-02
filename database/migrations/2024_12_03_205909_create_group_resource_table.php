@@ -15,7 +15,7 @@ class CreateGroupResourceTable extends Migration
             $table->timestamps();
         });
     }
-
+    
     public function down()
     {
         Schema::dropIfExists('group_resource');

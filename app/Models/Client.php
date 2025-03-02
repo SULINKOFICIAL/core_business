@@ -31,19 +31,19 @@ class Client extends Model
         'updated_by',
     ];
     
-    // Relacionamento com resources
+    // Pacote atual do cliente
     public function package(): HasOne
     {
        return $this->hasOne(Package::class, 'id', 'package_id');
     }
     
-    // Relacionamento com resources
+    // Módulos habilitados para o cliente
     public function modules(): BelongsToMany
     {
        return $this->belongsToMany(Module::class, 'clients_modules', 'client_id', 'module_id');
     }
     
-    // Relacionamento com resources
+    // Compras realizadas pelo cliente
     public function purchases(): HasMany
     {
        return $this->hasMany(ClientPurchase::class, 'client_id', 'id');

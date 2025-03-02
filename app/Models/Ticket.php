@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Ticket extends Model
 {
     protected $table = 'tickets';
+    
     /**
      * The attributes that are mass assignable.
      *
@@ -22,5 +23,4 @@ class Ticket extends Model
         'finished_by',
         'finished_at',
     ];
-
 }
