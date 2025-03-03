@@ -302,10 +302,23 @@ class PackageController extends Controller
                 'total_value' => 0,
                 'description' => 'Pacote alterado',
                 'method' => 'Manual',
+                'status' => false,
+            ]);
+
+            // Registra o valor anterior do pacote
+            ClientPurchaseItem::create([
+                'purchase_id' => $purchase->id,
+                'type' => 'Pacote',
+                'action' => 'Sem alteração',
+                'item_name' => "{$client->package->name} ({$client->users_limit} usuários)",
+                'item_key' => $client->package->id,
+                'quantity' => 1,
+                'item_value' => $client->current_value,
             ]);
 
             // **Registra os Itens da Compra**
             if ($limitUsers) {
+                
                 // Calcula o valor do novo limite de usuários
                 $priceLimitUsers = ($data['users_limit'] - 3) * 29.90;
 
@@ -338,7 +351,6 @@ class PackageController extends Controller
                     'quantity' => 1,
                     'item_value' => $module->value,
                 ]);
-                
             }
 
             // Remove módulos como Downgrade
@@ -353,12 +365,31 @@ class PackageController extends Controller
                     'quantity' => 1,
                     'item_value' => -$module->value,
                 ]);
-                
             }
 
             // Aqui somamos o valor de todos os módulos ativos para o cliente
             $totalPrice = $client->modules->sum('value') + 29.90;
 
+            // Obtém o valor diário do plano atual
+            $daysInMonth = now()->daysInMonth;
+            $dailyRate = $client->current_value / $daysInMonth;
+
+            // Calcula os dias restantes
+            $daysUsed = now()->day; // Quantidade de dias já utilizados no mês
+            $daysRemaining = $daysInMonth - $daysUsed;
+
+            // Calcula o crédito proporcional
+            $credit = $dailyRate * $daysRemaining;
+
+            // Adiciona crédito
+            ClientPurchaseItem::create([
+                'purchase_id' => $purchase->id,
+                'type'        => 'Crédito',
+                'action'      => 'Ajuste',
+                'item_name'   => 'Crédito',
+                'quantity'    => 1,
+                'item_value'  => -$credit,
+            ]);
             
             // O valor dos usuários deve ser calculado com base no limite de usuários
             if ($client->users_limit > 3) {

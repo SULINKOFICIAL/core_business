@@ -48,6 +48,12 @@ class Client extends Model
     {
        return $this->hasMany(ClientPurchase::class, 'client_id', 'id');
     }
+    
+    // Assinaturas realizadas pelo cliente
+    public function subscriptions(): HasMany
+    {
+       return $this->hasMany(ClientSubscription::class, 'client_id', 'id');
+    }
 
     public function systemStatus()
     {
