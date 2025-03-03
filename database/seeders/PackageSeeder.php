@@ -16,7 +16,7 @@ class PackageSeeder extends Seeder
     {
         Package::create([
             'name'          => 'Free Trial',
-            'value'         => 0,
+            'value'         => 89.9,
             'duration_days' => 30,
             'order'         => 1,
             'created_by'    => 1,
@@ -62,14 +62,19 @@ class PackageSeeder extends Seeder
         $modules = Module::get();
 
         // Adiciona os grupos
-        foreach ($packages as $package) {
-            foreach ($modules as $module) {
+        foreach ($packages as $key => $package) {
+            foreach ($modules->take(count($modules) - 1) as $module) {
                 PackageModule::create([
                     'module_id' => $module->id,
                     'package_id' => $package->id,
                     'created_by' => 1,
-               ]);
+                ]);
             }
+        }
+
+
+        // Randomiza módulos
+        if($key <= 1 || rand(true, false)){
         }
 
     }

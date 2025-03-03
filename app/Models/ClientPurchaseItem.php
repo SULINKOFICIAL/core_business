@@ -10,7 +10,8 @@ class ClientPurchaseItem extends Model
     protected $table = 'clients_purchases_items';
     protected $fillable = [
         'purchase_id',
-        'item_type',
+        'type',
+        'action',
         'item_name',
         'item_key',
         'quantity',

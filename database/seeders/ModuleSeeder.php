@@ -17,24 +17,28 @@ class ModuleSeeder extends Seeder
     {
         Module::create([
             'name' => 'Financeiro',
+            'value' => 20,
             'status' => 1,
             'created_by' => 1,
         ]);
 
         Module::create([
             'name' => 'Usuários',
+            'value' => 20,
             'status' => 1,
             'created_by' => 2,
         ]);
 
         Module::create([
             'name' => 'Blog',
+            'value' => 20,
             'status' => 1,
             'created_by' => 2,
         ]);
 
         Module::create([
             'name' => 'Vendas',
+            'value' => 20,
             'status' => 1,
             'created_by' => 1,
         ]);

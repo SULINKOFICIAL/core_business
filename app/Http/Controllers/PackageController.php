@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\ClientModule;
 use App\Models\ClientPurchase;
 use App\Models\ClientPurchaseItem;
 use App\Models\ClientSubscription;
@@ -183,33 +184,45 @@ class PackageController extends Controller
         // Cria registro de "Compra"
         $lastPurchase = ClientPurchase::create([
             'client_id'     => $client->id,
+            'description'   => 'Pacote Atribuido',
             'purchase_date' => now(),
-            'total_value'   => 0.00,
+            'total_value'   => $package->value,
             'method'        => 'Manual',
         ]);
 
-        // Adiciona os módulos a compra
+        // Adiciona os módulos a compra e ao cliente
         foreach ($modules as $module) {
+
+            // Adiciona módulo a compra do cliente
             ClientPurchaseItem::create([
                 'purchase_id' => $lastPurchase->id,
-                'item_type'   => 'Módulo',
+                'type'        => 'Módulo',
+                'action'      => 'Adição',
                 'item_name'   => $module->name,
                 'item_key'    => $module->id,
                 'quantity'    => 1,
                 'item_value'  => $module->value,
             ]);
+
+            // Libera módulo para o cliente
+            ClientModule::create([
+                'client_id' => $client->id,
+                'module_id' => $module->id,
+            ]);
         }
 
         // Registra data da inscrição
         ClientSubscription::create([
-            'client_id'  => $id,
-            'package_id' => $data['package_id'],
-            'start_date' => now(),
-            'end_date'   => now()->addDays(30),
+            'client_id'     => $id,
+            'package_id'    => $data['package_id'],
+            'purschase_id'  => $lastPurchase->id,
+            'start_date'    => now(),
+            'end_date'      => now()->addDays(30),
         ]);
 
         // Atualiza o pacote do cliente
-        $client->package_id = $data['package_id'];
+        $client->package_id    = $data['package_id'];
+        $client->current_value = $package->value;
         $client->save();
         
         // Retorna a página
@@ -218,4 +231,153 @@ class PackageController extends Controller
             ->with('message', 'Pacote <b>'. $package->name . ' adicionado com sucesso.');
 
     }
+
+
+    /**
+      * Store a newly created resource in storage.
+      *
+      * @param  \Illuminate\Http\Request  $request
+      * @param  int  $id
+      * @return \Illuminate\Http\Response
+      */
+    public function upgrade(Request $request, $id)
+    {
+        // Inicia configurações
+        $limitUsers = null;
+        $moduleChange = null;
+
+        // Obtém o cliente
+        $client = Client::find($id);
+
+        // Obtém dados do formulário
+        $data = $request->all();
+
+        // Obtém os módulos atuais do cliente
+        $actualModules = $client->modules->pluck('id')->toArray();
+
+        // Obtém os novos módulos do request
+        $newModules = isset($data['modules']) ? $data['modules'] : [];
+
+        // Verifica se houve mudança de módulos (upgrade ou downgrade)
+        $modulesAdded = array_diff($newModules, $actualModules); // Novos módulos adicionados
+        $modulesRemoved = array_diff($actualModules, $newModules); // Módulos removidos
+
+        if (!empty($modulesAdded) && empty($modulesRemoved)) {
+            $moduleChange = 'Upgrade Módulos';
+        } elseif (!empty($modulesRemoved) && empty($modulesAdded)) {
+            $moduleChange = 'Downgrade Módulos';
+        } elseif (!empty($modulesAdded) && !empty($modulesRemoved)) {
+            $moduleChange = 'Mudança de Módulos';
+        }
+
+        // Verifica se houve mudança no limite de usuários
+        if ($data['users_limit'] < $client->users_limit) {
+            $limitUsers = 'Downgrade';
+        } elseif ($data['users_limit'] > $client->users_limit) {
+            $limitUsers = 'Upgrade';
+        }
+
+        // Remove módulos antigos
+        ClientModule::where('client_id', $id)->delete();
+
+        // Adiciona novos módulos ao cliente
+        foreach ($newModules as $moduleId) {
+            ClientModule::create([
+                'client_id' => $id,
+                'module_id' => $moduleId,
+            ]);
+        }
+
+        // Recarrega os módulos após a atualização
+        $client->load('modules');
+
+        // **Criação da Compra**
+        if ($limitUsers || $moduleChange) {
+
+            // Cria a compra
+            $purchase = ClientPurchase::create([
+                'client_id' => $id,
+                'purchase_date' => now(),
+                'previous_value' => $client->current_value,
+                'total_value' => 0,
+                'description' => 'Pacote alterado',
+                'method' => 'Manual',
+            ]);
+
+            // **Registra os Itens da Compra**
+            if ($limitUsers) {
+                // Calcula o valor do novo limite de usuários
+                $priceLimitUsers = ($data['users_limit'] - 3) * 29.90;
+
+                // Cria item 
+                ClientPurchaseItem::create([
+                    'purchase_id' => $purchase->id,
+                    'type' => 'Usuários',
+                    'action' => 'Alteração',
+                    'item_name' => 'Quantidade alterada',
+                    'item_key' => $data['users_limit'],
+                    'quantity' => 1,
+                    'item_value' => $priceLimitUsers,
+                    'start_date' => now(),
+                ]);
+
+                // Atualiza no cliente
+                $client->users_limit = $data['users_limit'];
+
+            }
+
+            // Adiciona módulos como Upgrade
+            foreach ($modulesAdded as $moduleId) {
+                $module = Module::find($moduleId);
+                ClientPurchaseItem::create([
+                    'purchase_id' => $purchase->id,
+                    'type' => 'Modulo',
+                    'action' => 'Upgrade',
+                    'item_name' => $module->name,
+                    'item_key' => $module->id,
+                    'quantity' => 1,
+                    'item_value' => $module->value,
+                ]);
+                
+            }
+
+            // Remove módulos como Downgrade
+            foreach ($modulesRemoved as $moduleId) {
+                $module = Module::find($moduleId);
+                ClientPurchaseItem::create([
+                    'purchase_id' => $purchase->id,
+                    'type' => 'Modulo',
+                    'action' => 'Downgrade',
+                    'item_name' => $module->name,
+                    'item_key' => $module->id,
+                    'quantity' => 1,
+                    'item_value' => -$module->value,
+                ]);
+                
+            }
+
+            // Aqui somamos o valor de todos os módulos ativos para o cliente
+            $totalPrice = $client->modules->sum('value') + 29.90;
+
+            
+            // O valor dos usuários deve ser calculado com base no limite de usuários
+            if ($client->users_limit > 3) {
+                $totalPrice += ($client->users_limit - 3) * 29.90;
+            }
+            
+            // Atualiza no cliente
+            $client->current_value = $totalPrice;
+            $client->save();
+
+            // Atualiza o total da compra
+            $purchase->update(['total_value' => $totalPrice]);
+
+        }
+
+        // Retorna a página
+        return redirect()
+            ->route('clients.show', $id)
+            ->with('message', 'Configurações da conta do cliente atualizadas com sucesso.');
+    }
+
 }

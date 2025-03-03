@@ -1,5 +1,5 @@
 <button id="drawer_upgrade" class="btn btn-primary btn-active-success position-fixed" style="right: 50px; bottom: 50px">Modificar Plano</button>
-<form action="{{ route('clients.purchases.store', $client->id) }}" method="POST" enctype="multipart/form-data">
+<form action="{{ route('packages.upgrade', $client->id) }}" method="POST" enctype="multipart/form-data">
     @csrf
     <div
         class="bg-white"
@@ -79,7 +79,7 @@
         function sumUpgrade() {
 
             // Preço base do plano (sem considerar os módulos adicionais)
-            let basePrice = 49.00;
+            let basePrice = 29.00;
 
             // Quantidade de usuários
             let users = parseInt($('#qnt-users').val());

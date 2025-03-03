@@ -33,7 +33,7 @@
                 "debug": false,
                 "newestOnTop": false,
                 "progressBar": false,
-                "positionClass": "toastr-bottom-right",
+                "positionClass": "toastr-bottom-left",
                 "preventDuplicates": false,
                 "onclick": null,
                 "showDuration": "300",

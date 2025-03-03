@@ -24,15 +24,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/visualizar/{id}', [ClientController::class, 'show'])->name('show');
             Route::get('/editar/{id}', [ClientController::class, 'edit'])->name('edit');
             Route::put('/editar/{id}', [ClientController::class, 'update'])->name('update');
-            Route::get('/desabilitar/{id}', [ClientController::class, 'destroy'])->name('destroy');
-
-            // Compras
-            Route::prefix('compras')->group(function () {
-                Route::name('purchases.')->group(function () {
-                    Route::post('/adicionar/{id}', [ClientPurchaseController::class, 'store'])->name('store');
-                });
-            });
-            
+            Route::get('/desabilitar/{id}', [ClientController::class, 'destroy'])->name('destroy');            
         });
     });
 
@@ -47,6 +39,7 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/editar/{id}', [PackageController::class, 'update'])->name('update');
             Route::get('/desabilitar/{id}', [PackageController::class, 'destroy'])->name('destroy');
             Route::post('/atribuir/{id}', [PackageController::class, 'assign'])->name('assign');
+            Route::post('/adicionar/{id}', [PackageController::class, 'upgrade'])->name('upgrade');
         });
     });
 

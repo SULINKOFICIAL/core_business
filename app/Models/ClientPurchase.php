@@ -13,7 +13,9 @@ class ClientPurchase extends Model
     protected $fillable = [
         'client_id',
         'purchase_date',
+        'previous_value',
         'total_value',
+        'description',
         'method',
         'status',
     ];
