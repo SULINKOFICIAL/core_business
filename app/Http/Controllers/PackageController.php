@@ -139,7 +139,7 @@ class PackageController extends Controller
         // Retorna a página
         return redirect()
             ->route('packages.edit', $id)
-            ->with('message', 'Pacote <b>'. $oldName . '</b> atualizado para <b>'. $packages->name .'</b> com sucesso.');
+            ->with('message', 'Pacote <b>'. $oldName . '</b> atualizado para <b>'. $package->name .'</b> com sucesso.');
     }
 
     public function destroy($id)
@@ -409,6 +409,21 @@ class PackageController extends Controller
         return redirect()
             ->route('clients.show', $id)
             ->with('message', 'Configurações da conta do cliente atualizadas com sucesso.');
+    }
+
+
+
+    /**
+      * Pacote para upgrades.
+      *
+      * @param  \Illuminate\Http\Request  $request
+      * @param  int  $id
+      * @return \Illuminate\Http\Response
+      */
+      public function new(Request $request, $id){
+
+        // Verificar se o plano atual é grátis, se for não calcular créditos restantes.
+
     }
 
 }

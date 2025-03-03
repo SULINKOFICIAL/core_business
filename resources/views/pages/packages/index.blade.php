@@ -12,7 +12,12 @@
         <div class="card w-100 mb-6">
             <div class="card-header d-flex align-items-center justify-content-between min-h-60px px-6">
                 <div class="w-75">
-                    <a href="{{ route('modules.edit', $package->id) }}" class="mb-0 fw-bolder @if ($package->status == 0) text-danger @else text-gray-700 @endif text-hover-primary m-0 fs-5 text-uppercase lh-1">{{ Str::limit($package->name, 25) }}</a>
+                    <a href="{{ route('modules.edit', $package->id) }}" class="mb-0 fw-bolder @if ($package->status == 0) text-danger @else text-gray-700 @endif text-hover-primary m-0 fs-5 text-uppercase lh-1">
+                        {{ Str::limit($package->name, 25) }}
+                        @if ($package->free)
+                            <span class="text-success fs-7">Teste Grátis</span>
+                        @endif
+                    </a>
                     <p class="text-gray-500 mb-0 fw-semibold fs-7 lh-1">
                         <span class="fw-bolder text-primary">{{ $package->duration_days }}</span> dias - <span class="text-success value-module">R$ {{ number_format($package->value, 2, ',', '.') }}</span>
                     </p>

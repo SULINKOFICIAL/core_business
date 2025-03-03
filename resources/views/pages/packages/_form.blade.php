@@ -1,7 +1,15 @@
 <div class="row">
-    <div class="col-10 mb-4">
+    <div class="col-8 mb-4">
         <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Nome</label>
         <input type="text" class="form-control form-control-solid" placeholder="Nome" name="name" value="{{ $package->name ?? old('name') }}" required>
+    </div>
+    <div class="col-2 mb-4">
+        <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Teste grátis?</label>
+        <select name="free" class="form-select form-select-solid" data-control="select2" data-hide-search="true" data-placeholder="Selecione" required>
+            <option value=""></option>
+            <option value="0" @if(!isset($package) || $package->free == false) selected @endif>Não</option>
+            <option value="1" @if(isset($package) && $package->free == true) selected @endif>Sim</option>
+        </select>
     </div>
     <div class="col-2 mb-4">
         <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Ordem</label>
