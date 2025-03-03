@@ -20,26 +20,21 @@
                 <div>
                     <div class="d-flex align-items-center justify-content-between">
                         <p class="fw-bold text-gray-700 fs-2x mb-2 text-uppercase lh-1">
-                            {{ $client->name }} <span class="fs-3 text-gray-600">Valor atual do pacote: <span class="text-success">R$ {{ number_format($client->current_value, 2, ',', '.') }}</span></span>
+                            {{ $client->name }}
                         </p>
                         <a href="{{ route('clients.edit', $client->id) }}" class="text-hover-primary">
                             <i class="fa-solid fa-gear"></i>
                         </a>
                     </div>
-                    <p class="text-gray-600 my-2">
+                    <p class="fs-6 text-gray-700 fw-bold mb-0">
+                        Valor atual do pacote: <span class="text-success fw-bolder">R$ {{ number_format($client->current_value, 2, ',', '.') }}</span>
+                    </p>
+                    <p class="fs-6 text-gray-700 fw-bold mb-0">
+                        Próxima renovação em: <span class="text-primary fw-bolder"> {{ $client->renovation() ?? 0 }}</span> dias
+                    </p>
+                    <p class="text-gray-600 mb-0">
                         Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially  in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
                     </p>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-sm btn-primary btn-sections" data-show="purschases">
-                            Histórico de Compras
-                        </button>
-                        <button class="btn btn-sm btn-success btn-sections" data-show="signatures">
-                            Assinaturas
-                        </button>
-                        <button class="btn btn-sm btn-danger btn-sections" data-show="resources">
-                            Ver Recursos
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
@@ -60,6 +55,17 @@
                     </div>
                     @endforeach
                 </div>
+            </div>
+            <div class="gap-2">
+                <button class="btn btn-sm w-100 mb-4 btn-primary btn-sections" data-show="purschases">
+                    Histórico de Compras
+                </button>
+                <button class="btn btn-sm w-100 mb-4 btn-success btn-sections" data-show="signatures">
+                    Assinaturas
+                </button>
+                <button class="btn btn-sm w-100 mb-4 btn-danger btn-sections" data-show="resources">
+                    Ver Recursos
+                </button>
             </div>
         </div>
         <div class="col-10">

@@ -55,6 +55,16 @@ class Client extends Model
        return $this->hasMany(ClientSubscription::class, 'client_id', 'id');
     }
 
+    // Retorna em quantos dias deve ser feita a próxima renovação
+    public function renovation()
+    {
+        $latestSubscription = $this->subscriptions()->latest('end_date')->first();
+        if (!$latestSubscription || !$latestSubscription->end_date) {
+            return null; // Sem assinatura ativa
+        }
+        return ceil(now()->diffInDays($latestSubscription->end_date));
+    }
+
     public function systemStatus()
     {
 

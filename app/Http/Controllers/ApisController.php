@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Client;
 use App\Models\ErrorMiCore;
+use App\Models\Package;
 use App\Models\Ticket;
 use GuzzleHttp\Client as Guzzle;
 use Illuminate\Support\Str;
@@ -83,10 +84,6 @@ class ApisController extends Controller
 
     }
 
-
-
-
-
     public function getDatabase(Request $request){
         $subdomain = $request->query('subdomain');
         $token = $request->header('Authorization');
@@ -157,6 +154,28 @@ class ApisController extends Controller
 
         // Retorna resposta
         return response()->json('Ticket criado com sucesso!', 201);
+
+    }
+
+    public function plan(Request $request) {
+
+        // Recebe dados
+        $data = $request->all();
+
+        // Obtém dados do cliente
+        $client = Client::where('token', $data['token'])->first();
+
+        // Caso não encontre a conta do cliente
+        if(!$client) return response()->json('Conta não encontrada', 404);
+
+        // Obtém plano atual do cliente
+        $package = $client->package;
+
+        // Retorna resposta
+        return response()->json([
+            'package' => $package,
+            'renovation' => $client->renovation(),
+        ], 200);
 
     }
 

@@ -6,7 +6,7 @@
 <p class="text-center fw-bold text-gray-700 fs-2 mb-4 text-uppercase">
     Editar Pacote
 </p>
-<form action="{{ route('packages.update', $packages->id) }}" method="POST" enctype="multipart/form-data">
+<form action="{{ route('packages.update', $package->id) }}" method="POST" enctype="multipart/form-data">
     @csrf
     @method('PUT')
     <div class="card">
@@ -15,12 +15,12 @@
         </div>
     </div>
     <div class="d-flex justify-content-between mt-4">
-        @if ($packages->status == 1)
-            <a href="{{ route('packages.destroy', $packages->id) }}" class="btn btn-lg btn-danger me-2">
+        @if ($package->status == 1)
+            <a href="{{ route('packages.destroy', $package->id) }}" class="btn btn-lg btn-danger me-2">
                 Desativar Pacote
             </a>
         @else
-            <a href="{{ route('packages.destroy', $packages->id) }}" class="btn btn-lg btn-success me-2">
+            <a href="{{ route('packages.destroy', $package->id) }}" class="btn btn-lg btn-success me-2">
                 Ativar Pacote
             </a>
         @endif  

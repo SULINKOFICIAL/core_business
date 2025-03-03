@@ -7,7 +7,6 @@
                     <th class="w-150px text-center px-6">Transação</th>
                     <th class="">Data Inicio</th>
                     <th class="">Data Fim</th>
-                    <th class="">Dias restantes</th>
                 </tr>
             </thead>
             <tbody class="text-start">
@@ -35,16 +34,6 @@
                             {{ $subscription->end_date->format('d/m/Y') }} às {{ $subscription->end_date->format('H:i:s') }}
                         </span>
                     </td>
-                    <td>
-                        <span class="text-gray-600">
-                            @php
-                                $now = now();
-                                $diff = $subscription->end_date->diff($now);
-                            @endphp
-                            {{ $diff->d }} dias e {{ $diff->h }} horas
-                        </span>
-                    </td>
-                    
                 </tr>
                 @endforeach
             </tbody>
