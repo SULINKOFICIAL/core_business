@@ -7,7 +7,7 @@ use App\Models\Client;
 use App\Models\ErrorMiCore;
 use App\Models\Package;
 use App\Models\Ticket;
-use GuzzleHttp\Client as Guzzle;
+use App\Services\PackageService;
 use Illuminate\Support\Str;
 
 class ApisController extends Controller
@@ -183,6 +183,30 @@ class ApisController extends Controller
                 'renovation' => 0,
             ], 200);
         }
+
+    }
+
+    public function payment(Request $request, PackageService $service) {
+
+        // Obtém dados
+        $data = $request->all();
+        
+        // Obtém cliente
+        $client = Client::where('token', $data['token'])->first();
+
+        // Obtém pacote desejado
+        $package = Package::find($data['package_id']);
+
+        // Retorna erro caso não encontre cliente ou pacote
+        if (!$client || !$package) return response()->json(['error' => 'Cliente ou pacote não encontrado.'], 404);
+
+        // Retorna o cliente atualizado
+        $response = $service->assignNewPackage($client, $package);
+
+        // Retorna pacote atualizado
+        return response()->json([
+            'message' => $response,
+        ]);
 
     }
 

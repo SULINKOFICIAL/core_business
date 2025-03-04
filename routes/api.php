@@ -15,7 +15,8 @@ Route::prefix('micore')->group(function () {
  */
 Route::prefix('central')->middleware('auth.bearer')->group(function () {
     Route::get('/get-database', [ApisController::class, 'getDatabase']);
-    Route::get('/my-plan', [ApisController::class, 'plan']);
+    Route::get('/data', [ApisController::class, 'plan']);
+    Route::post('/payment', [ApisController::class, 'payment']);
     Route::post('/error', [ApisController::class, 'notifyErrors']);
     Route::post('/tickets', [ApisController::class, 'tickets']);
 });
