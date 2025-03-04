@@ -33,7 +33,7 @@
                             @if ($client->package)
                             <span class="badge badge-light-success">{{ $client->package->name }}</span>
                             @else
-                            <span class="badge badge-light">Erro no pacote</span>
+                            <span class="badge badge-light-primary">Sem pacote</span>
                             @endif
                         </td>
                         <td class="text-center text-gray-600">{{ $client->created_at->format('d/m/Y')}}</td>

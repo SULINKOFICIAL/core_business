@@ -15,47 +15,38 @@ class PackageSeeder extends Seeder
     public function run(): void
     {
         Package::create([
-            'name'          => 'Free Trial',
+            'name'          => 'Teste Gratuíto',
             'free'          => true,
-            'value'         => 89.9,
+            'value'         => 0,
             'duration_days' => 30,
             'order'         => 1,
             'created_by'    => 1,
         ]);
         
         Package::create([
-            'name'          => 'Premium Trial',
-            'value'         => 149,
+            'name'          => 'Começando',
+            'value'         => 29,
             'duration_days' => 30,
             'order'         => 1,
             'created_by'    => 1,
         ]);
 
         Package::create([
-            'name' => 'Vendas Full',
+            'name' => 'Avançado',
             'status' => 1,
-            'value' => '250.00',
+            'value' => 49,
             'duration_days' => 30,
             'order' => 1,
             'created_by' => 2,
         ]);
 
         Package::create([
-            'name' => 'Financeiro',
+            'name' => 'Empresas',
             'status' => 1,
-            'value' => '10.00',
+            'value' => 59,
             'duration_days' => 30,
             'order' => 1,
             'created_by' => 2,
-        ]);
-
-        Package::create([
-            'name' => 'Atendimento ao Cliente',
-            'value' => '199.90',
-            'duration_days' => 30,
-            'status' => 1,
-            'order' => 1,
-            'created_by' => 1,
         ]);
  
         // Obtém os recuros e adiciona aos grupos

@@ -16,28 +16,56 @@ class ModuleSeeder extends Seeder
     public function run(): void
     {
         Module::create([
-            'name' => 'Financeiro',
+            'name' => 'Gestão',
             'value' => 20,
             'status' => 1,
             'created_by' => 1,
         ]);
 
         Module::create([
-            'name' => 'Usuários',
+            'name' => 'Atendimento',
             'value' => 20,
             'status' => 1,
             'created_by' => 2,
         ]);
 
         Module::create([
-            'name' => 'Blog',
+            'name' => 'Tarefas',
             'value' => 20,
             'status' => 1,
             'created_by' => 2,
         ]);
 
         Module::create([
-            'name' => 'Vendas',
+            'name' => 'Recursos Humanos',
+            'value' => 20,
+            'status' => 1,
+            'created_by' => 1,
+        ]);
+
+        Module::create([
+            'name' => 'Vendas, Produtos e Serviços',
+            'value' => 20,
+            'status' => 1,
+            'created_by' => 1,
+        ]);
+
+        Module::create([
+            'name' => 'Marketing',
+            'value' => 20,
+            'status' => 1,
+            'created_by' => 1,
+        ]);
+
+        Module::create([
+            'name' => 'Streaming',
+            'value' => 20,
+            'status' => 1,
+            'created_by' => 1,
+        ]);
+
+        Module::create([
+            'name' => 'Financias',
             'value' => 20,
             'status' => 1,
             'created_by' => 1,
