@@ -23,10 +23,20 @@
                         </span>
                     </td>
                     <td class="text-start">
-                        <span class="text-gray-800 fw-bold">{{ $purchase->description }}</span>
+                        <span class="text-gray-600">
+                        @if ($purchase->type == 'Pacote Atribuido')
+                            Pacote atribuido <span class="fw-bolder text-success">{{ $purchase->package->name }}</span>
+                        @endif
+                        @if ($purchase->type == 'Pacote Trocado')
+                            Pacote trocado de <span class="fw-bolder text-danger">{{ $purchase->previousPackage->name }}</span> para <span class="fw-bolder text-success">{{ $purchase->package->name }}</span>.
+                        @endif
+                        </span>
+                        @if ($purchase->description)
+                        <p class="text-gray-700 fw-bold fs-8 mb-0">Observação: {{ $purchase->description }}</p>
+                        @endif
                     </td>
                     <td class="text-start">
-                        <span class="text-gray-700 fw-bold">R$ {{ number_format($purchase->total_value, 2, ',', '.') }}</span>
+                        <span class="text-gray-700 fw-bold">R$ {{ number_format($purchase->total(), 2, ',', '.') }}</span>
                     </td>
                     <td class="text-center">
                         <span class="text-gray-700 fw-bold">{{ $purchase->method }}</span>
@@ -49,6 +59,8 @@
                         <span class="badge badge-light-danger">{{ $item->action }}</span>
                         @elseif($item->action == 'Adição')
                         <span class="badge badge-light-primary">{{ $item->action }}</span>
+                        @elseif($item->action == 'Alteração')
+                        <span class="badge badge-light-warning">{{ $item->action }}</span>
                         @else
                         <span class="badge badge-light-info">{{ $item->action }}</span>
                         @endif

@@ -20,7 +20,6 @@ class Client extends Model
         'domain',
         'package_id',
         'users_limit',
-        'current_value',
         'logo',
         'table',
         'password',
@@ -63,6 +62,12 @@ class Client extends Model
             return null; // Sem assinatura ativa
         }
         return ceil(now()->diffInDays($latestSubscription->end_date));
+    }
+
+    // Retorna em quantos dias deve ser feita a próxima renovação
+    public function lastSubscription()
+    {
+        return $this->subscriptions()->latest('end_date')->first();
     }
 
     public function systemStatus()

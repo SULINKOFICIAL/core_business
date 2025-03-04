@@ -12,9 +12,10 @@ class ClientPurchase extends Model
     ];
     protected $fillable = [
         'client_id',
+        'type',
+        'key_id',
+        'previous_key_id',
         'purchase_date',
-        'previous_value',
-        'total_value',
         'description',
         'method',
         'status',
@@ -23,5 +24,20 @@ class ClientPurchase extends Model
     public function items()
     {
         return $this->hasMany(ClientPurchaseItem::class, 'purchase_id');
+    }
+
+    public function package()
+    {
+        return $this->hasOne(Package::class, 'id', 'key_id');
+    }
+
+    public function previousPackage()
+    {
+        return $this->hasOne(Package::class, 'id', 'previous_key_id');
+    }
+
+    public function total()
+    {
+        return $this->items()->sum('item_value');
     }
 }

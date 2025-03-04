@@ -165,7 +165,9 @@ class PackageController extends Controller
     }
 
     
-
+    /**
+     * Atribui um pacote a um cliente sem pacotes.
+     */
     public function assign($id, Request $request)
     {
 
@@ -184,10 +186,21 @@ class PackageController extends Controller
         // Cria registro de "Compra"
         $lastPurchase = ClientPurchase::create([
             'client_id'     => $client->id,
-            'description'   => 'Pacote Atribuido',
+            'type'          => 'Pacote Atribuido',
+            'key_id'        => $package->id,
             'purchase_date' => now(),
-            'total_value'   => $package->value,
             'method'        => 'Manual',
+        ]);
+
+        // Adiciona módulo a compra do cliente
+        ClientPurchaseItem::create([
+            'purchase_id' => $lastPurchase->id,
+            'type'        => 'Pacote',
+            'action'      => 'Adição',
+            'item_name'   => $package->name,
+            'item_key'    => $package->id,
+            'quantity'    => 1,
+            'item_value'  => $package->value,
         ]);
 
         // Adiciona os módulos a compra e ao cliente
@@ -201,7 +214,7 @@ class PackageController extends Controller
                 'item_name'   => $module->name,
                 'item_key'    => $module->id,
                 'quantity'    => 1,
-                'item_value'  => $module->value,
+                'item_value'  => 0,
             ]);
 
             // Libera módulo para o cliente
@@ -222,7 +235,6 @@ class PackageController extends Controller
 
         // Atualiza o pacote do cliente
         $client->package_id    = $data['package_id'];
-        $client->current_value = $package->value;
         $client->save();
         
         // Retorna a página
@@ -234,12 +246,8 @@ class PackageController extends Controller
 
 
     /**
-      * Store a newly created resource in storage.
-      *
-      * @param  \Illuminate\Http\Request  $request
-      * @param  int  $id
-      * @return \Illuminate\Http\Response
-      */
+     * Personaliza um pacote para um cliente.
+     */
     public function upgrade(Request $request, $id)
     {
         // Inicia configurações
@@ -298,11 +306,10 @@ class PackageController extends Controller
             $purchase = ClientPurchase::create([
                 'client_id' => $id,
                 'purchase_date' => now(),
-                'previous_value' => $client->current_value,
-                'total_value' => 0,
-                'description' => 'Pacote alterado',
-                'method' => 'Manual',
-                'status' => false,
+                'type'          => 'Pacote alterado',
+                'key_id'        => $client->package_id,
+                'method'        => 'Manual',
+                'status'        => false,
             ]);
 
             // Registra o valor anterior do pacote
@@ -400,9 +407,6 @@ class PackageController extends Controller
             $client->current_value = $totalPrice;
             $client->save();
 
-            // Atualiza o total da compra
-            $purchase->update(['total_value' => $totalPrice]);
-
         }
 
         // Retorna a página
@@ -414,16 +418,113 @@ class PackageController extends Controller
 
 
     /**
-      * Pacote para upgrades.
-      *
-      * @param  \Illuminate\Http\Request  $request
-      * @param  int  $id
-      * @return \Illuminate\Http\Response
-      */
-      public function new(Request $request, $id){
+     * Troca o pacote do cliente.
+     */
+    public function new(Request $request, $id)
+    {
+        // Obtém os dados da requisição
+        $data = $request->all();
 
-        // Verificar se o plano atual é grátis, se for não calcular créditos restantes.
+        // Obtém cliente
+        $client = Client::findOrFail($id);
 
+        // Obtém o pacote atual e o novo
+        $currentPackage = $client->package;
+        $newPackage = Package::findOrFail($data['package_id']);
+
+        // Obtém a assinatura ativa atual
+        $currentSubscription = $client->lastSubscription();
+
+        // Se houver uma assinatura ativa, finaliza ela
+        if ($currentSubscription) {
+            $currentSubscription->update([
+                'status' => 'Cancelado',
+                'end_date' => now(),
+            ]);
+        }
+
+        // Calcula crédito se necessário
+        $credit = 0;
+        if (!$currentPackage->free) {
+            $daysInMonth = now()->daysInMonth;
+            $daysUsed = now()->day;
+            $daysRemaining = $daysInMonth - $daysUsed;
+            $dailyRate = $currentPackage->value / $daysInMonth;
+            $credit = $dailyRate * $daysRemaining;
+        }
+
+        // Criar nova compra
+        $purchase = ClientPurchase::create([
+            'client_id' => $client->id,
+            'purchase_date' => now(),
+            'type' => 'Pacote Trocado',
+            'key_id' => $newPackage->id,
+            'previous_key_id' => $currentPackage->id,
+            'method' => 'Manual',
+            'status' => true,
+        ]);
+
+        // Adiciona novo pacote na compra
+        ClientPurchaseItem::create([
+            'purchase_id' => $purchase->id,
+            'type' => 'Pacote',
+            'action' => 'Alteração',
+            'item_name' => $newPackage->name,
+            'item_key' => $newPackage->id,
+            'quantity' => 1,
+            'item_value' => $newPackage->value,
+        ]);
+
+        // Adiciona crédito na compra, se houver
+        if ($credit > 0) {
+            ClientPurchaseItem::create([
+                'purchase_id' => $purchase->id,
+                'type' => 'Crédito',
+                'action' => 'Ajuste',
+                'item_name' => 'Crédito proporcional',
+                'quantity' => 1,
+                'item_value' => -$credit,
+            ]);
+        }
+
+        // Remove os módulos antigos
+        ClientModule::where('client_id', $client->id)->delete();
+
+        // Adiciona os novos módulos
+        foreach ($newPackage->modules as $module) {
+            ClientPurchaseItem::create([
+                'purchase_id' => $purchase->id,
+                'type' => 'Módulo',
+                'action' => 'Adição',
+                'item_name' => $module->name,
+                'item_key' => $module->id,
+                'quantity' => 1,
+                'item_value' => 0,
+            ]);
+
+            ClientModule::create([
+                'client_id' => $client->id,
+                'module_id' => $module->id,
+            ]);
+        }
+
+        // Criar nova assinatura
+        ClientSubscription::create([
+            'client_id' => $client->id,
+            'package_id' => $newPackage->id,
+            'purschase_id' => $purchase->id,
+            'start_date' => now(),
+            'end_date' => now()->addDays($newPackage->duration_days),
+            'status' => 'Ativa',
+        ]);
+
+        // Atualizar o cliente com o novo pacote
+        $client->update([
+            'package_id' => $newPackage->id,
+        ]);
+
+        return redirect()
+            ->route('clients.show', $client->id)
+            ->with('message', 'Pacote atualizado com sucesso.');
     }
-
 }

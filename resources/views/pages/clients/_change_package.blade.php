@@ -1,5 +1,5 @@
-<button id="drawer_package" class="btn btn-success btn-active-success position-fixed" style="right: 200px; bottom: 50px">Atribuir Pacote</button>
-<form action="{{ route('packages.assign', $client->id) }}" method="POST" enctype="multipart/form-data">
+<button id="drawer_package" class="btn btn-danger btn-active-success position-fixed z-index-3" style="right: 200px; bottom: 50px">Trocar Pacote</button>
+<form action="{{ route('packages.new', $client->id) }}" method="POST" enctype="multipart/form-data">
     @csrf
     <div
         class="bg-white"
@@ -12,7 +12,7 @@
             <div class="card-header pe-5">
                 <div class="card-title">
                     <div class="d-flex justify-content-center flex-column me-3">
-                        <span class="fs-4 fw-bold text-gray-700 me-1 lh-1">Atribuir Pacote: <span class="text-danger">{{ $client->name }}</span></span>
+                        <span class="fs-4 fw-bold text-gray-700 me-1 lh-1">Trocar Pacote: <span class="text-danger">{{ $client->name }}</span></span>
                     </div>
                 </div>
                 <div class="card-toolbar">
@@ -35,7 +35,7 @@
                 <div class="d-flex justify-content-center align-items-center">
                     <button type="submit" class="btn btn-success btn-active-danger text-uppercase fw-bolder">
                         <i class="fa-solid fa-circle-check fs-4"></i>
-                        Atribuir pacote ao Cliente
+                        Trocar pacote do Cliente
                     </button>
                 </div>
             </div>

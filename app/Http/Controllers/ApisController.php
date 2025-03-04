@@ -171,11 +171,18 @@ class ApisController extends Controller
         // Obtém plano atual do cliente
         $package = $client->package;
 
-        // Retorna resposta
-        return response()->json([
-            'package' => $package,
-            'renovation' => $client->renovation(),
-        ], 200);
+        // Se o cliente tiver plano
+        if($package){
+            return response()->json([
+                'package' => $package,
+                'renovation' => $client->renovation(),
+            ], 200);
+        } else {
+            return response()->json([
+                'package' => 'Sem Plano',
+                'renovation' => 0,
+            ], 200);
+        }
 
     }
 

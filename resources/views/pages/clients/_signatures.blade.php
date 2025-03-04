@@ -7,6 +7,7 @@
                     <th class="w-150px text-center px-6">Transação</th>
                     <th class="">Data Inicio</th>
                     <th class="">Data Fim</th>
+                    <th class="">Status</th>
                 </tr>
             </thead>
             <tbody class="text-start">
@@ -33,6 +34,17 @@
                         <span class="text-gray-600">
                             {{ $subscription->end_date->format('d/m/Y') }} às {{ $subscription->end_date->format('H:i:s') }}
                         </span>
+                    </td>
+                    <td>
+                        @if ($subscription->status == 'Ativa')
+                        <span class="badge badge-light-success">
+                            Ativa
+                        </span>
+                        @else
+                        <span class="badge badge-light-danger">
+                            Cancelada
+                        </span>
+                        @endif
                     </td>
                 </tr>
                 @endforeach

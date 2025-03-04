@@ -16,6 +16,7 @@ class PackageSeeder extends Seeder
     {
         Package::create([
             'name'          => 'Free Trial',
+            'free'          => true,
             'value'         => 89.9,
             'duration_days' => 30,
             'order'         => 1,

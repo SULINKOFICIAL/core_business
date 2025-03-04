@@ -16,25 +16,32 @@ class ClientSeeder extends Seeder
         Client::create([
             'name' => 'Sulink',
             'domain' => 'sulink.com.br',
-            'token' => 'gk3RawCERe3uk6EmSdtJOMFtvnRQGS7N16M0l3K98c012484',
+            'token' => '123',
+            // 'package_id' => 1,
             'created_by' => 1,
         ]);
 
         Client::create([
             'name' => 'Coca Cola',
             'domain' => 'cocacola.com.br',
+            'token' => '123',
+            // 'package_id' => 1,
             'created_by' => 1,
         ]);
 
         Client::create([
             'name' => 'Porsche',
             'domain' => 'porscheerp.com.br',
+            'token' => '123',
+            // 'package_id' => 1,
             'created_by' => 1,
         ]);
 
         Client::create([
             'name' => 'Stanley',
             'domain' => 'stanley1913.com.br',
+            'token' => '123',
+            // 'package_id' => 1,
             'created_by' => 1,
         ]);
     }

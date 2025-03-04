@@ -94,6 +94,8 @@
     @endif
     @if (!$client->package_id)
     @include('pages.clients._add_package')
+    @else
+    @include('pages.clients._change_package')
     @endif
     @include('pages.clients._upgrade')
 @endsection
