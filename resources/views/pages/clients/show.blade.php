@@ -66,9 +66,6 @@
                 <button class="btn btn-sm w-100 mb-4 btn-danger btn-sections" data-show="resources">
                     Ver Recursos
                 </button>
-                <a href="{{ route('cpanel.migrate', $client->id) }}" class="btn btn-sm w-100 mb-4 btn-info">
-                    Atualizar banco
-                </a>
             </div>
         </div>
         <div class="col-12 col-lx-10">
