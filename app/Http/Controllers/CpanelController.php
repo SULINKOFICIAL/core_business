@@ -6,6 +6,7 @@ use App\Models\Client;
 use Exception;
 use Illuminate\Support\Str;
 use GuzzleHttp\Client as Guzzle;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -387,4 +388,54 @@ class CpanelController extends Controller
             "content" => $content,
         ]);
     }
+
+    /**
+     * Realiza atualização do banco de dados de forma dinamica.
+     */
+    public function migrateClientDatabase($datatable)
+    {
+        // Define a conexão para o banco do cliente
+        config([
+            'database.connections.mysql_cliente' => [
+                'driver'    => 'mysql',
+                'host'      => $this->cpanelHost,
+                'database'  => $datatable['name'],
+                'username'  => $datatable['name'] . '_usr',
+                'password'  => $datatable['password'],
+                'charset'   => 'utf8mb4',
+                'collation' => 'utf8mb4_unicode_ci',
+                'prefix'    => '',
+                'strict'    => false,
+            ]
+        ]);
+
+        // Reinicia a conexão
+        DB::purge('mysql_cliente');
+        DB::disconnect('mysql_cliente');
+        DB::reconnect('mysql_cliente');
+
+        // Define a conexão correta e executa as migrations
+        Artisan::call('migrate', [
+            '--database' => 'mysql_cliente',
+            '--force' => true,
+        ]);
+
+        return Artisan::output();
+    }
+
+    /**
+     * Atualiza o banco de dados de um cliente em especifico
+     */
+    public function migrateClient($id){
+
+        $client = Client::find($id);
+        $database = [
+            'name' => $client->table,
+            'password' => $client->password,
+        ];
+        
+        $this->migrateClientDatabase($database);
+        
+    }
+
 }
