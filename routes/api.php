@@ -11,7 +11,7 @@ Route::prefix('micore')->group(function () {
 });
 
 /**
- * Api para comunicação entre os sistemas core com a central
+ * Api que envia informações para os miCores.
  */
 Route::prefix('central')->middleware('auth.bearer')->group(function () {
     Route::get('/get-database', [ApisController::class, 'getDatabase']);
