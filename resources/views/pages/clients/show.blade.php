@@ -40,7 +40,7 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-12 col-lx-2">
+        <div class="col-12 col-xl-2">
             <div class="card mb-4">
                 <div class="card-body p-6">
                     <p class="fw-bolder text-gray-700 fs-3 text-uppercase">Configuração</p>
@@ -66,9 +66,12 @@
                 <button class="btn btn-sm w-100 mb-4 btn-danger btn-sections" data-show="resources">
                     Ver Recursos
                 </button>
+                <a href="{{ route('systems.update.database', $client->id) }}" class="btn btn-sm w-100 mb-4 btn-info">
+                    Atualizar banco de dados
+                </a>
             </div>
         </div>
-        <div class="col-12 col-lx-10">
+        <div class="col-12 col-xl-10">
             <div class="divs-sections div-resources" style="display: none;">
                 @include('pages.clients._resources')
             </div>
@@ -129,7 +132,7 @@
                 data: {
                     status: checked,
                     client_id: "{{ $client->id }}",
-                     name: name,
+                    name: name,
                 },
                 success: function(response) {
                     toastr.success('Sucesso');

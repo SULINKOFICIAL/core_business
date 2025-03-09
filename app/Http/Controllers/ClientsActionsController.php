@@ -38,6 +38,20 @@ class ClientsActionsController extends Controller
 
     }
 
+    // Obtém permissões do usuário
+    public function updateDatabase(Request $request, $id){
+
+        // Encontra o cliente
+        $client = $this->repository->find($id);
+
+        // Realiza solicitação
+        $response = $this->guzzle('POST', 'sistema/atualizar-banco', $client);
+
+        // Retorna resposta
+        return $response;
+
+    }
+
     /**
      * Realiza uma solicitação Guzzle com autenticação Bearer
      *
@@ -55,7 +69,7 @@ class ClientsActionsController extends Controller
         // Inicializa os parâmetros da requisição
         $options = [
             'headers' => [
-                'Authorization' => 'Bearer ' . $client->token,
+                'Authorization' => 'Bearer ' . env('CENTRAL_CORE_TOKEN'),
             ]
         ];
 
@@ -65,7 +79,7 @@ class ClientsActionsController extends Controller
         }
 
         // Realiza a solicitação
-        $response = $guzzle->$method("https://$client->domain/api/$url", $options);
+        $response = $guzzle->$method("http://$client->domain/api/$url", $options);
 
         // Obtém o corpo da resposta
         $response = $response->getBody()->getContents();

@@ -382,9 +382,9 @@ class CpanelController extends Controller
         $content = "Arquivo de teste criado via API em " . date('Y-m-d H:i:s');
 
         return $this->guzzle('POST', "{$this->cpanelUrl}/execute/Fileman/save_file_content", $this->cpanelUser, $this->cpanelPass, [
-            "dir"       => $path,
-            "file"      => "teste.txt",
-            "content"   => $content,
+            "dir"     => $path,
+            "file"    => "teste.txt",
+            "content" => $content,
         ]);
     }
 }
