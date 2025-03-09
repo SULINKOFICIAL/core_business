@@ -12,8 +12,9 @@
                     <th class="text-center px-0">Domínio</th>
                     <th class="text-center px-0">Plano</th>
                     <th class="text-center px-0">Criado Em</th>
+                    <th class="text-center px-0">Banco</th>
                     <th class="text-center px-0">Status</th>
-                    <th class="text-end pe-12"></th>
+                    <th class="text-end pe-12 w-100px"></th>
                 </tr>
             </thead>
             <tbody>
@@ -37,6 +38,13 @@
                             @endif
                         </td>
                         <td class="text-center text-gray-600">{{ $client->created_at->format('d/m/Y')}}</td>
+                        <td class="text-center">
+                            @if ($client->db_last_version == 0)
+                                <i class="fa-solid fa-circle-xmark text-danger"></i>
+                            @else
+                                <i class="fa-solid fa-circle-check text-success"></i>
+                            @endif
+                        </td>
                         <td class="text-center">
                             @if ($client->status == 0)
                                 <span class="badge badge-light-danger">Desabilitado</span>  

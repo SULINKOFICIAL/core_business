@@ -39,7 +39,7 @@ class ClientsActionsController extends Controller
     }
 
     // Obtém permissões do usuário
-    public function updateDatabase(Request $request, $id){
+    public function updateDatabase($id){
 
         // Encontra o cliente
         $client = $this->repository->find($id);
@@ -47,8 +47,10 @@ class ClientsActionsController extends Controller
         // Realiza solicitação
         $response = $this->guzzle('POST', 'sistema/atualizar-banco', $client);
 
-        // Retorna resposta
-        return $response;
+        // Retorna a página
+        return redirect()
+                ->route('clients.index')
+                ->with('message', 'Migrate Executado' );
 
     }
 
@@ -86,6 +88,10 @@ class ClientsActionsController extends Controller
 
         // Decodifica o JSON
         $response = json_decode($response, true);
+
+        // Se salva o status da atualização
+        $client->db_last_version = $response['status'];
+        $client->save();
 
         // Retorna a resposta
         return $response;
