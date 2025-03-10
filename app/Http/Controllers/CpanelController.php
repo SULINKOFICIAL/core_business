@@ -9,7 +9,6 @@ use GuzzleHttp\Client as Guzzle;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use mysqli;
 use phpseclib3\Net\SSH2;
 
 class CpanelController extends Controller

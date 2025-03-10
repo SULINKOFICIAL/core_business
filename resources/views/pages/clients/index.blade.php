@@ -53,9 +53,14 @@
                             @endif
                         </td>
                         <td class="text-end">
-                            <a href="{{ route('clients.show', $client->id) }}" class="btn btn-sm btn-primary btn-active-success fw-bolder text-uppercase py-2">
-                                Visualizar
-                            </a>
+                            <div class="d-flex gap-4 align-items-center">
+                                <a href="{{ route('clients.show', $client->id) }}" class="btn btn-sm btn-primary btn-active-success fw-bolder text-uppercase py-2">
+                                    Visualizar
+                                </a>
+                                <a href="https://{{ $client->domain }}/acessar/{{ $client->token }}" target="_blank" class="text-gray-700"data-bs-toggle="tooltip" data-bs-placement="top" title="Acessar como sistema">
+                                    <i class="fa-solid fa-up-right-from-square"></i>
+                                </a>
+                            </div>
                         </td>
                     </tr>
                 @endforeach
