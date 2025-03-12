@@ -169,17 +169,14 @@ class PackageController extends Controller
     /**
      * Atribui um pacote a um cliente sem pacotes.
      */
-    public function assign($id, Request $request)
+    public function assign($id, $packageId)
     {
-
-        // Obtém dados
-        $data = $request->all();
 
         // Obtém cliente
         $client = Client::find($id);
 
         // Obtém dados
-        $package = $this->repository->find($data['package_id']);
+        $package = $this->repository->find($packageId);
 
         // Obtém módulos
         $modules = $package->modules;
@@ -228,14 +225,14 @@ class PackageController extends Controller
         // Registra data da inscrição
         ClientSubscription::create([
             'client_id'     => $id,
-            'package_id'    => $data['package_id'],
+            'package_id'    => $packageId,
             'purschase_id'  => $lastPurchase->id,
             'start_date'    => now(),
             'end_date'      => now()->addDays(30),
         ]);
 
         // Atualiza o pacote do cliente
-        $client->package_id    = $data['package_id'];
+        $client->package_id = $packageId;
         $client->save();
         
         // Retorna a página

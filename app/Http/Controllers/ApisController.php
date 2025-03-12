@@ -62,8 +62,14 @@ class ApisController extends Controller
         // Adiciona o sufixo dos domínios Core
         $data['domain'] = $data['domain'] . '.micore.com.br';
 
+        // Associa pacote teste gratuito
+        $data['package_id'] = 1;
+
         // Insere no banco de dados
-        $this->repository->create($data);
+        $client = $this->repository->create($data);
+
+        // Adiciona pacote básico ao cliente
+        app(PackageController::class)->assign($client->id, 1);
 
         // Gera dado do banco de dados
         $database = [
