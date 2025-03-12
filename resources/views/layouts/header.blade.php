@@ -4,24 +4,24 @@
             <div class="row align-items-center">
                 <div class="col-3">
                     <a href="{{ route('index') }}" class="d-flex align-items-center">
-                        <img src="{{ asset('assets/media/logos/sulink-core.svg') }}" class="w-200px">
+                        <img src="{{ asset('assets/media/logos/logo-central-dark.svg') }}" class="w-200px">
                     </a>
                 </div>
-                <div class="col-6 d-flex align-items-center justify-content-center">
+               <div class="col-6 d-flex align-items-center justify-content-center">
                     <div class="app-header-menu app-header-mobile-drawer align-items-center justify-content-center" data-kt-drawer="true" data-kt-drawer-name="app-header-menu" data-kt-drawer-activate="{default: true, lg: false}" data-kt-drawer-overlay="true" data-kt-drawer-width="250px" data-kt-drawer-direction="end" data-kt-drawer-toggle="#kt_app_header_menu_toggle" data-kt-swapper="true" data-kt-swapper-mode="{default: 'append', lg: 'prepend'}" data-kt-swapper-parent="{default: '#kt_app_body', lg: '#kt_app_header_wrapper'}">
-                        <a href="{{ route('clients.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
+                        <a href="{{ route('clients.index') }}" class="fw-bold text-hover-warning text-uppercase mx-12 {{ Request::routeIs('clients.index') ? 'text-warning' : 'text-white' }}">
                             Clientes
                         </a>
-                        <a href="{{ route('packages.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
+                        <a href="{{ route('packages.index') }}" class="fw-bold text-hover-warning text-uppercase mx-12 {{ Request::routeIs('packages.index') ? 'text-warning' : 'text-white' }}">
                             Pacotes
                         </a>
-                        <a href="{{ route('modules.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
+                        <a href="{{ route('modules.index') }}" class="fw-bold text-hover-warning text-uppercase mx-12 {{ Request::routeIs('modules.index') ? 'text-warning' : 'text-white' }}">
                             Módulos
                         </a>
-                        <a href="{{ route('groups.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
+                        <a href="{{ route('groups.index') }}" class="fw-bold text-hover-warning text-uppercase mx-12 {{ Request::routeIs('groups.index') ? 'text-warning' : 'text-white' }}">
                             Grupo de Recursos
                         </a>
-                        <a href="{{ route('resources.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
+                        <a href="{{ route('resources.index') }}" class="fw-bold text-hover-warning text-uppercase mx-12 {{ Request::routeIs('resources.index') ? 'text-warning' : 'text-white' }}">
                             Recursos
                         </a>
                     </div>

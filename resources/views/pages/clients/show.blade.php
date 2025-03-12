@@ -7,13 +7,11 @@
         <div class="card-body">
             <div class="d-flex align-items-center">
                 <div class="me-12">
-                    <div class="h-150px w-150px rounded bg-light d-flex align-items-center justify-content-center p-2">
+                    <div class="h-150px w-150px">
                     @if ($client->logo)
-                        <img src="{{ asset('storage/clientes/' . $client->id . '/logo.png') }}" alt="Logo do Cliente" class="img-fluid w-100 object-fit-contain">
+                        <img src="{{ asset('storage/clientes/' . $client->id . '/logo.png') }}" alt="Logo do Cliente" class="img-fluid w-100 object-fit-contain rounded shadow">
                     @else
-                        <div class="h-50px d-flex align-items-center justify-content-center">
-                            <p class="m-0 fs-2x fw-bolder text-gray-300 text-uppercase text-center">Sem logo</p>
-                        </div>
+                        <img src="{{ asset('assets/media/images/logo.png') }}" alt="Logo do Cliente" class="img-fluid w-100 object-fit-contain rounded shadow">
                     @endif
                     </div>
                 </div>
