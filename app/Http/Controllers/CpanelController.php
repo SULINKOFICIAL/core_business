@@ -118,7 +118,7 @@ class CpanelController extends Controller
             'password'   => $userPassword,
             'full_name'  => $user['name'],
             'email'      => $user['email'],
-            'role'       => 1,
+            'role_id'    => 1,
             'created_by' => 1,
         ]);
 
