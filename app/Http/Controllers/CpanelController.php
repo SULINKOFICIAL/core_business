@@ -127,7 +127,7 @@ class CpanelController extends Controller
             'plataform'    => 'micore',
             'option_name'  => 'api_token',
             'option_value' => $apiToken,
-            'updated_by'   => 'system',
+            'updated_by'   => 1,
         ]);
 
         return $apiToken;
