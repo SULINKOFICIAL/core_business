@@ -4,6 +4,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ClientPurchaseController;
 use App\Http\Controllers\ClientsActionsController;
 use App\Http\Controllers\CpanelController;
+use App\Http\Controllers\ERedeController;
 use App\Http\Controllers\ErrorMiCoreController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\PackageController;
@@ -99,6 +100,15 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/recurso', [ClientsActionsController::class, 'feature'])->name('feature');
             Route::get('/acessar-recursos', [ClientsActionsController::class, 'getResources'])->name('get.resources');
             Route::get('/atualizar-banco/{id}', [ClientsActionsController::class, 'updateDatabase'])->name('update.database');
+        });
+    });
+
+    Route::prefix('rede')->group(function () {
+        Route::name('rede.')->group(function () {
+            Route::get('/simular-transacao/{id?}', [ERedeController::class, 'simulateTransaction'])->name('simulate.transaction');
+            Route::get('/transacao', [ERedeController::class, 'transaction'])->name('transaction');
+            Route::get('/token/{token}', [ERedeController::class, 'verifySolicitation'])->name('verify.token');
+            Route::get('/criptografia/{token}', [ERedeController::class, 'cryptogram'])->name('cryptogram');
         });
     });
 

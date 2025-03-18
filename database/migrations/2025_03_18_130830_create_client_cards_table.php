@@ -18,6 +18,8 @@ return new class extends Migration
             $table->text('number');
             $table->integer('expiration_month');
             $table->integer('expiration_year');
+            $table->string('tokenization_id')->nullable();
+            $table->dateTime('tokenization_id_at')->nullable();
             $table->boolean('status')->default(true);
             $table->timestamps();
         });

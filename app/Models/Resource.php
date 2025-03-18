@@ -8,7 +8,6 @@ class Resource extends Model
 {
     protected $fillable = [
         'name',
-        'slug',
         'status',
         'filed_by',
         'created_by',

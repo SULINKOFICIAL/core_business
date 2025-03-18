@@ -14,14 +14,12 @@ class ApisController extends Controller
 {
     
     /**
-     * Controlador responsável por gerencia o atendimento SAC do Core.
+     * Controlador responsável por gerenciar as APIs do sistema.
      *
-     * Este controlador se comunica com a API oficial do WhatsApp através
-     * do Controller WhatsappApiController() para realizar operações como
-     * envio de mensagens e templates.
-     *
-     * O controlador também utiliza um canal para comunicação em tempo
-     * real das mensagens.
+     * Este controlador gerencia a criação das contas dos clientes na
+     * central, e também é responsável por gerenciar a criação das contas
+     * no cPanel que esta em um EC2 em nossa aplicação na Amazon.
+     * 
      */
     protected $request;
     private $repository;
@@ -36,6 +34,11 @@ class ApisController extends Controller
 
     }
 
+    /**
+     * Função responsável por criar clientes através de sites externos,
+     * por exemplo o site comercial micore.com.br, mas também pode ser
+     * utilizado para criar sistemas através de landing pages.
+     */
     public function newClient(Request $request){
 
         // Obtém dados
@@ -90,17 +93,14 @@ class ApisController extends Controller
 
     }
 
+    /**
+     * Função responsável por obter a database do sistema que esta acessando
+     * o sistema, fazemos isso filtrando o domínio que fez a requisição.
+     */
     public function getDatabase(Request $request){
+
+        // Extrai o domínio
         $subdomain = $request->query('subdomain');
-        $token = $request->header('Authorization');
-
-        // Verifica se o token começa com "Bearer "
-        if (str_starts_with($token, 'Bearer ')) {
-            $token = substr($token, 7); // Remove o "Bearer " do token
-        }
-
-        // Valida o token enviado pelo MiCore
-        if (!$token || $token !== env('CENTRAL_CORE_TOKEN')) return response()->json(['error' => 'Token inválido.'], 401);
 
         // Verifica se existe um subdóminio
         if (!$subdomain) return response()->json(['error' => 'Subdomínio não fornecido.'], 400);
@@ -115,22 +115,13 @@ class ApisController extends Controller
             'db_user' => $client->table . '_usr',
             'db_password' => $client->password,
         ]);
+
     }
 
     public function notifyErrors(Request $request){
         
         // Recebe dados
         $data = $request->all();
-
-        // Verificar se a requisição é segura
-        if(!isset($data['token'])) {
-            return response()->json('Token não encontrado', 409);
-        }  
-
-        // Verificar se a requisição é segura
-        if ($data['token'] !== env('CENTRAL_CORE_TOKEN')){
-            return response()->json('Token não autorizado', 409);
-        }
 
         // Registra erro que veio através do MiCore
         ErrorMiCore::create($data);
@@ -144,16 +135,6 @@ class ApisController extends Controller
 
         // Recebe dados
         $data = $request->all();
-
-        // Verificar se a requisição é segura
-        if(!isset($data['token'])) {
-            return response()->json('Token não encontrado', 409);
-        }  
-
-        // Verificar se a requisição é segura
-        if ($data['token'] !== env('CENTRAL_CORE_TOKEN')){
-            return response()->json('Token não autorizado', 409);
-        }
         
         // Registra o ticket no banco de dados
         Ticket::create($data);

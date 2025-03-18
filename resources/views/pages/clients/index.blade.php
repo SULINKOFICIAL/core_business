@@ -57,7 +57,7 @@
                                 <a href="{{ route('clients.show', $client->id) }}" class="btn btn-sm btn-primary btn-active-success fw-bolder text-uppercase py-2">
                                     Visualizar
                                 </a>
-                                <a href="https://{{ $client->domain }}/acessar/{{ $client->token }}" target="_blank" class="text-gray-700"data-bs-toggle="tooltip" data-bs-placement="top" title="Acessar como sistema">
+                                <a href="https://{{ $client->domain }}/acessar/{{ $client->token }}" target="_blank" class="text-gray-700" data-bs-toggle="tooltip" data-bs-placement="top" title="Acessar como sistema">
                                     <i class="fa-solid fa-up-right-from-square"></i>
                                 </a>
                             </div>

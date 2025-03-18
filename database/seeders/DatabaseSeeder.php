@@ -37,21 +37,22 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('@Ca11924180'),
         ]);
 
-
-
-        // Seeder para fornecedores
+        // Seeder para clientes
         $this->call(ClientSeeder::class);
 
-        // Seeder para fornecedores
+        // Seeder para cartões de clientes
+        $this->call(ClientCardSeeder::class);
+
+        // Seeder para recursos
         $this->call(ResourceSeeder::class);
 
-        // Seeder para fornecedores
+        // Seeder para grupo de recursos
         $this->call(GroupSeeder::class);
 
-        // Seeder para fornecedores
+        // Seeder para módulos
         $this->call(ModuleSeeder::class);
 
-        // Seeder para fornecedores
+        // Seeder para pacotes
         $this->call(PackageSeeder::class);
 
     }

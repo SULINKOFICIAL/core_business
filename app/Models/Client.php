@@ -47,6 +47,12 @@ class Client extends Model
     {
        return $this->hasMany(ClientPurchase::class, 'client_id', 'id');
     }
+
+    // Compras realizadas pelo cliente
+    public function cards(): HasMany
+    {
+       return $this->hasMany(ClientCard::class, 'client_id', 'id');
+    }
     
     // Assinaturas realizadas pelo cliente
     public function subscriptions(): HasMany

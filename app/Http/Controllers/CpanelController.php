@@ -333,7 +333,7 @@ class CpanelController extends Controller
      */
     private function guzzle($method, $url, $user, $pass, $data = null)
     {
-        $client = new Guzzle(); // Instanciando a classe Client diretamente
+        $client = new Guzzle();
 
         $options = [
             'auth' => [$user, $pass],

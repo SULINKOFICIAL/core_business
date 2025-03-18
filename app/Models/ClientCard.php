@@ -13,5 +13,7 @@ class ClientCard extends Model
         'number',
         'expiration_month',
         'expiration_year',
+        'tokenization_id',
+        'tokenization_id_at',
     ];
 }
