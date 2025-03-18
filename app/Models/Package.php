@@ -10,6 +10,7 @@ class Package extends Model
     protected $fillable = [
         'name',
         'free',
+        'size_storage',
         'value',
         'duration_days',
         'order',
