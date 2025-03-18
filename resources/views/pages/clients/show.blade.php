@@ -8,30 +8,38 @@
             <div class="d-flex align-items-center">
                 <div class="me-12">
                     <div class="h-150px w-150px">
-                    @if ($client->logo)
-                        <img src="{{ asset('storage/clientes/' . $client->id . '/logo.png') }}" alt="Logo do Cliente" class="img-fluid w-100 object-fit-contain rounded shadow">
-                    @else
-                        <img src="{{ asset('assets/media/images/logo.png') }}" alt="Logo do Cliente" class="img-fluid w-100 object-fit-contain rounded shadow">
-                    @endif
+                        @if ($client->logo)
+                            <img src="{{ asset('storage/clientes/' . $client->id . '/logo.png') }}" alt="Logo do Cliente" class="img-fluid w-100 object-fit-contain rounded shadow">
+                        @else
+                            <img src="{{ asset('assets/media/images/logo.png') }}" alt="Logo do Cliente" class="img-fluid w-100 object-fit-contain rounded shadow">
+                        @endif
                     </div>
                 </div>
-                <div>
-                    <div class="d-flex align-items-center justify-content-between">
-                        <p class="fw-bold text-gray-700 fs-2x mb-2 text-uppercase lh-1">
+                <div class="w-100">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <p class="fw-bold text-gray-700 fs-2x mb-0 text-uppercase lh-1">
                             {{ $client->name }}
                         </p>
-                        <a href="{{ route('clients.edit', $client->id) }}" class="text-hover-primary">
-                            <i class="fa-solid fa-gear"></i>
-                        </a>
+                        <div class="d-flex gap-4">
+                            <a href="{{ route('systems.update.database', $client->id) }}" class="btn btn-icon btn-sm btn-light-primary">
+                                <i class="fa-solid fa-database" data-bs-toggle="tooltip" title="Atualizar banco de dados"></i>
+                            </a>
+                            <a href="{{ route('clients.edit', $client->id) }}" class="btn btn-icon btn-sm btn-light-primary">
+                                <i class="fa-solid fa-gear" data-bs-toggle="tooltip" title="Configurações"></i>
+                            </a>
+                        </div>
                     </div>
+                    <p class="text-gray-600 mb-0">
+                        Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially  in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
+                    </p>
                     <p class="fs-6 text-gray-700 fw-bold mb-0">
                         Valor atual do pacote: <span class="text-success fw-bolder">R$ {{ number_format($client->current_value, 2, ',', '.') }}</span>
                     </p>
                     <p class="fs-6 text-gray-700 fw-bold mb-0">
                         Próxima renovação em: <span class="text-primary fw-bolder"> {{ $client->renovation() ?? 0 }}</span> dias
-                    </p>
-                    <p class="text-gray-600 mb-0">
-                        Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially  in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
+                        <span class="fs-6 text-gray-700 fw-bold mb-0">
+                            armazenamento: <span class="text-primary fw-bolder"> {{ number_format($client->package->size_storage / 1073741824, 2) }}</span> GB
+                        </span>
                     </p>
                 </div>
             </div>
@@ -54,29 +62,32 @@
                     @endforeach
                 </div>
             </div>
-            <div class="gap-2">
-                <button class="btn btn-sm w-100 mb-4 btn-primary btn-sections" data-show="purschases">
-                    Histórico de Compras
-                </button>
-                <button class="btn btn-sm w-100 mb-4 btn-success btn-sections" data-show="signatures">
-                    Assinaturas
-                </button>
-                <button class="btn btn-sm w-100 mb-4 btn-danger btn-sections" data-show="resources">
-                    Ver Recursos
-                </button>
-                <a href="{{ route('systems.update.database', $client->id) }}" class="btn btn-sm w-100 mb-4 btn-info">
-                    Atualizar banco de dados
-                </a>
-            </div>
         </div>
         <div class="col-12 col-xl-10">
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm w-200px mb-2 btn-success btn-sections" data-show="cards">
+                    Cartões
+                </button>
+                <button class="btn btn-sm w-200px mb-2 btn-success btn-sections" data-show="signatures">
+                    Assinaturas
+                </button>
+                <button class="btn btn-sm w-200px mb-2 btn-primary btn-sections" data-show="purschases">
+                    Histórico de Compras
+                </button>
+                <button class="btn btn-sm w-200px mb-2 btn-danger btn-sections" data-show="resources">
+                    Ver Recursos
+                </button>
+            </div>
+            <div class="divs-sections div-cards">
+                @include('pages.clients._cards')
+            </div>
             <div class="divs-sections div-resources" style="display: none;">
                 @include('pages.clients._resources')
             </div>
-            <div class="divs-sections div-purschases">
+            <div class="divs-sections div-purschases" style="display: none;">
                 @include('pages.clients._purchases')
             </div>
-            <div class="divs-sections div-signatures">
+            <div class="divs-sections div-signatures" style="display: none;">
                 @include('pages.clients._signatures')
             </div>
         </div>

@@ -19,7 +19,8 @@
                         @endif
                     </a>
                     <p class="text-gray-500 mb-0 fw-semibold fs-7 lh-1">
-                        <span class="fw-bolder text-primary">{{ $package->duration_days }}</span> dias - <span class="text-success value-module">R$ {{ number_format($package->value, 2, ',', '.') }}</span>
+                        <span class="fw-bolder text-primary">{{ $package->duration_days }}</span> dias - <span class="text-success value-module">R$ {{ number_format($package->value, 2, ',', '.') }}</span> -
+                        <span class="text-danger fw-bolder"> {{ number_format($package->size_storage / 1073741824, 2) }}</span> GB
                     </p>
                 </div>
                 <a href="{{ route('packages.edit', $package->id) }}" class="btn btn-sm btn-icon btn-light-primary">

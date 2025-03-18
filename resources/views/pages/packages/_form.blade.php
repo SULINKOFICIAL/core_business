@@ -28,6 +28,7 @@
         <select name="size_storage" class="form-select form-select-solid" data-control="select2" data-hide-search="true" data-placeholder="Selecione" required>
             <option value=""></option>
             <option value="1073741824" @if(isset($package) && $package->size_storage == 1073741824) selected @endif>1GB</option>
+            <option value="2684354560" @if(isset($package) && $package->size_storage == 2684354560) selected @endif>2.5GB</option>
             <option value="5368709120" @if(!isset($package) || $package->size_storage == 5368709120) selected @endif>5GB</option>
             <option value="10737418240" @if(isset($package) && $package->size_storage == 10737418240) selected @endif>10GB</option>
             <option value="16106127360" @if(isset($package) && $package->size_storage == 16106127360) selected @endif>15GB</option>

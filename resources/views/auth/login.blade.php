@@ -12,7 +12,7 @@
 			<div class="d-flex flex-column flex-lg-row flex-column-fluid">
 				<div class="d-flex flex-lg-row-fluid">
 				</div>
-				<div class="d-flex align-items-center pe-5">
+				<div class="d-flex align-items-center pe-20 me-20">
 					<div class="text-center">
 						<img class="theme-light-show mx-auto mw-100 w-150px w-lg-400px mb-10 mb-lg-15" src="{{ asset('assets/media/logos/logo-central-dark.svg') }}" alt="" />
 						<div class="bg-body d-flex flex-column flex-center rounded-4 w-md-600px px-7 py-15">
@@ -27,7 +27,7 @@
 										<input type="text" placeholder="Email" name="email" class="form-control bg-transparent mb-8" required/>
 										<input type="password" placeholder="Password" name="password" class="form-control bg-transparent mb-3" required />
 										<div class="d-flex justify-content-end">
-											<button type="submit" class="btn text-uppercase btn-success btn-active-danger fw-bolder">
+											<button type="submit" class="btn text-uppercase btn-success btn-active-danger fw-bolder w-100">
 												Acessar
 											</button>
 										</div>

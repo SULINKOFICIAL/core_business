@@ -2,17 +2,17 @@
     @foreach ($modules as $module)
     <div class="col-6">
         <div class="card mb-4">
-            <div class="card-header">
+            <div class="card-header min-h-50px slk-dark">
                 <div class="card-title">
                     <span class="card-icon">
                         <i class="flaticon2-line-chart text-primary"></i>
                     </span>
-                    <h3 class="card-label">
+                    <h3 class="card-label text-white">
                         {{ $module->name }}
                     </h3>
                 </div>
             </div>
-            <div class="card-body">
+            <div class="card-body p-6">
                 @if ($module->groups->count())
                     @foreach ($module->groups as $group)
                     <div class="rounded mb-4 p-4 bg-light">
