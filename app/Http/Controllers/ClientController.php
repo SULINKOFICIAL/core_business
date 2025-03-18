@@ -130,7 +130,6 @@ class ClientController extends Controller
 
         // Realiza consulta
         $actualFeatures = $this->guzzle('get', 'sistema/permissoes', $client);
-        // $actualFeatures = null;
 
         // Reposta da API
         $responseApi = true;
