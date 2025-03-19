@@ -65,7 +65,7 @@
         </div>
         <div class="col-12 col-xl-10">
             <div class="d-flex gap-2">
-                <button class="btn btn-sm w-200px mb-2 btn-success btn-sections" data-show="cards">
+                <button class="btn btn-sm w-200px mb-2 btn-warning btn-sections" data-show="cards">
                     Cartões
                 </button>
                 <button class="btn btn-sm w-200px mb-2 btn-success btn-sections" data-show="signatures">
@@ -78,13 +78,13 @@
                     Ver Recursos
                 </button>
             </div>
-            <div class="divs-sections div-cards">
+            <div class="divs-sections div-cards" style="display: none;">
                 @include('pages.clients._cards')
             </div>
             <div class="divs-sections div-resources" style="display: none;">
                 @include('pages.clients._resources')
             </div>
-            <div class="divs-sections div-purschases" style="display: none;">
+            <div class="divs-sections div-purschases">
                 @include('pages.clients._purchases')
             </div>
             <div class="divs-sections div-signatures" style="display: none;">

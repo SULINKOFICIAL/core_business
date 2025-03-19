@@ -18,12 +18,18 @@ class ClientPurchase extends Model
         'purchase_date',
         'description',
         'method',
+        'gateway_id',
         'status',
     ];
 
     public function items()
     {
         return $this->hasMany(ClientPurchaseItem::class, 'purchase_id');
+    }
+
+    public function client()
+    {
+        return $this->hasOne(Client::class, 'id', 'client_id');
     }
 
     public function package()

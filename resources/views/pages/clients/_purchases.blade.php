@@ -42,8 +42,10 @@
                         <span class="text-gray-700 fw-bold">{{ $purchase->method }}</span>
                     </td>
                     <td class="text-center">
-                        @if ($purchase->status)
+                        @if ($purchase->status == 'Pago')
                         <span class="badge badge-light-success">Pago</span>
+                        @elseif ($purchase->status == 'Cancelado')
+                        <span class="badge badge-light-danger">Cancelado</span>
                         @else
                         <span class="badge badge-light-warning">Pendente</span>
                         @endif

@@ -25,7 +25,7 @@ class ClientSeeder extends Seeder
             'name' => 'Coca Cola',
             'email' => 'coca@cocacola.com.br',
             'domain' => 'cocacola.com.br',
-            'token' => '123',
+            'token' => '111',
             'package_id' => 1,
             'created_by' => 1,
         ]);

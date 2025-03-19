@@ -4,14 +4,18 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Client;
+use App\Models\ClientCard;
 use App\Models\ErrorMiCore;
 use App\Models\Package;
 use App\Models\Ticket;
+use App\Services\ERedeService;
 use App\Services\PackageService;
 use Illuminate\Support\Str;
 
 class ApisController extends Controller
 {
+
+    protected $eRedeService;
     
     /**
      * Controlador responsável por gerenciar as APIs do sistema.
@@ -25,12 +29,13 @@ class ApisController extends Controller
     private $repository;
     private $cpanelMiCore;
 
-    public function __construct(Request $request, Client $content)
+    public function __construct(Request $request, Client $content, ERedeService $eRedeService)
     {
 
         $this->request = $request;
         $this->repository = $content;
         $this->cpanelMiCore = new CpanelController();
+        $this->eRedeService = $eRedeService;
 
     }
 
@@ -173,22 +178,88 @@ class ApisController extends Controller
 
     }
 
+    /**
+     * Função responsável por processar pagamentos dos sistemas miCores.
+     * Utilizamos junto a ele a integração através da eRede.
+     */
     public function payment(Request $request, PackageService $service) {
 
-        // Obtém dados
+        // Obtém os dados enviados no formulário
         $data = $request->all();
+
+        // Se não encontrar o cliente
+        if(!isset($data['token']) || !isset($data['package_id'])){
+            return response()->json('Parametros faltando não encontrado.');
+        }
         
-        // Obtém cliente
+        // Obtém cliente associado ao miCore através do Token dele
         $client = Client::where('token', $data['token'])->first();
 
-        // Obtém pacote desejado
+        // Se não encontrar o cliente
+        if(!$client) return response()->json('Cliente não encontrado.');
+
+        // Obtém o pacote que o cliente quer realizar o upgrade
         $package = Package::find($data['package_id']);
 
-        // Retorna erro caso não encontre cliente ou pacote
-        if (!$client || !$package) return response()->json(['error' => 'Cliente ou pacote não encontrado.'], 404);
+        // Encontra o cartão do cliente para reutilizar
+        if(isset($data['card_id'])){
+
+            // Encontra o cartão do cliente
+            $card = ClientCard::where('client_id', $client->id)
+                                ->where('number', $data['card_number'])
+                                ->first();
+
+            return 'Cartão não encontrado para esse cliente';
+
+        } else {
+
+            // Verifica se o cartão já não estra cadastrado
+            if(!$card = ClientCard::where('client_id', $client->id)->where('number', $data['card_number'])->first()) {
+                // Salvamos o cartão do cliente
+                $card = ClientCard::create([
+                    'client_id'        => $client->id,
+                    'name'             => $data['card_name'],
+                    'number'           => $data['card_number'],
+                    'expiration_month' => $data['expiration_month'],
+                    'expiration_year'  => $data['expiration_year'],
+                ]);
+            }
+        }
 
         // Retorna o cliente atualizado
-        $response = $service->assignNewPackage($client, $package);
+        $paymentIntention = $service->createPaymentIntent($client, $package, 'Gateway', 1);
+
+        // Formata o valor inteiro em centavos conforme eRede solicita
+        $amount = (int) ($paymentIntention->total() * 100);
+
+        // Formata a referencia da transação
+        $reference = 'PI' . $paymentIntention->id;
+
+        // Formata cartão para enviar para rede
+        $card = [
+            'name'            => $card->name,
+            'cardNumber'      => $card->number,
+            'expirationMonth' => $card->expiration_month,
+            'expirationYear'  => $card->expiration_year,
+            'ccv'             => $data['ccv'],
+        ];
+
+        // Realiza transação do eRedeController aqui
+        $responseRede = $this->eRedeService->transaction($amount, $reference, $card, null);
+
+        dd($responseRede);
+
+        // Se foi pago atribui o pacote ao cliente
+        if($responseRede == ''){
+
+            // Atualiza para pago
+            $paymentIntention->status = 'Pago';
+            $paymentIntention->save();
+
+            // Retorna o cliente atualizado
+            $responsePurschase = $service->confirmPackageChange($paymentIntention);
+
+        }
 
         // Retorna pacote atualizado
         return response()->json([

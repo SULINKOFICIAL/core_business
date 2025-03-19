@@ -10,30 +10,20 @@ use App\Models\Package;
 
 class PackageService
 {
-    public function assignNewPackage($client, $newPackage)
+    public function createPaymentIntent($client, $newPackage, $method = 'Manual', $gateway = null)
     {
 
         // Verifica se não esta atualizando para o mesmo pacote
-        if($client->package_id == $newPackage->id){
-            return 'O usuário já esta com o pacote "' . $newPackage->name . '" em sua conta.';
+        if ($client->package_id == $newPackage->id) {
+            return 'O usuário já está com o pacote "' . $newPackage->name . '" em sua conta.';
         }
 
-        // Obtém o pacote atual e o novo
+        // Se tiver alguma inteção de compra cancela e gera uma nova
+        ClientPurchase::where('status', 'Pendente')->update(['status' => 'Cancelado']);
+
         $currentPackage = $client->package;
-
-        // Obtém a assinatura ativa atual
-        $currentSubscription = $client->lastSubscription();
-
-        // Se houver uma assinatura ativa, finaliza ela
-        if ($currentSubscription) {
-            $currentSubscription->update([
-                'status' => 'Cancelado',
-                'end_date' => now(),
-            ]);
-        }
-
-        // Calcula crédito se necessário
         $credit = 0;
+
         if ($currentPackage && !$currentPackage->free) {
             $daysInMonth = now()->daysInMonth;
             $daysUsed = now()->day;
@@ -42,42 +32,28 @@ class PackageService
             $credit = $dailyRate * $daysRemaining;
         }
 
-        // Criar nova compra
+        // Criar intenção de compra
         $purchase = ClientPurchase::create([
-            'client_id' => $client->id,
-            'purchase_date' => now(),
-            'type' => 'Pacote Trocado',
-            'key_id' => $newPackage->id,
+            'client_id'       => $client->id,
+            'purchase_date'   => now(),
+            'type'            => 'Pacote Trocado',
+            'key_id'          => $newPackage->id,
             'previous_key_id' => $currentPackage->id,
-            'method' => 'Manual',
-            'status' => true,
+            'method'          => $method,
+            'gateway_id'      => $gateway,
+            'status'          => 'Pendente',
         ]);
 
-        // Adiciona novo pacote na compra
+        // Adiciona pacote na compra
         ClientPurchaseItem::create([
             'purchase_id' => $purchase->id,
-            'type' => 'Pacote',
-            'action' => 'Alteração',
-            'item_name' => $newPackage->name,
-            'item_key' => $newPackage->id,
-            'quantity' => 1,
-            'item_value' => $newPackage->value,
+            'type'        => 'Pacote',
+            'action'      => 'Alteração',
+            'item_name'   => $newPackage->name,
+            'item_key'    => $newPackage->id,
+            'quantity'    => 1,
+            'item_value'  => $newPackage->value,
         ]);
-
-        // Adiciona crédito na compra, se houver
-        if ($credit > 0) {
-            ClientPurchaseItem::create([
-                'purchase_id' => $purchase->id,
-                'type' => 'Crédito',
-                'action' => 'Ajuste',
-                'item_name' => 'Crédito proporcional',
-                'quantity' => 1,
-                'item_value' => -$credit,
-            ]);
-        }
-
-        // Remove os módulos antigos
-        ClientModule::where('client_id', $client->id)->delete();
 
         // Adiciona os novos módulos
         foreach ($newPackage->modules as $module) {
@@ -90,29 +66,72 @@ class PackageService
                 'quantity' => 1,
                 'item_value' => 0,
             ]);
+        }
 
+        // Adiciona crédito se necessário
+        if ($credit > 0) {
+            ClientPurchaseItem::create([
+                'purchase_id' => $purchase->id,
+                'type'        => 'Crédito',
+                'action'      => 'Ajuste',
+                'item_name'   => 'Crédito proporcional',
+                'quantity'    => 1,
+                'item_value'  => -$credit,
+            ]);
+        }
+
+        return $purchase;
+    }
+
+    public function confirmPackageChange($purchase)
+    {
+        if ($purchase->status !== 'Pago') {
+            return 'Pagamento ainda não confirmado.';
+        }
+
+        $client = $purchase->client;
+        $newPackage = Package::find($purchase->key_id);
+
+        if (!$newPackage) {
+            return 'Pacote não encontrado.';
+        }
+
+        // Cancela assinatura atual
+        $currentSubscription = $client->lastSubscription();
+        if ($currentSubscription) {
+            $currentSubscription->update([
+                'status'   => 'Cancelado',
+                'end_date' => now(),
+            ]);
+        }
+
+        // Remove módulos antigos
+        ClientModule::where('client_id', $client->id)->delete();
+
+        // Adiciona novos módulos
+        foreach ($newPackage->modules as $module) {
             ClientModule::create([
-                'client_id' => $client->id,
-                'module_id' => $module->id,
+                'client_id'  => $client->id,
+                'module_id'  => $module->id,
             ]);
         }
 
         // Criar nova assinatura
         ClientSubscription::create([
-            'client_id' => $client->id,
-            'package_id' => $newPackage->id,
+            'client_id'    => $client->id,
+            'package_id'   => $newPackage->id,
             'purschase_id' => $purchase->id,
-            'start_date' => now(),
-            'end_date' => now()->addDays($newPackage->duration_days),
-            'status' => 'Ativa',
+            'start_date'   => now(),
+            'end_date'     => now()->addDays($newPackage->duration_days),
+            'status'       => 'Ativa',
         ]);
 
-        // Atualizar o cliente com o novo pacote
+        // Atualizar cliente com novo pacote
         $client->update([
             'package_id' => $newPackage->id,
         ]);
 
-        return 'Pacote "' . $newPackage->name . '" adicionado com sucesso.';
-        
+        return 'Pacote "' . $newPackage->name . '" ativado com sucesso.';
     }
+
 }
