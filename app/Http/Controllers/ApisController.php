@@ -10,6 +10,7 @@ use App\Models\Package;
 use App\Models\Ticket;
 use App\Services\ERedeService;
 use App\Services\PackageService;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class ApisController extends Controller
@@ -227,7 +228,19 @@ class ApisController extends Controller
         }
 
         // Retorna o cliente atualizado
-        $paymentIntention = $service->createPaymentIntent($client, $package, 'Gateway', 1);
+        $responsePaymentIntent = $service->createPaymentIntent($client, $package, 'Gateway', 1);
+
+        // Se o cliente estiver tentando comprar o mesmo plano
+        if($responsePaymentIntent['status'] == 'Falha'){
+            // Retorna pacote atualizado
+            return response()->json([
+                'code' => 'Falha',
+                'message' => $responsePaymentIntent['message'],
+            ]);
+        }
+
+        // Extrai a intenção de pagamento
+        $paymentIntention = $responsePaymentIntent['purchase'];
 
         // Formata o valor inteiro em centavos conforme eRede solicita
         $amount = (int) ($paymentIntention->total() * 100);
@@ -237,34 +250,43 @@ class ApisController extends Controller
 
         // Formata cartão para enviar para rede
         $card = [
-            'name'            => $card->name,
-            'cardNumber'      => $card->number,
-            'expirationMonth' => $card->expiration_month,
-            'expirationYear'  => $card->expiration_year,
-            'ccv'             => $data['ccv'],
+            'name'   => $card->name,
+            'number' => $card->number,
+            'month'  => $card->expiration_month,
+            'year'   => $card->expiration_year,
+            'ccv'    => $data['ccv'],
         ];
 
         // Realiza transação do eRedeController aqui
         $responseRede = $this->eRedeService->transaction($amount, $reference, $card, null);
 
-        dd($responseRede);
+        Log::info(json_encode($paymentIntention));
+        Log::info(json_encode($responseRede));
 
         // Se foi pago atribui o pacote ao cliente
-        if($responseRede == ''){
+        if($responseRede['returnCode'] == '00'){
 
             // Atualiza para pago
             $paymentIntention->status = 'Pago';
             $paymentIntention->save();
 
             // Retorna o cliente atualizado
-            $responsePurschase = $service->confirmPackageChange($paymentIntention);
+            $service->confirmPackageChange($paymentIntention);
 
+            // Retorna pacote atualizado
+            return response()->json([
+                'status' => 'Sucesso',
+                'message' => 'Compra realizada com sucesso.',
+            ]);
+
+        } else {
+            // Retorna pacote atualizado
+            return response()->json([
+                'status' => 'Falha',
+                'message' => 'Ocorreu um problema ao realizar a compra.',
+            ]);
         }
 
-        // Retorna pacote atualizado
-        return response()->json([
-            'message' => $response,
-        ]);
 
     }
 

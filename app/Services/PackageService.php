@@ -15,7 +15,10 @@ class PackageService
 
         // Verifica se não esta atualizando para o mesmo pacote
         if ($client->package_id == $newPackage->id) {
-            return 'O usuário já está com o pacote "' . $newPackage->name . '" em sua conta.';
+            return [
+                'status' => 'Falha', 
+                'message' => 'O cliente já esta com esse plano atribuido',
+            ];
         }
 
         // Se tiver alguma inteção de compra cancela e gera uma nova
@@ -80,7 +83,10 @@ class PackageService
             ]);
         }
 
-        return $purchase;
+        return [
+            'status' => 'Sucesso', 
+            'purchase' => $purchase
+        ];
     }
 
     public function confirmPackageChange($purchase)

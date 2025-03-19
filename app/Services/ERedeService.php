@@ -34,7 +34,7 @@ class ERedeService
     public function tokenization($email, $number, $expirationMonth, $expirationYear, $cardName, $securityCode, $storageCard = 0){
 
         // Realiza solicitação
-        return $this->guzzle(
+        return $this->guzzleRequest(
             'post', 
             env('REDE_TOKEN_URL') . '/token-service/v1/tokenization', 
             [
@@ -114,7 +114,7 @@ class ERedeService
         }
 
         // Envia a solicitação para a eRede
-        return $this->guzzle(
+        return $this->guzzleRequest(
             'post', 
             env('REDE_URL') . '/v1/transactions', 
             $transactionData
@@ -128,7 +128,7 @@ class ERedeService
      * @return mixed Resposta da API contendo o cryptogram.
      */
     public function verifySolicitation($tokenizationId){
-        return $this->guzzle('get', env('REDE_TOKEN_URL') . '/token-service/v1/tokenization/' . $tokenizationId);
+        return $this->guzzleRequest('get', env('REDE_TOKEN_URL') . '/token-service/v1/tokenization/' . $tokenizationId);
     }
 
 
@@ -141,63 +141,12 @@ class ERedeService
     public function cryptogram($tokenizationId){
 
         // Realiza solicitação
-        return $this->guzzle(
+        return $this->guzzleRequest(
             'post', 
             env('REDE_TOKEN_URL') . '/token-service/v1/cryptogram/' . $tokenizationId, 
             [
                 'subscription' => true
             ]);
-
-    }
-
-    /**
-     * Chama a função transaction() com parâmetros fictícios para realizar uma transação.
-     * 
-     * @return mixed Resposta da API contendo os detalhes da transação.
-     */
-    public function simulateTransaction() {
-
-        dd('Chegou');
-
-        // Obtém o cliente
-        $client = Client::find(1);
-
-        // Obtém o cartão do cliente
-        $clientCard = $client->cards[0];
-
-        // Definindo parâmetros fictícios
-        // $tokenizationId  = null;      // ID fictício do cartão tokenizado
-        $amount          = 1050;      // Valor fictício da transação
-        $reference       = 'ref0003'; // Referência fictícia
-
-        // Obtém cartão do cliente
-        if($clientCard){
-            $card = [
-                'name'   => $clientCard->name, 
-                'number' => $clientCard->number, 
-                'month'  => $clientCard->expiration_month, 
-                'year'   => $clientCard->expiration_year, 
-            ];
-        } else {
-            // Simula um cartão
-            $card = [
-                'name'   => 'John Snow', 
-                'number' => '5448280000000007', 
-                'month'  => 1, 
-                'year'   => 2028, 
-                'ccv'    => '123', 
-            ];
-        }
-
-        // Chama a função transaction passando os parâmetros fictícios
-        $response = $this->transaction(
-            $amount, 
-            $reference, 
-            $clientCard->tokenization_id,
-            $card,
-        );
-
-        dd($response);
 
     }
     
