@@ -260,6 +260,13 @@ class ApisController extends Controller
         // Realiza transação do eRedeController aqui
         $responseRede = $this->eRedeService->transaction($amount, $reference, $card, null);
 
+        // Realizar tokenização
+        // Realizar tokenização
+        // Realizar tokenização
+        // Realizar tokenização
+        // Realizar tokenização
+        // Realizar tokenização
+
         /**
          * Registra logs nas primeiras transações para
          * facilitar o processo de cobranças.

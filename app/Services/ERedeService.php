@@ -20,35 +20,6 @@ class ERedeService
     }
 
     /**
-     * Tokeniza um cartão de crédito, armazenando-o com segurança na API da eRede.
-     * 
-     * @param string $email            E-mail do titular do cartão.
-     * @param string $number           Número do cartão de crédito.
-     * @param string $expirationMonth  Mês de expiração do cartão (MM).
-     * @param string $expirationYear   Ano de expiração do cartão (AAAA).
-     * @param string $cardName         Nome do titular impresso no cartão.
-     * @param string $securityCode     Código de segurança (CVV).
-     * @param int    $storageCard      Indica se o cartão deve ser armazenado (0 = não, 1 = sim).
-     * @return mixed Resposta da API contendo os dados do cartão tokenizado.
-     */
-    public function tokenization($email, $number, $expirationMonth, $expirationYear, $cardName, $securityCode, $storageCard = 0){
-
-        // Realiza solicitação
-        return $this->guzzleRequest(
-            'post', 
-            env('REDE_TOKEN_URL') . '/token-service/v1/tokenization', 
-            [
-                'email'           => $email, 
-                'cardNumber'      => $number, 
-                'expirationMonth' => $expirationMonth, 
-                'expirationYear'  => $expirationYear, 
-                'cardholderName'  => $cardName, 
-                'securityCode'    => $securityCode, 
-                'storageCard'     => $storageCard, 
-            ]);
-    }
-
-    /**
      * Realiza a transação de pagamento com o cartão tokenizado.
      * 
      * @param string $tokenizationId ID do cartão tokenizado.
@@ -122,6 +93,35 @@ class ERedeService
     }
 
     /**
+     * Tokeniza um cartão de crédito, armazenando-o com segurança na API da eRede.
+     * 
+     * @param string $email            E-mail do titular do cartão.
+     * @param string $number           Número do cartão de crédito.
+     * @param string $expirationMonth  Mês de expiração do cartão (MM).
+     * @param string $expirationYear   Ano de expiração do cartão (AAAA).
+     * @param string $cardName         Nome do titular impresso no cartão.
+     * @param string $securityCode     Código de segurança (CVV).
+     * @param int    $storageCard      Indica se o cartão deve ser armazenado (0 = não, 1 = sim).
+     * @return mixed Resposta da API contendo os dados do cartão tokenizado.
+     */
+    public function tokenization($email, $number, $expirationMonth, $expirationYear, $cardName, $securityCode, $storageCard = 0){
+
+        // Realiza solicitação
+        return $this->guzzleRequest(
+            'post', 
+            env('REDE_TOKEN_URL') . '/token-service/v1/tokenization', 
+            [
+                'email'           => $email, 
+                'cardNumber'      => $number, 
+                'expirationMonth' => $expirationMonth, 
+                'expirationYear'  => $expirationYear, 
+                'cardholderName'  => $cardName, 
+                'securityCode'    => $securityCode, 
+                'storageCard'     => $storageCard, 
+            ]);
+    }
+
+    /**
      * Verifica dados sobre o token gerado.
      * 
      * @param string $tokenizationId ID do cartão tokenizado.
@@ -130,7 +130,6 @@ class ERedeService
     public function verifySolicitation($tokenizationId){
         return $this->guzzleRequest('get', env('REDE_TOKEN_URL') . '/token-service/v1/tokenization/' . $tokenizationId);
     }
-
 
     /**
      * Obtém um cryptogram (criptograma de segurança) para um cartão tokenizado.
