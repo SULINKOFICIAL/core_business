@@ -105,6 +105,14 @@ class ERedeService
      * @return mixed Resposta da API contendo os dados do cartão tokenizado.
      */
     public function tokenization($email, $number, $expirationMonth, $expirationYear, $cardName, $securityCode, $storageCard = 0){
+
+        /** 
+         * Regras do Storage Card
+         * 0 - Não armazenar o cartão
+         * 1 - Cartão sendo armazenado pela primeira vez. (Requer SecurityCode)
+         * 2 - Cartão já armazenado. (Não requer o SecurityCode)
+         */
+
         // Realiza solicitação
         return $this->guzzleRequest(
             'post', 
