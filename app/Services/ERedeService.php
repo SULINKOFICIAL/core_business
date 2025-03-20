@@ -104,7 +104,7 @@ class ERedeService
      * @param int    $storageCard      Indica se o cartão deve ser armazenado (0 = não, 1 = sim).
      * @return mixed Resposta da API contendo os dados do cartão tokenizado.
      */
-    public function tokenization($email, $number, $expirationMonth, $expirationYear, $cardName, $securityCode, $storageCard = 0){
+    public function tokenization($email, $number, $expirationMonth, $expirationYear, $cardName, $securityCode, $storageCard = 2){
 
         /** 
          * Regras do Storage Card
