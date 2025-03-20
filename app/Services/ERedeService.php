@@ -36,14 +36,14 @@ class ERedeService
 
         // Monta os dados básicos da transação
         $transactionData = [
-            'capture'                => false,
+            'capture'                => true,
             'kind'                   => 'credit',
             'reference'              => $reference,
             'amount'                 => $amount,
-            'softDescriptor'         => 'PD01',
+            'softDescriptor'         => 'MICORE01',
             'subscription'           => false,
             'origin'                 => 1,
-            'distributorAffiliation' => 73373853,
+            'distributorAffiliation' => env('REDE_PV'),
             'brandTid'               => 'string',
             'transactionCredentials' => [
                 'credentialId' => '01'
@@ -105,18 +105,17 @@ class ERedeService
      * @return mixed Resposta da API contendo os dados do cartão tokenizado.
      */
     public function tokenization($email, $number, $expirationMonth, $expirationYear, $cardName, $securityCode, $storageCard = 0){
-
         // Realiza solicitação
         return $this->guzzleRequest(
             'post', 
-            env('REDE_TOKEN_URL') . '/token-service/v1/tokenization', 
+            env('REDE_TOKEN_URL') . '/v1/tokenization', 
             [
                 'email'           => $email, 
-                'cardNumber'      => $number, 
-                'expirationMonth' => $expirationMonth, 
-                'expirationYear'  => $expirationYear, 
+                'cardNumber'      => (int) $number, 
+                'expirationMonth' => sprintf('%02d', $expirationMonth),
+                'expirationYear'  => (int) $expirationYear, 
                 'cardholderName'  => $cardName, 
-                'securityCode'    => $securityCode, 
+                'securityCode'    => (int) $securityCode, 
                 'storageCard'     => $storageCard, 
             ]);
     }
@@ -128,7 +127,7 @@ class ERedeService
      * @return mixed Resposta da API contendo o cryptogram.
      */
     public function verifySolicitation($tokenizationId){
-        return $this->guzzleRequest('get', env('REDE_TOKEN_URL') . '/token-service/v1/tokenization/' . $tokenizationId);
+        return $this->guzzleRequest('get', env('REDE_TOKEN_URL') . '/v1/tokenization/' . $tokenizationId);
     }
 
     /**
@@ -142,7 +141,7 @@ class ERedeService
         // Realiza solicitação
         return $this->guzzleRequest(
             'post', 
-            env('REDE_TOKEN_URL') . '/token-service/v1/cryptogram/' . $tokenizationId, 
+            env('REDE_TOKEN_URL') . '/v1/cryptogram/' . $tokenizationId, 
             [
                 'subscription' => true
             ]);
@@ -175,7 +174,7 @@ class ERedeService
             if ($data !== null) {
                 $options['json'] = $data;
             }
-    
+
             // Realiza a solicitação
             $response = $guzzle->$method("$url", $options);
 

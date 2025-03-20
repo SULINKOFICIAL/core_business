@@ -25,7 +25,7 @@ class PackageSeeder extends Seeder
         
         Package::create([
             'name'          => 'Começando',
-            'value'         => 29,
+            'value'         => 1,
             'duration_days' => 30,
             'order'         => 1,
             'created_by'    => 1,
@@ -34,7 +34,7 @@ class PackageSeeder extends Seeder
         Package::create([
             'name' => 'Avançado',
             'status' => 1,
-            'value' => 49,
+            'value' => 2,
             'duration_days' => 30,
             'order' => 1,
             'created_by' => 2,
@@ -43,7 +43,7 @@ class PackageSeeder extends Seeder
         Package::create([
             'name' => 'Empresas',
             'status' => 1,
-            'value' => 59,
+            'value' => 3,
             'duration_days' => 30,
             'order' => 1,
             'created_by' => 2,

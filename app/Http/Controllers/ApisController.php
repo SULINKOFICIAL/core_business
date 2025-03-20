@@ -202,6 +202,9 @@ class ApisController extends Controller
         // Obtém o pacote que o cliente quer realizar o upgrade
         $package = Package::find($data['package_id']);
 
+        // Limpa os dados do cartão
+        $data['card_number'] = (int) str_replace(' ', '', $data['card_number']);
+
         // Encontra o cartão do cliente para reutilizar
         if(isset($data['card_id'])){
 
@@ -256,12 +259,19 @@ class ApisController extends Controller
             'year'   => $card->expiration_year,
             'ccv'    => $data['ccv'],
         ];
-
+        
         // Realiza transação do eRedeController aqui
         $responseRede = $this->eRedeService->transaction($amount, $reference, $cardTransaction, null);
 
         // Realiza tokenização, procedimento para cobrar recorrências automáticas.
-        $responseTokenization = $this->eRedeService->tokenization($client->email, $card->number, $card->expiration_month, $card->expiration_year, $card->name, $data['ccv']);
+        $responseTokenization = $this->eRedeService->tokenization(
+            $client->email,
+            $card->number,
+            $card->expiration_month,
+            $card->expiration_year,
+            $card->name,
+            $data['ccv']
+        );
 
         // Se não foi bem sucedido a tokenização
         if($responseTokenization['returnCode'] == '00'){
@@ -299,6 +309,12 @@ class ApisController extends Controller
             ]);
 
         } else {
+
+            // Atualiza para pago
+            $paymentIntention->status = 'Falha';
+            $paymentIntention->response = json_encode($responseRede);
+            $paymentIntention->save();
+
             // Retorna pacote atualizado
             return response()->json([
                 'status' => 'Falha',

@@ -20,6 +20,7 @@ class ClientPurchase extends Model
         'method',
         'gateway_id',
         'status',
+        'response',
     ];
 
     public function items()
