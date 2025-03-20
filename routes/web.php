@@ -105,8 +105,6 @@ Route::middleware(['auth'])->group(function () {
 
     Route::prefix('rede')->group(function () {
         Route::name('rede.')->group(function () {
-            Route::get('/simular-transacao/{id?}', [ERedeController::class, 'simulateTransaction'])->name('simulate.transaction');
-            Route::get('/transacao', [ERedeController::class, 'transaction'])->name('transaction');
             Route::get('/token/{token}', [ERedeController::class, 'verifySolicitation'])->name('verify.token');
             Route::get('/criptografia/{token}', [ERedeController::class, 'cryptogram'])->name('cryptogram');
         });

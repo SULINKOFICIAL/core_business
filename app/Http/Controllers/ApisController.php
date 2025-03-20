@@ -16,6 +16,7 @@ use Illuminate\Support\Str;
 class ApisController extends Controller
 {
 
+    // Gerencia Serviço eRede
     protected $eRedeService;
     
     /**
