@@ -30,6 +30,25 @@ class ERedeController extends Controller
         $this->eRedeService = $eRedeService;
     }
 
+    public function testar(){
+        // Realiza tokenização, procedimento para cobrar recorrências automáticas.
+        $responseTokenization = $this->eRedeService->tokenization(
+            'ramon@sulink.com.br',
+            '5162928376060732',
+            '03',
+            '2033',
+            'Ramon L I Piekarski',
+            '303'
+        );
+
+        dump($responseTokenization);
+
+        // Consulta token
+        $responseConsult = $this->eRedeService->verifySolicitation($responseTokenization['tokenizationId']);
+
+        dd($responseConsult);
+    }
+
     /**
      * Verifica a solicitação de tokenização de um cartão de crédito.
      *
