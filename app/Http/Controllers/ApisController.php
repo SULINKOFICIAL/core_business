@@ -260,7 +260,7 @@ class ApisController extends Controller
             'year'   => $card->expiration_year,
             'ccv'    => $data['ccv'],
         ];
-
+        
         // Realiza tokenização, procedimento para cobrar recorrências automáticas.
         $responseTokenization = $this->eRedeService->tokenization(
             $client->email,
@@ -268,26 +268,16 @@ class ApisController extends Controller
             $card->expiration_month,
             $card->expiration_year,
             $card->name,
-            $data['ccv']
+            $data['ccv'],
         );
 
         // Consulta token
         $responseConsult = $this->eRedeService->verifySolicitation($responseTokenization['tokenizationId']);
 
         dd($responseTokenization, $responseConsult);
-        
+
         // Realiza transação do eRedeController aqui
         $responseRede = $this->eRedeService->transaction($amount, $reference, $cardTransaction, null);
-
-        // Realiza tokenização, procedimento para cobrar recorrências automáticas.
-        $responseTokenization = $this->eRedeService->tokenization(
-            $client->email,
-            $card->number,
-            $card->expiration_month,
-            $card->expiration_year,
-            $card->name,
-            $data['ccv']
-        );
 
         // Se não foi bem sucedido a tokenização
         if($responseTokenization['returnCode'] == '00'){

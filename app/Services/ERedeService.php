@@ -41,10 +41,11 @@ class ERedeService
             'reference'              => $reference,
             'amount'                 => $amount,
             'softDescriptor'         => 'MICORE01',
-            'subscription'           => false,
+            'subscription'           => true,
             'origin'                 => 1,
             'distributorAffiliation' => env('REDE_PV'),
             'brandTid'               => 'string',
+            'storageCard'            => 1,
             'transactionCredentials' => [
                 'credentialId' => '01'
             ]
@@ -104,7 +105,7 @@ class ERedeService
      * @param int    $storageCard      Indica se o cartão deve ser armazenado (0 = não, 1 = sim).
      * @return mixed Resposta da API contendo os dados do cartão tokenizado.
      */
-    public function tokenization($email, $number, $expirationMonth, $expirationYear, $cardName, $securityCode, $storageCard = 2){
+    public function tokenization($email, $number, $expirationMonth, $expirationYear, $cardName, $securityCode, $storageCard = 0){
 
         /** 
          * Regras do Storage Card
@@ -112,7 +113,8 @@ class ERedeService
          * 1 - Cartão sendo armazenado pela primeira vez. (Requer SecurityCode)
          * 2 - Cartão já armazenado. (Não requer o SecurityCode)
          */
-
+        // dd($email, (int) $number, $expirationMonth, (int) $expirationYear, $cardName, (int) $securityCode, $storageCard);
+        
         // Realiza solicitação
         return $this->guzzleRequest(
             'post', 

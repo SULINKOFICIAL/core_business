@@ -119,6 +119,8 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/insere-token/{id}', [CpanelController::class, 'clientAddTokenAndUser'])->name('token');
         });
     });
+    
+    Route::get('/resposta-rede', [ERedeController::class, 'webhook']);
 
 });
 

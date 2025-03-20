@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Client;
 use App\Services\ERedeService;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Request;
 
 /**
  * Controlador responsável por interagir com a API da eRede para operações de 
@@ -71,5 +72,16 @@ class ERedeController extends Controller
     {
         $responseRede = $this->eRedeService->cryptogram($tokenizationId);
         dd($responseRede);
+    }
+
+    /**
+     * Obtém o criptograma do cartão de crédito tokenizado.
+     *
+     * @param string $tokenizationId Identificador da tokenização.
+     * @return void
+     */
+    public function webhook(Request $request)
+    {
+        Log::info(json_encode($request->all()));
     }
 }
