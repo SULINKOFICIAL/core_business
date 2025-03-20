@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Services\ERedeService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Request;
 
 /**
  * Controlador responsável por interagir com a API da eRede para operações de 
