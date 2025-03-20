@@ -32,10 +32,14 @@ class ERedeService
      * @param string $securityCode   Código de segurança do cartão (CVV).
      * @return mixed Resposta da API contendo os detalhes da transação.
      */
-    public function transaction($amount, $reference, $card, $tokenizationId = null) {
+    public function transaction($amount, $reference, $card, $ccv = null) {
 
         // Monta os dados básicos da transação
         $transactionData = [
+            'cardholderName'         => $card->name,
+            'cardNumber'             => $card->number,
+            'expirationMonth'        => $card->expiration_month,
+            'expirationYear'         => $card->expiration_year,
             'capture'                => true,
             'kind'                   => 'credit',
             'reference'              => $reference,
@@ -44,45 +48,21 @@ class ERedeService
             'subscription'           => true,
             'origin'                 => 1,
             'distributorAffiliation' => env('REDE_PV'),
-            'brandTid'               => 'string',
-            'storageCard'            => 1,
             'transactionCredentials' => [
                 'credentialId' => '01'
             ]
         ];
 
-        // Formata os dados do cartão
-        $transactionData['cardholderName']  = $card['name'];
-        $transactionData['cardNumber']      = $card['number'];
-        $transactionData['expirationMonth'] = $card['month'];
-        $transactionData['expirationYear']  = $card['year'];
-
         /**
-         * Se veio o TokenizationId significa que será
-         * uma transação que será feita de forma automática,
-         * ou seja, não será necessário CCV.
+         * Se veio o brandTid significa que será uma transação que
+         * será feita de forma automática ou seja, não será necessário CCV.
          */
-        if($tokenizationId){
-
-            // Gera o token criptografado para que a transação seja realizada.
-            $encryptedToken = $this->cryptogram($tokenizationId);
-
-            // Formata os demais dados necessários
-            $transactionData['tokenCryptogram'] = $encryptedToken['cryptogramInfo']['tokenCryptogram'];
-            $transactionData['tokenizationId']  = $tokenizationId;
-            $transactionData['storageCard']     = 1;
-            $transactionData['securityAuthentication'] = [
-                'sai' => "01",
-            ];
-            $transactionData['transactionCredentials'] = [
-                'credentialId' => "01",
-            ];
-        }
-
-        // Caso não seja uma transação via token
-        if (!$tokenizationId) {
-            $transactionData['securityCode'] = $card['ccv'];
-            $transactionData['storageCard']  = 0;
+        if ($card->brand_tid) {
+            $transactionData['storageCard'] = 2;
+            $transactionData['brandTid'] = $card->brand_tid;
+        } else {
+            $transactionData['storageCard'] = 1;
+            $transactionData['securityCode'] = $ccv;
         }
 
         // Envia a solicitação para a eRede
@@ -92,6 +72,7 @@ class ERedeService
             $transactionData
         );
     }
+
 
     /**
      * Tokeniza um cartão de crédito, armazenando-o com segurança na API da eRede.
@@ -105,7 +86,7 @@ class ERedeService
      * @param int    $storageCard      Indica se o cartão deve ser armazenado (0 = não, 1 = sim).
      * @return mixed Resposta da API contendo os dados do cartão tokenizado.
      */
-    public function tokenization($email, $number, $expirationMonth, $expirationYear, $cardName, $securityCode, $storageCard = 0){
+    public function tokenization($email, $number, $expirationMonth, $expirationYear, $cardName, $securityCode, $storageCard = 0, $brandTid){
 
         /** 
          * Regras do Storage Card

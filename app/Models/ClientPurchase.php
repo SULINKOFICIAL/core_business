@@ -19,6 +19,8 @@ class ClientPurchase extends Model
         'description',
         'method',
         'gateway_id',
+        'brand_tid',
+        'brand_tid_at',
         'status',
         'response',
     ];

@@ -250,58 +250,27 @@ class ApisController extends Controller
         $amount = (int) ($paymentIntention->total() * 100);
 
         // Formata a referencia da transação
-        $reference = 'PI' . $paymentIntention->id;
-
-        // Formata cartão para enviar para rede
-        $cardTransaction = [
-            'name'   => $card->name,
-            'number' => $card->number,
-            'month'  => $card->expiration_month,
-            'year'   => $card->expiration_year,
-            'ccv'    => $data['ccv'],
-        ];
+        $reference = 'PTI' . $paymentIntention->id;
         
-        // Realiza tokenização, procedimento para cobrar recorrências automáticas.
-        $responseTokenization = $this->eRedeService->tokenization(
-            $client->email,
-            $card->number,
-            $card->expiration_month,
-            $card->expiration_year,
-            $card->name,
-            $data['ccv'],
-        );
-
-        // Consulta token
-        $responseConsult = $this->eRedeService->verifySolicitation($responseTokenization['tokenizationId']);
-
-        dd($responseTokenization, $responseConsult);
-
         // Realiza transação do eRedeController aqui
-        $responseRede = $this->eRedeService->transaction($amount, $reference, $cardTransaction, null);
-
-        // Se não foi bem sucedido a tokenização
-        if($responseTokenization['returnCode'] == '00'){
-            $card->tokenization_id = $responseTokenization['tokenizationId'];
-            $card->tokenization_id_at = now();
-            $card->save();
-        } else {
-            Log::info('Falha na Tokenização');
-            Log::info(json_encode($responseTokenization));
-        }
-
-        /**
-         * Registra logs nas primeiras transações para
-         * facilitar o processo de cobranças.
-         */
-        Log::info('Intenção de pagamento');
-        Log::info(json_encode($paymentIntention));
-        Log::info('Resposta Rede');
-        Log::info(json_encode($responseRede));
+        $responseRede = $this->eRedeService->transaction($amount, $reference, $card, $data['ccv']);
 
         // Se foi pago atribui o pacote ao cliente
         if($responseRede['returnCode'] == '00'){
 
-            // Atualiza para pago
+            /**
+             * Aqui armazenamos a primeiro brandTid ao cartão
+             * para próximas cobranças sejam atreladas a esse primeira.
+             */
+            if(!$card->brand_tid){
+                $card->brand_tid = $responseRede['brandTid'];
+                $card->brand_tid_at = now();
+                $card->save();
+            }
+
+            // Salta o brandTid referente a transação em questão.
+            $paymentIntention->brand_tid = $responseRede['brandTid'];
+            $paymentIntention->brand_tid_at = now();
             $paymentIntention->status = 'Pago';
             $paymentIntention->save();
 
