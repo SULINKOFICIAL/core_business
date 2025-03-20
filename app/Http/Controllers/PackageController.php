@@ -428,7 +428,8 @@ class PackageController extends Controller
         $package = Package::findOrFail($data['package_id']);
 
         // Retorna o cliente atualizado
-        $response = $service->assignNewPackage($client, $package);
+        $response = $service->createPaymentIntent($client, $package);
+        $service->confirmPackageChange($response['purchase']);
 
         return redirect()
             ->route('clients.show', $client->id)
