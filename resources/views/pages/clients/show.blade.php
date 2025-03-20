@@ -32,6 +32,7 @@
                     <p class="text-gray-600 mb-0">
                         Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially  in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
                     </p>
+                    @if ($client->package)
                     <p class="fs-6 text-gray-700 fw-bold mb-0">
                         Valor atual do pacote: <span class="text-success fw-bolder">R$ {{ number_format($client->current_value, 2, ',', '.') }}</span>
                     </p>
@@ -41,6 +42,11 @@
                             armazenamento: <span class="text-primary fw-bolder"> {{ number_format($client->package->size_storage / 1073741824, 2) }}</span> GB
                         </span>
                     </p>
+                    @else
+                    <p class="fs-6 text-danger fw-bold mb-0 mt-2">
+                        Nenhum pacote atribuido
+                    </p>
+                    @endif
                 </div>
             </div>
         </div>

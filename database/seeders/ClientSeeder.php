@@ -26,7 +26,6 @@ class ClientSeeder extends Seeder
             'email' => 'coca@cocacola.com.br',
             'domain' => 'cocacola.com.br',
             'token' => '111',
-            'package_id' => 1,
             'created_by' => 1,
         ]);
         
@@ -35,7 +34,6 @@ class ClientSeeder extends Seeder
             'email' => 'porsche@porscheerp.com.br',
             'domain' => 'porscheerp.com.br',
             'token' => '222',
-            'package_id' => 1,
             'created_by' => 1,
         ]);
 
@@ -44,7 +42,6 @@ class ClientSeeder extends Seeder
             'email' => 'stanley@gmail.com',
             'domain' => 'stanley.com.br',
             'token' => '333',
-            'package_id' => 1,
             'created_by' => 1,
         ]);
     }

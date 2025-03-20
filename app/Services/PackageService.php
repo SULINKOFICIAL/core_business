@@ -35,13 +35,22 @@ class PackageService
             $credit = $dailyRate * $daysRemaining;
         }
 
+        // Se for uma troca
+        if($currentPackage){
+            $type = 'Pacote Trocado';
+            $oldPackage = $currentPackage->id;
+        } else {
+            $type = 'Pacote Atribuido';
+            $oldPackage = null;
+        }
+
         // Criar intenção de compra
         $purchase = ClientPurchase::create([
             'client_id'       => $client->id,
             'purchase_date'   => now(),
-            'type'            => 'Pacote Trocado',
+            'type'            => $type,
             'key_id'          => $newPackage->id,
-            'previous_key_id' => $currentPackage->id,
+            'previous_key_id' => $oldPackage,
             'method'          => $method,
             'gateway_id'      => $gateway,
             'status'          => 'Pendente',

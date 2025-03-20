@@ -169,72 +169,26 @@ class PackageController extends Controller
     /**
      * Atribui um pacote a um cliente sem pacotes.
      */
-    public function assign($id, $packageId)
+    public function assign(Request $request, $id, PackageService $service)
     {
 
-        // Obtém cliente
-        $client = Client::find($id);
+        // Obtém os dados da requisição
+        $data = $request->all();
 
-        // Obtém dados
-        $package = $this->repository->find($packageId);
+        // Obtém cliente e pacote
+        $client = Client::findOrFail($id);
+        $package = Package::findOrFail($data['package_id']);
 
-        // Obtém módulos
-        $modules = $package->modules;
+        // Retorna o cliente atualizado
+        $response = $service->createPaymentIntent($client, $package);
 
-        // Cria registro de "Compra"
-        $lastPurchase = ClientPurchase::create([
-            'client_id'     => $client->id,
-            'type'          => 'Pacote Atribuido',
-            'key_id'        => $package->id,
-            'purchase_date' => now(),
-            'method'        => 'Manual',
-        ]);
+        // Força atribuição
+        $response['purchase']->status = 'Pago';
+        $response['purchase']->save();
 
-        // Adiciona módulo a compra do cliente
-        ClientPurchaseItem::create([
-            'purchase_id' => $lastPurchase->id,
-            'type'        => 'Pacote',
-            'action'      => 'Adição',
-            'item_name'   => $package->name,
-            'item_key'    => $package->id,
-            'quantity'    => 1,
-            'item_value'  => $package->value,
-        ]);
+        // Libera alteração dos módulos do cliente
+        $service->confirmPackageChange($response['purchase']);
 
-        // Adiciona os módulos a compra e ao cliente
-        foreach ($modules as $module) {
-
-            // Adiciona módulo a compra do cliente
-            ClientPurchaseItem::create([
-                'purchase_id' => $lastPurchase->id,
-                'type'        => 'Módulo',
-                'action'      => 'Adição',
-                'item_name'   => $module->name,
-                'item_key'    => $module->id,
-                'quantity'    => 1,
-                'item_value'  => 0,
-            ]);
-
-            // Libera módulo para o cliente
-            ClientModule::create([
-                'client_id' => $client->id,
-                'module_id' => $module->id,
-            ]);
-        }
-
-        // Registra data da inscrição
-        ClientSubscription::create([
-            'client_id'     => $id,
-            'package_id'    => $packageId,
-            'purschase_id'  => $lastPurchase->id,
-            'start_date'    => now(),
-            'end_date'      => now()->addDays(30),
-        ]);
-
-        // Atualiza o pacote do cliente
-        $client->package_id = $packageId;
-        $client->save();
-        
         // Retorna a página
         return redirect()
             ->route('clients.show', $client->id)
