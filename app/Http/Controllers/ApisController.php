@@ -249,7 +249,7 @@ class ApisController extends Controller
         $reference = 'PI' . $paymentIntention->id;
 
         // Formata cartão para enviar para rede
-        $card = [
+        $cardTransaction = [
             'name'   => $card->name,
             'number' => $card->number,
             'month'  => $card->expiration_month,
@@ -258,20 +258,28 @@ class ApisController extends Controller
         ];
 
         // Realiza transação do eRedeController aqui
-        $responseRede = $this->eRedeService->transaction($amount, $reference, $card, null);
+        $responseRede = $this->eRedeService->transaction($amount, $reference, $cardTransaction, null);
 
-        // Realizar tokenização
-        // Realizar tokenização
-        // Realizar tokenização
-        // Realizar tokenização
-        // Realizar tokenização
-        // Realizar tokenização
+        // Realiza tokenização, procedimento para cobrar recorrências automáticas.
+        $responseTokenization = $this->eRedeService->tokenization($client->email, $card->number, $card->expiration_month, $card->expiration_year, $card->name, $data['ccv']);
+
+        // Se não foi bem sucedido a tokenização
+        if($responseTokenization['returnCode'] == '00'){
+            $card->tokenization_id = $responseTokenization['tokenizationId'];
+            $card->tokenization_id_at = now();
+            $card->save();
+        } else {
+            Log::info('Falha na Tokenização');
+            Log::info(json_encode($responseTokenization));
+        }
 
         /**
          * Registra logs nas primeiras transações para
          * facilitar o processo de cobranças.
          */
+        Log::info('Intenção de pagamento');
         Log::info(json_encode($paymentIntention));
+        Log::info('Resposta Rede');
         Log::info(json_encode($responseRede));
 
         // Se foi pago atribui o pacote ao cliente
