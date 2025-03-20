@@ -191,7 +191,7 @@ class ApisController extends Controller
 
         // Se não encontrar o cliente
         if(!isset($data['token']) || !isset($data['package_id'])){
-            return response()->json('Parametros faltando não encontrado.');
+            return response()->json('Parâmetros faltando', 400);
         }
         
         // Obtém cliente associado ao miCore através do Token dele
