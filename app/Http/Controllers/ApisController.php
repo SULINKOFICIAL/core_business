@@ -253,7 +253,7 @@ class ApisController extends Controller
         $reference = 'PTI' . $paymentIntention->id;
         
         // Realiza transação do eRedeController aqui
-        $responseRede = $this->eRedeService->transaction($amount, $reference, $card, $data['ccv']);
+        $responseRede = $this->eRedeService->transaction($amount, $reference, $card, $data['ccv'] ?? null);
 
         // Se foi pago atribui o pacote ao cliente
         if($responseRede['returnCode'] == '00'){
