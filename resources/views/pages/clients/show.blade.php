@@ -77,7 +77,7 @@
                 <button class="btn btn-sm w-200px mb-2 btn-success btn-sections" data-show="signatures">
                     Assinaturas
                 </button>
-                <button class="btn btn-sm w-200px mb-2 btn-primary btn-sections" data-show="purschases">
+                <button class="btn btn-sm w-200px mb-2 btn-primary btn-sections" data-show="orders">
                     Histórico de Compras
                 </button>
                 <button class="btn btn-sm w-200px mb-2 btn-danger btn-sections" data-show="resources">
@@ -90,8 +90,8 @@
             <div class="divs-sections div-resources" style="display: none;">
                 @include('pages.clients._resources')
             </div>
-            <div class="divs-sections div-purschases">
-                @include('pages.clients._purchases')
+            <div class="divs-sections div-orders">
+                @include('pages.clients._orders')
             </div>
             <div class="divs-sections div-signatures" style="display: none;">
                 @include('pages.clients._signatures')
