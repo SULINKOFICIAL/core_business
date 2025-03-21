@@ -157,7 +157,7 @@ class ApisController extends Controller
         $data = $request->all();
 
         // Obtém dados do cliente
-        $client = Client::where('token', $data['token'])->first();
+        $client = Client::where('token', $data['token_micore'])->first();
 
         // Caso não encontre a conta do cliente
         if(!$client) return response()->json('Conta não encontrada', 404);
@@ -190,21 +190,24 @@ class ApisController extends Controller
         $data = $request->all();
 
         // Se não encontrar o cliente
-        if(!isset($data['token']) || !isset($data['package_id'])){
-            return response()->json('Parâmetros faltando', 400);
+        if (!isset($data['token_micore']) || !isset($data['package_id'])) {
+            return response()->json(['error' => 'Parâmetros faltando'], 400);
         }
-        
+
         // Obtém cliente associado ao miCore através do Token dele
-        $client = Client::where('token', $data['token'])->first();
+        $client = Client::where('token', $data['token_micore'])->first();
 
         // Se não encontrar o cliente
-        if(!$client) return response()->json('Cliente não encontrado.');
+        if(!$client) return response()->json(['error' => 'Cliente não encontrado'], 404);
 
         // Obtém o pacote que o cliente quer realizar o upgrade
         $package = Package::find($data['package_id']);
 
         // Limpa os dados do cartão
         $data['card_number'] = (int) str_replace(' ', '', $data['card_number']);
+
+        // Busca o cartão do cliente
+        $card = ClientCard::where('client_id', $client->id)->where('number', $data['card_number'])->first();
 
         // Encontra o cartão do cliente para reutilizar
         if(isset($data['card_id'])){
@@ -217,9 +220,10 @@ class ApisController extends Controller
             return 'Cartão não encontrado para esse cliente';
 
         } else {
+            
+            // Verifica se o cartão já não está cadastrado
+            if (!$card) {
 
-            // Verifica se o cartão já não estra cadastrado
-            if(!$card = ClientCard::where('client_id', $client->id)->where('number', $data['card_number'])->first()) {
                 // Salvamos o cartão do cliente
                 $card = ClientCard::create([
                     'client_id'        => $client->id,
@@ -228,7 +232,17 @@ class ApisController extends Controller
                     'expiration_month' => $data['expiration_month'],
                     'expiration_year'  => $data['expiration_year'],
                 ]);
+
+            } else {
+
+                // Atualiza os dados do cartão existente
+                $card->update([
+                    'name'             => $data['card_name'],
+                    'expiration_month' => $data['expiration_month'],
+                    'expiration_year'  => $data['expiration_year'],
+                ]);
             }
+
         }
 
         // Retorna o cliente atualizado
@@ -290,10 +304,13 @@ class ApisController extends Controller
             $paymentIntention->response = json_encode($responseRede);
             $paymentIntention->save();
 
+            Log::info(json_encode($responseRede));
+
             // Retorna pacote atualizado
             return response()->json([
                 'status' => 'Falha',
-                'message' => 'Ocorreu um problema ao realizar a compra.',
+                'error' => 'Ocorreu um problema ao realizar a compra: ',
+                'redeCode' => $responseRede['returnCode'],
             ]);
         }
 
