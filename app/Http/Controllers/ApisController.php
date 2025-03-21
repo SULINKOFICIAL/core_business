@@ -298,7 +298,7 @@ class ApisController extends Controller
         }
 
         // Retorna o cliente atualizado
-        $orderResponse = $service->createOrder($client, $package, 'Gateway', 1);
+        $orderResponse = $service->createOrder($client, $package);
 
         // Se o cliente estiver tentando comprar o mesmo plano
         if($orderResponse['status'] == 'Falha'){

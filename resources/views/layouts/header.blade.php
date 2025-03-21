@@ -2,41 +2,67 @@
     <div class="app-container container-fluid d-flex align-items-center slk-dark shadow-lg" id="kt_app_header_container">
         <div class="w-100">
             <div class="row align-items-center">
-                <div class="col-3">
+                <div class="col-2">
                     <a href="{{ route('index') }}" class="d-flex align-items-center">
                         <img src="{{ asset('assets/media/logos/logo-central-dark.svg') }}" class="w-200px">
                     </a>
                 </div>
-               <div class="col-6 d-flex align-items-center justify-content-center">
+                <div class="col-8 d-flex align-items-center justify-content-center">
                     <div class="app-header-menu app-header-mobile-drawer align-items-center justify-content-center" data-kt-drawer="true" data-kt-drawer-name="app-header-menu" data-kt-drawer-activate="{default: true, lg: false}" data-kt-drawer-overlay="true" data-kt-drawer-width="250px" data-kt-drawer-direction="end" data-kt-drawer-toggle="#kt_app_header_menu_toggle" data-kt-swapper="true" data-kt-swapper-mode="{default: 'append', lg: 'prepend'}" data-kt-swapper-parent="{default: '#kt_app_body', lg: '#kt_app_header_wrapper'}">
-                        <a href="{{ route('clients.index') }}" class="fw-bold text-hover-warning text-uppercase mx-12 {{ Request::routeIs('clients.index') ? 'text-warning' : 'text-white' }}">
+                        <a href="{{ route('clients.index') }}" class="fw-bold text-hover-warning text-uppercase mx-8 fs-7 {{ Request::routeIs('clients.index') ? 'text-warning' : 'text-white' }}">
                             Clientes
                         </a>
-                        <a href="{{ route('packages.index') }}" class="fw-bold text-hover-warning text-uppercase mx-12 {{ Request::routeIs('packages.index') ? 'text-warning' : 'text-white' }}">
+                        <a href="{{ route('packages.index') }}" class="fw-bold text-hover-warning text-uppercase mx-8 fs-7 {{ Request::routeIs('packages.index') ? 'text-warning' : 'text-white' }}">
                             Pacotes
                         </a>
-                        <a href="{{ route('modules.index') }}" class="fw-bold text-hover-warning text-uppercase mx-12 {{ Request::routeIs('modules.index') ? 'text-warning' : 'text-white' }}">
+                        <a href="{{ route('modules.index') }}" class="fw-bold text-hover-warning text-uppercase mx-8 fs-7 {{ Request::routeIs('modules.index') ? 'text-warning' : 'text-white' }}">
                             Módulos
                         </a>
-                        <a href="{{ route('groups.index') }}" class="fw-bold text-hover-warning text-uppercase mx-12 {{ Request::routeIs('groups.index') ? 'text-warning' : 'text-white' }}">
+                        <a href="{{ route('groups.index') }}" class="fw-bold text-hover-warning text-uppercase mx-8 fs-7 {{ Request::routeIs('groups.index') ? 'text-warning' : 'text-white' }}">
                             Grupo de Recursos
                         </a>
-                        <a href="{{ route('resources.index') }}" class="fw-bold text-hover-warning text-uppercase mx-12 {{ Request::routeIs('resources.index') ? 'text-warning' : 'text-white' }}">
+                        <a href="{{ route('resources.index') }}" class="fw-bold text-hover-warning text-uppercase mx-8 fs-7 {{ Request::routeIs('resources.index') ? 'text-warning' : 'text-white' }}">
                             Recursos
                         </a>
+                        <div class="menu menu-column menu-gray-600 menu-active-primary menu-hover-light-primary menu-here-light-primary menu-show-light-primary fw-semibold w-175px" data-kt-menu="true">
+                            <div class="menu-item" data-kt-menu-trigger="hover" data-kt-menu-placement="bottom-start">
+                                <a href="#" class="menu-link">
+                                    <span class="menu-title text-uppercase text-white fs-7">
+                                        Configuração
+                                        <i class="fa-solid fa-angle-down text-white fs-8 ms-2"></i>
+                                    </span>
+                                </a>
+                                <div class="menu-sub menu-sub-dropdown w-175px py-2">
+                                    <div class="menu-item">
+                                        <a href="{{ route('subscriptions.generate') }}" class="menu-link">
+                                            <span class="menu-icon">
+                                                <i class="ki-duotone ki-chart-simple-2 fs-3"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span></i>
+                                            </span>
+                                            <span class="menu-title">Assinaturas</span>
+                                        </a>
+                                    </div>
+                                    <div class="menu-item">
+                                        <a href="{{ route('tickets.index') }}" class="menu-link">
+                                            <span class="menu-icon">
+                                                <i class="ki-duotone ki-notification-on fs-3"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i>
+                                            </span>
+                                            <span class="menu-title">Tickets</span>
+                                        </a>
+                                    </div>
+                                    <div class="menu-item">
+                                        <a href="{{ route('errors.index') }}" class="menu-link">
+                                            <span class="menu-icon">
+                                                <i class="ki-duotone ki-calendar-2 fs-3"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i>
+                                            </span>
+                                            <span class="menu-title">Errors</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-2 d-flex align-items-end justify-content-end">
-                    <a href="{{ route('tickets.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
-                        <i class="fa-solid fa-ticket-simple"></i>
-                        Tickets
-                    </a>
-                    <a href="{{ route('errors.index') }}" class="fw-bold text-white text-hover-warning text-uppercase mx-12">
-                        <i class="fa-solid fa-bug-slash"></i>
-                        Erros
-                    </a>
-                </div>
-                <div class="col-1">
+                <div class="col-2">
                     <div class="app-navbar flex-shrink-0 justify-content-end">
                         <div class="app-navbar-item ms-1 ms-md-4" id="kt_header_user_menu_toggle">
                             <div class="cursor-pointer symbol symbol-35px" data-kt-menu-trigger="{default: 'click', lg: 'hover'}" data-kt-menu-attach="parent" data-kt-menu-placement="bottom-end">

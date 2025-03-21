@@ -10,6 +10,7 @@ use App\Http\Controllers\PackageController;
 use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\SubscriptionsController;
 use App\Http\Controllers\TicketController;
 
 // Paínel de administração
@@ -28,7 +29,6 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/desabilitar/{id}', [ClientController::class, 'destroy'])->name('destroy');            
         });
     });
-
 
     Route::prefix('pacotes')->group(function () {
         Route::name('packages.')->group(function () {
@@ -97,6 +97,20 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
+
+    /**
+     * Rotas para comandos nos sistemas miCores.
+     */
+    Route::prefix('assinaturas')->group(function () {
+        Route::name('subscriptions.')->group(function () {
+            Route::get('/emitir', [SubscriptionsController::class, 'generate'])->name('generate');
+        });
+    });
+
+
+    /**
+     * Rotas para obter informações ou alterar miCores.
+     */
     Route::prefix('sistemas')->group(function () {
         Route::name('systems.')->group(function () {
             Route::get('/recurso', [ClientsActionsController::class, 'feature'])->name('feature');
@@ -105,6 +119,9 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
+    /**
+     * Rotas relacionadas aos comandos da eRede.
+     */
     Route::prefix('rede')->group(function () {
         Route::name('rede.')->group(function () {
             Route::get('/testar', [ERedeController::class, 'testar'])->name('test');
@@ -113,6 +130,9 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
+    /**
+     * Rotas para integração a API do cPanel.
+     */
     Route::prefix('cpanel')->group(function () {
         Route::name('cpanel.')->group(function () {
             Route::get('/gerar', [CpanelController::class, 'make'])->name('make');

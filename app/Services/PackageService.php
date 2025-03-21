@@ -10,7 +10,7 @@ use App\Models\Package;
 
 class PackageService
 {
-    public function createOrder($client, $newPackage, $method = 'Manual', $gateway = null)
+    public function createOrder($client, $newPackage)
     {
 
         // Verifica se não esta atualizando para o mesmo pacote
@@ -69,8 +69,6 @@ class PackageService
             'type'            => $type,
             'key_id'          => $newPackage->id,
             'previous_key_id' => $oldPackage,
-            'method'          => $method,
-            'gateway_id'      => $gateway,
             'status'          => 'Pendente',
         ]);
 

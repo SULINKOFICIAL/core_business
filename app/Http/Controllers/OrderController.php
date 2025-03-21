@@ -7,10 +7,8 @@ use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
-
     protected $request;
     private $repository;
-    private $cpanelMiCore;
 
     public function __construct(Request $request, Order $content)
     {

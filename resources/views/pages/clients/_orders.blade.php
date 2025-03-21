@@ -24,12 +24,15 @@
                     </td>
                     <td class="text-start">
                         <span class="text-gray-600">
-                        @if ($order->type == 'Pacote Atribuido')
-                            Pacote atribuido <span class="fw-bolder text-success">{{ $order->package->name }}</span>
-                        @endif
-                        @if ($order->type == 'Pacote Trocado')
-                            Pacote trocado de <span class="fw-bolder text-danger">{{ $order->previousPackage->name }}</span> para <span class="fw-bolder text-success">{{ $order->package->name }}</span>.
-                        @endif
+                            @if ($order->type == 'Pacote Atribuido')
+                                Pacote atribuido <span class="fw-bolder text-success">{{ $order->package->name }}</span>
+                            @endif
+                            @if ($order->type == 'Pacote Trocado')
+                                Pacote trocado de <span class="fw-bolder text-danger">{{ $order->previousPackage->name }}</span> para <span class="fw-bolder text-success">{{ $order->package->name }}</span>.
+                            @endif
+                            @if ($order->type == 'Renovação')
+                                {{ $order->type }}
+                            @endif
                         </span>
                         @if ($order->description)
                         <p class="text-gray-700 fw-bold fs-8 mb-0">Observação: {{ $order->description }}</p>
@@ -48,6 +51,9 @@
                         <span class="badge badge-light-danger">Cancelado</span>
                         @else
                         <span class="badge badge-light-warning">Pendente</span>
+                        @if ($order->type == 'Renovação')
+                            <i class="fa-solid fa-sack-dollar" data-bs-toggle="tooltip" data-bs-html="true" title="Forçar Pagar"></i>
+                        @endif
                         @endif
                     </td>
                 </tr>
