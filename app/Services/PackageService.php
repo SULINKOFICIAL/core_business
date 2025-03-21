@@ -10,7 +10,7 @@ use App\Models\Package;
 
 class PackageService
 {
-    public function createPaymentIntent($client, $newPackage, $method = 'Manual', $gateway = null)
+    public function createOrder($client, $newPackage, $method = 'Manual', $gateway = null)
     {
 
         // Verifica se não esta atualizando para o mesmo pacote
@@ -21,18 +21,36 @@ class PackageService
             ];
         }
 
-        // Se tiver alguma inteção de compra cancela e gera uma nova
-        Order::where('status', 'Pendente')->update(['status' => 'Cancelado']);
+        // Se já existir um pedido em andamento referente aquele item/produtos.
+        $existsOrder = Order::where('client_id', $client->id)
+                            ->where('key_id', $newPackage->id)
+                            ->where('status', 'Pendente')
+                            ->first();
 
+        // Retorna o pedido em andamento
+        if($existsOrder){
+            return [
+                'status' => 'Pedido já foi gerado.', 
+                'order' => $existsOrder
+            ];
+        }
+
+        // Obtém pacote atual
         $currentPackage = $client->package;
+
+        // Inicia variável que vai calcular o crédito do cliente
         $credit = 0;
 
+        /**
+         * Verifica se o cliente estava em um pacote
+         * gratuito, se estiver não calcula créditos.
+         */
         if ($currentPackage && !$currentPackage->free) {
-            $daysInMonth = now()->daysInMonth;
-            $daysUsed = now()->day;
+            $daysInMonth   = now()->daysInMonth;
+            $daysUsed      = now()->day;
             $daysRemaining = $daysInMonth - $daysUsed;
-            $dailyRate = $currentPackage->value / $daysInMonth;
-            $credit = $dailyRate * $daysRemaining;
+            $dailyRate     = $currentPackage->value / $daysInMonth;
+            $credit        = $dailyRate * $daysRemaining;
         }
 
         // Se for uma troca
@@ -47,7 +65,7 @@ class PackageService
         // Criar intenção de compra
         $order = Order::create([
             'client_id'       => $client->id,
-            'order_date'   => now(),
+            'order_date'      => now(),
             'type'            => $type,
             'key_id'          => $newPackage->id,
             'previous_key_id' => $oldPackage,
@@ -58,7 +76,7 @@ class PackageService
 
         // Adiciona pacote na compra
         OrderItem::create([
-            'order_id' => $order->id,
+            'order_id'    => $order->id,
             'type'        => 'Pacote',
             'action'      => 'Alteração',
             'item_name'   => $newPackage->name,
@@ -70,12 +88,12 @@ class PackageService
         // Adiciona os novos módulos
         foreach ($newPackage->modules as $module) {
             OrderItem::create([
-                'order_id' => $order->id,
-                'type' => 'Módulo',
-                'action' => 'Adição',
+                'order_id'  => $order->id,
+                'type'      => 'Módulo',
+                'action'    => 'Adição',
                 'item_name' => $module->name,
-                'item_key' => $module->id,
-                'quantity' => 1,
+                'item_key'  => $module->id,
+                'quantity'  => 1,
                 'item_value' => 0,
             ]);
         }
@@ -83,7 +101,7 @@ class PackageService
         // Adiciona crédito se necessário
         if ($credit > 0) {
             OrderItem::create([
-                'order_id' => $order->id,
+                'order_id'    => $order->id,
                 'type'        => 'Crédito',
                 'action'      => 'Ajuste',
                 'item_name'   => 'Crédito proporcional',
@@ -93,7 +111,7 @@ class PackageService
         }
 
         return [
-            'status' => 'Sucesso', 
+            'status' => 'Pedido Gerado', 
             'order' => $order
         ];
     }

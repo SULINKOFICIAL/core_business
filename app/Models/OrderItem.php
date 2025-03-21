@@ -23,5 +23,4 @@ class OrderItem extends Model
     {
        return $this->hasOne(Module::class, 'id', 'item_key');
     }
-
 }

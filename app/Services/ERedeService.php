@@ -33,7 +33,7 @@ class ERedeService
      * @param string $securityCode   Código de segurança do cartão (CVV).
      * @return mixed Resposta da API contendo os detalhes da transação.
      */
-    public function transaction($amount, $reference, $card, $ccv = null) {
+    public function transaction($transaction, $card, $ccv = null) {
 
         // Monta os dados básicos da transação
         $transactionData = [
@@ -43,8 +43,8 @@ class ERedeService
             'expirationYear'         => $card->expiration_year,
             'capture'                => true,
             'kind'                   => 'credit',
-            'reference'              => $reference,
-            'amount'                 => $amount,
+            'reference'              => 'OT' . $transaction->id,
+            'amount'                 => (int) ($transaction->amount * 100),
             'softDescriptor'         => 'MICORE01',
             'subscription'           => true,
             'origin'                 => 1,
@@ -87,7 +87,7 @@ class ERedeService
      * @param int    $storageCard      Indica se o cartão deve ser armazenado (0 = não, 1 = sim).
      * @return mixed Resposta da API contendo os dados do cartão tokenizado.
      */
-    public function tokenization($email, $number, $expirationMonth, $expirationYear, $cardName, $securityCode, $storageCard = 0, $brandTid){
+    public function tokenization($email, $number, $expirationMonth, $expirationYear, $cardName, $securityCode, $storageCard = 0, $brandTid = null){
 
         /** 
          * Regras do Storage Card
@@ -95,7 +95,6 @@ class ERedeService
          * 1 - Cartão sendo armazenado pela primeira vez. (Requer SecurityCode)
          * 2 - Cartão já armazenado. (Não requer o SecurityCode)
          */
-        // dd($email, (int) $number, $expirationMonth, (int) $expirationYear, $cardName, (int) $securityCode, $storageCard);
         
         // Realiza solicitação
         return $this->guzzleRequest(

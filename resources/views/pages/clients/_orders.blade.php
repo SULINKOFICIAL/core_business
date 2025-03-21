@@ -39,7 +39,7 @@
                         <span class="text-gray-700 fw-bold">R$ {{ number_format($order->total(), 2, ',', '.') }}</span>
                     </td>
                     <td class="text-center">
-                        <span class="text-gray-700 fw-bold">{{ $order->method }}</span>
+                        <span class="text-gray-700 fw-bold">{{ $order->method ?? '-' }}</span>
                     </td>
                     <td class="text-center">
                         @if ($order->status == 'Pago')
@@ -51,7 +51,35 @@
                         @endif
                     </td>
                 </tr>
-                @foreach ($order->items as $item)
+                @foreach ($order->transactions()->orderBy('created_at', 'DESC')->get() as $transaction)
+                <tr class="text-muted bg-light">
+                    <td class="px-2 text-gray-700 fw-bolder mb-0"></td>
+                    <td class="text-gray-700 fw-semibold text-uppercase">
+                        <span class="fs-9">Ref: </span><span class="text-primary fw-bold">OT{{ $transaction->id }}</span>
+                    </td>
+                    <td class="text-start py-1">
+                        <span class="text-gray-700 lh-1">R$ {{ number_format($transaction->amount, 2, ',', '.') }}</span>
+                    </td>
+                    <td class="p-0 text-center">
+                        {{ $transaction->method }} <b class="fw-bolder text-success">{{ $transaction->gateway->name }}</b>
+                    </td>
+                    <td class="text-center">
+                        @if ($transaction->status == 'Pago')
+                        <span class="badge badge-light-success">Pago</span>
+                        @elseif ($transaction->status == 'Cancelado')
+                        <span class="badge badge-light-danger">Cancelado</span>
+                        @elseif ($transaction->status == 'Falhou')
+                        <span class="badge badge-light-danger">Falhou</span>
+                        @else
+                        <span class="badge badge-light-warning">Pendente</span>
+                        @endif
+                        @if ($transaction->response)
+                            <i class="fa-solid fa-circle-info text-gray-400" data-bs-toggle="tooltip" data-bs-html="true" title="{{ $transaction->response }}"></i>
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+                {{-- @foreach ($order->items as $item)
                 <tr class="text-muted bg-light">
                     <td class="p-0"></td>
                     <td class="text-gray-700 fw-semibold">
@@ -74,7 +102,7 @@
                     <td class="p-0"></td>
                     <td class="p-0"></td>
                 </tr>
-                @endforeach
+                @endforeach --}}
                 @endforeach
             </tbody>
         </table>

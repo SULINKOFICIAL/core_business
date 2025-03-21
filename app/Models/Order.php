@@ -17,17 +17,17 @@ class Order extends Model
         'previous_key_id',
         'order_date',
         'description',
-        'method',
-        'gateway_id',
-        'brand_tid',
-        'brand_tid_at',
         'status',
-        'response',
     ];
 
     public function items()
     {
         return $this->hasMany(OrderItem::class, 'order_id');
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(OrderTransaction::class, 'order_id');
     }
 
     public function client()

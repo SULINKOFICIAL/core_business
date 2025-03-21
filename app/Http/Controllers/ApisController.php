@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\Client;
 use App\Models\ClientCard;
 use App\Models\ErrorMiCore;
+use App\Models\Order;
+use App\Models\OrderTransaction;
 use App\Models\Package;
 use App\Models\Ticket;
 use App\Services\ERedeService;
@@ -233,9 +235,14 @@ class ApisController extends Controller
 
         // Obtém os dados enviados no formulário
         $data = $request->all();
-
+        
         // Se não encontrar o cliente
-        if (!isset($data['token_micore']) || !isset($data['package_id'])) {
+        if (!isset($data['token_micore'])     || 
+            !isset($data['package_id'])       || 
+            !isset($data['card_name'])        || 
+            !isset($data['card_number'])      || 
+            !isset($data['expiration_month']) || 
+            !isset($data['expiration_year'])) {
             return response()->json(['error' => 'Parâmetros faltando'], 400);
         }
 
@@ -291,28 +298,38 @@ class ApisController extends Controller
         }
 
         // Retorna o cliente atualizado
-        $responsePaymentIntent = $service->createPaymentIntent($client, $package, 'Gateway', 1);
+        $orderResponse = $service->createOrder($client, $package, 'Gateway', 1);
 
         // Se o cliente estiver tentando comprar o mesmo plano
-        if($responsePaymentIntent['status'] == 'Falha'){
+        if($orderResponse['status'] == 'Falha'){
             // Retorna pacote atualizado
             return response()->json([
                 'code' => 'Falha',
-                'message' => $responsePaymentIntent['message'],
+                'message' => $orderResponse['message'],
             ]);
         }
 
         // Extrai a intenção de pagamento
-        $paymentIntention = $responsePaymentIntent['order'];
+        $order = $orderResponse['order'];
 
-        // Formata o valor inteiro em centavos conforme eRede solicita
-        $amount = (int) ($paymentIntention->total() * 100);
+        // Verifica se já não foi pago
+        if($order->status == 'Pago'){// Retorna pacote atualizado
+            return response()->json([
+                'status' => 'Falha',
+                'error' => 'Seu pedido já foi pago.',
+            ]);
+        }
 
-        // Formata a referencia da transação
-        $reference = 'PTI' . $paymentIntention->id;
+        // Gera transação para processar o pedido
+        $transaction = OrderTransaction::create([
+            'order_id'   => $order->id,
+            'amount'     => $order->total(),
+            'method'     => 'Gateway',
+            'gateway_id' => 1,
+        ]);
         
         // Realiza transação do eRedeController aqui
-        $responseRede = $this->eRedeService->transaction($amount, $reference, $card, $data['ccv'] ?? null);
+        $responseRede = $this->eRedeService->transaction($transaction, $card, ($data['ccv'] ?? null));
 
         // Se foi pago atribui o pacote ao cliente
         if($responseRede['returnCode'] == '00'){
@@ -328,13 +345,18 @@ class ApisController extends Controller
             }
 
             // Salta o brandTid referente a transação em questão.
-            $paymentIntention->brand_tid = $responseRede['brandTid'];
-            $paymentIntention->brand_tid_at = now();
-            $paymentIntention->status = 'Pago';
-            $paymentIntention->save();
+            $transaction->brand_tid = $responseRede['brandTid'];
+            $transaction->brand_tid_at = now();
+            $transaction->status = 'Pago';
+            $transaction->response = json_encode($responseRede);
+            $transaction->save();
+
+            // Atualiza o pedido
+            $order->status = 'Pago';
+            $order->save();
 
             // Retorna o cliente atualizado
-            $service->confirmPackageChange($paymentIntention);
+            $service->confirmPackageChange($order);
 
             // Retorna pacote atualizado
             return response()->json([
@@ -345,11 +367,9 @@ class ApisController extends Controller
         } else {
 
             // Atualiza para pago
-            $paymentIntention->status = 'Falha';
-            $paymentIntention->response = json_encode($responseRede);
-            $paymentIntention->save();
-
-            Log::info(json_encode($responseRede));
+            $transaction->status = 'Falhou';
+            $transaction->response = json_encode($responseRede);
+            $transaction->save();
 
             // Retorna pacote atualizado
             return response()->json([
