@@ -180,6 +180,26 @@ class ApisController extends Controller
 
     }
 
+    public function purchases(Request $request) {
+
+        // Recebe dados
+        $data = $request->all();
+
+        // Obtém dados do cliente
+        $client = Client::where('token', $data['token_micore'])->first();
+
+        // Caso não encontre a conta do cliente
+        if(!$client) return response()->json('Conta não encontrada', 404);
+
+        // Obtém plano atual do cliente
+        $purchases = $client->purchases()->orderBy('created_at', 'DESC')->get();
+
+        // Se o cliente tiver plano
+        return response()->json($purchases, 200);
+
+    }
+
+
     /**
      * Função responsável por processar pagamentos dos sistemas miCores.
      * Utilizamos junto a ele a integração através da eRede.
