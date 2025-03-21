@@ -26,6 +26,6 @@ class OrderTransaction extends Model
     // Relacionamento com resources
     public function gateway(): HasOne
     {
-       return $this->hasOne(Gateway::class, 'id', 'order_id');
+       return $this->hasOne(Gateway::class, 'id', 'gateway_id');
     }
 }

@@ -15,7 +15,7 @@
                 @foreach ($client->orders()->orderBy('created_at', 'DESC')->get() as $order)
                 <tr>
                     <td class="w-100px text-start px-2">
-                        <p class="text-gray-700 fw-bolder mb-0">
+                        <p class="text-gray-700 text-hover-primary fw-bolder mb-0 cursor-pointer show-details" data-order="{{ $order->id }}">
                             #{{ str_pad($order->id, 4, '0', STR_PAD_LEFT) }}
                         </p>
                         <span class="text-gray-600 fs-8">
@@ -79,32 +79,45 @@
                     </td>
                 </tr>
                 @endforeach
-                {{-- @foreach ($order->items as $item)
-                <tr class="text-muted bg-light">
-                    <td class="p-0"></td>
-                    <td class="text-gray-700 fw-semibold">
-                        @if ($item->action == 'Upgrade')
-                        <span class="badge badge-light-success">{{ $item->action }}</span>
-                        @elseif($item->action == 'Downgrade')
-                        <span class="badge badge-light-danger">{{ $item->action }}</span>
-                        @elseif($item->action == 'Adição')
-                        <span class="badge badge-light-primary">{{ $item->action }}</span>
-                        @elseif($item->action == 'Alteração')
-                        <span class="badge badge-light-warning">{{ $item->action }}</span>
-                        @else
-                        <span class="badge badge-light-info">{{ $item->action }}</span>
-                        @endif
-                        {{ $item->item_name }}
-                    </td>
-                    <td class="text-start py-1">
-                        <span class="text-gray-700 lh-1">R$ {{ number_format($item->item_value, 2, ',', '.') }}</span>
-                    </td>
-                    <td class="p-0"></td>
-                    <td class="p-0"></td>
-                </tr>
-                @endforeach --}}
                 @endforeach
             </tbody>
         </table>
     </div>
 </div>
+
+@section('modals')
+    @parent
+    <div class="modal fade" tabindex="-1" id="modal-order">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content">
+                {{-- RESULTS HERE --}}
+                {{-- RESULTS HERE --}}
+                {{-- RESULTS HERE --}}
+            </div>
+        </div>
+    </div>
+@endsection
+
+@section('custom-footer')
+    @parent
+    <script>
+    $(document).ready(function() {
+        $(document).on('click', '.show-details', function(){
+
+            // Obtém o ID do pedido
+            var orderId = $(this).data('order');
+
+            // Busca detalhes do pedido
+            $.ajax({
+                type:'GET',
+                url: "{{ route('orders.show', '') }}/" + orderId,
+                success: function(response) {
+                    $('#modal-order .modal-content').html(response);
+                    $('#modal-order').modal('show');
+                },
+            });
+
+        });
+    });
+    </script>
+@endsection

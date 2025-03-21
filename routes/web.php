@@ -9,6 +9,7 @@ use App\Http\Controllers\GroupController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\ModuleController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\TicketController;
 
 // Paínel de administração
@@ -34,7 +35,6 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', [PackageController::class, 'index'])->name('index');
             Route::get('/adicionar', [PackageController::class, 'create'])->name('create');
             Route::post('/adicionar', [PackageController::class, 'store'])->name('store');
-            Route::get('/visualizar/{id}', [PackageController::class, 'show'])->name('show');
             Route::get('/editar/{id}', [PackageController::class, 'edit'])->name('edit');
             Route::put('/editar/{id}', [PackageController::class, 'update'])->name('update');
             Route::get('/desabilitar/{id}', [PackageController::class, 'destroy'])->name('destroy');
@@ -49,7 +49,6 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', [ModuleController::class, 'index'])->name('index');
             Route::get('/adicionar', [ModuleController::class, 'create'])->name('create');
             Route::post('/adicionar', [ModuleController::class, 'store'])->name('store');
-            Route::get('/visualizar/{id}', [ModuleController::class, 'show'])->name('show');
             Route::get('/editar/{id}', [ModuleController::class, 'edit'])->name('edit');
             Route::put('/editar/{id}', [ModuleController::class, 'update'])->name('update');
             Route::get('/desabilitar/{id}', [ModuleController::class, 'destroy'])->name('destroy');
@@ -61,7 +60,6 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', [GroupController::class, 'index'])->name('index');
             Route::get('/adicionar', [GroupController::class, 'create'])->name('create');
             Route::post('/adicionar', [GroupController::class, 'store'])->name('store');
-            Route::get('/visualizar/{id}', [GroupController::class, 'show'])->name('show');
             Route::get('/editar/{id}', [GroupController::class, 'edit'])->name('edit');
             Route::put('/editar/{id}', [GroupController::class, 'update'])->name('update');
             Route::get('/desabilitar/{id}', [GroupController::class, 'destroy'])->name('destroy');
@@ -73,10 +71,15 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', [ResourceController::class, 'index'])->name('index');
             Route::get('/adicionar', [ResourceController::class, 'create'])->name('create');
             Route::post('/adicionar', [ResourceController::class, 'store'])->name('store');
-            Route::get('/visualizar/{id}', [ResourceController::class, 'show'])->name('show');
             Route::get('/editar/{id}', [ResourceController::class, 'edit'])->name('edit');
             Route::put('/editar/{id}', [ResourceController::class, 'update'])->name('update');
             Route::get('/desabilitar/{id}', [ResourceController::class, 'destroy'])->name('destroy');
+        });
+    });
+
+    Route::prefix('pedidos')->group(function () {
+        Route::name('orders.')->group(function () {
+            Route::get('/visualizar/{id}', [OrderController::class, 'show'])->name('show');
         });
     });
 

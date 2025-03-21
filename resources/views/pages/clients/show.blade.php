@@ -141,7 +141,7 @@
             var name = $(this).val();
 
             // Busca OS
-           $.ajax({
+            $.ajax({
                 type:'GET',
                 url: "{{ route('systems.feature') }}",
                 data: {

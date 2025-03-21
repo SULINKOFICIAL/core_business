@@ -125,7 +125,7 @@ class ClientController extends Controller
         // Obtém dados dos Modulos ativos
         $modules = Module::where('status', true)->get();
 
-        // Obtém dados do Lead
+        // Obtém dados do Cliente
         $client = $this->repository->find($id);
 
         // Realiza consulta
