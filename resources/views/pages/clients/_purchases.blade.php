@@ -12,46 +12,46 @@
                 </tr>
             </thead>
             <tbody class="text-start">
-                @foreach ($client->purchases()->orderBy('created_at', 'DESC')->get() as $purchase)
+                @foreach ($client->orders()->orderBy('created_at', 'DESC')->get() as $order)
                 <tr>
                     <td class="w-100px text-start px-2">
                         <p class="text-gray-700 fw-bolder mb-0">
-                            #{{ str_pad($purchase->id, 4, '0', STR_PAD_LEFT) }}
+                            #{{ str_pad($order->id, 4, '0', STR_PAD_LEFT) }}
                         </p>
                         <span class="text-gray-600 fs-8">
-                            {{ $purchase->purchase_date->format('d/m/Y') }} às {{ $purchase->purchase_date->format('H:i:s') }}
+                            {{ $order->order_date->format('d/m/Y') }} às {{ $order->order_date->format('H:i:s') }}
                         </span>
                     </td>
                     <td class="text-start">
                         <span class="text-gray-600">
-                        @if ($purchase->type == 'Pacote Atribuido')
-                            Pacote atribuido <span class="fw-bolder text-success">{{ $purchase->package->name }}</span>
+                        @if ($order->type == 'Pacote Atribuido')
+                            Pacote atribuido <span class="fw-bolder text-success">{{ $order->package->name }}</span>
                         @endif
-                        @if ($purchase->type == 'Pacote Trocado')
-                            Pacote trocado de <span class="fw-bolder text-danger">{{ $purchase->previousPackage->name }}</span> para <span class="fw-bolder text-success">{{ $purchase->package->name }}</span>.
+                        @if ($order->type == 'Pacote Trocado')
+                            Pacote trocado de <span class="fw-bolder text-danger">{{ $order->previousPackage->name }}</span> para <span class="fw-bolder text-success">{{ $order->package->name }}</span>.
                         @endif
                         </span>
-                        @if ($purchase->description)
-                        <p class="text-gray-700 fw-bold fs-8 mb-0">Observação: {{ $purchase->description }}</p>
+                        @if ($order->description)
+                        <p class="text-gray-700 fw-bold fs-8 mb-0">Observação: {{ $order->description }}</p>
                         @endif
                     </td>
                     <td class="text-start">
-                        <span class="text-gray-700 fw-bold">R$ {{ number_format($purchase->total(), 2, ',', '.') }}</span>
+                        <span class="text-gray-700 fw-bold">R$ {{ number_format($order->total(), 2, ',', '.') }}</span>
                     </td>
                     <td class="text-center">
-                        <span class="text-gray-700 fw-bold">{{ $purchase->method }}</span>
+                        <span class="text-gray-700 fw-bold">{{ $order->method }}</span>
                     </td>
                     <td class="text-center">
-                        @if ($purchase->status == 'Pago')
+                        @if ($order->status == 'Pago')
                         <span class="badge badge-light-success">Pago</span>
-                        @elseif ($purchase->status == 'Cancelado')
+                        @elseif ($order->status == 'Cancelado')
                         <span class="badge badge-light-danger">Cancelado</span>
                         @else
                         <span class="badge badge-light-warning">Pendente</span>
                         @endif
                     </td>
                 </tr>
-                @foreach ($purchase->items as $item)
+                @foreach ($order->items as $item)
                 <tr class="text-muted bg-light">
                     <td class="p-0"></td>
                     <td class="text-gray-700 fw-semibold">

@@ -180,7 +180,7 @@ class ApisController extends Controller
 
     }
 
-    public function purchases(Request $request) {
+    public function orders(Request $request) {
 
         // Recebe dados
         $data = $request->all();
@@ -192,35 +192,35 @@ class ApisController extends Controller
         if(!$client) return response()->json('Conta não encontrada', 404);
 
         // Obtém plano atual do cliente
-        $purchases = $client->purchases()->orderBy('created_at', 'DESC')->get();
+        $orders = $client->orders()->orderBy('created_at', 'DESC')->get();
 
         // Inicia Json
-        $purchasesJson = [];
+        $ordersJson = [];
 
         // Formata dados Json
-        foreach ($purchases as $purchase) {
+        foreach ($orders as $order) {
 
             // Date formated
-            $buy['id']          = $purchase->id;
-            $buy['date']        = $purchase->purchase_date;
-            $buy['type']        = $purchase->type;
-            $buy['amount']      = $purchase->total();
-            $buy['method']      = $purchase->method;
-            $buy['status']      = $purchase->status;
-            $buy['packageName'] = $purchase->package->name;
+            $buy['id']          = $order->id;
+            $buy['date']        = $order->order_date;
+            $buy['type']        = $order->type;
+            $buy['amount']      = $order->total();
+            $buy['method']      = $order->method;
+            $buy['status']      = $order->status;
+            $buy['packageName'] = $order->package->name;
             
             // Se for a atribuição de um pacote
             if($buy['type'] == 'Pacote Trocado'){
-                $buy['previousPackageName'] = $purchase->previousPackage->name;
+                $buy['previousPackageName'] = $order->previousPackage->name;
             }
 
             // Obtém dados
-            $purchasesJson[] = $buy;
+            $ordersJson[] = $buy;
 
         }
 
         // Se o cliente tiver plano
-        return response()->json($purchasesJson, 200);
+        return response()->json($ordersJson, 200);
 
     }
 
@@ -303,7 +303,7 @@ class ApisController extends Controller
         }
 
         // Extrai a intenção de pagamento
-        $paymentIntention = $responsePaymentIntent['purchase'];
+        $paymentIntention = $responsePaymentIntent['order'];
 
         // Formata o valor inteiro em centavos conforme eRede solicita
         $amount = (int) ($paymentIntention->total() * 100);

@@ -4,18 +4,18 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class ClientPurchase extends Model
+class Order extends Model
 {
-    protected $table = 'clients_purchases';
+    protected $table = 'orders';
     protected $casts = [
-        'purchase_date' => 'datetime',
+        'order_date' => 'datetime',
     ];
     protected $fillable = [
         'client_id',
         'type',
         'key_id',
         'previous_key_id',
-        'purchase_date',
+        'order_date',
         'description',
         'method',
         'gateway_id',
@@ -27,7 +27,7 @@ class ClientPurchase extends Model
 
     public function items()
     {
-        return $this->hasMany(ClientPurchaseItem::class, 'purchase_id');
+        return $this->hasMany(OrderItem::class, 'order_id');
     }
 
     public function client()

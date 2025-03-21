@@ -5,11 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-class ClientPurchaseItem extends Model
+class OrderItem extends Model
 {
-    protected $table = 'clients_purchases_items';
+    protected $table = 'orders_items';
     protected $fillable = [
-        'purchase_id',
+        'order_id',
         'type',
         'action',
         'item_name',

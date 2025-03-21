@@ -3,8 +3,8 @@
 namespace App\Services;
 use App\Models\Client;
 use App\Models\ClientModule;
-use App\Models\ClientPurchase;
-use App\Models\ClientPurchaseItem;
+use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\ClientSubscription;
 use App\Models\Package;
 
@@ -22,7 +22,7 @@ class PackageService
         }
 
         // Se tiver alguma inteção de compra cancela e gera uma nova
-        ClientPurchase::where('status', 'Pendente')->update(['status' => 'Cancelado']);
+        Order::where('status', 'Pendente')->update(['status' => 'Cancelado']);
 
         $currentPackage = $client->package;
         $credit = 0;
@@ -45,9 +45,9 @@ class PackageService
         }
 
         // Criar intenção de compra
-        $purchase = ClientPurchase::create([
+        $order = Order::create([
             'client_id'       => $client->id,
-            'purchase_date'   => now(),
+            'order_date'   => now(),
             'type'            => $type,
             'key_id'          => $newPackage->id,
             'previous_key_id' => $oldPackage,
@@ -57,8 +57,8 @@ class PackageService
         ]);
 
         // Adiciona pacote na compra
-        ClientPurchaseItem::create([
-            'purchase_id' => $purchase->id,
+        OrderItem::create([
+            'order_id' => $order->id,
             'type'        => 'Pacote',
             'action'      => 'Alteração',
             'item_name'   => $newPackage->name,
@@ -69,8 +69,8 @@ class PackageService
 
         // Adiciona os novos módulos
         foreach ($newPackage->modules as $module) {
-            ClientPurchaseItem::create([
-                'purchase_id' => $purchase->id,
+            OrderItem::create([
+                'order_id' => $order->id,
                 'type' => 'Módulo',
                 'action' => 'Adição',
                 'item_name' => $module->name,
@@ -82,8 +82,8 @@ class PackageService
 
         // Adiciona crédito se necessário
         if ($credit > 0) {
-            ClientPurchaseItem::create([
-                'purchase_id' => $purchase->id,
+            OrderItem::create([
+                'order_id' => $order->id,
                 'type'        => 'Crédito',
                 'action'      => 'Ajuste',
                 'item_name'   => 'Crédito proporcional',
@@ -94,18 +94,18 @@ class PackageService
 
         return [
             'status' => 'Sucesso', 
-            'purchase' => $purchase
+            'order' => $order
         ];
     }
 
-    public function confirmPackageChange($purchase)
+    public function confirmPackageChange($order)
     {
-        if ($purchase->status !== 'Pago') {
+        if ($order->status !== 'Pago') {
             return 'Pagamento ainda não confirmado.';
         }
 
-        $client = $purchase->client;
-        $newPackage = Package::find($purchase->key_id);
+        $client = $order->client;
+        $newPackage = Package::find($order->key_id);
 
         if (!$newPackage) {
             return 'Pacote não encontrado.';
@@ -133,12 +133,12 @@ class PackageService
 
         // Criar nova assinatura
         ClientSubscription::create([
-            'client_id'    => $client->id,
-            'package_id'   => $newPackage->id,
-            'purschase_id' => $purchase->id,
-            'start_date'   => now(),
-            'end_date'     => now()->addDays($newPackage->duration_days),
-            'status'       => 'Ativa',
+            'client_id'  => $client->id,
+            'package_id' => $newPackage->id,
+            'order_id'   => $order->id,
+            'start_date' => now(),
+            'end_date'   => now()->addDays($newPackage->duration_days),
+            'status'     => 'Ativa',
         ]);
 
         // Atualizar cliente com novo pacote

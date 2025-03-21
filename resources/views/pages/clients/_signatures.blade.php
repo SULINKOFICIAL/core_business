@@ -22,8 +22,8 @@
                         </span>
                     </td>
                     <td class="text-center">
-                        <span class="text-gray-700 fw-bold">#{{ str_pad($subscription->purschase->id, 4, '0', STR_PAD_LEFT) }}</span>
-                        <p class="text-gray-700 m-0 text-center">{{ $subscription->purschase->method }}</p>
+                        <span class="text-gray-700 fw-bold">#{{ str_pad($subscription->order->id, 4, '0', STR_PAD_LEFT) }}</span>
+                        <p class="text-gray-700 m-0 text-center">{{ $subscription->order->method }}</p>
                     </td>
                     <td>
                         <span class="text-gray-600">

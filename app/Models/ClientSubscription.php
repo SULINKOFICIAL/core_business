@@ -16,16 +16,16 @@ class ClientSubscription extends Model
     protected $fillable = [
         'client_id',
         'package_id',
-        'purschase_id',
+        'order_id',
         'start_date',
         'end_date',
         'status',
     ];
 
     // Relacionamento com resources
-    public function purschase(): HasOne
+    public function order(): HasOne
     {
-       return $this->hasOne(ClientPurchase::class, 'id', 'purschase_id');
+       return $this->hasOne(Order::class, 'id', 'order_id');
     }
 
 }

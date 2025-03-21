@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\ClientModule;
-use App\Models\ClientPurchase;
-use App\Models\ClientPurchaseItem;
+use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\ClientSubscription;
 use App\Models\Package;
 use App\Models\Module;
@@ -183,11 +183,11 @@ class PackageController extends Controller
         $response = $service->createPaymentIntent($client, $package);
 
         // Força atribuição
-        $response['purchase']->status = 'Pago';
-        $response['purchase']->save();
+        $response['order']->status = 'Pago';
+        $response['order']->save();
 
         // Libera alteração dos módulos do cliente
-        $service->confirmPackageChange($response['purchase']);
+        $service->confirmPackageChange($response['order']);
 
         // Retorna a página
         return redirect()
@@ -255,9 +255,9 @@ class PackageController extends Controller
         if ($limitUsers || $moduleChange) {
 
             // Cria a compra
-            $purchase = ClientPurchase::create([
+            $order = Order::create([
                 'client_id' => $id,
-                'purchase_date' => now(),
+                'order_date' => now(),
                 'type'          => 'Pacote alterado',
                 'key_id'        => $client->package_id,
                 'method'        => 'Manual',
@@ -265,8 +265,8 @@ class PackageController extends Controller
             ]);
 
             // Registra o valor anterior do pacote
-            ClientPurchaseItem::create([
-                'purchase_id' => $purchase->id,
+            OrderItem::create([
+                'order_id' => $order->id,
                 'type' => 'Pacote',
                 'action' => 'Sem alteração',
                 'item_name' => "{$client->package->name} ({$client->users_limit} usuários)",
@@ -282,8 +282,8 @@ class PackageController extends Controller
                 $priceLimitUsers = ($data['users_limit'] - 3) * 29.90;
 
                 // Cria item 
-                ClientPurchaseItem::create([
-                    'purchase_id' => $purchase->id,
+                OrderItem::create([
+                    'order_id' => $order->id,
                     'type' => 'Usuários',
                     'action' => 'Alteração',
                     'item_name' => 'Quantidade alterada',
@@ -301,8 +301,8 @@ class PackageController extends Controller
             // Adiciona módulos como Upgrade
             foreach ($modulesAdded as $moduleId) {
                 $module = Module::find($moduleId);
-                ClientPurchaseItem::create([
-                    'purchase_id' => $purchase->id,
+                OrderItem::create([
+                    'order_id' => $order->id,
                     'type' => 'Modulo',
                     'action' => 'Upgrade',
                     'item_name' => $module->name,
@@ -315,8 +315,8 @@ class PackageController extends Controller
             // Remove módulos como Downgrade
             foreach ($modulesRemoved as $moduleId) {
                 $module = Module::find($moduleId);
-                ClientPurchaseItem::create([
-                    'purchase_id' => $purchase->id,
+                OrderItem::create([
+                    'order_id' => $order->id,
                     'type' => 'Modulo',
                     'action' => 'Downgrade',
                     'item_name' => $module->name,
@@ -341,8 +341,8 @@ class PackageController extends Controller
             $credit = $dailyRate * $daysRemaining;
 
             // Adiciona crédito
-            ClientPurchaseItem::create([
-                'purchase_id' => $purchase->id,
+            OrderItem::create([
+                'order_id' => $order->id,
                 'type'        => 'Crédito',
                 'action'      => 'Ajuste',
                 'item_name'   => 'Crédito',
@@ -383,7 +383,7 @@ class PackageController extends Controller
 
         // Retorna o cliente atualizado
         $response = $service->createPaymentIntent($client, $package);
-        $service->confirmPackageChange($response['purchase']);
+        $service->confirmPackageChange($response['order']);
 
         return redirect()
             ->route('clients.show', $client->id)

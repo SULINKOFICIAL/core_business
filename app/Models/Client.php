@@ -43,9 +43,9 @@ class Client extends Model
     }
     
     // Compras realizadas pelo cliente
-    public function purchases(): HasMany
+    public function orders(): HasMany
     {
-       return $this->hasMany(ClientPurchase::class, 'client_id', 'id');
+       return $this->hasMany(Order::class, 'client_id', 'id');
     }
 
     // Compras realizadas pelo cliente

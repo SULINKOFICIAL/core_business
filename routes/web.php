@@ -1,7 +1,6 @@
 <?php
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClientController;
-use App\Http\Controllers\ClientPurchaseController;
 use App\Http\Controllers\ClientsActionsController;
 use App\Http\Controllers\CpanelController;
 use App\Http\Controllers\ERedeController;
