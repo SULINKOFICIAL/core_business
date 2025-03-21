@@ -194,8 +194,33 @@ class ApisController extends Controller
         // Obtém plano atual do cliente
         $purchases = $client->purchases()->orderBy('created_at', 'DESC')->get();
 
+        // Inicia Json
+        $purchasesJson = [];
+
+        // Formata dados Json
+        foreach ($purchases as $purchase) {
+
+            // Date formated
+            $buy['id']          = $purchase->id;
+            $buy['date']        = $purchase->purchase_date;
+            $buy['type']        = $purchase->type;
+            $buy['amount']      = $purchase->total();
+            $buy['method']      = $purchase->method;
+            $buy['status']      = $purchase->status;
+            $buy['packageName'] = $purchase->package->name;
+            
+            // Se for a atribuição de um pacote
+            if($buy['type'] == 'Pacote Trocado'){
+                $buy['previousPackageName'] = $purchase->previousPackage->name;
+            }
+
+            // Obtém dados
+            $purchasesJson[] = $buy;
+
+        }
+
         // Se o cliente tiver plano
-        return response()->json($purchases, 200);
+        return response()->json($purchasesJson, 200);
 
     }
 
