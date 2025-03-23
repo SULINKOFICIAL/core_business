@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('client_subscriptions', function (Blueprint $table) {
-            $table->string('status')->default('Ativa')->after('end_date');
+            $table->string('status')->default('Ativo')->after('end_date');
         });
     }
 

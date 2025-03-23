@@ -13,10 +13,11 @@
             </thead>
             <tbody class="text-start">
                 @foreach ($client->orders()->orderBy('created_at', 'DESC')->get() as $order)
-                <tr>
+                <tr class="show-div">
                     <td class="w-100px text-start px-2">
                         <p class="text-gray-700 text-hover-primary fw-bolder mb-0 cursor-pointer show-details" data-order="{{ $order->id }}">
                             #{{ str_pad($order->id, 4, '0', STR_PAD_LEFT) }}
+                            <i class="fa-solid fa-eye show-after"></i>
                         </p>
                         <span class="text-gray-600 fs-8">
                             {{ $order->order_date->format('d/m/Y') }} às {{ $order->order_date->format('H:i:s') }}
@@ -31,11 +32,11 @@
                                 Pacote trocado de <span class="fw-bolder text-danger">{{ $order->previousPackage->name }}</span> para <span class="fw-bolder text-success">{{ $order->package->name }}</span>.
                             @endif
                             @if ($order->type == 'Renovação')
-                                {{ $order->type }}
+                                {{ $order->type }} do plano <span class="fw-bolder text-success">{{ $order->package->name }}</span>
                             @endif
                         </span>
                         @if ($order->description)
-                        <p class="text-gray-700 fw-bold fs-8 mb-0">Observação: {{ $order->description }}</p>
+                        <p class="text-gray-700 fs-8 mb-0"><b>Observação:</b> {{ $order->description }}</p>
                         @endif
                     </td>
                     <td class="text-start">
@@ -50,10 +51,17 @@
                         @elseif ($order->status == 'Cancelado')
                         <span class="badge badge-light-danger">Cancelado</span>
                         @else
-                        <span class="badge badge-light-warning">Pendente</span>
-                        @if ($order->type == 'Renovação')
-                            <i class="fa-solid fa-sack-dollar" data-bs-toggle="tooltip" data-bs-html="true" title="Forçar Pagar"></i>
-                        @endif
+                            <span class="badge badge-light-warning">Pendente</span>
+                            @if ($order->type == 'Renovação')
+                            <a href="{{ route('subscriptions.renew', $order->id) }}" class="text-hover-primary">
+                                <i class="fa-solid fa-arrow-rotate-right" data-bs-toggle="tooltip" data-bs-html="true" title="Forçar Renovação"></i>
+                            </a>
+                            @endif
+                            @if ($order->type == 'Pacote Trocado')
+                            <a href="{{ route('payments.approve', $order->id) }}" class="text-hover-primary">
+                                <i class="fa-solid fa-sack-dollar" data-bs-toggle="tooltip" data-bs-html="true" title="Aprovar Pagamento"></i>
+                            </a>
+                            @endif
                         @endif
                     </td>
                 </tr>

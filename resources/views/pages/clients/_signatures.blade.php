@@ -37,13 +37,17 @@
                         <p class="text-gray-700 m-0 text-center">{{ $subscription->order->method }}</p>
                     </td>
                     <td>
-                        @if ($subscription->status == 'Ativa')
+                        @if ($subscription->status == 'Ativo')
                         <span class="badge badge-light-success">
-                            Ativa
+                            Ativo
+                        </span>
+                        @elseif($subscription->status == 'Cancelado' || $subscription->status == 'Expirado')
+                        <span class="badge badge-light-danger">
+                            {{ $subscription->status }}
                         </span>
                         @else
-                        <span class="badge badge-light-danger">
-                            Cancelada
+                        <span class="badge badge-light-info">
+                            {{ $subscription->status }}
                         </span>
                         @endif
                     </td>

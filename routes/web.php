@@ -103,10 +103,20 @@ Route::middleware(['auth'])->group(function () {
      */
     Route::prefix('assinaturas')->group(function () {
         Route::name('subscriptions.')->group(function () {
+            Route::get('/renovar/{id}', [SubscriptionsController::class, 'renew'])->name('renew');
+            Route::get('/expirar', [SubscriptionsController::class, 'expired'])->name('expired');
             Route::get('/emitir', [SubscriptionsController::class, 'generate'])->name('generate');
         });
     });
 
+    /**
+     * Rotas para pagamentos nos sistemas miCores.
+     */
+    Route::prefix('pagamentos')->group(function () {
+        Route::name('payments.')->group(function () {
+            Route::get('/aprovar/{id}', [OrderController::class, 'approve'])->name('approve');
+        });
+    });
 
     /**
      * Rotas para obter informações ou alterar miCores.
@@ -143,7 +153,8 @@ Route::middleware(['auth'])->group(function () {
     });
 
 });
-    
+
+// Resposta da eRede
 Route::get('/resposta-rede', [ERedeController::class, 'webhook']);
 
 require __DIR__.'/auth.php';

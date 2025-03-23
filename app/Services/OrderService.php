@@ -8,7 +8,7 @@ use App\Models\OrderItem;
 use App\Models\ClientSubscription;
 use App\Models\Package;
 
-class PackageService
+class OrderService
 {
     public function createOrder($client, $newPackage)
     {
@@ -114,7 +114,7 @@ class PackageService
         ];
     }
 
-    public function confirmPackageChange($order)
+    public function confirmPaymentOrder($order)
     {
         if ($order->status !== 'Pago') {
             return 'Pagamento ainda não confirmado.';
@@ -154,7 +154,7 @@ class PackageService
             'order_id'   => $order->id,
             'start_date' => now(),
             'end_date'   => now()->addDays($newPackage->duration_days),
-            'status'     => 'Ativa',
+            'status'     => 'Ativo',
         ]);
 
         // Atualizar cliente com novo pacote

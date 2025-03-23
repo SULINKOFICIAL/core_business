@@ -53,7 +53,7 @@
                     <td class="text-center">
                         @if ($card->status)
                         <span class="badge badge-light-success">
-                            Ativa
+                            Ativo
                         </span>
                         @else
                         <span class="badge badge-light-danger">

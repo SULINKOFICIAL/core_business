@@ -6,13 +6,11 @@ use Illuminate\Http\Request;
 use App\Models\Client;
 use App\Models\ClientCard;
 use App\Models\ErrorMiCore;
-use App\Models\Order;
 use App\Models\OrderTransaction;
 use App\Models\Package;
 use App\Models\Ticket;
 use App\Services\ERedeService;
-use App\Services\PackageService;
-use Illuminate\Support\Facades\Log;
+use App\Services\OrderService;
 use Illuminate\Support\Str;
 
 class ApisController extends Controller
@@ -231,7 +229,7 @@ class ApisController extends Controller
      * Função responsável por processar pagamentos dos sistemas miCores.
      * Utilizamos junto a ele a integração através da eRede.
      */
-    public function payment(Request $request, PackageService $service) {
+    public function payment(Request $request, OrderService $service) {
 
         // Obtém os dados enviados no formulário
         $data = $request->all();
@@ -255,23 +253,22 @@ class ApisController extends Controller
         // Obtém o pacote que o cliente quer realizar o upgrade
         $package = Package::find($data['package_id']);
 
-        // Limpa os dados do cartão
-        $data['card_number'] = (int) str_replace(' ', '', $data['card_number']);
-
-        // Busca o cartão do cliente
-        $card = ClientCard::where('client_id', $client->id)->where('number', $data['card_number'])->first();
-
         // Encontra o cartão do cliente para reutilizar
         if(isset($data['card_id'])){
 
             // Encontra o cartão do cliente
-            $card = ClientCard::where('client_id', $client->id)
-                                ->where('number', $data['card_number'])
-                                ->first();
+            $card = ClientCard::where('client_id', $client->id)->where('number', $data['card_number'])->first();
 
-            return 'Cartão não encontrado para esse cliente';
+            // Se não encontrar o cliente
+            if(!$client) return response()->json(['error' => 'Cartão não encontrado para esse cliente'], 404);
 
         } else {
+
+            // Limpa os dados do cartão
+            $data['card_number'] = (int) str_replace(' ', '', $data['card_number']);
+    
+            // Busca o cartão do cliente
+            $card = ClientCard::where('client_id', $client->id)->where('number', $data['card_number'])->first();
             
             // Verifica se o cartão já não está cadastrado
             if (!$card) {
@@ -356,7 +353,7 @@ class ApisController extends Controller
             $order->save();
 
             // Retorna o cliente atualizado
-            $service->confirmPackageChange($order);
+            $service->confirmPaymentOrder($order);
 
             // Retorna pacote atualizado
             return response()->json([

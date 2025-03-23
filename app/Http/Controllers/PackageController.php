@@ -10,6 +10,7 @@ use App\Models\ClientSubscription;
 use App\Models\Package;
 use App\Models\Module;
 use App\Models\PackageModule;
+use App\Services\OrderService;
 use App\Services\PackageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,12 +20,14 @@ class PackageController extends Controller
 
     protected $request;
     private $repository;
+    private $orderService;
 
     public function __construct(Request $request, Package $content)
     {
 
         $this->request = $request;
         $this->repository = $content;
+        $this->orderService = new OrderService;
 
     }
 
@@ -169,7 +172,7 @@ class PackageController extends Controller
     /**
      * Atribui um pacote a um cliente sem pacotes.
      */
-    public function assign(Request $request, $id, PackageService $service)
+    public function assign(Request $request, $id)
     {
 
         // Obtém os dados da requisição
@@ -180,14 +183,14 @@ class PackageController extends Controller
         $package = Package::findOrFail($data['package_id']);
 
         // Retorna o cliente atualizado
-        $response = $service->createPaymentIntent($client, $package);
+        $response = $this->orderService->createOrder($client, $package);
 
         // Força atribuição
         $response['order']->status = 'Pago';
         $response['order']->save();
 
         // Libera alteração dos módulos do cliente
-        $service->confirmPackageChange($response['order']);
+        $this->orderService->confirmPaymentOrder($response['order']);
 
         // Retorna a página
         return redirect()
@@ -372,7 +375,7 @@ class PackageController extends Controller
     /**
      * Troca o pacote do cliente.
      */
-    public function new(Request $request, $id, PackageService $service)
+    public function new(Request $request, $id)
     {
         // Obtém os dados da requisição
         $data = $request->all();
@@ -382,8 +385,8 @@ class PackageController extends Controller
         $package = Package::findOrFail($data['package_id']);
 
         // Retorna o cliente atualizado
-        $response = $service->createPaymentIntent($client, $package);
-        $service->confirmPackageChange($response['order']);
+        $response = $this->orderService->createOrder($client, $package);
+        $this->orderService->confirmPaymentOrder($response['order']);
 
         return redirect()
             ->route('clients.show', $client->id)
