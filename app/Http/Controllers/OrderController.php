@@ -46,8 +46,11 @@ class OrderController extends Controller
     public function approve($id)
     {
 
+        // Busca o pedido
+        $order = Order::find($id);
+
         // Aprova o pagamento do cliente
-        $this->orderService->confirmPaymentOrder($id);
+        $this->orderService->confirmPaymentOrder($order);
 
         // Redireciona
         return redirect()

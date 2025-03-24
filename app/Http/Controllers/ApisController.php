@@ -348,10 +348,6 @@ class ApisController extends Controller
             $transaction->response = json_encode($responseRede);
             $transaction->save();
 
-            // Atualiza o pedido
-            $order->status = 'Pago';
-            $order->save();
-
             // Retorna o cliente atualizado
             $service->confirmPaymentOrder($order);
 

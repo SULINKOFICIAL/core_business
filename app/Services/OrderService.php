@@ -116,16 +116,14 @@ class OrderService
 
     public function confirmPaymentOrder($order)
     {
-        if ($order->status !== 'Pago') {
-            return 'Pagamento ainda não confirmado.';
+        if ($order->status === 'Pago') {
+            return 'Esse Pagamento já foi aprovado.';
         }
 
         $client = $order->client;
         $newPackage = Package::find($order->key_id);
 
-        if (!$newPackage) {
-            return 'Pacote não encontrado.';
-        }
+        if (!$newPackage) return 'Pacote não encontrado.';
 
         // Cancela assinatura atual
         $currentSubscription = $client->lastSubscription();
@@ -161,6 +159,10 @@ class OrderService
         $client->update([
             'package_id' => $newPackage->id,
         ]);
+
+        // Atualiza o pedido
+        $order->status = 'Pago';
+        $order->save();
 
         return 'Pacote "' . $newPackage->name . '" ativado com sucesso.';
     }
