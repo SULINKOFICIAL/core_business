@@ -1,4 +1,3 @@
-
 <div class="card mb-4">
     <div class="card-body">
         <table class="table table-striped table-row-bordered gy-2 gs-7 align-middle datatables">

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Client;
 use App\Models\ClientCard;
 use App\Models\ErrorMiCore;
+use App\Models\Order;
 use App\Models\OrderTransaction;
 use App\Models\Package;
 use App\Models\Ticket;
@@ -206,8 +207,10 @@ class ApisController extends Controller
             $buy['type']        = $order->type;
             $buy['amount']      = $order->total();
             $buy['method']      = $order->method;
+            $buy['description'] = $order->description;
             $buy['status']      = $order->status;
             $buy['packageName'] = $order->package->name;
+            $buy['transactions'] = $order->transactions->count();
             
             // Se for a atribuição de um pacote
             if($buy['type'] == 'Pacote Trocado'){
@@ -221,6 +224,61 @@ class ApisController extends Controller
 
         // Se o cliente tiver plano
         return response()->json($ordersJson, 200);
+
+    }
+
+    public function order(Request $request, $id) {
+
+        // Recebe dados
+        $data = $request->all();
+        
+        // Obtém dados do cliente
+        $client = Client::where('token', $data['token_micore'])->first();
+
+        // Caso não encontre a conta do cliente
+        if(!$client) return response()->json('Conta não encontrada', 404);
+
+        // Busca o pedido do cliente
+        $order = Order::where('client_id', $client->id)->where('id', $id)->first();
+
+        // Formata o pedido
+        $orderJson['id']          = $order->id;
+        $orderJson['date']        = $order->order_date;
+        $orderJson['type']        = $order->type;
+        $orderJson['amount']      = $order->total();
+        $orderJson['method']      = $order->method;
+        $orderJson['description'] = $order->description;
+        $orderJson['status']      = $order->status;
+        $orderJson['packageName'] = $order->package->name;
+
+        // Caso não encontre a conta do cliente
+        if(!$client) return response()->json('Pedido não encontrado', 404);
+
+        // Obtém transações do pedido
+        $transactions = $order->transactions;
+
+        // Insere o pedido formatado
+        $transactionsJson = [];
+
+        // Formata dados Json
+        foreach ($transactions as $transaction) {
+
+            // Date formated
+            $buy['id']          = $transaction->id;
+            $buy['amount']      = $transaction->amount;
+            $buy['method']      = $transaction->method;
+            $buy['status']      = $transaction->status;
+
+            // Obtém dados
+            $transactionsJson[] = $buy;
+
+        }
+
+        // Insere as transações no pedido
+        $orderJson['transactions'] = $transactionsJson;
+
+        // Se o cliente tiver plano
+        return response()->json($orderJson, 200);
 
     }
 

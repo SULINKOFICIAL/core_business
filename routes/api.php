@@ -19,6 +19,7 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
      */
     Route::get('/meu-plano',      [ApisController::class, 'plan']);
     Route::get('/minhas-compras', [ApisController::class, 'orders']);
+    Route::get('/compra/{id}', [ApisController::class, 'order']);
     Route::get('/meu-banco',      [ApisController::class, 'getDatabase']);
 
     /**
@@ -26,7 +27,7 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
      */
     Route::post('/pagamento', [ApisController::class, 'payment']);
     Route::post('/tickets',   [ApisController::class, 'tickets']);
-    Route::post('/cartao',    [ApiPaymentsController::class, 'newCard']);
+    Route::post('/cartao',    [ApisController::class, 'newCard']);
     Route::post('/error',     [ApisController::class, 'notifyErrors']);
 
 });
