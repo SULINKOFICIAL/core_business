@@ -113,7 +113,6 @@ class ClientController extends Controller
 
     }
 
-
     /**
      * Display the specified resource.
      *
@@ -129,27 +128,27 @@ class ClientController extends Controller
         $client = $this->repository->find($id);
 
         // Realiza consulta
-        $actualFeatures = $this->guzzle('get', 'sistema/permissoes', $client);
+        $responseApi = $this->guzzle('get', 'sistema/permissoes', $client);
 
         // Reposta da API
-        $responseApi = true;
+        $apiError = false;
         
         // Se ocorreu um erro
-        if ($actualFeatures == 'Error' || $actualFeatures == null) {
-            $responseApi = false;
+        if (isset($responseApi['error']) && $responseApi['error'] == true) {
+            $apiError = true;
         }
 
         // Inicia Array
         $allowFeatures = [];
 
         // Se foi tudo bem sucedido
-        if($responseApi){
+        if(!$apiError){
             
             // Transforma em uma coleção
-            $actualFeatures = $actualFeatures['permissions'];
+            $responseApi = $responseApi['permissions'];
     
             // Separa variáveis
-            foreach ($actualFeatures as $value) {
+            foreach ($responseApi as $value) {
                 $allowFeatures[$value['name']] = $value['status'];
             }
 
@@ -160,11 +159,12 @@ class ClientController extends Controller
 
         // Retorna a página
         return view('pages.clients.show')->with([
-            'client' => $client,
-            'modules' => $modules,
-            'packages' => $packages,
+            'client'        => $client,
+            'modules'       => $modules,
+            'packages'      => $packages,
             'allowFeatures' => $allowFeatures,
-            'responseApi' => $responseApi,
+            'apiError'      => $apiError,
+            'responseApi'   => $responseApi,
         ]);
 
     }
@@ -187,7 +187,7 @@ class ClientController extends Controller
             // Inicializa os parâmetros da requisição
             $options = [
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $client->token,
+                    'Authorization' => 'Bearer ' . env('CENTRAL_TOKEN'),
                 ]
             ];
 
@@ -197,7 +197,7 @@ class ClientController extends Controller
             }
 
             // Realiza a solicitação
-            $response = $guzzle->$method("https://$client->domain/api/$url", $options);
+            $response = $guzzle->$method("http://$client->domain/api/$url", $options);
 
             // Obtém o corpo da resposta
             $response = $response->getBody()->getContents();
@@ -210,7 +210,10 @@ class ClientController extends Controller
 
 
         } catch (\Exception $e) {
-            return 'Error';
+            return [
+                'error' => true,
+                'message' => $e->getMessage(),
+            ];
         }
     }
 

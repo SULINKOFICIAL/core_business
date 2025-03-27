@@ -98,7 +98,7 @@
             </div>
         </div>
     </div>
-    @if (!$responseApi)
+    @if ($apiError)
         <div class="alert alert-danger d-flex align-items-center p-5 mb-5">
             <i class="ki-duotone ki-shield-tick fs-2hx text-danger me-4">
                 <span class="path1"></span>
@@ -107,6 +107,8 @@
             <div class="d-flex flex-column">
                 <h4 class="mb-1 text-danger">Erro na API</h4>
                 <span>Aconteceu um erro ao buscar as permissões já habilitadas para esse cliente, verifique se o token esta configurado corretamente e o domínio.</span>
+                <br>
+                {{ $responseApi['message'] }}
             </div>
         </div>
     @endif

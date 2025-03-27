@@ -20,7 +20,7 @@ class ValidateBearerToken
         $token = $request->bearerToken();
 
         // Verificar se o token existe e é válido
-        if (!$token || $token !== env('CENTRAL_CORE_TOKEN')) {
+        if (!$token || $token !== env('CENTRAL_TOKEN')) {
             return response()->json(['error' => 'Token inválido.'], 401);
         }
 

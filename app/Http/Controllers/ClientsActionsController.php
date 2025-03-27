@@ -130,7 +130,7 @@ class ClientsActionsController extends Controller
         // Inicializa os parâmetros da requisição
         $options = [
             'headers' => [
-                'Authorization' => 'Bearer ' . env('CENTRAL_CORE_TOKEN'),
+                'Authorization' => 'Bearer ' . env('CENTRAL_TOKEN'),
             ]
         ];
 
