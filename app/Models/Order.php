@@ -8,17 +8,22 @@ class Order extends Model
 {
     protected $table = 'orders';
     protected $casts = [
-        'order_date' => 'datetime',
+        'paid_at' => 'datetime',
     ];
     protected $fillable = [
         'client_id',
         'type',
         'key_id',
         'previous_key_id',
-        'order_date',
+        'paid_at',
         'description',
         'status',
     ];
+
+    public function paidBy()
+    {
+        return $this->transactions()->where('status', 'Pago')->first();
+    }
 
     public function items()
     {

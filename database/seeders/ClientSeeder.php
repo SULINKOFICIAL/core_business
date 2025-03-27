@@ -24,7 +24,7 @@ class ClientSeeder extends Seeder
         Client::create([
             'name' => 'Coca Cola',
             'email' => 'coca@cocacola.com.br',
-            'domain' => 'cocacola.com.br',
+            'domain' => '127.0.0.1:8001',
             'token' => '111',
             'created_by' => 1,
         ]);
@@ -32,7 +32,7 @@ class ClientSeeder extends Seeder
         Client::create([
             'name' => 'Porsche',
             'email' => 'porsche@porscheerp.com.br',
-            'domain' => 'porscheerp.com.br',
+            'domain' => '127.0.0.1:8002',
             'token' => '222',
             'created_by' => 1,
         ]);
@@ -40,7 +40,7 @@ class ClientSeeder extends Seeder
         Client::create([
             'name' => 'Stanley',
             'email' => 'stanley@gmail.com',
-            'domain' => 'stanley.com.br',
+            'domain' => '127.0.0.1:8003',
             'token' => '333',
             'created_by' => 1,
         ]);

@@ -128,8 +128,8 @@ class SubscriptionsController extends Controller
             // Verifica se o cliente já tem um pedido de renovação neste mês
             $orderExists = Order::where('client_id', $client->id)
                                 ->where('type', 'Renovação')
-                                ->whereMonth('order_date', Carbon::now()->month)
-                                ->whereYear('order_date', Carbon::now()->year)
+                                ->whereMonth('created_at', Carbon::now()->month)
+                                ->whereYear('created_at', Carbon::now()->year)
                                 ->exists();
             
             // Se a solicitação de renovação ainda não foi gerada
@@ -139,7 +139,6 @@ class SubscriptionsController extends Controller
                 $order = Order::create([
                     'client_id'  => $client->id,
                     'key_id'     => $package->id,
-                    'order_date' => Carbon::now(),
                     'status'     => 'Pendente',
                     'type'       => 'Renovação',
                 ]);

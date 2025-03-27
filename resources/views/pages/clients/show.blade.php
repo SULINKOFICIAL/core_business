@@ -108,7 +108,7 @@
                 <h4 class="mb-1 text-danger">Erro na API</h4>
                 <span>Aconteceu um erro ao buscar as permissões já habilitadas para esse cliente, verifique se o token esta configurado corretamente e o domínio.</span>
                 <br>
-                {{ $responseApi['message'] }}
+                {{ $apiGetPermissions['message'] ?? 'Erro desconhecido verifique a URL do cliente.' }}
             </div>
         </div>
     @endif

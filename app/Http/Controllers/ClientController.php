@@ -127,31 +127,31 @@ class ClientController extends Controller
         // Obtém dados do Cliente
         $client = $this->repository->find($id);
 
-        // Realiza consulta
-        $responseApi = $this->guzzle('get', 'sistema/permissoes', $client);
-
-        // Reposta da API
+        // Valida se não aconteceu algum erro com a API
         $apiError = false;
-        
-        // Se ocorreu um erro
-        if (isset($responseApi['error']) && $responseApi['error'] == true) {
-            $apiError = true;
-        }
 
-        // Inicia Array
+        // Inicia Array para receber as permissões liberadas do cliente
         $allowFeatures = [];
 
-        // Se foi tudo bem sucedido
-        if(!$apiError){
-            
+        // Realiza consulta para verificar se consegue se comunicar com o miCore
+        $apiVerifyStatus = $this->guzzle('get', 'sistema/status', $client);
+
+        // Realiza consulta para verificar se consegue se comunicar com o miCore
+        $apiGetPermissions = $this->guzzle('get', 'sistema/permissoes', $client);
+
+        // Se conseguir conectar ao miCore do cliente
+        if($apiVerifyStatus){
+    
             // Transforma em uma coleção
-            $responseApi = $responseApi['permissions'];
+            $apiGetPermissions = $apiGetPermissions['permissions'];
     
             // Separa variáveis
-            foreach ($responseApi as $value) {
+            foreach ($apiGetPermissions as $value) {
                 $allowFeatures[$value['name']] = $value['status'];
             }
 
+        } else {
+            $apiError = true;
         }
 
         // Obtém pacotes
@@ -164,7 +164,7 @@ class ClientController extends Controller
             'packages'      => $packages,
             'allowFeatures' => $allowFeatures,
             'apiError'      => $apiError,
-            'responseApi'   => $responseApi,
+            'apiGetPermissions'   => $apiGetPermissions,
         ]);
 
     }
@@ -204,10 +204,9 @@ class ClientController extends Controller
 
             // Decodifica o JSON
             $response = json_decode($response, true);
-
+            
             // Retorna a resposta
             return $response;
-
 
         } catch (\Exception $e) {
             return [

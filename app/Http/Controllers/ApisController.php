@@ -203,7 +203,8 @@ class ApisController extends Controller
 
             // Date formated
             $buy['id']          = $order->id;
-            $buy['date']        = $order->order_date;
+            $buy['date_created'] = $order->created_at;
+            $buy['date_paid']   = $order->paid_at;
             $buy['type']        = $order->type;
             $buy['amount']      = $order->total();
             $buy['method']      = $order->method;
@@ -243,7 +244,8 @@ class ApisController extends Controller
 
         // Formata o pedido
         $orderJson['id']          = $order->id;
-        $orderJson['date']        = $order->order_date;
+        $orderJson['date_created'] = $order->created_at;
+        $orderJson['date_paid']   = $order->paid_at;
         $orderJson['type']        = $order->type;
         $orderJson['amount']      = $order->total();
         $orderJson['method']      = $order->method;
@@ -264,10 +266,12 @@ class ApisController extends Controller
         foreach ($transactions as $transaction) {
 
             // Date formated
-            $buy['id']          = $transaction->id;
-            $buy['amount']      = $transaction->amount;
-            $buy['method']      = $transaction->method;
-            $buy['status']      = $transaction->status;
+            $buy['id']           = $transaction->id;
+            $buy['amount']       = $transaction->amount;
+            $buy['method']       = $transaction->method;
+            $buy['gateway']      = $transaction->gateway ? $transaction->gateway->name : null;
+            $buy['date_created'] = $transaction->created_at;
+            $buy['status']       = $transaction->status;
 
             // Obtém dados
             $transactionsJson[] = $buy;

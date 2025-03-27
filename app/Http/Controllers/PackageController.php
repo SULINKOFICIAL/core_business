@@ -185,10 +185,6 @@ class PackageController extends Controller
         // Retorna o cliente atualizado
         $response = $this->orderService->createOrder($client, $package);
 
-        // Força atribuição
-        $response['order']->status = 'Pago';
-        $response['order']->save();
-
         // Libera alteração dos módulos do cliente
         $this->orderService->confirmPaymentOrder($response['order']);
 
@@ -259,12 +255,11 @@ class PackageController extends Controller
 
             // Cria a compra
             $order = Order::create([
-                'client_id' => $id,
-                'order_date' => now(),
-                'type'          => 'Pacote alterado',
-                'key_id'        => $client->package_id,
-                'method'        => 'Manual',
-                'status'        => false,
+                'client_id'  => $id,
+                'type'       => 'Pacote alterado',
+                'key_id'     => $client->package_id,
+                'method'     => 'Manual',
+                'status'     => false,
             ]);
 
             // Registra o valor anterior do pacote
@@ -390,6 +385,6 @@ class PackageController extends Controller
 
         return redirect()
             ->route('clients.show', $client->id)
-            ->with('message', $response);
+            ->with(['message' => 'Pacote trocado']);
     }
 }

@@ -116,6 +116,7 @@ class OrderService
 
     public function confirmPaymentOrder($order)
     {
+
         if ($order->status === 'Pago') {
             return 'Esse Pagamento já foi aprovado.';
         }
@@ -162,6 +163,7 @@ class OrderService
 
         // Atualiza o pedido
         $order->status = 'Pago';
+        $order->paid_at = now();
         $order->save();
 
         return 'Pacote "' . $newPackage->name . '" ativado com sucesso.';

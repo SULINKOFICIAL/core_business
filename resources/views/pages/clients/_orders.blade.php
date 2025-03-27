@@ -19,7 +19,7 @@
                             <i class="fa-solid fa-eye show-after"></i>
                         </p>
                         <span class="text-gray-600 fs-8">
-                            {{ $order->order_date->format('d/m/Y') }} às {{ $order->order_date->format('H:i:s') }}
+                            {{ $order->created_at->format('d/m/Y') }} às {{ $order->created_at->format('H:i:s') }}
                         </span>
                     </td>
                     <td class="text-start">
@@ -42,7 +42,11 @@
                         <span class="text-gray-700 fw-bold">R$ {{ number_format($order->total(), 2, ',', '.') }}</span>
                     </td>
                     <td class="text-center">
-                        <span class="text-gray-700 fw-bold">{{ $order->method ?? '-' }}</span>
+                        @if ($order->status == 'Pago')
+                            {{ $order->paidBy() }}
+                        @else
+                        <span class="badge badge-light text-muted">Não Pago</span>
+                        @endif
                     </td>
                     <td class="text-center">
                         @if ($order->status == 'Pago')
