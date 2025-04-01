@@ -140,7 +140,7 @@ class ClientController extends Controller
         $apiGetPermissions = $this->guzzle('get', 'sistema/permissoes', $client);
 
         // Se conseguir conectar ao miCore do cliente
-        if($apiVerifyStatus){
+        if(!isset($apiVerifyStatus['error'])){
     
             // Transforma em uma coleção
             $apiGetPermissions = $apiGetPermissions['permissions'];
