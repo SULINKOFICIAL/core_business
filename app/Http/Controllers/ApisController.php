@@ -55,6 +55,16 @@ class ApisController extends Controller
         // Autor
         $data['created_by'] = 1;
 
+        // Limpa o campo CNPJ
+        if(isset($data['cnpj']) && $data['cnpj']){
+            $data['cnpj'] = onlyNumbers($data['cnpj']);
+        }
+
+        // Limpa o campo CPF
+        if(isset($data['cpf']) && $data['cpf']){
+            $data['cpf'] = onlyNumbers($data['cpf']);
+        }
+
         // Gera um domínio permitido
         $data['domain'] = verifyIfAllow($data['company']);
 
@@ -63,18 +73,12 @@ class ApisController extends Controller
 
         // Insere prefixo do miCore
         $data['table'] = 'micorecom_' . $data['table'];
-        
-        // Gera senha
-        $data['password'] = Str::random(12);
 
         // Gera token para API
         $data['token'] = hash('sha256', $data['company'] . microtime(true));
 
         // Adiciona o sufixo dos domínios Core
         $data['domain'] = $data['domain'] . '.micore.com.br';
-
-        // Associa pacote teste gratuito
-        $data['package_id'] = 1;
         
         // Insere no banco de dados
         $client = $this->repository->create($data);
@@ -88,14 +92,14 @@ class ApisController extends Controller
         // Gera dado do banco de dados
         $database = [
             'name' => $data['table'],
-            'password' => $data['password']
+            'password' => Str::random(12)
         ];
 
         // Gera usuário
         $user = [
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => $request->password,
+            'name'       => $data['name'],
+            'email'      => $data['email'],
+            'password'   => $data['password'],
             'short_name' => generateShortName($data['name']),
         ];
 

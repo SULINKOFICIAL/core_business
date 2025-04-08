@@ -17,6 +17,9 @@ class Client extends Model
      */
     protected $fillable = [
         'name',
+        'company',
+        'cnpj',
+        'cpf',
         'domain',
         'package_id',
         'users_limit',

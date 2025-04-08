@@ -90,3 +90,9 @@ if (!function_exists('generateShortName')) {
         return $parts[0]; // Caso só tenha um nome
     }
 }
+
+if (! function_exists('onlyNumbers')) {
+    function onlyNumbers($number){
+        return preg_replace('/\D/', '', $number);
+    }
+}
