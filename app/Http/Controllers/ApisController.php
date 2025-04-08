@@ -52,13 +52,11 @@ class ApisController extends Controller
         // Obtém dados
         $data = $request->all();
 
-        dd($data);
-
         // Autor
         $data['created_by'] = 1;
 
         // Gera um domínio permitido
-        $data['domain'] = verifyIfAllow($data['name']);
+        $data['domain'] = verifyIfAllow($data['company']);
 
         // Gera um nome de tabela permitido
         $data['table'] = str_replace('-', '_', $data['domain']);
