@@ -76,6 +76,8 @@ class ApisController extends Controller
         // Associa pacote teste gratuito
         $data['package_id'] = 1;
 
+        dd($data);
+
         // Insere no banco de dados
         $client = $this->repository->create($data);
 
