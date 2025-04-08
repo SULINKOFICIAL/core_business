@@ -75,14 +75,15 @@ class ApisController extends Controller
 
         // Associa pacote teste gratuito
         $data['package_id'] = 1;
-
-        dd($data);
-
+        
         // Insere no banco de dados
         $client = $this->repository->create($data);
 
+        // Simula solicitação de troca de pacote
+        $request = new Request(['package_id' => 1]);
+
         // Adiciona pacote básico ao cliente
-        app(PackageController::class)->assign($client->id, 1);
+        app(PackageController::class)->assign($request, $client->id);
 
         // Gera dado do banco de dados
         $database = [
