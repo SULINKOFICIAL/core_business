@@ -68,7 +68,7 @@ class ApisController extends Controller
         $data['password'] = Str::random(12);
 
         // Gera token para API
-        $data['token'] = hash('sha256', $data['name'] . microtime(true));
+        $data['token'] = hash('sha256', $data['company'] . microtime(true));
 
         // Adiciona o sufixo dos domínios Core
         $data['domain'] = $data['domain'] . '.micore.com.br';
