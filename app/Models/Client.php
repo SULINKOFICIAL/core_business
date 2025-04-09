@@ -27,7 +27,7 @@ class Client extends Model
         'users_limit',
         'logo',
         'table',
-        'password',
+        'table_password',
         'token',
         'status',
         'filed_by',
