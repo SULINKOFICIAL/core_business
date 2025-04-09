@@ -12,6 +12,7 @@ use App\Models\Package;
 use App\Models\Ticket;
 use App\Services\ERedeService;
 use App\Services\OrderService;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class ApisController extends Controller
@@ -52,7 +53,7 @@ class ApisController extends Controller
         // Obtém dados
         $data = $request->all();
 
-        dd(json_encode($data));
+        dd(Log::info($data));
 
         // Autor
         $data['created_by'] = 1;
