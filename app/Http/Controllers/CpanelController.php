@@ -88,7 +88,7 @@ class CpanelController extends Controller
         // Obtém banco de dados
         $database = [
             'name' => $client->table,
-            'password' => $client->password,
+            'password' => $client->table_password,
         ];
 
         // Envia a solicitação para criar o subdomínio
@@ -226,7 +226,7 @@ class CpanelController extends Controller
         // Obtém banco de dados
         $database = [
             'name' => $client->table,
-            'password' => $client->password,
+            'password' => $client->table_password,
         ];
 
         // Envia a solicitação para criar o subdomínio
