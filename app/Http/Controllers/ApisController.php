@@ -150,7 +150,7 @@ class ApisController extends Controller
         return response()->json([
             'database_name' => $client->table,
             'db_user' => $client->table . '_usr',
-            'db_password' => $client->password,
+            'db_password' => $client->table_password,
         ]);
 
     }
