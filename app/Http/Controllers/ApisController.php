@@ -52,7 +52,7 @@ class ApisController extends Controller
         // Obtém dados
         $data = $request->all();
 
-        dd($data);
+        dd(json_encode($data));
 
         // Autor
         $data['created_by'] = 1;
