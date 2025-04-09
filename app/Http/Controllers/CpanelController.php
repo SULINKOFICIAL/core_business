@@ -53,11 +53,6 @@ class CpanelController extends Controller
         // Registra tempo
         Log::info("Inserindo usuário e token no banco : " . $datatable['name']);
 
-        // Separador
-        Log::info("======================================");
-        Log::info("================ FIM =================");
-        Log::info("======================================");
-
         // // 3. Adiciona registros únicos no cliente
         $this->addTokenAndUser($datatable, $user);
 
@@ -196,7 +191,7 @@ class CpanelController extends Controller
     private function makeSubdomain($domain)
     {
 
-        $documentRoot = "/home/micorecom/core";
+        $documentRoot = "/home/micorebr/core";
 
         // Envia a solicitação para criar o subdomínio
         $response = $this->guzzle('GET', "{$this->cpanelUrl}/execute/SubDomain/addsubdomain", $this->cpanelUser, $this->cpanelPass, [
@@ -238,7 +233,7 @@ class CpanelController extends Controller
     }
 
     /**
-     * Clona um banco de dados existente (micorecom_template) para um novo banco.
+     * Clona um banco de dados existente (micorebr_template) para um novo banco.
      *
      * @param string $novoBanco Nome do novo banco de dados
      * @return void
@@ -247,7 +242,7 @@ class CpanelController extends Controller
     private function cloneDatabase($database)
     {
         // Banco modelo
-        $templateBanco = 'micorecom_template';
+        $templateBanco = 'micorebr_template';
 
         // Criar o novo banco de dados
         $this->guzzle('GET', "{$this->cpanelUrl}/execute/Mysql/create_database", $this->cpanelUser, $this->cpanelPass, [
@@ -358,7 +353,7 @@ class CpanelController extends Controller
     private function cloneRepository($domain)
     {
         $repoUrl = 'https://github.com/SULINKOFICIAL/coresulink.git';
-        $path = "/home/micorecom/{$domain}";
+        $path = "/home/micorebr/{$domain}";
 
         $ssh = new SSH2(env('WHM_IP'));
         if (!$ssh->login($this->cpanelUser, $this->cpanelPass)) {
@@ -377,7 +372,7 @@ class CpanelController extends Controller
      */
     private function createTestFileCpanel()
     {
-        $path = "/home/micorecom";
+        $path = "/home/micorebr";
         $content = "Arquivo de teste criado via API em " . date('Y-m-d H:i:s');
 
         return $this->guzzle('POST', "{$this->cpanelUrl}/execute/Fileman/save_file_content", $this->cpanelUser, $this->cpanelPass, [

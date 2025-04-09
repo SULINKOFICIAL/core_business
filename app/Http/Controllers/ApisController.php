@@ -72,7 +72,7 @@ class ApisController extends Controller
         // Limpa WhatsApp
         $data['whatsapp'] = onlyNumbers($data['whatsapp']);
 
-       // Realiza verificações de duplicidade
+       /* // Realiza verificações de duplicidade
         foreach ($verifications as $field => $message) {
             if (!empty($data[$field])) {
                 if ($client = Client::where($field, $data[$field])->first()) {
@@ -82,7 +82,7 @@ class ApisController extends Controller
                     ], 409);
                 }
             }
-        }
+        } */
 
         // Gera um domínio permitido
         $data['domain'] = verifyIfAllow($data['company']);
@@ -91,7 +91,7 @@ class ApisController extends Controller
         $data['table'] = str_replace('-', '_', $data['domain']);
 
         // Insere prefixo do miCore
-        $data['table'] = 'micorecom_' . $data['table'];
+        $data['table'] = 'micorebr_' . $data['table'];
 
         // Gera senha
         $data['table_password'] = Str::random(12);
