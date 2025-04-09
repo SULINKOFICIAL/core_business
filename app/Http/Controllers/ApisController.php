@@ -66,6 +66,9 @@ class ApisController extends Controller
         if (!empty($data['cnpj'])) $data['cnpj'] = onlyNumbers($data['cnpj']);
         if (!empty($data['cpf']))  $data['cpf']  = onlyNumbers($data['cpf']);
 
+        // Limpa WhatsApp
+        $data['whatsapp'] = onlyNumbers($data['whatsapp']);
+
         // Realiza verificações de duplicidade
         foreach ($verifications as $field => $message) {
             if (!empty($data[$field])) {
