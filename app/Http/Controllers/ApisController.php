@@ -53,26 +53,26 @@ class ApisController extends Controller
         // Obtém dados
         $data = $request->all();
 
-        dd(Log::info($data));
-
         // Autor
         $data['created_by'] = 1;
 
         // Cria mensagens de erro para email, CNPJ ou CPF
-        $verifications = [
-            'email' => 'Já existe uma conta com esse email',
-            'cnpj'  => 'Já existe uma conta com esse CNPJ',
-            'cpf'   => 'Já existe uma conta com esse CPF',
-        ];
+        $verifications = ['email' => 'Já existe uma conta com esse email'];
 
         // Limpa CNPJ e CPF
-        if (!empty($data['cnpj'])) $data['cnpj'] = onlyNumbers($data['cnpj']);
-        if (!empty($data['cpf']))  $data['cpf']  = onlyNumbers($data['cpf']);
+        if (!empty($data['cnpj'])){
+            $verifications['cnpj'] = 'Já existe uma conta com esse CNPJ';
+            $data['cnpj'] = onlyNumbers($data['cnpj']);
+        } 
+        if (!empty($data['cpf'])){
+            $verifications['cpf'] = 'Já existe uma conta com esse CPF';
+            $data['cpf']  = onlyNumbers($data['cpf']);
+        }
 
         // Limpa WhatsApp
         $data['whatsapp'] = onlyNumbers($data['whatsapp']);
 
-       /*  // Realiza verificações de duplicidade
+       // Realiza verificações de duplicidade
         foreach ($verifications as $field => $message) {
             if (!empty($data[$field])) {
                 if ($client = Client::where($field, $data[$field])->first()) {
@@ -82,7 +82,7 @@ class ApisController extends Controller
                     ], 409);
                 }
             }
-        } */
+        }
 
         // Gera um domínio permitido
         $data['domain'] = verifyIfAllow($data['company']);
