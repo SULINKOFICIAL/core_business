@@ -52,6 +52,8 @@ class ApisController extends Controller
         // Obtém dados
         $data = $request->all();
 
+        dd($data);
+
         // Autor
         $data['created_by'] = 1;
 
