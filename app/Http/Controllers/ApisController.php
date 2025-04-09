@@ -55,14 +55,27 @@ class ApisController extends Controller
         // Autor
         $data['created_by'] = 1;
 
-        // Limpa o campo CNPJ
-        if(isset($data['cnpj']) && $data['cnpj']){
-            $data['cnpj'] = onlyNumbers($data['cnpj']);
-        }
+        // Cria mensagens de erro para email, CNPJ ou CPF
+        $verifications = [
+            'email' => 'Já existe uma conta com esse email',
+            'cnpj'  => 'Já existe uma conta com esse CNPJ',
+            'cpf'   => 'Já existe uma conta com esse CPF',
+        ];
 
-        // Limpa o campo CPF
-        if(isset($data['cpf']) && $data['cpf']){
-            $data['cpf'] = onlyNumbers($data['cpf']);
+        // Limpa CNPJ e CPF
+        if (!empty($data['cnpj'])) $data['cnpj'] = onlyNumbers($data['cnpj']);
+        if (!empty($data['cpf']))  $data['cpf']  = onlyNumbers($data['cpf']);
+
+        // Realiza verificações de duplicidade
+        foreach ($verifications as $field => $message) {
+            if (!empty($data[$field])) {
+                if ($client = Client::where($field, $data[$field])->first()) {
+                    return response()->json([
+                        'message' => $message,
+                        'url'     => $client->domain,
+                    ], 409);
+                }
+            }
         }
 
         // Gera um domínio permitido
@@ -102,6 +115,7 @@ class ApisController extends Controller
             'password'   => $data['password'],
             'short_name' => generateShortName($data['name']),
         ];
+        dd('Chegou');
 
         // Gera subdomínio, banco de dados e usuário no Cpanel miCore.com.br
         return $this->cpanelMiCore->make($data['domain'], $database, $user);        
