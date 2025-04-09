@@ -93,6 +93,9 @@ class ApisController extends Controller
         // Insere prefixo do miCore
         $data['table'] = 'micorecom_' . $data['table'];
 
+        // Gera senha
+        $data['table_password'] = Str::random(12);
+
         // Gera token para API
         $data['token'] = hash('sha256', $data['company'] . microtime(true));
 
@@ -111,7 +114,7 @@ class ApisController extends Controller
         // Gera dado do banco de dados
         $database = [
             'name' => $data['table'],
-            'password' => Str::random(12)
+            'password' => $data['table_password'],
         ];
 
         // Gera usuário
