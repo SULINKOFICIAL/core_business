@@ -93,7 +93,7 @@ class CpanelController extends Controller
             'short_name' => 'teste',
             'name'       => 'teste',
             'email'      => 'teste@gmail.com',
-            'email'      => 'teste',
+            'password'   => 'teste',
         ];
 
         // Envia a solicitação para criar o subdomínio
