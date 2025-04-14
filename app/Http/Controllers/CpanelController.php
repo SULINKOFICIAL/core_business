@@ -147,7 +147,7 @@ class CpanelController extends Controller
         config([
             'database.connections.mysql_cliente' => [
                 'driver'    => 'mysql',
-                'host'      => $this->cpanelHost,
+                'host'      => env('WHM_IP'),
                 'database'  => $datatable['name'],
                 'username'  => $datatable['name'] . '_usr',
                 'password'  => $datatable['password'],
