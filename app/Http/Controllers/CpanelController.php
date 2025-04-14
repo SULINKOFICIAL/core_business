@@ -142,6 +142,7 @@ class CpanelController extends Controller
      */
     private function connectDatabase($datatable)
     {
+        dd(env('WHM_IP'));
      
         // Configura conexão
         config([
