@@ -14,17 +14,13 @@ Route::prefix('micore')->group(function () {
 
 Route::prefix('central')->middleware('auth.bearer')->group(function () {
 
-    /**
-     * API que envia informações para os miCores.
-     */
+    /** API que envia informações para os miCores */
     Route::get('/meu-plano',      [ApisController::class, 'plan']);
     Route::get('/minhas-compras', [ApisController::class, 'orders']);
     Route::get('/compra/{id}',    [ApisController::class, 'order']);
     Route::get('/meu-banco',      [ApisController::class, 'getDatabase']);
 
-    /**
-     * API que recebe dados dos miCores.
-     */
+    /** API que recebe dados dos miCores */
     Route::post('/pagamento', [ApisController::class, 'payment']);
     Route::post('/tickets',   [ApisController::class, 'tickets']);
     Route::post('/cartao',    [ApisController::class, 'newCard']);
