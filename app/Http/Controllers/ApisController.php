@@ -91,7 +91,7 @@ class ApisController extends Controller
         $data['table'] = str_replace('-', '_', $data['domain']);
 
         // Insere prefixo do miCore
-        $data['table'] = 'micorebr_' . $data['table'];
+        $data['table'] = env('CPANEL_PREFIX') . '_' . $data['table'];
 
         // Gera senha
         $data['table_password'] = Str::random(12);

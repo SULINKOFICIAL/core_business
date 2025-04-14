@@ -77,7 +77,7 @@ class ClientController extends Controller
         $data['table'] = str_replace('-', '_', $data['domain']);
 
         // Insere prefixo do miCore
-        $data['table'] = 'micorebr_' . $data['table'];
+        $data['table'] = env('CPANEL_PREFIX') . '_' . $data['table'];
         
         // Gera senha
         $data['password'] = Str::random(12);

@@ -18,14 +18,16 @@ class CpanelController extends Controller
     private $cpanelUrl;
     private $cpanelUser;
     private $cpanelPass;
+    private $cpanelPrefix;
 
     public function __construct()
     {
         // Define as configurações do cPanel
-        $this->cpanelHost = env('CPANEL_HOST');
-        $this->cpanelUrl  = env('CPANEL_URL');
-        $this->cpanelUser = env('CPANEL_USER');
-        $this->cpanelPass = env('CPANEL_PASS');
+        $this->cpanelHost   = env('CPANEL_HOST');
+        $this->cpanelUrl    = env('CPANEL_URL');
+        $this->cpanelUser   = env('CPANEL_USER');
+        $this->cpanelPass   = env('CPANEL_PASS');
+        $this->cpanelPrefix = env('CPANEL_PREFIX');
     }
 
     /**
@@ -191,7 +193,7 @@ class CpanelController extends Controller
     private function makeSubdomain($domain)
     {
 
-        $documentRoot = "/home/micorebr/core";
+        $documentRoot = "/home/" . $this->cpanelPrefix . "/core";
 
         // Envia a solicitação para criar o subdomínio
         $response = $this->guzzle('GET', "{$this->cpanelUrl}/execute/SubDomain/addsubdomain", $this->cpanelUser, $this->cpanelPass, [
@@ -233,7 +235,7 @@ class CpanelController extends Controller
     }
 
     /**
-     * Clona um banco de dados existente (micorebr_template) para um novo banco.
+     * Clona um banco de dados existente (micorecom_template) para um novo banco.
      *
      * @param string $novoBanco Nome do novo banco de dados
      * @return void
@@ -242,7 +244,7 @@ class CpanelController extends Controller
     private function cloneDatabase($database)
     {
         // Banco modelo
-        $templateBanco = 'micorebr_template';
+        $templateBanco = $this->cpanelPrefix . '_template';
 
         // Criar o novo banco de dados
         $this->guzzle('GET', "{$this->cpanelUrl}/execute/Mysql/create_database", $this->cpanelUser, $this->cpanelPass, [
@@ -353,7 +355,7 @@ class CpanelController extends Controller
     private function cloneRepository($domain)
     {
         $repoUrl = 'https://github.com/SULINKOFICIAL/coresulink.git';
-        $path = "/home/micorebr/{$domain}";
+        $path = "/home/" . $this->cpanelPrefix . "/{$domain}";
 
         $ssh = new SSH2(env('WHM_IP'));
         if (!$ssh->login($this->cpanelUser, $this->cpanelPass)) {
@@ -372,7 +374,7 @@ class CpanelController extends Controller
      */
     private function createTestFileCpanel()
     {
-        $path = "/home/micorebr";
+        $path = "/home/" . $this->cpanelPrefix;
         $content = "Arquivo de teste criado via API em " . date('Y-m-d H:i:s');
 
         return $this->guzzle('POST', "{$this->cpanelUrl}/execute/Fileman/save_file_content", $this->cpanelUser, $this->cpanelPass, [
