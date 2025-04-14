@@ -88,14 +88,21 @@ class CpanelController extends Controller
             'password' => $client->table_password,
         ];
 
+        // Usuário
+        $user = [
+            'short_name' => 'teste',
+            'name'       => 'teste',
+            'email'      => 'teste@gmail.com',
+            'email'      => 'teste',
+        ];
+
         // Envia a solicitação para criar o subdomínio
-        $response = $this->cloneDatabase($database, $client->name);
+        $response = $this->addTokenAndUser($database, $user);
 
         // Retorna a resposta da API
         return $response;
 
     }
-
 
     /**
      * Adiciona token e usuário no banco de dados do cliente.
