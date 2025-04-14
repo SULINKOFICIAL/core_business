@@ -164,7 +164,7 @@ class CpanelController extends Controller
         // Força desconexão anterior
         DB::disconnect('mysql_cliente');
 
-         // Reconecta ao novo banco
+        // Reconecta ao novo banco
         DB::reconnect('mysql_cliente');
     
         return true;
