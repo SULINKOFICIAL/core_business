@@ -72,7 +72,7 @@ class ApisController extends Controller
         // Limpa WhatsApp
         $data['whatsapp'] = onlyNumbers($data['whatsapp']);
 
-       /* // Realiza verificações de duplicidade
+        // Realiza verificações de duplicidade
         foreach ($verifications as $field => $message) {
             if (!empty($data[$field])) {
                 if ($client = Client::where($field, $data[$field])->first()) {
@@ -82,7 +82,7 @@ class ApisController extends Controller
                     ], 409);
                 }
             }
-        } */
+        }
 
         // Gera um domínio permitido
         $data['domain'] = verifyIfAllow($data['company']);
@@ -149,8 +149,8 @@ class ApisController extends Controller
 
         return response()->json([
             'database_name' => $client->table,
-            'db_user' => $client->table . '_usr',
-            'db_password' => $client->table_password,
+            'db_user'       => $client->table . '_usr',
+            'db_password'   => $client->table_password,
         ]);
 
     }
