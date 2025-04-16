@@ -63,7 +63,7 @@ class CpanelController extends Controller
 
         // Retorna a página
         return response()->json([
-            'url' => "https://" . $domain,
+            'url' => $domain,
             'message' => 'Conta criada com sucesso',
         ]);
     }
