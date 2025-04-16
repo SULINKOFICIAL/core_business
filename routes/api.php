@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
  * API para comunicação com o WebSite micore.com.br
  */
 Route::prefix('micore')->group(function () {
+    Route::get('/acessar/{url}', [ApisController::class, 'access']);
     Route::post('/cadastrar-se', [ApisController::class, 'newClient']);
 });
 

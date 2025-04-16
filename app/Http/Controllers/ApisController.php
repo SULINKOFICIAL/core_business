@@ -466,4 +466,24 @@ class ApisController extends Controller
 
     }
 
+
+
+    /**
+     * Função responsável por redireciona o cliente para o
+     * sistema correto, assim ele não cai no problema de htaccess.
+     */
+    public function access(Request $request){
+        
+        // Obtém url
+        $url = $request->query('url');
+
+        // Validação simples (opcional)
+        if (!filter_var('https://' . $url, FILTER_VALIDATE_URL)) {
+            abort(404);
+        }
+
+        return redirect()->away('https://' . $url);
+
+    }
+
 }
