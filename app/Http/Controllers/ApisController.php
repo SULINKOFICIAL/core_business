@@ -406,6 +406,7 @@ class ApisController extends Controller
             // Salvamos o cartão do cliente
             $card = ClientCard::create([
                 'client_id'        => $client->id,
+                'main'             => true,
                 'name'             => $data['card_name'],
                 'number'           => $data['card_number'],
                 'expiration_month' => $data['expiration_month'],
