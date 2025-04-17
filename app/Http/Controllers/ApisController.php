@@ -18,9 +18,6 @@ use Illuminate\Support\Str;
 class ApisController extends Controller
 {
 
-    // Gerencia Serviço eRede
-    protected $eRedeService;
-    
     /**
      * Controlador responsável por gerenciar as APIs do sistema.
      *
@@ -32,6 +29,7 @@ class ApisController extends Controller
     protected $request;
     private $repository;
     private $cpanelMiCore;
+    protected $eRedeService;
 
     public function __construct(Request $request, Client $content, ERedeService $eRedeService)
     {
@@ -714,6 +712,7 @@ class ApisController extends Controller
                 'status' => 'Falha',
                 'message' => 'Ocorreu um problema ao realizar a compra: ' . $redeErrors[$responseRede['returnCode']],
             ]);
+            
         }
 
     }

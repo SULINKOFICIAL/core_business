@@ -42,6 +42,14 @@
                                         </a>
                                     </div>
                                     <div class="menu-item">
+                                        <a href="{{ route('subscriptions.charge') }}" class="menu-link">
+                                            <span class="menu-icon">
+                                                <i class="ki-duotone ki-chart-simple-2 fs-3"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span></i>
+                                            </span>
+                                            <span class="menu-title">Cobrar</span>
+                                        </a>
+                                    </div>
+                                    <div class="menu-item">
                                         <a href="{{ route('subscriptions.expired') }}" class="menu-link">
                                             <span class="menu-icon">
                                                 <i class="ki-duotone ki-chart-simple-2 fs-3"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span></i>

@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\ClientSubscription;
 use App\Models\Package;
+use Carbon\Carbon;
 
 class OrderService
 {
@@ -116,48 +117,75 @@ class OrderService
     public function confirmPaymentOrder($order)
     {
 
-        if ($order->status === 'Pago') {
-            return 'Esse Pagamento já foi aprovado.';
-        }
+        // Verifica se o pagamento já foi processado
+        if ($order->status === 'Pago') return 'Esse Pagamento já foi aprovado.';
 
+        // Busca o cliente
         $client = $order->client;
-        $newPackage = Package::find($order->key_id);
 
-        if (!$newPackage) return 'Pacote não encontrado.';
+        // Busca o pacote a ser renovado
+        $package = Package::find($order->key_id);
 
-        // Cancela assinatura atual
+        // Obtém a última assinatura
         $currentSubscription = $client->lastSubscription();
-        if ($currentSubscription) {
+
+        /**
+         * Caso não seja uma renovação, indica que o usuário esta 
+         * trocando o pacote dele ou esta sendo atribuido um novo.
+         */
+        if($order->type != 'Renovação'){
+
+            // Cancela assinatura atual
+            if ($currentSubscription) {
+                $currentSubscription->update([
+                    'status'   => 'Cancelado',
+                    'end_date' => now(),
+                ]);
+            }
+
+            // Remove módulos antigos
+            ClientModule::where('client_id', $client->id)->delete();
+
+            // Adiciona novos módulos
+            foreach ($package->modules as $module) {
+                ClientModule::create([
+                    'client_id'  => $client->id,
+                    'module_id'  => $module->id,
+                ]);
+            }
+
+            // Define a data de inicio da nova assinatura para hoje
+            $startDate = now();
+
+        } else {
+
+            // Muda o status da assinatura atual para renovada
             $currentSubscription->update([
-                'status'   => 'Cancelado',
+                'status'   => 'Renovada',
                 'end_date' => now(),
             ]);
-        }
 
-        // Remove módulos antigos
-        ClientModule::where('client_id', $client->id)->delete();
+            // Extende a data da assinatura a partir da última
+            $startDate = $currentSubscription->end_date;
 
-        // Adiciona novos módulos
-        foreach ($newPackage->modules as $module) {
-            ClientModule::create([
-                'client_id'  => $client->id,
-                'module_id'  => $module->id,
-            ]);
+            // Verifique se a data final já passou
+            if ($startDate->isPast()) $startDate = now();
+            
         }
 
         // Criar nova assinatura
         ClientSubscription::create([
             'client_id'  => $client->id,
-            'package_id' => $newPackage->id,
+            'package_id' => $package->id,
             'order_id'   => $order->id,
-            'start_date' => now(),
-            'end_date'   => now()->addDays($newPackage->duration_days),
+            'start_date' => $startDate,
+            'end_date'   => $startDate->addDays($package->duration_days),
             'status'     => 'Ativo',
         ]);
 
         // Atualizar cliente com novo pacote
         $client->update([
-            'package_id' => $newPackage->id,
+            'package_id' => $package->id,
         ]);
 
         // Atualiza o pedido
@@ -165,7 +193,8 @@ class OrderService
         $order->paid_at = now();
         $order->save();
 
-        return 'Pacote "' . $newPackage->name . '" ativado com sucesso.';
+        return 'Pacote "' . $package->name . '" ativado com sucesso.';
+        
     }
 
 }
