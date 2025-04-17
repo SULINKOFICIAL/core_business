@@ -32,8 +32,8 @@ class GenerateRenewalOrders implements ShouldQueue
 
         // Verifica todas as assinaturas próximas de vencer
         $subscriptions = ClientSubscription::where('status', 'Ativo')
-                                ->where('end_date', '<=', Carbon::now()->addDays(5))
-                                ->get();
+                                            ->whereDate('end_date', Carbon::now()->addDays(5)->toDateString())
+                                            ->get();
 
         foreach ($subscriptions as $subscription) {
             $client = $subscription->client;
