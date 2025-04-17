@@ -17,7 +17,11 @@ class GenerateRenewalOrders implements ShouldQueue
     use Queueable, InteractsWithQueue, SerializesModels;
 
     /**
-     * Execute the job.
+     * Agenda a geração automática de faturas para clientes 
+     * cujos sistemas expiram em até 5 dias.
+     * 
+     * Este job é executado diariamente às 04:00 da manhã 
+     * e garante que não ocorra sobreposição de execuções.
      */
     public function handle(): void
     {
