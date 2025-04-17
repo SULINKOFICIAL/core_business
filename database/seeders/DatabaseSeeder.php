@@ -37,12 +37,6 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('@Ca11924180'),
         ]);
 
-        // Seeder para clientes
-        $this->call(ClientSeeder::class);
-
-        // Seeder para cartões de clientes
-        $this->call(ClientCardSeeder::class);
-
         // Seeder para recursos
         $this->call(ResourceSeeder::class);
 
@@ -54,6 +48,12 @@ class DatabaseSeeder extends Seeder
 
         // Seeder para pacotes
         $this->call(PackageSeeder::class);
+
+        // Seeder para clientes
+        $this->call(ClientSeeder::class);
+
+        // Seeder para cartões de clientes
+        $this->call(ClientCardSeeder::class);
 
     }
 }

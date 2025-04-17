@@ -43,7 +43,11 @@
                     </td>
                     <td class="text-center">
                         @if ($order->status == 'Pago')
-                            {{ $order->paidBy() }}
+                            @if ($order->paidBy())
+                                <span class="fw-bolder text-success">
+                                    {{ $order->paidBy()->gateway->name }}
+                                </span>
+                            @endif
                         @else
                         <span class="badge badge-light text-muted">Não Pago</span>
                         @endif

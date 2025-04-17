@@ -9,6 +9,7 @@ class ClientCard extends Model
     protected $table = 'clients_cards';
     protected $fillable = [
         'client_id',
+        'main',
         'name',
         'number',
         'expiration_month',

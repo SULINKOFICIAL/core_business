@@ -43,10 +43,11 @@ class SubscriptionsController extends Controller
 
         // Obtém a assinatura do cliente relacionada ao pedido
         $subscription = ClientSubscription::where('client_id', $order->client_id)
-                                        ->where('package_id', $order->key_id)
-                                        ->orderBy('end_date', 'desc')
-                                        ->first();
+                                            ->where('package_id', $order->key_id)
+                                            ->orderBy('end_date', 'desc')
+                                            ->first();
 
+        // Caso não encontre a assinatura do usuário
         if (!$subscription) {
             return redirect()
                 ->route('clients.show', $order->client_id)

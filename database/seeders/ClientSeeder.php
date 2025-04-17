@@ -2,8 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Http\Controllers\PackageController;
 use App\Models\Client;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Http\Request;
 use Illuminate\Database\Seeder;
 
 class ClientSeeder extends Seeder
@@ -22,6 +23,22 @@ class ClientSeeder extends Seeder
         ]); */
 
         Client::create([
+            'name' => 'localhost',
+            'email' => 'stanley@gmail.com',
+            'domain' => '127.0.0.1:8000',
+            'token' => '111',
+            'created_by' => 1,
+        ]);
+
+
+        // Simula solicitação de troca de pacote
+        $request = new Request(['package_id' => 1]);
+
+        // Adiciona pacote básico ao cliente
+        app(PackageController::class)->assign($request, 1);
+
+        /* 
+        Client::create([
             'name' => 'Coca Cola',
             'email' => 'coca@cocacola.com.br',
             'domain' => '127.0.0.1:8001',
@@ -35,14 +52,6 @@ class ClientSeeder extends Seeder
             'domain' => '127.0.0.1:8002',
             'token' => '222',
             'created_by' => 1,
-        ]);
-
-        Client::create([
-            'name' => 'Stanley',
-            'email' => 'stanley@gmail.com',
-            'domain' => '127.0.0.1:8003',
-            'token' => '333',
-            'created_by' => 1,
-        ]);
+        ]); */
     }
 }

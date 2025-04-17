@@ -65,7 +65,6 @@ class OrderService
         // Criar intenção de compra
         $order = Order::create([
             'client_id'       => $client->id,
-            'order_date'      => now(),
             'type'            => $type,
             'key_id'          => $newPackage->id,
             'previous_key_id' => $oldPackage,
