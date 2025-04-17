@@ -6,12 +6,15 @@ use App\Jobs\GenerateRenewalOrders;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Log;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote')->hourly();
-
+/**
+ * Agenda a geração automática de faturas para clientes 
+ * cujos sistemas expiram em até 5 dias.
+ * 
+ * Este job é executado diariamente às 04:00 da manhã 
+ * e garante que não ocorra sobreposição de execuções.
+ */
 Schedule::job(new GenerateRenewalOrders)
-    ->hourly()
+    ->dailyAt('04:00')
     ->withoutOverlapping()
     ->before(function () {
         Log::info('[' . now()->toDateTimeString() . '] Vai rodar o Job de Renovação...');

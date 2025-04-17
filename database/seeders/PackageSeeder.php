@@ -28,7 +28,7 @@ class PackageSeeder extends Seeder
             'name'          => 'Começando',
             'size_storage'  => 1073741824 * 5,
             'value'         => 1,
-            'duration_days' => 30,
+            'duration_days' => 5, // 5 dias para testar renovação
             'order'         => 1,
             'created_by'    => 1,
         ]);

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\GenerateRenewalOrders;
 use App\Models\ClientSubscription;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -123,52 +124,9 @@ class SubscriptionsController extends Controller
     public function generate()
     {
 
-        // Verifica todas as assinaturas próximas de vencer
-        $subscriptions = ClientSubscription::where('status', 'Ativo')
-                                            ->whereDate('end_date', Carbon::now()->addDays(5)->toDateString())
-                                            ->get();
-                                
-        // Para cada assinatura
-        foreach ($subscriptions as $subscription) {
+        (new GenerateRenewalOrders())->handle();
 
-            // Cria um novo pedido para o cliente
-            $client = $subscription->client;
-            $package = $client->package;
-
-            // Verifica se o cliente já tem um pedido de renovação neste mês
-            $orderExists = Order::where('client_id', $client->id)
-                                ->where('type', 'Renovação')
-                                ->whereMonth('created_at', Carbon::now()->month)
-                                ->whereYear('created_at', Carbon::now()->year)
-                                ->exists();
-            
-            // Se a solicitação de renovação ainda não foi gerada
-            if (!$orderExists) {
-
-                // Cria um novo pedido de renovação se não existir um no mês atual
-                $order = Order::create([
-                    'client_id'  => $client->id,
-                    'key_id'     => $package->id,
-                    'status'     => 'Pendente',
-                    'type'       => 'Renovação',
-                ]);
-            
-                // Verifica se o cliente já possui um pedido para renovação ou upgrade
-                OrderItem::create([
-                    'order_id'   => $order->id,
-                    'amount'     => $package->value,
-                    'order_id'   => $order->id,
-                    'type'       => 'Pacote',
-                    'action'     => 'Renovação',
-                    'quantity'   => 1,
-                    'item_value' => $package->value,
-                ]);
-
-            }
-
-        }
-
-        return redirect()->back()->with(['message' => 'Assinaturas Geradas']);
+        return response()->json(['message' => 'Job de renovação executado diretamente.']);
 
     }
 

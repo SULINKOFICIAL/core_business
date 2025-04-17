@@ -33,8 +33,8 @@ class ClientSeeder extends Seeder
 
         // Simula solicitação de troca de pacote
         $request = new Request(['package_id' => 1]);
-
-        // Adiciona pacote básico ao cliente
+        app(PackageController::class)->assign($request, 1);
+        $request = new Request(['package_id' => 2]);
         app(PackageController::class)->assign($request, 1);
 
         /* 

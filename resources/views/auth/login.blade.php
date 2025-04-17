@@ -24,7 +24,7 @@
 										<div class="text-gray-600 fs-base text-center fw-semibold mb-7">
 											Este sistema foi projetado para otimizar e centralizar as operações empresariais, facilitando a gestãoe promovendo maior eficiência.
 										</div>
-										<input type="text" placeholder="Email" name="email" class="form-control bg-transparent mb-8" required/>
+										<input type="text" placeholder="Email" name="email" class="form-control bg-transparent mb-2" required/>
 										<input type="password" placeholder="Password" name="password" class="form-control bg-transparent mb-3" required />
 										<div class="d-flex justify-content-end">
 											<button type="submit" class="btn text-uppercase btn-success btn-active-danger fw-bolder w-100">
