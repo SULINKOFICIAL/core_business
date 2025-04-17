@@ -68,8 +68,17 @@ class SubscriptionsController extends Controller
             'status'     => 'Ativo',
         ]);
 
+        // Da 100% de desconto já que foi liberação manual
+        OrderItem::create([
+            'order_id'   => $order->id,
+            'type'       => 'Desconto',
+            'action'     => 'Desconto por liberação manual',
+            'item_value' => -$order->total(),
+        ]);
+
         // Atualiza o status do pedido para concluído
         $order->update([
+            'description' => 'Liberação manual.',
             'description' => 'Liberação manual.',
             'status' => 'Pago',
         ]);
@@ -158,16 +167,8 @@ class SubscriptionsController extends Controller
             }
 
         }
-       
-        // PRECISA FAZER O PROCEDIMENTO PARA REPOIS QUE PAGA, GERAR A NOVA ASSINATURA COM DIAS ADICIONAIS
-        // PRECISA FAZER O PROCEDIMENTO PARA REPOIS QUE PAGA, GERAR A NOVA ASSINATURA COM DIAS ADICIONAIS
-        // PRECISA FAZER O PROCEDIMENTO PARA REPOIS QUE PAGA, GERAR A NOVA ASSINATURA COM DIAS ADICIONAIS
 
-        // VERIFICAR SE CONSIGO APROVEITAR O MESMO PAYMENT DA API PARA COMPRA DE NOVOS PACOTES
-        // VERIFICAR SE CONSIGO APROVEITAR O MESMO PAYMENT DA API PARA COMPRA DE NOVOS PACOTES
-        // VERIFICAR SE CONSIGO APROVEITAR O MESMO PAYMENT DA API PARA COMPRA DE NOVOS PACOTES
-
-        return 'Assinaturas Geradas.';
+        return redirect()->back()->with(['message' => 'Assinaturas Geradas']);
 
     }
 

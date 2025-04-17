@@ -1,6 +1,7 @@
 <?php
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -68,11 +69,27 @@ class Client extends Model
     // Retorna em quantos dias deve ser feita a próxima renovação
     public function renovation()
     {
+        // Obtém assinatura do cliente
         $latestSubscription = $this->subscriptions()->latest('end_date')->first();
+
+        // Caso não encontre
         if (!$latestSubscription || !$latestSubscription->end_date) {
             return null; // Sem assinatura ativa
         }
-        return ceil(now()->diffInDays($latestSubscription->end_date));
+
+        // Obtém últilo dia
+        $endDate = $latestSubscription->end_date;
+
+        // Obtém data de expiração
+        if($endDate->isToday()){
+            return 'Hoje';
+        } elseif ($endDate->isTomorrow()) {
+            return 'Amanhã';
+        } else {
+            $now = Carbon::now();
+            return floor($now->diffInDays($endDate));
+        }
+
     }
 
     // Retorna em quantos dias deve ser feita a próxima renovação
