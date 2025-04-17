@@ -11,7 +11,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote')->hourly();
 
 Schedule::job(new GenerateRenewalOrders)
-    ->hourly()
+    ->everyMinute()
     ->withoutOverlapping()
     ->before(function () {
         Log::info('[' . now()->toDateTimeString() . '] Vai rodar o Job de Renovação...');
