@@ -129,6 +129,30 @@ class ApisController extends Controller
     }
 
     /**
+     * Função responsável por obter o cliente no banco de dados
+     * e pegar o dominio do cliente para acessar via micore.com.br
+     */
+    public function findClient(Request $request)
+    {
+        // Obtém dados
+        $data = $request->all();
+
+        // Obtém dados do cliente
+        $client = isset($data['email']) ? Client::where('email', $data['email'])->first()
+                : (isset($data['cnpj']) ? Client::where('cnpj', $data['cnpj'])->first()
+                : (isset($data['cpf']) ? Client::where('cpf', $data['cpf'])->first()
+                : null));
+
+        // Verifica se o cliente foi encontrado
+        if ($client) {
+            return response()->json(['domain' => $client->domain]);
+        } else {
+            return response()->json(['message' => 'Não foi possível encontrar um cliente relacionado.'], 404);
+        }
+    }
+
+
+    /**
      * Função responsável por obter a database do sistema que esta acessando
      * o sistema, fazemos isso filtrando o domínio que fez a requisição.
      */
