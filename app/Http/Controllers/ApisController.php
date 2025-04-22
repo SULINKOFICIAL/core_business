@@ -137,8 +137,6 @@ class ApisController extends Controller
         // Obtém dados
         $data = $request->all();
 
-        dd($data);
-
         // Obtém dados do cliente
         $client = isset($data['email']) ? Client::where('email', $data['email'])->first()
                 : (isset($data['cnpj']) ? Client::where('cnpj', $data['cnpj'])->first()
