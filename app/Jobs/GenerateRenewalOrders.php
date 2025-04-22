@@ -33,35 +33,38 @@ class GenerateRenewalOrders implements ShouldQueue
 
         foreach ($subscriptions as $subscription) {
             $client = $subscription->client;
-            $package = $client->package;
-
-            // Verifica se já não foi gerado o pedido de renovação desse mes
-            $orderExists = Order::where('client_id', $client->id)
-                                ->where('type', 'Renovação')
-                                ->whereMonth('created_at', Carbon::now()->month)
-                                ->whereYear('created_at', Carbon::now()->year)
-                                ->exists();
-
-            // Caso ainda não exista
-            if (!$orderExists) {
-
-                // Cria pedido
-                $order = Order::create([
-                    'client_id'  => $client->id,
-                    'key_id'     => $package->id,
-                    'status'     => 'Pendente',
-                    'type'       => 'Renovação',
-                ]);
-
-                // Cria item que representa renovação
-                OrderItem::create([
-                    'order_id'   => $order->id,
-                    'amount'     => $package->value,
-                    'type'       => 'Pacote',
-                    'action'     => 'Renovação',
-                    'quantity'   => 1,
-                    'item_value' => $package->value,
-                ]);
+            if(isset($client->package)){
+                
+                $package = $client->package;
+    
+                // Verifica se já não foi gerado o pedido de renovação desse mes
+                $orderExists = Order::where('client_id', $client->id)
+                                    ->where('type', 'Renovação')
+                                    ->whereMonth('created_at', Carbon::now()->month)
+                                    ->whereYear('created_at', Carbon::now()->year)
+                                    ->exists();
+    
+                // Caso ainda não exista
+                if (!$orderExists) {
+    
+                    // Cria pedido
+                    $order = Order::create([
+                        'client_id'  => $client->id,
+                        'key_id'     => $package->id,
+                        'status'     => 'Pendente',
+                        'type'       => 'Renovação',
+                    ]);
+    
+                    // Cria item que representa renovação
+                    OrderItem::create([
+                        'order_id'   => $order->id,
+                        'amount'     => $package->value,
+                        'type'       => 'Pacote',
+                        'action'     => 'Renovação',
+                        'quantity'   => 1,
+                        'item_value' => $package->value,
+                    ]);
+                }
             }
 
         }
