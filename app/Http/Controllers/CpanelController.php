@@ -37,7 +37,7 @@ class CpanelController extends Controller
      * @param string $table Nome da tabela (não utilizada atualmente)
      * @return \Illuminate\Http\JsonResponse
      */
-    public function make($domain, $datatable, $user)
+    public function make($domain, $datatable, $user, $token)
     {
 
         // Registra tempo
@@ -56,7 +56,7 @@ class CpanelController extends Controller
         Log::info("Inserindo usuário e token no banco : " . $datatable['name']);
 
         // // 3. Adiciona registros únicos no cliente
-        $this->addTokenAndUser($datatable, $user);
+        $this->addTokenAndUser($datatable, $user, $token);
 
         // Registra tempo
         Log::info("Finalizou a inserção dos usuário e token no banco : " . $datatable['name']);
@@ -97,7 +97,7 @@ class CpanelController extends Controller
         ];
 
         // Envia a solicitação para criar o subdomínio
-        $response = $this->addTokenAndUser($database, $user);
+        $response = $this->addTokenAndUser($database, $user, $client->token);
 
         // Retorna a resposta da API
         return $response;
@@ -107,14 +107,13 @@ class CpanelController extends Controller
     /**
      * Adiciona token e usuário no banco de dados do cliente.
      */
-    private function addTokenAndUser($datatable, $user)
+    private function addTokenAndUser($datatable, $user, $token)
     {
         // Conectar ao banco recém-criado
         $this->connectDatabase($datatable);
 
         // Gerar senha hashada e token de API
         $userPassword = Hash::make($user['password']);
-        $apiToken = Str::random(60);
 
         // Inserir usuário padrão
         DB::connection('mysql_cliente')->table('users')->insert([
@@ -130,7 +129,7 @@ class CpanelController extends Controller
         DB::connection('mysql_cliente')->table('configs_api')->insert([
             'plataform'    => 'micore',
             'option_name'  => 'api_token',
-            'option_value' => $apiToken,
+            'option_value' => $token,
             'updated_by'   => 1,
         ]);
 

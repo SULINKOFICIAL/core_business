@@ -124,7 +124,7 @@ class ApisController extends Controller
         ];
 
         // Gera subdomínio, banco de dados e usuário no Cpanel miCore.com.br
-        return $this->cpanelMiCore->make($data['domain'], $database, $user);        
+        return $this->cpanelMiCore->make($data['domain'], $database, $user, $client->token);        
 
     }
 
