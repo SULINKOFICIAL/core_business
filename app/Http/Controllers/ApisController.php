@@ -221,10 +221,16 @@ class ApisController extends Controller
 
         // Se o cliente tiver plano
         if($package){
+
+            // Obtém pedido de renovação do cliente
+            $existsRenovation = $client->orders()->where('type', 'Renovação')->where('status', 'pendente')->exists();
+
             return response()->json([
-                'package' => $package,
-                'renovation' => $client->renovation(),
+                'package'     => $package,
+                'renovation'  => $client->renovation(),
+                'existsOrder' => $existsRenovation, 
             ], 200);
+            
         } else {
             return response()->json([
                 'package' => 'Sem Plano',

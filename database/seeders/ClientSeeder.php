@@ -30,7 +30,7 @@ class ClientSeeder extends Seeder
         app(PackageController::class)->assign($request, 1);
         
         // Adiciona o pacote "Começando" com 5 dias para testar a emissão de renovações.
-        if(false){
+        if(true){
             $request = new Request(['package_id' => 2]);
             app(PackageController::class)->assign($request, 1);
         }
