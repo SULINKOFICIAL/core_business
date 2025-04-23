@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\Package;
 use Exception;
 use Illuminate\Support\Str;
 use GuzzleHttp\Client as Guzzle;
@@ -37,7 +38,7 @@ class CpanelController extends Controller
      * @param string $table Nome da tabela (não utilizada atualmente)
      * @return \Illuminate\Http\JsonResponse
      */
-    public function make($domain, $datatable, $user, $token)
+    public function make($domain, $datatable, $user, $client)
     {
 
         // Registra tempo
@@ -56,7 +57,7 @@ class CpanelController extends Controller
         Log::info("Inserindo usuário e token no banco : " . $datatable['name']);
 
         // // 3. Adiciona registros únicos no cliente
-        $this->addTokenAndUser($datatable, $user, $token);
+        $this->addTokenAndUser($datatable, $user, $client);
 
         // Registra tempo
         Log::info("Finalizou a inserção dos usuário e token no banco : " . $datatable['name']);
@@ -107,7 +108,7 @@ class CpanelController extends Controller
     /**
      * Adiciona token e usuário no banco de dados do cliente.
      */
-    private function addTokenAndUser($datatable, $user, $token)
+    private function addTokenAndUser($datatable, $user, $client)
     {
         // Conectar ao banco recém-criado
         $this->connectDatabase($datatable);
@@ -125,12 +126,19 @@ class CpanelController extends Controller
             'created_by' => 1,
         ]);
 
-        // Inserir o token na tabela `configs_api`
-        DB::connection('mysql_cliente')->table('configs_api')->insert([
-            'plataform'    => 'micore',
-            'option_name'  => 'api_token',
-            'option_value' => $token,
-            'updated_by'   => 1,
+        // Inserir o token da conta do usuário
+        DB::connection('mysql_cliente')->table('central_configs')->insert([
+            'key'   => 'token',
+            'value' => $client->token,
+        ]);
+
+        // Obtém o tamanho do pacote inicial
+        $sizeStorage = (int) Package::find(1)->size_storage;
+
+        // Inserir a quantia inicial de armazenamento
+        DB::connection('mysql_cliente')->table('central_configs')->insert([
+            'key'   => 's3StorageAllow',
+            'value' => $sizeStorage,
         ]);
 
         return true;
