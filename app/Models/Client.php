@@ -89,7 +89,7 @@ class Client extends Model
             return 'Amanhã';
         } else {
             $now = Carbon::now();
-            return floor($now->diffInDays($endDate));
+            return round($now->diffInDays($endDate));
         }
 
     }

@@ -19,7 +19,7 @@ class PackageSeeder extends Seeder
             'size_storage'  => 1073741824 * 1,
             'free'          => true,
             'value'         => 0,
-            'duration_days' => 30,
+            'duration_days' => 5,
             'order'         => 1,
             'created_by'    => 1,
         ]);
