@@ -196,7 +196,7 @@ class ClientsActionsController extends Controller
         
         try {
             // Realiza a solicitação
-            $response = $guzzle->$method("http://$client->domain/api/$url", $options);
+            $response = $guzzle->$method("https://$client->domain/api/$url", $options);
     
             // Obtém o corpo da resposta
             $response = $response->getBody()->getContents();
