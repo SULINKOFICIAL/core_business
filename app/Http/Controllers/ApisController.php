@@ -6,9 +6,11 @@ use Illuminate\Http\Request;
 use App\Models\Client;
 use App\Models\ClientCard;
 use App\Models\ErrorMiCore;
+use App\Models\Module;
 use App\Models\Order;
 use App\Models\OrderTransaction;
 use App\Models\Package;
+use App\Models\PackageModule;
 use App\Models\Ticket;
 use App\Services\ERedeService;
 use App\Services\OrderService;
@@ -381,6 +383,67 @@ class ApisController extends Controller
         // Se o cliente tiver plano
         return response()->json($cardsJson, 200);
 
+    }
+
+    public function packages(Request $request)
+    {
+        // Recebe dados
+        $data = $request->all();
+
+        // Obtém dados do cliente
+        $client = Client::where('token', $data['token_micore'])->first();
+
+        // Caso não encontre a conta do cliente
+        if(!$client) return response()->json('Conta não encontrada', 404);
+        
+        // Obtém Pacotes do micore junto com os modulos
+        $packages = Package::with('modules')->orderBy('order', 'ASC')->where('show_website', true)->where('status', true)->get();
+
+        $modules = Module::where('status', true)->get();
+
+        // Inicia Json
+        $packageJson = [];
+
+        // Formata dados Json
+        foreach ($packages as $package) {
+
+            // Modulos do pacote
+            $packageModules = $package->modules()->pluck('module_id')->toArray();
+
+            // Date formated
+            $packageData['id']                 = $package->id;
+            $packageData['name']               = $package->name;
+            $packageData['description']        = $package->description;
+            $packageData['free']               = $package->free;
+            $packageData['value']              = $package->value;
+            $packageData['size_storage']       = $package->size_storage;
+            $packageData['duration_days']      = $package->duration_days;
+            $packageData['modules']            = [];
+
+            foreach ($modules as $module) {
+
+                // Formata dados
+                $moduleFormated['name'] = $module->name; 
+                $moduleFormated['description'] = $module->description; 
+                $moduleFormated['in_package'] = in_array($module->id, $packageModules) ? true : false; 
+
+                // Adiciona modulo ao pacote
+                $packageData['modules'][] = $moduleFormated;
+
+            }
+
+            // Obtém dados
+            $packageJson[] = $packageData;
+        }
+
+        // Retorna formatado em json
+        return response()->json([
+            'packages' => $packageJson,
+            'actual'   => [
+                'id'         => $client->package->id,
+                'name'       => $client->package->name,
+                ]
+        ], 200);
     }
 
     /**

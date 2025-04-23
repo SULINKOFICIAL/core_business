@@ -21,6 +21,7 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
     Route::get('/compra/{id}',    [ApisController::class, 'order']);
     Route::get('/cartoes',        [ApisController::class, 'cards']);
     Route::get('/meu-banco',      [ApisController::class, 'getDatabase']);
+    Route::get('/pacotes',        [ApisController::class, 'packages']);
 
     /** API que recebe dados dos miCores */
     Route::post('/pagamento', [ApisController::class, 'payment']);
