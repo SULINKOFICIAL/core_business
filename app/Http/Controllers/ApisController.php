@@ -126,7 +126,7 @@ class ApisController extends Controller
         ];
 
         // Gera subdomínio, banco de dados e usuário no Cpanel miCore.com.br
-        return $this->cpanelMiCore->make($data['domain'], $database, $user, $client->token);        
+        return $this->cpanelMiCore->make($data['domain'], $database, $user, $client);        
 
     }
 
@@ -526,7 +526,7 @@ class ApisController extends Controller
         $order = $orderResponse['order'];
 
         // Verifica se já não foi pago
-        if($order->status == 'Pago'){// Retorna pacote atualizado
+        if($order->status == 'Pago'){
             return response()->json([
                 'status' => 'Falha',
                 'message' => 'Seu pedido já foi pago.',

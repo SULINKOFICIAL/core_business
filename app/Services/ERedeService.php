@@ -43,7 +43,7 @@ class ERedeService
             'expirationYear'         => $card->expiration_year,
             'capture'                => true,
             'kind'                   => 'credit',
-            'reference'              => 'OR' . $transaction->id,
+            'reference'              => 'REFE' . $transaction->id,
             'amount'                 => (int) ($transaction->amount * 100),
             'softDescriptor'         => 'MICORE01',
             'subscription'           => true,

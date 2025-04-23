@@ -16,10 +16,23 @@ class OrderService
 
         // Verifica se não esta atualizando para o mesmo pacote
         if ($client->package_id == $newPackage->id) {
-            return [
-                'status' => 'Falha', 
-                'message' => 'O cliente já esta com esse plano atribuido',
-            ];
+
+            // Obtém pedido de renovação do cliente
+            $orderRenovation = $client->orders()->where('type', 'Renovação')->where('status', 'pendente')->first();
+
+            // Retorna ordem ou falha
+            if($orderRenovation){
+                return [
+                    'status' => 'Pedido de renovação encontrado.', 
+                    'order' => $orderRenovation
+                ];
+            } else {
+                return [
+                    'status' => 'Falha', 
+                    'message' => 'O cliente já esta com esse plano atribuido e não possui renovação pendentes.',
+                ];
+            }
+            
         }
 
         // Se já existir um pedido em andamento referente aquele item/produtos.
@@ -162,16 +175,18 @@ class OrderService
             // Muda o status da assinatura atual para renovada
             $currentSubscription->update([
                 'status'   => 'Renovada',
-                'end_date' => now(),
             ]);
 
             // Extende a data da assinatura a partir da última
             $startDate = $currentSubscription->end_date;
-
-            // Verifique se a data final já passou
-            if ($startDate->isPast()) $startDate = now();
             
         }
+
+        // Verifique se a data final já passou
+        if ($startDate->isPast()) $startDate = now();
+
+        // Separa a data de encerramento
+        $endDate = $startDate->clone();
 
         // Criar nova assinatura
         ClientSubscription::create([
@@ -179,7 +194,7 @@ class OrderService
             'package_id' => $package->id,
             'order_id'   => $order->id,
             'start_date' => $startDate,
-            'end_date'   => $startDate->addDays($package->duration_days),
+            'end_date'   => $endDate->addDays($package->duration_days),
             'status'     => 'Ativo',
         ]);
 
