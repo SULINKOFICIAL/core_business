@@ -16,10 +16,23 @@ class OrderService
 
         // Verifica se não esta atualizando para o mesmo pacote
         if ($client->package_id == $newPackage->id) {
-            return [
-                'status' => 'Falha', 
-                'message' => 'O cliente já esta com esse plano atribuido',
-            ];
+
+            // Obtém pedido de renovação do cliente
+            $orderRenovation = $client->orders()->where('type', 'Renovação')->where('status', 'pendente')->first();
+
+            // Retorna ordem ou falha
+            if($orderRenovation){
+                return [
+                    'status' => 'Pedido de renovação encontrado.', 
+                    'order' => $orderRenovation
+                ];
+            } else {
+                return [
+                    'status' => 'Falha', 
+                    'message' => 'O cliente já esta com esse plano atribuido e não possui renovação pendentes.',
+                ];
+            }
+            
         }
 
         // Se já existir um pedido em andamento referente aquele item/produtos.

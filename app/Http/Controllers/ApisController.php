@@ -463,7 +463,7 @@ class ApisController extends Controller
         $order = $orderResponse['order'];
 
         // Verifica se já não foi pago
-        if($order->status == 'Pago'){// Retorna pacote atualizado
+        if($order->status == 'Pago'){
             return response()->json([
                 'status' => 'Falha',
                 'message' => 'Seu pedido já foi pago.',
