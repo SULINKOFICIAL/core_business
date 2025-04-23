@@ -141,6 +141,6 @@ function generateMasks(){
 }
 
 $(document).ready(function(){
-    loadTables();
+    loadTables('.datatables',25, [[0, 'desc']]);
     generateMasks();
 })

@@ -24,12 +24,12 @@
                     </td>
                     <td>
                         <span class="text-gray-600">
-                            {{ $subscription->start_date->format('d/m/Y') }} às {{ $subscription->start_date->format('H:i:s') }}
+                            {{ $subscription->start_date->format('d/m/Y') }}
                         </span>
                     </td>
                     <td>
                         <span class="text-gray-600">
-                            {{ $subscription->end_date->format('d/m/Y') }} às {{ $subscription->end_date->format('H:i:s') }}
+                            {{ $subscription->end_date->format('d/m/Y') }}
                         </span>
                     </td>
                     <td class="text-center">
