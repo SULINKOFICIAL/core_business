@@ -29,19 +29,34 @@
                             </a>
                         </div>
                     </div>
-                    <p class="text-gray-600 mb-0">
-                        Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially  in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
-                    </p>
                     @if ($client->package)
-                    <p class="fs-6 text-gray-700 fw-bold mb-0">
+                    <p class="fs-6 text-gray-700 fw-bold mb-1">
                         Valor atual do pacote: <span class="text-success fw-bolder">R$ {{ number_format($client->current_value, 2, ',', '.') }}</span>
                     </p>
-                    <p class="fs-6 text-gray-700 fw-bold mb-0">
-                        Próxima renovação em: <span class="text-primary fw-bolder"> {{ $client->renovation() ?? 0 }}</span> dias
-                        <span class="fs-6 text-gray-700 fw-bold mb-0">
-                            armazenamento: <span class="text-primary fw-bolder"> {{ number_format($client->package->size_storage / 1073741824, 2) }}</span> GB
-                        </span>
-                    </p>
+                    <div class="d-flex gap-3">
+                        <div class="alert {{ $client->renovation() <= 5 ? 'alert-danger' : 'alert-success' }} d-flex align-items-center p-2 border-dashed {{ $client->renovation() <= 5 ? 'border-danger' : 'border-success' }} mb-0">
+                            <i class="ki-duotone ki-shield-tick fs-1 {{ $client->renovation() <= 5 ? 'text-danger' : 'text-success' }} me-2">
+                                <span class="path1">
+                                </span><span class="path2">
+                                </span>
+                            </i>
+                            <h6 class="mb-0 {{ $client->renovation() <= 5 ? 'text-danger' : 'text-success' }} fw-normal me-2">
+                                Renovação em: 
+                                <span class="fw-bolder">{{ $client->renovation() ?? 0 }} dias</span></span>
+                            </h4>
+                        </div>
+                        <div class="alert alert-primary d-flex align-items-center p-2 border-dashed border-primary mb-0">
+                            <i class="ki-duotone ki-shield-tick fs-1 text-primary me-2">
+                                <span class="path1">
+                                </span><span class="path2">
+                                </span>
+                            </i>
+                            <h6 class="mb-0 text-primary fw-normal me-2">
+                                Armazenamento:
+                                <span class="fw-bolder">{{ number_format($client->package->size_storage / 1073741824, 2) }} GB</span></span>
+                            </h6>
+                        </div>
+                    </div>
                     @else
                     <p class="fs-6 text-danger fw-bold mb-0 mt-2">
                         Nenhum pacote atribuido

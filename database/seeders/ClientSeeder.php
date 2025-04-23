@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Http\Controllers\PackageController;
+use App\Jobs\GenerateRenewalOrders;
 use App\Models\Client;
 use Illuminate\Http\Request;
 use Illuminate\Database\Seeder;
@@ -14,28 +15,25 @@ class ClientSeeder extends Seeder
      */
     public function run(): void
     {
-       /*  Client::create([
-            'name' => 'Sulink',
-            'domain' => 'sulink.com.br',
-            'token' => '123',
-            'package_id' => 1,
-            'created_by' => 1,
-        ]); */
 
+        // Cria usuário local para testes
         Client::create([
-            'name' => 'localhost',
-            'email' => 'stanley@gmail.com',
-            'domain' => '127.0.0.1:8000',
-            'token' => '111',
+            'name'       => 'localhost',
+            'email'      => 'micore@testes.com',
+            'domain'     => '127.0.0.1:8001',
+            'token'      => '111',
             'created_by' => 1,
         ]);
 
-
-        // Simula solicitação de troca de pacote
+        // Adiciona o pacote inicial ao cliente
         $request = new Request(['package_id' => 1]);
         app(PackageController::class)->assign($request, 1);
-        $request = new Request(['package_id' => 2]);
-        app(PackageController::class)->assign($request, 1);
+        
+        // Adiciona o pacote "Começando" com 5 dias para testar a emissão de renovações.
+        if(false){
+            $request = new Request(['package_id' => 2]);
+            app(PackageController::class)->assign($request, 1);
+        }
 
         /* 
         Client::create([
@@ -53,5 +51,6 @@ class ClientSeeder extends Seeder
             'token' => '222',
             'created_by' => 1,
         ]); */
+
     }
 }
