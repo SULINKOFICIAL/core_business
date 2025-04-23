@@ -133,7 +133,7 @@ class CpanelController extends Controller
             'updated_by'   => 1,
         ]);
 
-        return $apiToken;
+        return true;
     }
 
     /**
