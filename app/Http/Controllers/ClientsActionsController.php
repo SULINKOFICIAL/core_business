@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\Resource;
 use Illuminate\Http\Request;
 use GuzzleHttp\Client as Guzzle;
+use GuzzleHttp\Exception\ConnectException;
 use Illuminate\Support\Facades\Auth;
 
 class ClientsActionsController extends Controller
@@ -40,7 +41,36 @@ class ClientsActionsController extends Controller
 
     }
 
-    // Obtém permissões do usuário
+    // Atualiza todos os bancos de dados via API
+    public function updateAllDatabase()
+    {
+        $clientsId = $this->repository->all();
+        
+        $this->repository->update(['db_last_version' => false]);
+        
+        $errors = 0;
+        $totalClients = count($clientsId);
+
+        // Loop para percorrer todos os clientes
+        foreach ($clientsId as $client) {
+            // Se a atualização retornar false incrementa o contador de erros
+            if ($this->updateDatabase($client->id)) {
+                $errors++;
+            }
+        }
+
+        // Define a mensagem final com base no número de erros
+        $message = $errors > 0
+        ? "$errors de $totalClients cliente(s) apresentaram erro(s) durante a atualização."
+        : 'Bancos de dados atualizados com sucesso';
+
+        // Redireciona com a mensagem final
+        return redirect()
+            ->route('index')
+            ->with('message', $message);
+    }
+
+    // Atualiza o banco de dados do cliente via API
     public function updateDatabase($id){
 
         // Encontra o cliente
@@ -48,10 +78,34 @@ class ClientsActionsController extends Controller
 
         // Realiza solicitação
         $response = $this->guzzle('POST', 'sistema/atualizar-banco', $client);
-        
-        // Se salva o status da atualização
-        $client->db_last_version = $response['status'];
+
+        // Verifica a resposta antes de tentar acessar as chaves
+        if (!$response['success']) {
+            // Registra a mensagem de erro
+            $client->db_last_version = false;
+            $client->db_error = $response['message'] ?? 'Erro desconhecido';
+        } else {
+            // Atualiza db_last_version
+            $client->db_last_version = true;
+            $client->db_error = null;
+        }
+
+        // Atualiza no banco de dados
         $client->save();
+
+        // Retorna a página
+        return $client->db_last_version == false;
+
+    }
+
+    // Atualiza o banco de dados do cliente via API
+    public function updateDatabaseManual($id){
+
+        // Encontra o cliente
+        $client = $this->repository->find($id);
+
+        // Realiza solicitação
+        $this->updateDatabase($client->id);
 
         // Retorna a página
         return redirect()
@@ -131,7 +185,8 @@ class ClientsActionsController extends Controller
         $options = [
             'headers' => [
                 'Authorization' => 'Bearer ' . env('CENTRAL_TOKEN'),
-            ]
+            ],
+            'timeout' => 5
         ];
 
         // Se houver dados, adiciona ao corpo da requisição
@@ -139,17 +194,23 @@ class ClientsActionsController extends Controller
             $options['json'] = $data;
         }
         
-        // Realiza a solicitação
-        $response = $guzzle->$method("https://$client->domain/api/$url", $options);
+        try {
+            // Realiza a solicitação
+            $response = $guzzle->$method("http://$client->domain/api/$url", $options);
+    
+            // Obtém o corpo da resposta
+            $response = $response->getBody()->getContents();
 
-        // Obtém o corpo da resposta
-        $response = $response->getBody()->getContents();
-
-        // Decodifica o JSON
-        $response = json_decode($response, true);
-
-        // Retorna a resposta
-        return $response;
+            return [
+                'success' => true,
+            ];
+    
+        } catch (ConnectException $e) {
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }
     }
 
 }

@@ -30,6 +30,8 @@ class Client extends Model
         'table',
         'table_password',
         'token',
+        'db_last_version',
+        'db_error',
         'status',
         'filed_by',
         'created_by',
