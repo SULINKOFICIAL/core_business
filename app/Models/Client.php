@@ -83,14 +83,8 @@ class Client extends Model
         $endDate = $latestSubscription->end_date;
 
         // Obtém data de expiração
-        if($endDate->isToday()){
-            return 'Hoje';
-        } elseif ($endDate->isTomorrow()) {
-            return 'Amanhã';
-        } else {
-            $now = Carbon::now();
-            return round($now->diffInDays($endDate));
-        }
+        $now = Carbon::now();
+        return round($now->diffInDays($endDate));
 
     }
 
