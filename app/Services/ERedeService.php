@@ -1,10 +1,7 @@
 <?php
 
 namespace App\Services;
-
-use App\Models\Client;
 use GuzzleHttp\Client as Guzzle;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Classe responsável por interagir com a API da eRede para realizar operações
