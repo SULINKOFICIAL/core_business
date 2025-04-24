@@ -1,9 +1,13 @@
 <div class="row">
-    <div class="col-8 mb-4">
+    <div class="col-6 mb-4">
         <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Nome</label>
         <input type="text" class="form-control form-control-solid" placeholder="Nome" name="name" value="{{ $package->name ?? old('name') }}" required>
     </div>
-    <div class="col-2 mb-4">
+    <div class="col-3 mb-4">
+        <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Valor</label>
+        <input type="text" class="form-control form-control-solid input-money" name="value" value="R$ {{ number_format(($package->value ?? 0), 2, ',', '.') }}" required>
+    </div>
+    <div class="col-1 mb-4">
         <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Teste grátis?</label>
         <select name="free" class="form-select form-select-solid" data-control="select2" data-hide-search="true" data-placeholder="Selecione" required>
             <option value=""></option>
@@ -15,15 +19,15 @@
         <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Ordem</label>
         <input type="text" class="form-control form-control-solid" name="order" value="{{ $package->order ?? 1 }}" required>
     </div>
-    <div class="col-4 mb-4">
-        <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Valor</label>
-        <input type="text" class="form-control form-control-solid input-money" name="value" value="R$ {{ number_format(($package->value ?? 0), 2, ',', '.') }}" required>
+    <div class="col-6 mb-4">
+        <label class="form-label fs-6 fw-bold text-gray-700 mb-2">Descrição</label>
+        <input type="text" class="form-control form-control-solid" placeholder="Descrição" name="description" value="{{ $package->description ?? old('description') }}">
     </div>
-    <div class="col-4 mb-4">
+    <div class="col-3 mb-4">
         <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Dias liberados</label>
         <input type="number" class="form-control form-control-solid" min="1" name="duration_days" value="{{ $package->duration_days ?? 30 }}" required>
     </div>
-    <div class="col-4 mb-4">
+    <div class="col-3 mb-4">
         <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Espaço</label>
         <select name="size_storage" class="form-select form-select-solid" data-control="select2" data-hide-search="true" data-placeholder="Selecione" required>
             <option value=""></option>
