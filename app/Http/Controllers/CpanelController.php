@@ -128,8 +128,8 @@ class CpanelController extends Controller
 
         // Inserir o token da conta do usuário
         DB::connection('mysql_cliente')->table('central_configs')->insert([
-            'key'   => 'token',
-            'value' => $client->token,
+            'option_name'  => 'token',
+            'option_value' => $client->token,
         ]);
 
         // Obtém o tamanho do pacote inicial
@@ -137,8 +137,8 @@ class CpanelController extends Controller
 
         // Inserir a quantia inicial de armazenamento
         DB::connection('mysql_cliente')->table('central_configs')->insert([
-            'key'   => 's3StorageAllow',
-            'value' => $sizeStorage,
+            'option_name'  => 's3StorageAllow',
+            'option_value' => $sizeStorage,
         ]);
 
         return true;
