@@ -4,9 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\Resource;
+use App\Services\GuzzleService;
 use Illuminate\Http\Request;
-use GuzzleHttp\Client as Guzzle;
-use GuzzleHttp\Exception\ConnectException;
 use Illuminate\Support\Facades\Auth;
 
 class ClientsActionsController extends Controller
@@ -14,11 +13,13 @@ class ClientsActionsController extends Controller
 
     protected $request;
     private $repository;
+    protected $guzzleService;
 
-    public function __construct(Request $request, Client $content)
+    public function __construct(Request $request, Client $content, GuzzleService $guzzleService)
     {
         $this->request = $request;
         $this->repository = $content;
+        $this->guzzleService = $guzzleService;
     }
 
     // Obtém permissões do usuário
@@ -34,7 +35,7 @@ class ClientsActionsController extends Controller
         $data['status']  = filter_var($data['status'], FILTER_VALIDATE_BOOLEAN);
 
         // Realiza solicitação
-        $response = $this->guzzle('put', 'sistema/configurar-permissao', $client, ['name' => $data['name'], 'status' => $data['status']]);
+        $response = $this->guzzleService->request('put', 'sistema/configurar-permissao', $client, ['name' => $data['name'], 'status' => $data['status']]);
 
         // Retorna resposta
         return $response;
@@ -77,7 +78,7 @@ class ClientsActionsController extends Controller
         $client = $this->repository->find($id);
 
         // Realiza solicitação
-        $response = $this->guzzle('POST', 'sistema/atualizar-banco', $client);
+        $response = $this->guzzleService->request('POST', 'sistema/atualizar-banco', $client);
 
         // Verifica a resposta antes de tentar acessar as chaves
         if (!$response['success']) {
@@ -114,6 +115,7 @@ class ClientsActionsController extends Controller
 
     }
 
+
     // Obtém permissões do usuário
     public function getResources(Request $request)
     {
@@ -125,7 +127,7 @@ class ClientsActionsController extends Controller
         $client = $this->repository->find(1);
         
         // Realiza solicitação
-        $modules = $this->guzzle('post', 'sistema/permissoes-recursos', $client, $data);
+        $modules = $this->guzzleService->request('post', 'sistema/permissoes-recursos', $client, $data);
 
         /**
          * Define o status de todos os registros como 0 antes da verificação.
@@ -165,52 +167,6 @@ class ClientsActionsController extends Controller
         ->route('index')
         ->with('message', 'Permissões atualizadas com sucesso! Os recursos foram sincronizados com o sistema.');
 
-    }
-
-    /**
-     * Realiza uma solicitação Guzzle com autenticação Bearer
-     *
-     * @param string $method Método HTTP (get, post, etc)
-     * @param string $url URL para a solicitação
-     * @param object $client Objeto cliente contendo informações do cliente
-     * @param array|null $data Dados opcionais para incluir na requisição
-     * @return array Resposta da API
-     */
-    public function guzzle($method, $url, $client, $data = null)
-    {
-        // Instancia o Guzzle
-        $guzzle = new guzzle();
-
-        // Inicializa os parâmetros da requisição
-        $options = [
-            'headers' => [
-                'Authorization' => 'Bearer ' . env('CENTRAL_TOKEN'),
-            ],
-            'timeout' => 5
-        ];
-
-        // Se houver dados, adiciona ao corpo da requisição
-        if ($data !== null) {
-            $options['json'] = $data;
-        }
-        
-        try {
-            // Realiza a solicitação
-            $response = $guzzle->$method("https://$client->domain/api/$url", $options);
-    
-            // Obtém o corpo da resposta
-            $response = $response->getBody()->getContents();
-
-            return [
-                'success' => true,
-            ];
-    
-        } catch (ConnectException $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-            ];
-        }
     }
 
 }

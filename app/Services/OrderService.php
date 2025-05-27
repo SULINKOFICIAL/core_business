@@ -1,16 +1,17 @@
 <?php
 
 namespace App\Services;
-use App\Models\Client;
+
 use App\Models\ClientModule;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\ClientSubscription;
 use App\Models\Package;
-use Carbon\Carbon;
 
 class OrderService
 {
+
+
     public function createOrder($client, $newPackage)
     {
 
@@ -211,5 +212,7 @@ class OrderService
         return 'Pacote "' . $package->name . '" ativado com sucesso.';
         
     }
+
+    
 
 }

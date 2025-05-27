@@ -569,7 +569,8 @@ class ApisController extends Controller
 
             // Retorna pacote atualizado
             return response()->json([
-                'status' => 'Sucesso',
+                'status'  => 'Sucesso',
+                'package' => $client->package,
                 'message' => 'Compra realizada com sucesso.',
             ]);
 
