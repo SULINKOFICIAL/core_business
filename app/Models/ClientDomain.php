@@ -19,6 +19,6 @@ class ClientDomain extends Model
 
     public function client(): HasOne
     {
-        return $this->hasOne(Client::class);
+        return $this->hasOne(Client::class, 'id', 'client_id');
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Client;
 use App\Models\ClientCard;
+use App\Models\ClientDomain;
 use App\Models\ErrorMiCore;
 use App\Models\Module;
 use App\Models\Order;
@@ -163,16 +164,21 @@ class ApisController extends Controller
     public function getDatabase(Request $request){
 
         // Extrai o domínio
-        $subdomain = $request->query('subdomain');
-
+        $domain = $request->query('domain');
+        
         // Verifica se existe um subdóminio
-        if (!$subdomain) return response()->json(['error' => 'Subdomínio não fornecido.'], 400);
+        if (!$domain) return response()->json(['error' => 'Domínio não fornecido.'], 400);
+
+        // Busca na lista de domínios
+        $domain = ClientDomain::where('domain', $domain)->first();
+
+        // Verifica se o domínio existe
+        if (!$domain) return response()->json(['error' => 'Domínio não encontrado.'], 404);
 
         // Busca o banco de dados correspondente ao subdomínio
-        $client = Client::where('domain', $subdomain)->first();
+        $client = $domain->client;
 
-        if (!$client) return response()->json(['error' => 'Empresa não encontrada.'], 404);
-
+        // Retorna os dados do banco de dados
         return response()->json([
             'database_name' => $client->table,
             'db_user'       => $client->table . '_usr',
