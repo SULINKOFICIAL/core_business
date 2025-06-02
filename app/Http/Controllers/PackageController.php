@@ -14,6 +14,7 @@ use App\Services\OrderService;
 use App\Services\PackageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use GuzzleHttp\Client as Guzzle;
 
 class PackageController extends Controller
 {
@@ -383,8 +384,58 @@ class PackageController extends Controller
         $response = $this->orderService->createOrder($client, $package);
         $this->orderService->confirmPaymentOrder($response['order']);
 
+        // Realiza consulta para alterar o armazenamento do cliente no micore
+        $this->guzzle('post', 'sistema/ajustar-armazenamento', $client, ['size' => $package['size_storage']]);
+
         return redirect()
             ->route('clients.show', $client->id)
             ->with(['message' => 'Pacote trocado']);
+    }
+
+    /**
+     * Realiza uma solicitação Guzzle com autenticação Bearer
+     *
+     * @param string $method Método HTTP (get, post, etc)
+     * @param string $url URL para a solicitação
+     * @param object $client Objeto cliente contendo informações do cliente
+     * @param array|null $data Dados opcionais para incluir na requisição
+     * @return array Resposta da API
+     */
+    public function guzzle($method, $url, $client, $data = null)
+    {
+        try {
+            // Instancia o Guzzle
+            $guzzle = new Guzzle();
+
+            // Inicializa os parâmetros da requisição
+            $options = [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . env('CENTRAL_TOKEN'),
+                ]
+            ];
+
+            // Se houver dados, adiciona ao corpo da requisição
+            if ($data !== null) {
+                $options['json'] = $data;
+            }
+
+            // Realiza a solicitação
+            $response = $guzzle->$method("$client->domain/api/$url", $options);
+
+            // Obtém o corpo da resposta
+            $response = $response->getBody()->getContents();
+
+            // Decodifica o JSON
+            $response = json_decode($response, true);
+            
+            // Retorna a resposta
+            return $response;
+
+        } catch (\Exception $e) {
+            return [
+                'error' => true,
+                'message' => $e->getMessage(),
+            ];
+        }
     }
 }
