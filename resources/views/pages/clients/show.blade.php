@@ -33,6 +33,12 @@
                     <p class="fs-6 text-gray-700 fw-bold mb-1">
                         Valor atual do pacote: <span class="text-success fw-bolder">R$ {{ number_format($client->current_value, 2, ',', '.') }}</span>
                     </p>
+                    <p class="fs-6 text-gray-700 fw-bold mb-2">
+                        Domínios: 
+                        @foreach ($client->domains as $domain)
+                            <span class="badge badge-light-primary me-2">{{ $domain->domain }}</span>
+                        @endforeach
+                    </p>
                     <div class="d-flex gap-3">
                         <div class="alert {{ $client->renovation() <= 5 ? 'alert-danger' : 'alert-success' }} d-flex align-items-center p-2 border-dashed {{ $client->renovation() <= 5 ? 'border-danger' : 'border-success' }} mb-0">
                             <i class="ki-duotone ki-shield-tick fs-1 {{ $client->renovation() <= 5 ? 'text-danger' : 'text-success' }} me-2">

@@ -44,6 +44,12 @@ class Client extends Model
        return $this->hasOne(Package::class, 'id', 'package_id');
     }
     
+    // Domínios do cliente
+    public function domains(): HasMany
+    {
+       return $this->hasMany(ClientDomain::class, 'client_id', 'id');
+    }
+    
     // Módulos habilitados para o cliente
     public function modules(): BelongsToMany
     {

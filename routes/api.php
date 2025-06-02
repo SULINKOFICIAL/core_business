@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\ApiPaymentsController;
 use App\Http\Controllers\ApisController;
+use App\Http\Controllers\ApisDomainsController;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -28,5 +28,15 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
     Route::post('/tickets',   [ApisController::class, 'tickets']);
     Route::post('/cartao',    [ApisController::class, 'newCard']);
     Route::post('/error',     [ApisController::class, 'notifyErrors']);
+
+    /** API gerencia os domínios */
+
+    Route::prefix('dominios')->group(function () {
+        Route::get('/',  [ApisDomainsController::class, 'index']);
+        Route::post('/adicionar', [ApisDomainsController::class, 'store']);
+        Route::get('/editar/{id}', [ApisDomainsController::class, 'edit']);
+        Route::put('/editar/{id}', [ApisDomainsController::class, 'update']);
+        Route::delete('/remover/{id}', [ApisDomainsController::class, 'destroy']);
+    });
 
 });

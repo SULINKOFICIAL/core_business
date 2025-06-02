@@ -26,8 +26,8 @@
                             </a>
                         </td>
                         <td class="text-center">
-                            <a href="https://{{ $client->domain }}" target="_blank" class="text-gray-600 text-hover-danger m-0 text-center">
-                                {{ $client->domain }}
+                            <a href="https://{{ $client->domains()->first()->domain }}" target="_blank" class="text-gray-600 text-hover-danger m-0 text-center">
+                                {{ $client->domains()->first()->domain }} ({{ $client->domains()->count() }})
                             </a>
                         </td>
                         <td class="text-center">
