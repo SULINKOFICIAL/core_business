@@ -181,7 +181,7 @@ class ApisController extends Controller
         // Retorna os dados do banco de dados
         return response()->json([
             'database_name' => $client->table,
-            'db_user'       => $client->table . '_usr',
+            'db_user'       => $client->table,
             'db_password'   => $client->table_password,
         ]);
 
