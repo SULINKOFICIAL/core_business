@@ -40,7 +40,7 @@ class GuzzleService
         
         try {
             // Realiza a solicitação
-            $response = $guzzle->$method("http://$client->domain/api/$url", $options);
+            $response = $guzzle->$method("http://{$client->domains[0]->domain}/api/$url", $options);
 
             // Obtém o corpo da resposta
             $response = $response->getBody()->getContents();

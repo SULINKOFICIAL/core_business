@@ -150,7 +150,7 @@ class ApisController extends Controller
 
         // Verifica se o cliente foi encontrado
         if ($client) {
-            return response()->json(['domain' => $client->domain]);
+            return response()->json(['domain' => $client->domains[0]->domain]);
         } else {
             return response()->json(['message' => 'Não foi possível encontrar um cliente relacionado.'], 404);
         }

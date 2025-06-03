@@ -420,7 +420,7 @@ class PackageController extends Controller
             }
 
             // Realiza a solicitação
-            $response = $guzzle->$method("$client->domain/api/$url", $options);
+            $response = $guzzle->$method("{$client->domains[0]->domain}/api/$url", $options);
 
             // Obtém o corpo da resposta
             $response = $response->getBody()->getContents();
