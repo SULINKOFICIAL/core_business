@@ -26,6 +26,7 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
     /** API que recebe dados dos miCores */
     Route::post('/pagamento', [ApisController::class, 'payment']);
     Route::post('/tickets',   [ApisController::class, 'tickets']);
+    Route::post('/sugestoes', [ApisController::class, 'suggestions']);
     Route::post('/cartao',    [ApisController::class, 'newCard']);
     Route::post('/error',     [ApisController::class, 'notifyErrors']);
 

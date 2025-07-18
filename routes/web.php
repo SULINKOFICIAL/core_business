@@ -6,6 +6,7 @@ use App\Http\Controllers\CpanelController;
 use App\Http\Controllers\ERedeController;
 use App\Http\Controllers\ErrorMiCoreController;
 use App\Http\Controllers\GroupController;
+use App\Http\Controllers\IntegrationSuggestionController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\ModuleController;
@@ -87,6 +88,13 @@ Route::middleware(['auth'])->group(function () {
         Route::name('tickets.')->group(function () {
             Route::get('/', [TicketController::class, 'index'])->name('index');
             Route::put('/editar/{id}', [TicketController::class, 'update'])->name('update');
+        });
+    });
+
+    Route::prefix('sugestoes')->group(function () {
+        Route::name('suggestions.')->group(function () {
+            Route::get('/', [IntegrationSuggestionController::class, 'index'])->name('index');
+            Route::put('/editar/{id}', [IntegrationSuggestionController::class, 'update'])->name('update');
         });
     });
 

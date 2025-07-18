@@ -7,6 +7,7 @@ use App\Models\Client;
 use App\Models\ClientCard;
 use App\Models\ClientDomain;
 use App\Models\ErrorMiCore;
+use App\Models\IntegrationSuggestion;
 use App\Models\Module;
 use App\Models\Order;
 use App\Models\OrderTransaction;
@@ -204,12 +205,25 @@ class ApisController extends Controller
 
         // Recebe dados
         $data = $request->all();
-        
+
         // Registra o ticket no banco de dados
         Ticket::create($data);
 
         // Retorna resposta
         return response()->json('Ticket criado com sucesso!', 201);
+
+    }
+
+    public function suggestions(Request $request) {
+
+        // Recebe dados
+        $data = $request->all();
+
+        // Registra a sugestão no banco de dados
+        IntegrationSuggestion::create($data);
+
+        // Retorna resposta
+        return response()->json('Sugestão enviada com sucesso!', 201);
 
     }
 

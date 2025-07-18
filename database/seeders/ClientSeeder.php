@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Http\Controllers\PackageController;
 use App\Jobs\GenerateRenewalOrders;
 use App\Models\Client;
+use App\Models\ClientDomain;
 use Illuminate\Http\Request;
 use Illuminate\Database\Seeder;
 
@@ -17,12 +18,17 @@ class ClientSeeder extends Seeder
     {
 
         // Cria usuário local para testes
-        Client::create([
+        $client = Client::create([
             'name'       => 'localhost',
             'email'      => 'micore@testes.com',
-            'domain'     => '127.0.0.1:8001',
             'token'      => '111',
             'created_by' => 1,
+        ]);
+
+        ClientDomain::create([
+            'client_id'   => $client->id,
+            'domain'      => '127.0.0.1:8001',
+            'description' => 'Testes',
         ]);
 
         // Adiciona o pacote inicial ao cliente
