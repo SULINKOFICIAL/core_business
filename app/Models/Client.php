@@ -11,6 +11,11 @@ use Illuminate\Support\Facades\Http;
 class Client extends Model
 {
     protected $table = 'clients';
+
+    protected $casts = [
+        'first_user' => 'array',
+    ];
+
     /**
      * The attributes that are mass assignable.
      *
@@ -23,12 +28,13 @@ class Client extends Model
         'company',
         'cnpj',
         'cpf',
-        'domain',
         'package_id',
         'users_limit',
         'logo',
         'table',
+        'table_user',
         'table_password',
+        'first_user',
         'token',
         'db_last_version',
         'db_error',

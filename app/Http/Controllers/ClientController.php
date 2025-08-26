@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\ClientDomain;
 use App\Models\Module;
 use App\Models\Package;
 use Illuminate\Http\Request;
@@ -68,47 +69,48 @@ class ClientController extends Controller
         $data = $request->all();
 
         // Autor
-        $data['created_by'] = Auth::id();
+        $data['created_by'] = 1;
 
         // Gera um domínio permitido
-        $data['domain'] = verifyIfAllow($data['name']);
+        $data['domain'] = verifyIfAllow($data['domain']);
 
         // Gera um nome de tabela permitido
-        $data['table'] = str_replace('-', '_', $data['domain']);
+        $domainClean = str_replace('-', '_', $data['domain']);
 
         // Insere prefixo do miCore
-        $data['table'] = env('CPANEL_PREFIX') . '_' . $data['table'];
-        
+        $data['table'] = env('CPANEL_PREFIX') . '_' . $domainClean;
+
+        // Insere prefixo do miCore
+        $data['table_user'] = env('CPANEL_PREFIX') . '_' . $domainClean;
+
         // Gera senha
-        $data['password'] = Str::random(12);
+        $data['table_password'] = Str::random(12);
 
         // Gera token para API
-        $data['token'] = hash('sha256', $data['name'] . microtime(true));
+        $data['token'] = hash('sha256', $data['domain'] . microtime(true));
 
-        // Gera nome curto
-        $data['user']['short_name'] = generateShortName($data['user']['name']);
-
-        // Adiciona o sufixo dos domínios Core
-        $data['domain'] = $data['domain'] . '.micore.com.br';
+        // Gera usuário
+        $data['first_user'] = [
+            'name'       => $data['user']['name'],
+            'email'      => $data['user']['email'],
+            'password'   => $data['user']['password'],
+            'short_name' => generateShortName($data['user']['name']),
+        ];
 
         // Insere no banco de dados
         $created = $this->repository->create($data);
 
-         // Gera dado do banco de dados
-        $database = [
-            'name' => $data['table'],
-            'password' => $data['password']
-        ];
-
-        // Gera subdomínio, banco de dados e usuário no Cpanel miCore.com.br
-        $this->cpanelMiCore->make($data['domain'], $database, $data['user']);
-
-        // Salva logo
-        if(isset($data['fileLogo'])) $this->saveLogo($created, $data['fileLogo']);
+        // Registra o domínio do cliente
+        ClientDomain::create([
+            'client_id'     => $created->id,
+            'domain'        => $data['domain'] . '.micore.com.br',
+            'description'   => 'Domínio cadastrado ao criar a conta do cliente',
+            'status'        => true,
+        ]);
 
         // Retorna a página
         return redirect()
-                ->route('clients.index')
+                ->route('clients.install.index', $created->id)
                 ->with('message', 'Cliente <b>'. $created->name . '</b> adicionado com sucesso.');
 
     }

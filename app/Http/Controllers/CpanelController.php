@@ -38,35 +38,83 @@ class CpanelController extends Controller
      * @param string $table Nome da tabela (não utilizada atualmente)
      * @return \Illuminate\Http\JsonResponse
      */
-    public function make($domain, $datatable, $user, $client)
+    public function make($id)
     {
 
-        // Registra tempo
-        Log::info("Criando subdomínio: " . $domain);
+        // Obtém cliente
+        $client = Client::find($id);
 
-        // // 1. Cria o subdomínio
-        $this->makeSubdomain($domain);
+        // Se o cliente estiver na etapa de criação
+        if($client->install == 1){
+
+            // Registra tempo
+            Log::info("Criando subdomínio: " . $client->domains[0]->domain);
+
+            // Cria o subdomínio
+            $this->makeSubdomain($client->domains[0]->domain);
+            
+            // Atualiza status
+            $client->install = 2;
+            $client->save();
+
+            return response()->json([
+                'message' => 'Subdomínio criado com sucesso',
+                'step' => 2
+            ]);
+        }
+
+        // Se o cliente estiver na etapa de clonar o banco de dados modelo
+        if($client->install == 2){
+            
+            // Registra tempo
+            Log::info("Clonando banco template para : " . $client->table);
+
+            // Cria o banco de dados
+            $this->cloneDatabase($client);
+            
+            // Atualiza status
+            $client->install = 3;
+            $client->save();
+
+            return response()->json([
+                'message' => 'Banco de dados clonado com sucesso',
+                'step' => 3
+            ]);
+        }
+
+        // Se o cliente estiver na etapa de inserir o usuário e token
+        if($client->install == 3){
         
-        // Registra tempo
-        Log::info("Clonando banco template para : " . $datatable['name']);
+            // Registra tempo
+            Log::info("Inserindo usuário e token no banco : " . $client->table);
 
-        // // 2. Cria o banco de dados
-        $this->cloneDatabase($datatable);
-        
-        // Registra tempo
-        Log::info("Inserindo usuário e token no banco : " . $datatable['name']);
+            // Adiciona registros únicos no cliente
+            $this->addTokenAndUser($client);
+    
+            // Atualiza status
+            $client->install = 4;
+            $client->save();
 
-        // // 3. Adiciona registros únicos no cliente
-        $this->addTokenAndUser($datatable, $user, $client);
+            // Registra tempo
+            Log::info("Finalizou a inserção dos usuário e token no banco : " . $client->table);
 
-        // Registra tempo
-        Log::info("Finalizou a inserção dos usuário e token no banco : " . $datatable['name']);
+            return response()->json([
+                'message' => 'Usuário e token inseridos com sucesso',
+                'step' => 4
+            ]);
+        }
+
+        // Atualiza status
+        $client->install = 5;
+        $client->save();
 
         // Retorna a página
         return response()->json([
-            'url' => $domain,
+            'url' => $client->domains[0]->domain,
             'message' => 'Conta criada com sucesso',
+            'step' => 5
         ]);
+
     }
     
 
@@ -108,10 +156,21 @@ class CpanelController extends Controller
     /**
      * Adiciona token e usuário no banco de dados do cliente.
      */
-    private function addTokenAndUser($datatable, $user, $client)
+    private function addTokenAndUser($client)
     {
+
+        // Banco de dados
+        $database = [
+            'name' => $client->table,
+            'user' => $client->table_user,
+            'password' => $client->table_password,
+        ];
+
+        // Obtém cliente
+        $user = $client->first_user;
+
         // Conectar ao banco recém-criado
-        $this->connectDatabase($datatable);
+        $this->connectDatabase($database);
 
         // Gerar senha hashada e token de API
         $userPassword = Hash::make($user['password']);
@@ -156,7 +215,7 @@ class CpanelController extends Controller
                 'driver'    => 'mysql',
                 'host'      => env('WHM_IP'),
                 'database'  => $datatable['name'],
-                'username'  => $datatable['name'] . '_usr',
+                'username'  => $datatable['user'],
                 'password'  => $datatable['password'],
                 'charset'   => 'utf8mb4',
                 'collation' => 'utf8mb4_unicode_ci',
@@ -234,14 +293,8 @@ class CpanelController extends Controller
         // Obtém cliente
         $client = Client::find($id);
         
-        // Obtém banco de dados
-        $database = [
-            'name' => $client->table,
-            'password' => $client->table_password,
-        ];
-
         // Envia a solicitação para criar o subdomínio
-        $response = $this->cloneDatabase($database);
+        $response = $this->cloneDatabase($client);
 
         // Retorna a resposta da API
         return $response;
@@ -255,8 +308,16 @@ class CpanelController extends Controller
      * @return void
      * @throws Exception Se a clonagem falhar
      */
-    private function cloneDatabase($database)
+    private function cloneDatabase($client)
     {
+
+        // Banco de dados
+        $database = [
+            'name' => $client->table,
+            'user' => $client->table_user,
+            'password' => $client->table_password,
+        ];
+
         // Banco modelo
         $templateBanco = $this->cpanelPrefix . '_template';
 
@@ -277,23 +338,21 @@ class CpanelController extends Controller
         $ssh->exec($dumpCommand);
 
         // Criar um usuário para o banco clonado
-        $usuario = $database['name'] . "_usr";
-
         $this->guzzle('GET', "{$this->cpanelUrl}/execute/Mysql/create_user", $this->cpanelUser, $this->cpanelPass, [
-            "name" => $usuario,
+            "name" => $database['user'],
             "password" => $database['password']
         ]);
 
         // Conceder permissões ao novo usuário no banco clonado
         $this->guzzle('GET', "{$this->cpanelUrl}/execute/Mysql/set_privileges_on_database", $this->cpanelUser, $this->cpanelPass, [
-            "user" => $usuario,
+            "user" => $database['user'],
             "database" => $database['name'],
             "privileges" => "ALL PRIVILEGES"
         ]);
 
         return response()->json([
             'message' => "Banco de dados {$database['name']} clonado com sucesso!",
-            'usuario' => $usuario,
+            'usuario' => $database['user'],
             'password' => $database['password']
         ]);
     }

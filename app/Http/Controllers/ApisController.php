@@ -90,7 +90,7 @@ class ApisController extends Controller
         $data['domain'] = verifyIfAllow($data['company']);
 
         // Gera um nome de tabela permitido
-        $data['table'] = str_replace('-', '_', $data['domain']);
+        $data['table'] = $data['table_usr'] = str_replace('-', '_', $data['domain']);
 
         // Insere prefixo do miCore
         $data['table'] = env('CPANEL_PREFIX') . '_' . $data['table'];
@@ -104,6 +104,14 @@ class ApisController extends Controller
         // Adiciona o sufixo dos domínios Core
         $data['domain'] = $data['domain'] . '.micore.com.br';
         
+        // Gera usuário
+        $data['first_user'] = [
+            'name'       => $data['name'],
+            'email'      => $data['email'],
+            'password'   => $data['password'],
+            'short_name' => generateShortName($data['name']),
+        ];
+
         // Insere no banco de dados
         $client = $this->repository->create($data);
 
@@ -113,22 +121,8 @@ class ApisController extends Controller
         // Adiciona pacote básico ao cliente
         app(PackageController::class)->assign($request, $client->id);
 
-        // Gera dado do banco de dados
-        $database = [
-            'name' => $data['table'],
-            'password' => $data['table_password'],
-        ];
-
-        // Gera usuário
-        $user = [
-            'name'       => $data['name'],
-            'email'      => $data['email'],
-            'password'   => $data['password'],
-            'short_name' => generateShortName($data['name']),
-        ];
-
         // Gera subdomínio, banco de dados e usuário no Cpanel miCore.com.br
-        return $this->cpanelMiCore->make($data['domain'], $database, $user, $client);        
+        return $this->cpanelMiCore->make($client);        
 
     }
 
@@ -140,8 +134,6 @@ class ApisController extends Controller
     {
         // Obtém dados
         $data = $request->all();
-
-        Log::info(json_encode($data));
 
         // Obtém dados do cliente
         $client = isset($data['email']) ? Client::where('email', $data['email'])->first()

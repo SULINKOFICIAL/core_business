@@ -1,5 +1,6 @@
 <?php
 use App\Models\Client;
+use App\Models\ClientDomain;
 
 /**
  * Verifica se o domínio está disponível e gera um novo se necessário.
@@ -29,7 +30,7 @@ if (!function_exists('verifyIfAllow')) {
         $originalDomain = $domain;
         $counter = 1;
 
-        while (Client::where('domain', $domain . '.micore.com.br')->exists()) {
+        while (ClientDomain::where('domain', $domain . '.micore.com.br')->exists()) {
             // Adiciona um número incremental ao domínio
             $domain = $originalDomain . '-' . $counter;
             $counter++;
