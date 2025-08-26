@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class ClientSubscription extends Model
 {
-    protected $table = 'client_subscriptions';
+    protected $table = 'clients_subscriptions';
     protected $casts = [
         'start_date' => 'datetime',
         'end_date' => 'datetime',
