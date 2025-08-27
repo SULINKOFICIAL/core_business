@@ -175,7 +175,22 @@ class CpanelController extends Controller
         // Gerar senha hashada e token de API
         $userPassword = Hash::make($user['password']);
 
-        // Inserir usuário padrão
+        /**
+         * Por padrão cria o usuário de sistema para atribuir a ele
+         * configurações e históricos gerados pelo sistema.
+         */
+        DB::connection('mysql_cliente')->table('users')->insert([
+            'name'       => 'Sistema',
+            'password'   => Hash::make(rand(100000, 999999)),
+            'full_name'  => 'Sistema',
+            'email'      => 'sistema@micore.com.br',
+            'role_id'    => 1,
+            'created_by' => 1,
+        ]);
+
+        /**
+         * Inserir o primeiro usuário que utilizará o sistema.
+         */
         DB::connection('mysql_cliente')->table('users')->insert([
             'name'       => $user['short_name'],
             'password'   => $userPassword,
@@ -185,13 +200,19 @@ class CpanelController extends Controller
             'created_by' => 1,
         ]);
 
-        // Inserir o token da conta do usuário
+        /**
+         * Inserir o token da conta do usuário, é necessário para
+         * conseguirmos fazermos algumas separações como de Cache.
+         */
         DB::connection('mysql_cliente')->table('central_configs')->insert([
             'option_name'  => 'tenant',
             'option_value' => $client->id,
         ]);
 
-        // Inserir o token da conta do usuário
+        /**
+         * Inserir o token da conta do usuário, é necessário para
+         * realizarmos ações via API atraves da central.
+         */
         DB::connection('mysql_cliente')->table('central_configs')->insert([
             'option_name'  => 'token',
             'option_value' => $client->token,
