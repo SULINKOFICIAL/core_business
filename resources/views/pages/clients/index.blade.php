@@ -26,9 +26,13 @@
                             </a>
                         </td>
                         <td class="text-center">
-                            <a href="https://{{ $client->domains()->first()->domain }}" target="_blank" class="text-gray-600 text-hover-danger m-0 text-center">
-                                {{ $client->domains()->first()->domain }} ({{ $client->domains()->count() }})
-                            </a>
+                            @if ($client->domains()->count() > 0)
+                                <a href="https://{{ $client->domains()->first()->domain }}" target="_blank" class="text-gray-600 text-hover-danger m-0 text-center">
+                                    {{ $client->domains()->first()->domain }} ({{ $client->domains()->count() }})
+                                </a>
+                            @else
+                                <span class="badge badge-light-danger">Sem domínio</span>
+                            @endif
                         </td>
                         <td class="text-center">
                             @if ($client->package)
@@ -57,9 +61,11 @@
                                 <a href="{{ route('clients.show', $client->id) }}" class="btn btn-sm btn-primary btn-active-success fw-bolder text-uppercase py-2">
                                     Visualizar
                                 </a>
-                                <a href="https://{{ $client->domains[0]->domain }}/acessar/{{ $client->token }}" target="_blank" class="text-gray-700" data-bs-toggle="tooltip" data-bs-placement="top" title="Acessar como sistema">
-                                    <i class="fa-solid fa-up-right-from-square"></i>
-                                </a>
+                                @if ($client->domains()->count() > 0)
+                                    <a href="https://{{ $client->domains[0]->domain }}/acessar/{{ $client->token }}" target="_blank" class="text-gray-700" data-bs-toggle="tooltip" data-bs-placement="top" title="Acessar como sistema">
+                                        <i class="fa-solid fa-up-right-from-square"></i>
+                                    </a>
+                                @endif
                             </div>
                         </td>
                     </tr>

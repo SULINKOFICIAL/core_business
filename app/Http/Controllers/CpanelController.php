@@ -187,6 +187,12 @@ class CpanelController extends Controller
 
         // Inserir o token da conta do usuário
         DB::connection('mysql_cliente')->table('central_configs')->insert([
+            'option_name'  => 'tenant',
+            'option_value' => $client->id,
+        ]);
+
+        // Inserir o token da conta do usuário
+        DB::connection('mysql_cliente')->table('central_configs')->insert([
             'option_name'  => 'token',
             'option_value' => $client->token,
         ]);

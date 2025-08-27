@@ -100,6 +100,12 @@ class ClientController extends Controller
         // Insere no banco de dados
         $created = $this->repository->create($data);
 
+        // Simula solicitação de troca de pacote
+        $request = new Request(['package_id' => 1]);
+
+        // Adiciona pacote básico ao cliente
+        app(PackageController::class)->assign($request, $created->id);
+
         // Registra o domínio do cliente
         ClientDomain::create([
             'client_id'     => $created->id,
