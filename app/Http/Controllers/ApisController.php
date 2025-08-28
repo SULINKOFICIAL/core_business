@@ -158,7 +158,7 @@ class ApisController extends Controller
 
         // Extrai o domínio
         $domain = $request->query('domain');
-        
+
         // Verifica se existe um subdóminio
         if (!$domain) return response()->json(['error' => 'Domínio não fornecido.'], 400);
 
@@ -174,7 +174,7 @@ class ApisController extends Controller
         // Retorna os dados do banco de dados
         return response()->json([
             'database_name' => $client->table,
-            'db_user'       => $client->table,
+            'db_user'       => $client->table_user,
             'db_password'   => $client->table_password,
         ]);
 
