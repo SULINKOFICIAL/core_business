@@ -201,6 +201,34 @@ class CpanelController extends Controller
         ]);
 
         /**
+         * Inserir o colaborador referente ao usuário.
+         */
+        DB::connection('mysql_cliente')->table('users')->insert([
+            'user_id'    => 2,
+            'created_by' => 1,
+        ]);
+
+        /**
+         * Inserir o colaborador referente ao usuário.
+         */
+        DB::connection('mysql_cliente')->table('stores')->insert([
+            'public'        => 1,
+            'company'       => 'Matriz',
+            'abbreviation'  => 'MT',
+            'cnpj'          => '00000000000000',
+            'name_fantasy'  => 'Matrix',
+            'address'       => 'Rua Teste',
+            'number'        => '123',
+            'neighborhood'  => 'Teste',
+            'zip'           => '00000000',
+            'email'         => 'matrix@micore.com.br',
+            'site'          => 'matrix.com.br',
+            'phone1'        => '123456789',
+            'status'        => 1,
+            'created_by'    => 1,
+        ]);
+
+        /**
          * Inserir o token da conta do usuário, é necessário para
          * conseguirmos fazermos algumas separações como de Cache.
          */
