@@ -40,6 +40,37 @@ if (!function_exists('verifyIfAllow')) {
     }
 }
 
+
+// Generate random color code HEX
+if (!function_exists('randomColor')) {
+    function randomColor()
+    {
+        $letters = '0123456789ABCDEF';
+        $color = '#';
+        for ($i = 0; $i < 6; $i++) {
+            $color .= $letters[rand(0, 15)];
+        }
+        return $color;
+    }
+}
+
+// PUT THE BACKGROUND IN THE TEXT COLOR
+if (!function_exists('hex2rgb')) {
+    function hex2rgb($colour, $opacity) {
+
+        // REMOVE # FROM STRING
+        $colour = ltrim($colour, '#');
+
+        // EXTRACT RGB FROM HEX
+        $rgb = sscanf($colour, '%2x%2x%2x');
+        $rgb[] = $opacity;
+
+        // RETURN RGBA
+        return sprintf('rgb(%d, %d, %d, %d%%)', ...$rgb);
+
+    }
+}
+
 if (!function_exists('cleanString')) {
     function cleanString($text) {
         $utf8 = array(

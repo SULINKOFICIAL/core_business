@@ -2,18 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\News;
-use App\Models\NewsCategory;
 use Illuminate\Http\Request;
+use App\Models\NewsCategory;
 use Illuminate\Support\Facades\Auth;
 
-class NewsController extends Controller
+class NewsCategoryController extends Controller
 {
-   
+    
     protected $request;
     private $repository;
 
-    public function __construct(Request $request, News $content)
+    public function __construct(Request $request, NewsCategory $content)
     {
 
         $this->request = $request;
@@ -30,24 +29,18 @@ class NewsController extends Controller
     public function index()
     {
         // Obtém dados
-        $news = News::all();
+        $news = NewsCategory::all();
 
         // Retorna a página
-        return view('pages.news.index')->with([
+        return view('pages.news.categories.index')->with([
             'news' => $news,
         ]);
     }
 
     public function create()
     {   
-
-        // Obtém dados
-        $categories = NewsCategory::all(); 
-
         // Retorna a página
-        return view('pages.news.create')->with([
-            'categories' => $categories,
-        ]);
+        return view('pages.news.categories.create');
 
     }
 
@@ -55,18 +48,6 @@ class NewsController extends Controller
     {
         // Obtém dados
         $data = $request->all();
-
-        // Separa data de início e fim
-        $data['date'] = explode(' até ', $request->date);
-
-        // Remove data do array
-        $data['start_date'] = $data['date'][0];
-        $data['end_date'] = $data['date'][1];
-
-        // Limpa tags
-        $tagsArray = json_decode($data['tags'], true);
-        $values = array_column($tagsArray, 'value');
-        $data['tags'] = implode(', ', $values);
 
         // Autor
         $data['created_by'] = Auth::id();
@@ -76,23 +57,8 @@ class NewsController extends Controller
 
         // Retorna a página
         return redirect()
-                ->route('news.index')
-                ->with('message', 'Notícia <b>'. $created->title . '</b> adicionada com sucesso.');
-
-    }
-
-    public function show($id)
-    {
-        // Obtém dados
-        $modules = $this->repository->find($id);
-
-        // Verifica se existe
-        if(!$modules) return redirect()->back();
-
-        // Retorna a página
-        return view('pages.news.show')->with([
-            'news' => $modules,
-        ]);
+                ->route('news.categories.index')
+                ->with('message', 'Categoria <b>'. $created->title . '</b> adicionada com sucesso.');
 
     }
 
@@ -104,13 +70,9 @@ class NewsController extends Controller
         // Verifica se existe
         if(!$modules) return redirect()->back();
 
-        // Obtém dados
-        $categories = NewsCategory::all(); 
-
         // Retorna a página
-        return view('pages.news.edit')->with([
+        return view('pages.news.categories.edit')->with([
             'news' => $modules,
-            'categories' => $categories,
         ]);
 
     }
@@ -124,18 +86,6 @@ class NewsController extends Controller
         // Obtém dados
         $data = $request->all();
 
-        // Separa data de início e fim
-        $data['date'] = explode(' até ', $request->date);
-        
-        // Remove data do array
-        $data['start_date'] = $data['date'][0];
-        $data['end_date'] = $data['date'][1];
-
-        // Limpa tags
-        $tagsArray = json_decode($data['tags'], true);
-        $values = array_column($tagsArray, 'value');
-        $data['tags'] = implode(', ', $values);
-
         // Autor
         $data['updated_by'] = Auth::id();
         
@@ -144,8 +94,8 @@ class NewsController extends Controller
 
         // Retorna a página
         return redirect()
-            ->route('news.index')
-            ->with('message', 'Notícia <b>'. $modules->title .'</b> atualizada com sucesso.');
+            ->route('news.categories.index')
+            ->with('message', 'Categoria <b>'. $modules->title .'</b> atualizada com sucesso.');
         
     }
 
@@ -166,8 +116,8 @@ class NewsController extends Controller
 
         // Retorna a página
         return redirect()
-            ->route('news.index')
-            ->with('message', 'Notícia <b>'. $modules->title . '</b> '. $message .' com sucesso.');
+            ->route('news.categories.index')
+            ->with('message', 'Categoria <b>'. $modules->title . '</b> '. $message .' com sucesso.');
 
     }
 }

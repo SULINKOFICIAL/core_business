@@ -11,16 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('news', function (Blueprint $table) {
+        Schema::create('news_categories', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
-            $table->longText('body');
-            $table->string('category');
-            $table->enum('priority', ['high', 'medium', 'low'])->default('low');
-            $table->date('start_date')->nullable();
-            $table->date('end_date')->nullable();
-            $table->string('cta_text')->nullable();
-            $table->string('cta_url', 1000)->nullable();
+            $table->string('name');
+            $table->longText('color');
             $table->boolean('status')->default(true);
             $table->unsignedBigInteger('filed_by')->nullable(); 
             $table->unsignedBigInteger('created_by');
@@ -34,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('news');
+        Schema::dropIfExists('news_categories');
     }
 };

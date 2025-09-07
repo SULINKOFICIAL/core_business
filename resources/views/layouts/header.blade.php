@@ -12,8 +12,11 @@
                         <a href="{{ route('clients.index') }}" class="fw-bold text-hover-warning text-uppercase mx-8 fs-7 {{ Request::routeIs('clients.index') ? 'text-warning' : 'text-white' }}">
                             Clientes
                         </a>
-                        <a href="{{ route('news.index') }}" class="fw-bold text-hover-warning text-uppercase mx-8 fs-7 {{ Request::routeIs('packages.index') ? 'text-warning' : 'text-white' }}">
+                        <a href="{{ route('news.index') }}" class="fw-bold text-hover-warning text-uppercase mx-8 fs-7 {{ Request::routeIs('news.index') ? 'text-warning' : 'text-white' }}">
                             Notícias
+                        </a>
+                        <a href="{{ route('news.categories.index') }}" class="fw-bold text-hover-warning text-uppercase mx-8 fs-7 {{ Request::routeIs('news.categories.index') ? 'text-warning' : 'text-white' }}">
+                            Categorias de Notícias
                         </a>
                         <a href="{{ route('packages.index') }}" class="fw-bold text-hover-warning text-uppercase mx-8 fs-7 {{ Request::routeIs('packages.index') ? 'text-warning' : 'text-white' }}">
                             Pacotes

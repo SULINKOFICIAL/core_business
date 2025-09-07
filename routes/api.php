@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ApisController;
 use App\Http\Controllers\ApisDomainsController;
+use App\Http\Controllers\ApisNewsController;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -12,7 +13,9 @@ Route::prefix('micore')->group(function () {
     Route::post('/encontrar-cliente', [ApisController::class, 'findClient']);
 });
 
-
+/**
+ * API para comunicação com o WebSite micore.com.br
+ */
 Route::prefix('central')->middleware('auth.bearer')->group(function () {
 
     /** API que envia informações para os miCores */
@@ -31,13 +34,19 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
     Route::post('/error',     [ApisController::class, 'notifyErrors']);
 
     /** API gerencia os domínios */
-
     Route::prefix('dominios')->group(function () {
-        Route::get('/',  [ApisDomainsController::class, 'index']);
-        Route::post('/adicionar', [ApisDomainsController::class, 'store']);
-        Route::get('/editar/{id}', [ApisDomainsController::class, 'edit']);
-        Route::put('/editar/{id}', [ApisDomainsController::class, 'update']);
-        Route::delete('/remover/{id}', [ApisDomainsController::class, 'destroy']);
+        Route::get('/',                 [ApisDomainsController::class, 'index']);
+        Route::post('/adicionar',       [ApisDomainsController::class, 'store']);
+        Route::get('/editar/{id}',      [ApisDomainsController::class, 'edit']);
+        Route::put('/editar/{id}',      [ApisDomainsController::class, 'update']);
+        Route::delete('/remover/{id}',  [ApisDomainsController::class, 'destroy']);
+    });
+
+    /** API gerencia as notícias */
+    Route::prefix('noticias')->group(function () {
+        Route::get('/',                 [ApisNewsController::class, 'index']);
+        Route::get('/detalhes/{id}',    [ApisNewsController::class, 'show']);
+        Route::get('/nao-lidas/{id}',   [ApisNewsController::class, 'notRead']);
     });
 
 });

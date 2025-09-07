@@ -16,8 +16,10 @@ class News extends Model
 
     protected $fillable = [
         'title',
+        'resume',
+        'tags',
         'body',
-        'category',
+        'category_id',
         'priority',
         'start_date',
         'end_date',
@@ -28,4 +30,9 @@ class News extends Model
         'created_by',
         'updated_by',
     ];
+
+    public function category()
+    {
+        return $this->belongsTo(NewsCategory::class);
+    }
 }

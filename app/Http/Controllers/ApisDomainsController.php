@@ -17,11 +17,8 @@ class ApisDomainsController extends Controller
         // Recebe dados
         $data = $request->all();
 
-        // Obtém dados do cliente
-        $client = Client::where('token', $data['token_micore'])->first();
-
-        // Caso não encontre a conta do cliente
-        if(!$client) return response()->json('Conta não encontrada', 404);
+         // Obtém dados do cliente
+        $client = $data['client'];
 
         // Obtém plano atual do cliente
         $domains = $client->domains;
@@ -40,11 +37,8 @@ class ApisDomainsController extends Controller
         // Recebe dados
         $data = $request->all();
 
-        // Obtém dados do cliente
-        $client = Client::where('token', $data['token_micore'])->first();
-
-        // Caso não encontre a conta do cliente
-        if(!$client) return response()->json('Conta não encontrada', 404);
+         // Obtém dados do cliente
+        $client = $data['client'];
 
         // Obtém plano atual do cliente
         $domains = $client->domains()->create([
@@ -66,11 +60,8 @@ class ApisDomainsController extends Controller
         // Recebe dados
         $data = $request->all();
 
-        // Obtém dados do cliente
-        $client = Client::where('token', $data['token_micore'])->first();
-
-        // Caso não encontre a conta do cliente
-        if(!$client) return response()->json('Conta não encontrada', 404);
+         // Obtém dados do cliente
+        $client = $data['client'];
 
         // Obtém plano atual do cliente
         $domain = $client->domains()->find($id);
@@ -90,11 +81,8 @@ class ApisDomainsController extends Controller
         // Recebe dados
         $data = $request->all();
 
-        // Obtém dados do cliente
-        $client = Client::where('token', $data['token_micore'])->first();
-
-        // Caso não encontre a conta do cliente
-        if(!$client) return response()->json('Conta não encontrada', 404);
+         // Obtém dados do cliente
+        $client = $data['client'];
 
         // Obtém plano atual do cliente
         $domain = $client->domains()->find($id);
@@ -126,11 +114,8 @@ class ApisDomainsController extends Controller
         // Recebe dados
         $data = $request->all();
 
-        // Obtém dados do cliente
-        $client = Client::where('token', $data['token_micore'])->first();
-
-        // Caso não encontre a conta do cliente
-        if(!$client) return response()->json('Conta não encontrada', 404);
+         // Obtém dados do cliente
+        $client = $data['client'];
 
         // Obtém plano atual do cliente
         $domain = $client->domains()->find($id);

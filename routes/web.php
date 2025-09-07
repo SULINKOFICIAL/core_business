@@ -11,6 +11,7 @@ use App\Http\Controllers\IntegrationSuggestionController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\ModuleController;
+use App\Http\Controllers\NewsCategoryController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\SubscriptionsController;
@@ -59,6 +60,18 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/editar/{id}',      [NewsController::class, 'edit'])->name('edit');
             Route::put('/editar/{id}',      [NewsController::class, 'update'])->name('update');
             Route::get('/desabilitar/{id}', [NewsController::class, 'destroy'])->name('destroy');
+
+            Route::prefix('categorias')->group(function () {
+                Route::name('categories.')->group(function () {
+                    Route::get('/',                 [NewsCategoryController::class, 'index'])->name('index');
+                    Route::get('/adicionar',        [NewsCategoryController::class, 'create'])->name('create');
+                    Route::post('/adicionar',       [NewsCategoryController::class, 'store'])->name('store');
+                    Route::get('/editar/{id}',      [NewsCategoryController::class, 'edit'])->name('edit');
+                    Route::put('/editar/{id}',      [NewsCategoryController::class, 'update'])->name('update');
+                    Route::get('/desabilitar/{id}', [NewsCategoryController::class, 'destroy'])->name('destroy');
+                });
+            });
+
         });
     });
 

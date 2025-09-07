@@ -226,10 +226,7 @@ class ApisController extends Controller
         $data = $request->all();
 
         // Obtém dados do cliente
-        $client = Client::where('token', $data['token_micore'])->first();
-
-        // Caso não encontre a conta do cliente
-        if(!$client) return response()->json('Conta não encontrada', 404);
+        $client = $data['client'];
 
         // Obtém plano atual do cliente
         $package = $client->package;
@@ -260,11 +257,8 @@ class ApisController extends Controller
         // Recebe dados
         $data = $request->all();
 
-        // Obtém dados do cliente
-        $client = Client::where('token', $data['token_micore'])->first();
-
-        // Caso não encontre a conta do cliente
-        if(!$client) return response()->json('Conta não encontrada', 404);
+         // Obtém dados do cliente
+        $client = $data['client'];
 
         // Obtém plano atual do cliente
         $orders = $client->orders()->orderBy('created_at', 'DESC')->get();
@@ -307,11 +301,8 @@ class ApisController extends Controller
         // Recebe dados
         $data = $request->all();
         
-        // Obtém dados do cliente
-        $client = Client::where('token', $data['token_micore'])->first();
-
-        // Caso não encontre a conta do cliente
-        if(!$client) return response()->json('Conta não encontrada', 404);
+         // Obtém dados do cliente
+        $client = $data['client'];
 
         // Busca o pedido do cliente
         $order = Order::where('client_id', $client->id)->where('id', $id)->first();
@@ -366,11 +357,8 @@ class ApisController extends Controller
         // Recebe dados
         $data = $request->all();
 
-        // Obtém dados do cliente
-        $client = Client::where('token', $data['token_micore'])->first();
-
-        // Caso não encontre a conta do cliente
-        if(!$client) return response()->json('Conta não encontrada', 404);
+         // Obtém dados do cliente
+        $client = $data['client'];
 
         // Obtém plano atual do cliente
         $cards = $client->cards()->orderBy('created_at', 'DESC')->get();
@@ -403,11 +391,8 @@ class ApisController extends Controller
         // Recebe dados
         $data = $request->all();
 
-        // Obtém dados do cliente
-        $client = Client::where('token', $data['token_micore'])->first();
-
-        // Caso não encontre a conta do cliente
-        if(!$client) return response()->json('Conta não encontrada', 404);
+         // Obtém dados do cliente
+        $client = $data['client'];
         
         // Obtém Pacotes do micore junto com os modulos
         $packages = Package::with('modules')->orderBy('order', 'ASC')->where('show_website', true)->where('status', true)->get();
