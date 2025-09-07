@@ -11,6 +11,7 @@ use App\Http\Controllers\IntegrationSuggestionController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\ModuleController;
+use App\Http\Controllers\NewsController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\SubscriptionsController;
 use App\Http\Controllers\TicketController;
@@ -46,6 +47,18 @@ Route::middleware(['auth'])->group(function () {
                 });
             });
 
+        });
+    });
+
+    Route::prefix('noticias')->group(function () {
+        Route::name('news.')->group(function () {
+            Route::get('/',                 [NewsController::class, 'index'])->name('index');
+            Route::get('/adicionar',        [NewsController::class, 'create'])->name('create');
+            Route::post('/adicionar',       [NewsController::class, 'store'])->name('store');
+            Route::get('/visualizar/{id}',  [NewsController::class, 'show'])->name('show');
+            Route::get('/editar/{id}',      [NewsController::class, 'edit'])->name('edit');
+            Route::put('/editar/{id}',      [NewsController::class, 'update'])->name('update');
+            Route::get('/desabilitar/{id}', [NewsController::class, 'destroy'])->name('destroy');
         });
     });
 

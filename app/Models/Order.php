@@ -7,9 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class Order extends Model
 {
     protected $table = 'orders';
-    protected $casts = [
-        'paid_at' => 'datetime',
-    ];
     protected $fillable = [
         'client_id',
         'type',
@@ -18,6 +15,10 @@ class Order extends Model
         'paid_at',
         'description',
         'status',
+    ];
+
+    protected $casts = [
+        'paid_at' => 'datetime',
     ];
 
     public function paidBy()

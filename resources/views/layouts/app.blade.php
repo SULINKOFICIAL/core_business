@@ -25,6 +25,7 @@
         <script src="{{ asset('assets/plugins/custom/datatables/datatables.bundle.js') }}"></script>
         <script src="{{ asset('assets/js/datatable-input.js') }}"></script>
         <script src="{{ asset('assets/js/custom.bundle.js') }}"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/pt.min.js"></script>
         <script>
 
             // Configura Toaster
