@@ -18,16 +18,17 @@ Route::prefix('micore')->group(function () {
  */
 Route::prefix('central')->middleware('auth.bearer')->group(function () {
 
+    /** Retorna as informações do banco de dados */
+    Route::get('/meu-banco',      [ApisController::class, 'getDatabase']);
+
     /** APIS que necessitam de um cliente */
     Route::middleware('attach.client')->group(function () {
-    });
 
         /** API que envia informações para os miCores */
         Route::get('/meu-plano',      [ApisController::class, 'plan']);
         Route::get('/minhas-compras', [ApisController::class, 'orders']);
         Route::get('/compra/{id}',    [ApisController::class, 'order']);
         Route::get('/cartoes',        [ApisController::class, 'cards']);
-        Route::get('/meu-banco',      [ApisController::class, 'getDatabase']);
         Route::get('/pacotes',        [ApisController::class, 'packages']);
 
         /** API que recebe dados dos miCores */
@@ -53,5 +54,6 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
             Route::get('/nao-lidas/{id}',     [ApisNewsController::class, 'notRead']);
             Route::post('/marcar-lidas/{id}', [ApisNewsController::class, 'markRead']);
         });
+    });
 
 });
