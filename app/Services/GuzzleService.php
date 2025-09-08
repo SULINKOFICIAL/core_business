@@ -39,6 +39,7 @@ class GuzzleService
         }
         
         try {
+            dd("http://{$client->domains[0]->domain}/api/$url", $options);
             // Realiza a solicitação
             $response = $guzzle->$method("http://{$client->domains[0]->domain}/api/$url", $options);
 
