@@ -44,9 +44,10 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
 
     /** API gerencia as notícias */
     Route::prefix('noticias')->group(function () {
-        Route::get('/',                 [ApisNewsController::class, 'index']);
-        Route::get('/detalhes/{id}',    [ApisNewsController::class, 'show']);
-        Route::get('/nao-lidas/{id}',   [ApisNewsController::class, 'notRead']);
+        Route::get('/',                   [ApisNewsController::class, 'index']);
+        Route::get('/detalhes/{id}',      [ApisNewsController::class, 'show']);
+        Route::get('/nao-lidas/{id}',     [ApisNewsController::class, 'notRead']);
+        Route::post('/marcar-lidas/{id}', [ApisNewsController::class, 'markRead']);
     });
 
 });

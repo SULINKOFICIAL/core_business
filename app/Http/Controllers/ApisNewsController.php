@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\News;
+use App\Models\NewsRead;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -77,12 +78,12 @@ class ApisNewsController extends Controller
         $today = Carbon::today();
 
         // Lista de IDs que o usuário já viu (exemplo: array ou tabela no banco)
-        $seenNewsIds = [];
+        $seenNewsIds = NewsRead::where('client_user_id', $id)->pluck('news_id')->toArray();
 
         // Busca as novidades ativas para hoje e que não foram vistas
         $news = News::where('start_date', '<=', $today)
                     ->where('end_date', '>=', $today)
-                    // ->whereNotIn('id', $seenNewsIds)
+                    ->whereNotIn('id', $seenNewsIds)
                     ->get();
 
         // Formata as notícias
@@ -104,10 +105,18 @@ class ApisNewsController extends Controller
         // Obtém dados
         $data = $request->all();
 
-        dd($data);
+        foreach($data['readIds'] as $newsId) {
+            $newsRead = NewsRead::firstOrCreate([
+                'client_id'      => $data['client']->id,
+                'news_id'        => $newsId,
+                'client_user_id' => $id,
+            ],[
+                'viewed_at'      => now(),
+            ]);
+        }
 
         // Retorna IDS
-        return response()->json($news, 200);
+        return response()->json($newsRead, 200);
 
     }
 
