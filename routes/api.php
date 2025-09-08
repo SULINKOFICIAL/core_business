@@ -20,6 +20,7 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
 
     /** APIS que necessitam de um cliente */
     Route::middleware('attach.client')->group(function () {
+    });
 
         /** API que envia informações para os miCores */
         Route::get('/meu-plano',      [ApisController::class, 'plan']);
@@ -52,6 +53,5 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
             Route::get('/nao-lidas/{id}',     [ApisNewsController::class, 'notRead']);
             Route::post('/marcar-lidas/{id}', [ApisNewsController::class, 'markRead']);
         });
-    });
 
 });
