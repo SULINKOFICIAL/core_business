@@ -24,7 +24,7 @@ class ValidateBearerToken
         if (!$token || $token !== env('CENTRAL_TOKEN')) {
             return response()->json(['error' => 'Token inválido.'], 401);
         }
-/* 
+
         // Obtém dados do cliente
         $tokenClient = $request->input('token_micore');
 
@@ -40,7 +40,7 @@ class ValidateBearerToken
         if(!$client) return response()->json('Conta não encontrada', 404);
 
         // Adiciona o cliente ao request
-        $request->merge(['client' => $client]); */
+        $request->merge(['client' => $client]);
 
         return $next($request);
     }
