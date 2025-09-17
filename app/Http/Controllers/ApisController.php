@@ -162,6 +162,9 @@ class ApisController extends Controller
         // Verifica se existe um subdóminio
         if (!$domain) return response()->json(['error' => 'Domínio não fornecido.'], 400);
 
+        // Remove o www. caso exista
+        $domain = str_replace('www.', '', $domain);
+
         // Busca na lista de domínios
         $domain = ClientDomain::where('domain', $domain)->first();
 
