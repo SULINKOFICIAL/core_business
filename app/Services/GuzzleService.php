@@ -3,6 +3,9 @@
 namespace App\Services;
 use GuzzleHttp\Client as Guzzle;
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\ServerException;
+use GuzzleHttp\Exception\RequestException;
 
 /**
  * Classe responsável por interagir com a API da eRede para realizar operações
@@ -22,38 +25,41 @@ class GuzzleService
      */
     public function request($method, $url, $client, $data = null)
     {
-        // Instancia o Guzzle
-        $guzzle = new guzzle();
+        $guzzle = new Guzzle();
 
-        // Inicializa os parâmetros da requisição
         $options = [
             'headers' => [
                 'Authorization' => 'Bearer ' . env('CENTRAL_TOKEN'),
             ],
-            'timeout' => 5
+            'timeout' => 5,
         ];
 
-        // Se houver dados, adiciona ao corpo da requisição
         if ($data !== null) {
             $options['json'] = $data;
         }
-        
+
         try {
-
-            // Realiza a solicitação
             $response = $guzzle->$method("http://{$client->domains[0]->domain}/api/$url", $options);
-
-            // Obtém o corpo da resposta
-            $response = $response->getBody()->getContents();
+            $body = $response->getBody()->getContents();
 
             return [
                 'success' => true,
+                'data' => $body,
             ];
-    
+
         } catch (ConnectException $e) {
             return [
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => 'Falha de conexão: ' . $e->getMessage(),
+            ];
+        } catch (ClientException | ServerException | RequestException $e) {
+            // Captura qualquer erro HTTP e retorna sem quebrar o fluxo
+            $response = $e->getResponse();
+            $status = $response ? $response->getStatusCode() : null;
+            $body = $response ? $response->getBody()->getContents() : null;
+            return [
+                'success' => false,
+                'message' => "Erro HTTP {$status}",
             ];
         }
     }

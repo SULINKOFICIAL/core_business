@@ -45,11 +45,17 @@ class ClientsActionsController extends Controller
     // Atualiza todos os bancos de dados via API
     public function updateAllDatabase()
     {
+
+        // Obtém todos os clientes
         $clientsId = $this->repository->all();
         
+        // Sinaliza todos como desatualizados
         $this->repository->update(['db_last_version' => false]);
         
+        // Contador de erros
         $errors = 0;
+
+        // Total de clientes
         $totalClients = count($clientsId);
 
         // Loop para percorrer todos os clientes
@@ -111,7 +117,7 @@ class ClientsActionsController extends Controller
         // Retorna a página
         return redirect()
                 ->route('clients.index')
-                ->with('message', 'Migrate Executado' );
+                ->with('message', 'Migrate Executado');
 
     }
 

@@ -44,9 +44,9 @@
                         <td class="text-center text-gray-600">{{ $client->created_at->format('d/m/Y')}}</td>
                         <td class="text-center">
                             @if ($client->db_last_version == 0)
-                                <i class="fa-solid fa-circle-xmark text-danger"></i>
+                                <i class="fa-solid fa-circle-xmark text-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ $client->db_error }}"></i>
                             @else
-                                <i class="fa-solid fa-circle-check text-success"></i>
+                                <i class="fa-solid fa-circle-check text-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Banco de dados atualizado"></i>
                             @endif
                         </td>
                         <td class="text-center">
@@ -60,6 +60,9 @@
                             <div class="d-flex gap-4 align-items-center">
                                 <a href="{{ route('clients.show', $client->id) }}" class="btn btn-sm btn-primary btn-active-success fw-bolder text-uppercase py-2">
                                     Visualizar
+                                </a>
+                                <a href="{{ route('systems.update.database', $client->id) }}" target="_blank" class="text-gray-700" data-bs-toggle="tooltip" data-bs-placement="top" title="Atualizar banco de dados">
+                                    <i class="fa-solid fa-database"></i>
                                 </a>
                                 @if ($client->domains()->count() > 0)
                                     <a href="https://{{ $client->domains[0]->domain }}/acessar/{{ $client->token }}" target="_blank" class="text-gray-700" data-bs-toggle="tooltip" data-bs-placement="top" title="Acessar como sistema">
