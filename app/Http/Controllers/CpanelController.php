@@ -391,6 +391,8 @@ class CpanelController extends Controller
         // Carrega a chave privada
         $key = PublicKeyLoader::loadPrivateKey(file_get_contents($keyPath), env('SSH_PASSPHRASE'));
 
+        Log::info($key);
+
         // Autentica com chave privada
         if (!$ssh->login($this->cpanelUser, $key)) {
             throw new Exception('Falha na autenticação SSH com chave privada');
