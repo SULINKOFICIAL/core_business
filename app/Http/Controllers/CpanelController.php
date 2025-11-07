@@ -204,7 +204,7 @@ class CpanelController extends Controller
         /**
          * Inserir o colaborador referente ao usuário.
          */
-        DB::connection('mysql_cliente')->table('users')->insert([
+        DB::connection('mysql_cliente')->table('collaborators')->insert([
             'user_id'    => 2,
             'created_by' => 1,
         ]);
