@@ -10,6 +10,7 @@ use GuzzleHttp\Client as Guzzle;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use phpseclib3\Crypt\PublicKeyLoader;
 use phpseclib3\Net\SSH2;
 
 class CpanelController extends Controller
@@ -383,9 +384,20 @@ class CpanelController extends Controller
 
         // Conectar via SSH para clonar o banco
         $ssh = new SSH2(env('WHM_IP'));
-        if (!$ssh->login($this->cpanelUser, $this->cpanelPass)) {
-            throw new Exception('Falha na autenticação SSH');
+
+        // Caminho da chave privada (ex: storage_path('keys/id_rsa'))
+        $keyPath = base_path('storage/keys/id_rsa');
+
+        // Carrega a chave privada
+        $key = PublicKeyLoader::loadPrivateKey(file_get_contents($keyPath), env('SSH_PASSPHRASE'));
+
+        // Autentica com chave privada
+        if (!$ssh->login($this->cpanelUser, $key)) {
+            throw new Exception('Falha na autenticação SSH com chave privada');
         }
+
+        // Se chegou aqui, login foi bem-sucedido
+        echo $ssh->exec('whoami');
 
         // Comando para clonar o banco de dados usando mysqldump
         $dumpCommand = "mysqldump -u {$this->cpanelUser} -p'{$this->cpanelPass}' {$templateBanco} | mysql -u {$this->cpanelUser} -p'{$this->cpanelPass}' {$database['name']}";
