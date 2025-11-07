@@ -227,6 +227,8 @@ class CpanelController extends Controller
             'phone1'        => '123456789',
             'status'        => 1,
             'country_id'    => 26,
+            'state_id'      => 1,
+            'city_id'       => 1,
             'created_by'    => 1,
         ]);
 
