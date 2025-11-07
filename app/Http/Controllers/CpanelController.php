@@ -226,6 +226,7 @@ class CpanelController extends Controller
             'site'          => 'matrix.com.br',
             'phone1'        => '123456789',
             'status'        => 1,
+            'country_id'    => 26,
             'created_by'    => 1,
         ]);
 
