@@ -386,7 +386,7 @@ class CpanelController extends Controller
         $ssh = new SSH2(env('WHM_IP'));
 
         // Caminho da chave privada (ex: storage_path('keys/id_rsa'))
-        $keyPath = base_path('storage/keys/id_rsa');
+        $keyPath = storage_path('keys/id_rsa');
 
         // Carrega a chave privada
         $key = PublicKeyLoader::loadPrivateKey(file_get_contents($keyPath), env('SSH_PASSPHRASE'));
