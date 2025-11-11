@@ -98,9 +98,9 @@ class MetaCallbackController extends Controller
             /**
              * Enviar para a conta miCore responsável
              */
-            dd($response);
             
         }
+        dd($response);
 
         // Redireciona para aplicação
         return redirect()->away('http://' . $data['decoded']['origin'] . '/callbacks/meta?code=' . $data['code']);

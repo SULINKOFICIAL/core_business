@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Services;
-use App\Services\Http\RequestService;
+use App\Services\RequestService;
 
 class MetaApiService
 {
