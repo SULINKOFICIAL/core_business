@@ -204,7 +204,7 @@ class CpanelController extends Controller
         /**
          * Inserir o colaborador referente ao usuário.
          */
-        DB::connection('mysql_cliente')->table('users')->insert([
+        DB::connection('mysql_cliente')->table('collaborators')->insert([
             'user_id'    => 2,
             'created_by' => 1,
         ]);
@@ -226,6 +226,9 @@ class CpanelController extends Controller
             'site'          => 'matrix.com.br',
             'phone1'        => '123456789',
             'status'        => 1,
+            'country_id'    => 26,
+            'state_id'      => 1,
+            'city_id'       => 1,
             'created_by'    => 1,
         ]);
 
@@ -386,7 +389,7 @@ class CpanelController extends Controller
         $ssh = new SSH2(env('WHM_IP'));
 
         // Caminho da chave privada (ex: storage_path('keys/id_rsa'))
-        $keyPath = base_path('storage/keys/id_rsa');
+        $keyPath = storage_path('keys/id_rsa');
 
         // Carrega a chave privada
         $key = PublicKeyLoader::loadPrivateKey(file_get_contents($keyPath), env('SSH_PASSPHRASE'));
