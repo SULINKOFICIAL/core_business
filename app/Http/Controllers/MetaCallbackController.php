@@ -26,7 +26,7 @@ class MetaCallbackController extends Controller
         Log::info(json_encode($data));
 
         // Redireciona para aplicação
-        return redirect()->away('https://' . $data['decoded']['origin'] . '/callbacks/meta?code=' . $data['code']);
+        return redirect()->away('http://' . $data['decoded']['origin'] . '/callbacks/meta?code=' . $data['code']);
 
     }
 }
