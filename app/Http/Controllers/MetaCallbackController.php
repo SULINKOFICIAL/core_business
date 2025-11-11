@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
+use App\Models\ClientDomain;
+use App\Models\ClientIntegration;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Services\MetaApiService;
@@ -37,10 +40,10 @@ class MetaCallbackController extends Controller
         * Troca o código de autorização (code) gerado na autenticação inicial do Meta
         */
         $response = $this->metaService->getAccessToken($data['code']);
-    
+        dd($response);
         Log::info('Token de curto prazo');
         Log::info(json_encode($response));
-
+        dd($response);
          /**
          * Caso tenha sucesso
          */
@@ -95,9 +98,20 @@ class MetaCallbackController extends Controller
             // Calcula a expiração
             $expiresAt = now()->addSeconds($expiresIn);
 
+            // Encontra o cliente que é dono do domínio
+            $client = ClientDomain::where('domain', $data['decoded']['origin'])->first();
+
             /**
              * Enviar para a conta miCore responsável
              */
+            ClientIntegration::create([
+                'client_id'             => $client->client_id,
+                'provider'              => 'meta',
+                'external_account_id'   => $accountId,
+                'access_token'          => $accessToken,
+                'refresh_token'         => $response['data']['refresh_token'],
+                'token_expires_at'      => $expiresAt,
+            ]);
             
         }
         dd($response);
