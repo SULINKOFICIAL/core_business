@@ -44,7 +44,12 @@ class GuzzleService
             $body = $response->getBody()->getContents();
 
             Log::info('URL: ' . "http://{$client->domains[0]->domain}/api/$url");
-            Log::info('Requisição: ' . $response);
+            Log::info('Requisição: ' . json_encode([
+                'status' => $response->getStatusCode(),
+                'headers' => $response->getHeaders(),
+                'body' => $body,
+            ]));
+
             Log::info('Body: ' . $body);
 
             return [
