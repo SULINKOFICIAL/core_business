@@ -29,11 +29,8 @@ class ApisTokensController extends Controller
      *
      * @return string URL completa de autenticação
      */
-    public function url(Request $request)
+    public function url($host)
     {
-
-        // Obtém host
-        $host = $request->getHost();
 
         // Define o domínio da central
         $centralUrl = env('APP_URL') . '/callbacks/meta';
