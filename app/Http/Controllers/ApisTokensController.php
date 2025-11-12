@@ -62,7 +62,7 @@ class ApisTokensController extends Controller
      * em que um dos usuários dele autorizou através do 
      * sistema de atendimento. 
      */
-    public function token(Request $request, $id)
+    public function token($id)
     {
 
         // Obtém o Token solicitado
