@@ -100,8 +100,6 @@ class MetaCallbackController extends Controller
 
             // Encontra o cliente que é dono do domínio
             $client = ClientDomain::where('domain', $data['decoded']['origin'])->first();
-            
-            dd($response, $responseLongToken, $accountInformations, $data);
 
             /**
              * Enviar para a conta miCore responsável
