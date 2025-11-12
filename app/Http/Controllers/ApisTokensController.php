@@ -36,8 +36,7 @@ class ApisTokensController extends Controller
         $host = $request->getHost();
 
         // Define o domínio da central
-        // $centralUrl = env('CENTRAL_DOMAIN') . '/callbacks/meta';
-        $centralUrl = 'https://84f225eb187e.ngrok-free.app' . '/callbacks/meta';
+        $centralUrl = env('CENTRAL_DOMAIN') . '/callbacks/meta';
 
         // URL de redirecionamento
         $redirectUri = urlencode($centralUrl);
