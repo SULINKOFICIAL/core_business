@@ -63,12 +63,16 @@ class MetaCallbackController extends Controller
              * Este método deve ser chamado logo após o usuário autorizar a aplicação no fluxo OAuth2.
              *
              */
-            $response = $this->metaService->getLongToken($accessToken);
+            $responseLongToken = $this->metaService->getLongToken($accessToken);
+
+            // Extrai dados
+            $accessToken = $responseLongToken['data']['access_token'];
+            $expiresIn = $responseLongToken['data']['expires_in'];
 
             /**
              * Caso tenha erro
              */
-            if($response['success'] == false){
+            if($responseLongToken['success'] == false){
                 return redirect()->route('core.developers.test')->with([
                     'message' => 'Erro ao integrar conta.',
                 ]);
@@ -96,6 +100,8 @@ class MetaCallbackController extends Controller
 
             // Encontra o cliente que é dono do domínio
             $client = ClientDomain::where('domain', $data['decoded']['origin'])->first();
+            
+            dd($response, $responseLongToken, $accountInformations);
 
             /**
              * Enviar para a conta miCore responsável
@@ -106,7 +112,7 @@ class MetaCallbackController extends Controller
             ], [
                 'provider'              => 'meta',
                 'access_token'          => $accessToken,
-                'refresh_token'         => $response['data']['access_token'],
+                'refresh_token'         => $responseLongToken['data']['access_token'],
                 'token_expires_at'      => $expiresAt,
             ]);
 
