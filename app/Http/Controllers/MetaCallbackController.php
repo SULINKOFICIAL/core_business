@@ -115,7 +115,7 @@ class MetaCallbackController extends Controller
             ]);
 
             // Redireciona para aplicação
-            return redirect()->away('http://' . $data['decoded']['origin'] . ':8000/callbacks/meta?integration_id=' . $clientIntegration->id);
+            return redirect()->away('https://' . $data['decoded']['origin'] . '/callbacks/meta?integration_id=' . $clientIntegration->id);
             
         }
 
