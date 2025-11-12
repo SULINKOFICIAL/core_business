@@ -36,7 +36,7 @@ class ApisTokensController extends Controller
         $host = $request->getHost();
 
         // Define o domínio da central
-        $centralUrl = env('CENTRAL_DOMAIN') . '/callbacks/meta';
+        $centralUrl = env('APP_URL') . '/callbacks/meta';
 
         // URL de redirecionamento
         $redirectUri = urlencode($centralUrl);
