@@ -64,9 +64,6 @@ class ApisTokensController extends Controller
      */
     public function token(Request $request, $id)
     {
-        
-        // Obtém host
-        $host = $request->getHost();
 
         // Obtém o Token solicitado
         $token = ClientIntegration::find($id);
@@ -76,17 +73,6 @@ class ApisTokensController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Token não encontrado',
-            ], 404);
-        }
-
-        // Verifica se o token pertence ao mesmo host
-        $domain = ClientDomain::where('domain', $host)->first();
-
-        // Verifica se o token pertence ao mesmo host
-        if (!$domain || $domain->client_id !== $token->client_id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Resgate não autorizado',
             ], 404);
         }
 
