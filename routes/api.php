@@ -3,6 +3,7 @@
 use App\Http\Controllers\ApisController;
 use App\Http\Controllers\ApisDomainsController;
 use App\Http\Controllers\ApisNewsController;
+use App\Http\Controllers\ApisTokensController;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -45,6 +46,12 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
             Route::get('/editar/{id}',      [ApisDomainsController::class, 'edit']);
             Route::put('/editar/{id}',      [ApisDomainsController::class, 'update']);
             Route::delete('/remover/{id}',  [ApisDomainsController::class, 'destroy']);
+        });
+
+        /** API gerencia os domínios */
+        Route::prefix('tokens')->group(function () {
+            Route::get('/url',        [ApisTokensController::class, 'url']);
+            Route::get('/token/{id}', [ApisTokensController::class, 'token']);
         });
 
         /** API gerencia as notícias */

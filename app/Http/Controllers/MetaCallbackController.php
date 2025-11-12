@@ -17,7 +17,6 @@ class MetaCallbackController extends Controller
     public function __construct() {
         $this->metaService = new MetaApiService();
     }
-    
 
     /**
      * Callback para receber autorização OAuth,
@@ -30,9 +29,6 @@ class MetaCallbackController extends Controller
         // Obtém dados
         $data = $request->all();
 
-        // Loga dados
-        Log::info(json_encode($data));
-
         // Decodifica o state
         $data['decoded'] = json_decode(base64_decode($request->get('state')), true);
 
@@ -40,11 +36,18 @@ class MetaCallbackController extends Controller
         * Troca o código de autorização (code) gerado na autenticação inicial do Meta
         */
         $response = $this->metaService->getAccessToken($data['code']);
-        dd($response);
-        Log::info('Token de curto prazo');
-        Log::info(json_encode($response));
-        dd($response);
-         /**
+
+        /**
+         * Se o código não é mais válido
+         */
+        if($response['status'] == 400){
+            // Redireciona para aplicação
+            return redirect()->away('http://' . $data['decoded']['origin'] . '/callbacks/meta?code=' . $data['code'])->with([
+                'message' => 'Código de autorização inválido.',
+            ]);
+        }
+
+        /**
          * Caso tenha sucesso
          */
         if($response['success']){
@@ -62,9 +65,6 @@ class MetaCallbackController extends Controller
              */
             $response = $this->metaService->getLongToken($accessToken);
 
-            Log::info('Token de longo prazo');
-            Log::info(json_encode($response));
-
             /**
              * Caso tenha erro
              */
@@ -76,10 +76,6 @@ class MetaCallbackController extends Controller
 
             // Obtém dados da conta
             $accountInformations = $this->metaService->me($accessToken);
-
-
-            Log::info('Informações da conta');
-            Log::info(json_encode($accountInformations));
 
             /**
              * Caso tenha erro
@@ -104,20 +100,25 @@ class MetaCallbackController extends Controller
             /**
              * Enviar para a conta miCore responsável
              */
-            ClientIntegration::create([
-                'client_id'             => $client->client_id,
-                'provider'              => 'meta',
+            $clientIntegration = ClientIntegration::updateOrCreate([
                 'external_account_id'   => $accountId,
+                'client_id'             => $client->client_id,
+            ], [
+                'provider'              => 'meta',
                 'access_token'          => $accessToken,
-                'refresh_token'         => $response['data']['refresh_token'],
+                'refresh_token'         => $response['data']['access_token'],
                 'token_expires_at'      => $expiresAt,
             ]);
+
+            // Redireciona para aplicação
+            return redirect()->away('http://' . $data['decoded']['origin'] . ':8000/callbacks/meta?integration_id=' . $clientIntegration->id);
             
         }
-        dd($response);
 
-        // Redireciona para aplicação
-        return redirect()->away('http://' . $data['decoded']['origin'] . '/callbacks/meta?code=' . $data['code']);
+        /**
+         * Caso tenha erro
+         */
+        return redirect()->away('http://' . $data['decoded']['origin'] . '/callbacks/meta?error=true');
 
     }
 }

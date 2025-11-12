@@ -36,7 +36,7 @@ class MetaApiService
     {
 
         // Retorno temporário
-/*         return ['data' =>[
+        return [
             "success" => true,
             "status" => 200,
             "data" => [
@@ -45,8 +45,8 @@ class MetaApiService
                 "expires_in" => 5105318,
             ],
             "headers" => [],
-        ]];
- */
+        ];
+
         // Envia requisição via RequestService
         $response = $this->RequestService->request(
             'GET',
@@ -75,7 +75,7 @@ class MetaApiService
     public function me($accessToken)
     {
 
-        return ['data' =>[
+        return [
             "success" => true,
             "status" => 200,
             "data" => [
@@ -83,7 +83,7 @@ class MetaApiService
                 "name" => "Jeandreo Furquim",
             ],
             "headers" => [],
-        ]];
+        ];
 
         // Envia requisição via RequestService
         $response = $this->RequestService->request(
@@ -113,7 +113,7 @@ class MetaApiService
     public function getLongToken($accessToken)
     {
         
-        return ['data' =>[
+        return [
             "success" => true,
             "status" => 200,
             "data" => [
@@ -122,7 +122,7 @@ class MetaApiService
                 "expires_in" => 5105318,
             ],
             "headers" => [],
-        ]];
+        ];
 
         // Envia requisição via RequestService
         $response = $this->RequestService->request(
@@ -136,6 +136,60 @@ class MetaApiService
                     'fb_exchange_token' => $accessToken,
                 ]
             ]
+        );
+
+        // Retorna a resposta
+        return $response;
+
+    }
+
+    /**
+     * Recupera a lista de contas Business associadas ao usuário autenticado.
+     * 
+     * Utiliza o token de acesso para consultar as contas do tipo "Business Manager"
+     * vinculadas ao usuário logado.
+     *
+     * @param string $accessToken Token de acesso válido
+     * @return array Lista de empresas com ID e nome
+     */
+    public function getBusinesses($accessToken)
+    {
+
+        // Envia requisição via RequestService
+        $response = $this->RequestService->request(
+            'GET',
+            'https://graph.facebook.com/v20.0/me/businesses?fields=id,name,profile_picture_uri',
+            [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $accessToken,
+                ]
+            ]
+        );
+
+        // Retorna a resposta
+        return $response;
+
+    }
+
+    /**
+     * Recupera a lista de números de WhatsApp Business associados a uma conta Business.
+     *
+     * @param string $accessToken Token de acesso de curto prazo
+     * @param string $businessId ID da conta Business
+     * @return array Resposta com dados do usuário autenticado
+     */
+    public function getWabas($accessToken, $businessId)
+    {
+
+        // Envia requisição via RequestService
+        $response = $this->RequestService->request(
+            'GET',
+            "https://graph.facebook.com/v20.0/{$businessId}/owned_whatsapp_business_accounts?fields=id,name,phone_numbers,link,profile_picture_uri",
+            [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $accessToken,
+                ]
+            ],
         );
 
         // Retorna a resposta
