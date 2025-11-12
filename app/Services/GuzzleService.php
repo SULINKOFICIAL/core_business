@@ -6,6 +6,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\RequestException;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Classe responsável por interagir com a API da eRede para realizar operações
@@ -41,6 +42,10 @@ class GuzzleService
         try {
             $response = $guzzle->$method("http://{$client->domains[0]->domain}/api/$url", $options);
             $body = $response->getBody()->getContents();
+
+            Log::info('URL: ' . "http://{$client->domains[0]->domain}/api/$url");
+            Log::info('Requisição: ' . $response);
+            Log::info('Body: ' . $body);
 
             return [
                 'success' => true,
