@@ -9,7 +9,6 @@ use App\Http\Controllers\ErrorMiCoreController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\IntegrationSuggestionController;
 use App\Http\Controllers\MetaApiController;
-use App\Http\Controllers\MetaCallbackController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\ModuleController;

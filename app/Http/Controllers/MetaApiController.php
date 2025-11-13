@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\MetaDispatchRequest;
 use App\Models\Client;
 use App\Models\ClientDomain;
 use App\Models\ClientIntegration;
@@ -48,22 +49,20 @@ class MetaApiController extends Controller
      */
     public function return(Request $request, $logOld = null)
     {
-
         // Obtém dados
         $data = $request->all();
 
         // Dispara para a função que resolve
-        $this->handle($data, $logOld, $request->getHost());
+        $this->handle($data, $logOld);
 
         // Retorno Sucesso imediato para o Meta (202 Accepted)
         return response()->json([
             'status' => 'Accepted',
             'message' => 'Webhook recebido e será processado em background.'
         ], 202);
-
     }
 
-    public function handle(array $data, $logOld = null, $domain = null)
+    public function handle(array $data, $logOld = null)
     {
 
         /**
@@ -81,6 +80,9 @@ class MetaApiController extends Controller
             $logOld->new_log_id = $logApi->id;
             $logOld->save();
         }
+
+        // Dispara para a função de encontrar o dominio a ser enviado o conteudo
+        MetaDispatchRequest::dispatch($data, $logApi->id)->onQueue('whatsapp');
 
     }
 

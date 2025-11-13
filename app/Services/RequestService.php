@@ -53,7 +53,6 @@ class RequestService
      */
     public function request(string $method, string $url, array $options = [])
     {
-
         try {
 
             /**
