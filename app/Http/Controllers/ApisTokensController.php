@@ -127,7 +127,7 @@ class ApisTokensController extends Controller
         // Localiza o token e verifica a autorização
         return response()->json([
             'success' => true,
-            'message' => $data['status'] ? 'Subscrição ativa' : 'Subscrição desativada',
+            'message' => $data['status'] ? 'Ativou os números dessa conta' : 'Desativou os números dessa conta',
         ]);
     }
 
