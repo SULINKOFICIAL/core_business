@@ -51,9 +51,11 @@ class MetaApiController extends Controller
 
         // Obtém dados
         $data = $request->all();
+        Log::info('1111', $data);
 
         // Dispara para a função que resolve
         $this->handle($data, $logOld, $request->getHost());
+        Log::info('2222', $data);
 
         // Retorno Sucesso imediato para o Meta (202 Accepted)
         return response()->json([
