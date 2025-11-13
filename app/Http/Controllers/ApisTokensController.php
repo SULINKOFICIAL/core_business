@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
 use App\Models\ClientDomain;
 use App\Models\ClientIntegration;
+use App\Models\ClientMeta;
 use Illuminate\Http\Request;
 
 class ApisTokensController extends Controller
@@ -96,4 +98,37 @@ class ApisTokensController extends Controller
             'data' => $token->toArray(),
         ]);
     }
+
+    /**
+     * Recebe da conta do cliente quais serão os negócios
+     * da meta que serão responsabilidade da central receber
+     * as notificações.
+     * 
+     * A partir disso a central separará as notificações
+     * e enviará para o MiCore responsável.
+     */
+    public function subscribed(Request $request)
+    {
+        
+        // Obtém dados
+        $data = $request->all();
+
+        // Obtém cliente associado ao miCore através do Token dele
+        $client = Client::where('token', $data['token_micore'])->first();
+
+        // Obtém o Token solicitado
+        ClientMeta::updateOrCreate([
+            'client_id' => $client->id,
+            'meta_id' => $data['waba_id'],
+        ], [
+            'status' => $data['status'],
+        ]);
+
+        // Localiza o token e verifica a autorização
+        return response()->json([
+            'success' => true,
+            'message' => $data['status'] ? 'Ativou os números dessa conta' : 'Desativou os números dessa conta',
+        ]);
+    }
+
 }
