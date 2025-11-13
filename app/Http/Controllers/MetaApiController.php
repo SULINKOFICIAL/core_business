@@ -82,7 +82,7 @@ class MetaApiController extends Controller
         }
 
         // Dispara para a função de encontrar o dominio a ser enviado o conteudo
-        MetaDispatchRequest::dispatch($data, $logApi->id)->onQueue('whatsapp');
+        MetaDispatchRequest::dispatch($data, $logApi->id);
 
     }
 
