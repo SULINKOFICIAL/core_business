@@ -119,7 +119,7 @@ class ApisTokensController extends Controller
         // Obtém o Token solicitado
         ClientMeta::updateOrCreate([
             'client_id' => $client->id,
-            'meta_id' => $data['meta_id'],
+            'meta_id' => $data['waba_id'],
         ], [
             'status' => $data['status'],
         ]);
