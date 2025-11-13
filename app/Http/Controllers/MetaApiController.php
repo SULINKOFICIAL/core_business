@@ -51,11 +51,9 @@ class MetaApiController extends Controller
 
         // Obtém dados
         $data = $request->all();
-        Log::info('1111', $data);
 
         // Dispara para a função que resolve
         $this->handle($data, $logOld, $request->getHost());
-        Log::info('2222', $data);
 
         // Retorno Sucesso imediato para o Meta (202 Accepted)
         return response()->json([
@@ -77,8 +75,6 @@ class MetaApiController extends Controller
             'api' => 'Meta',
             'json' => json_encode($data),
         ]);
-
-        Log::info('Webhook recebido e será processado em background.', $data);
 
         // Se for um LogApi que está sendo reprocessado
         if($logOld){

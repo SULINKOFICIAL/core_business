@@ -206,8 +206,8 @@ Route::name('callbacks.')->prefix('callbacks')->group(function () {
 
 
 // Webhook: para receber notificações
-Route::prefix('webhooks')->middleware([])->group(function () {
-    Route::get('/meta', [MetaApiController::class, 'token']);
+Route::prefix('webhooks')->withoutMiddleware(['web'])->group(function () {
+    Route::get('/meta',  [MetaApiController::class, 'token']);
     Route::post('/meta', [MetaApiController::class, 'return'])->name('meta');
 });
 
