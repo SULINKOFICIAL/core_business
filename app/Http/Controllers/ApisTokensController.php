@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
 use App\Models\ClientDomain;
 use App\Models\ClientIntegration;
 use App\Models\ClientMeta;
@@ -112,9 +113,12 @@ class ApisTokensController extends Controller
         // Obtém dados
         $data = $request->all();
 
+        // Obtém cliente associado ao miCore através do Token dele
+        $client = Client::where('token', $data['token_micore'])->first();
+
         // Obtém o Token solicitado
         ClientMeta::updateOrCreate([
-            'client_id' => $data['client_id'],
+            'client_id' => $client->id,
             'meta_id' => $data['meta_id'],
         ], [
             'status' => $data['status'],
