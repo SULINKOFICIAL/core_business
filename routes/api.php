@@ -49,9 +49,10 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
         });
 
         /** API gerencia os domínios */
-        Route::prefix('tokens')->group(function () {
+        Route::prefix('meta')->group(function () {
             Route::get('/url/{host}', [ApisTokensController::class, 'url']);
             Route::get('/token/{id}', [ApisTokensController::class, 'token']);
+            Route::post('/inscricao', [ApisTokensController::class, 'subscribed']);
         });
 
         /** API gerencia as notícias */
