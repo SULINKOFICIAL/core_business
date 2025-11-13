@@ -8,6 +8,7 @@ use App\Http\Controllers\ERedeController;
 use App\Http\Controllers\ErrorMiCoreController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\IntegrationSuggestionController;
+use App\Http\Controllers\MetaApiController;
 use App\Http\Controllers\MetaCallbackController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\ResourceController;
@@ -198,12 +199,16 @@ Route::middleware(['auth'])->group(function () {
 
 });
 
-// Resposta da eRede
-Route::get('/resposta-rede', [ERedeController::class, 'webhook']);
-
 // Callback: para receber autorização OAuth
 Route::name('callbacks.')->prefix('callbacks')->group(function () {
-    Route::get('/meta', [MetaCallbackController::class, 'callback'])->name('meta');
+    Route::get('/meta', [MetaApiController::class, 'callback'])->name('meta');
+});
+
+
+// Webhook: para receber notificações
+Route::prefix('webhooks')->group(function () {
+    Route::get('/meta', [MetaApiController::class, 'token']);
+    Route::post('/meta', [MetaApiController::class, 'return'])->name('meta');
 });
 
 require __DIR__.'/auth.php';

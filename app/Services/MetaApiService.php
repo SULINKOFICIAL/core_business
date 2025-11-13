@@ -35,18 +35,6 @@ class MetaApiService
     public function getAccessToken($code)
     {
 
-        // Retorno temporário
-        return [
-            "success" => true,
-            "status" => 200,
-            "data" => [
-                "access_token" => "EAA3tm712Cw8BP9gtTDVKicZBSm0h5tPf4ZBEpKsZCbcIcusg2jJ0C4lUSWOmE1CnDP8QoFkvDvedZCguZBiZCJC9gnwxu1oJ8LIYsP8DFLvClN5ZB0oFUZCJZBdARhZAP2ZAxZA2UY1gJUejkzihBttXh2rl02JOhjZCkTz6T7vp9y0ElT1gzGY7ZBxcGjXKZAN36z4WPH5ZB0uPTrMhDT61YVphRkqc5M5ZCN8H5V4RXAeDIwS9RvyXMdbJyukMYVmxJEKnTBOh0ng85YGZBVm4J2jZCQQqaIXoxn1wK50sldjaFqU",
-                "token_type" => "bearer",
-                "expires_in" => 5105318,
-            ],
-            "headers" => [],
-        ];
-
         // Envia requisição via RequestService
         $response = $this->RequestService->request(
             'GET',
@@ -74,16 +62,6 @@ class MetaApiService
      */
     public function me($accessToken)
     {
-
-        return [
-            "success" => true,
-            "status" => 200,
-            "data" => [
-                "id" => "2302152953596620",
-                "name" => "Jeandreo Furquim",
-            ],
-            "headers" => [],
-        ];
 
         // Envia requisição via RequestService
         $response = $this->RequestService->request(
@@ -113,17 +91,6 @@ class MetaApiService
     public function getLongToken($accessToken)
     {
         
-        return [
-            "success" => true,
-            "status" => 200,
-            "data" => [
-                "access_token" => "EAA3tm712Cw8BP8VoAXbKEtsp3qGz2JdkiaVk3zI58RPZBCxd82ULEt4tm3pllKH399Tz2iJQt7MlrK4quzFmF9BW5eQRcxr9OhTj0Ri7ptLIv3dZBAlV8Rj3yAozPlrhYAzMUz9wSAPlJ7B3t7OuFlOUXdS9qpx442uKHFkMcTpK5wiAWFd6X5kCgn",
-                "token_type" => "bearer",
-                "expires_in" => 5105318,
-            ],
-            "headers" => [],
-        ];
-
         // Envia requisição via RequestService
         $response = $this->RequestService->request(
             'GET',

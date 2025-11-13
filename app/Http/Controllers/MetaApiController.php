@@ -5,17 +5,83 @@ namespace App\Http\Controllers;
 use App\Models\Client;
 use App\Models\ClientDomain;
 use App\Models\ClientIntegration;
+use App\Models\LogsApi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Config;
 use App\Services\MetaApiService;
 
-class MetaCallbackController extends Controller
+class MetaApiController extends Controller
 {
 
     protected $metaService;
             
     public function __construct() {
         $this->metaService = new MetaApiService();
+    }
+
+
+    /**
+     * Autorização de Webhook através da Meta.
+     */
+    public function token(Request $request)
+    {
+
+        /**
+         * Obtém parametros de verificação disparados
+         * pela Meta, eles precisam ser iguais ao que
+         * o sistema miCore espera
+         */
+        $data = $request->all();
+
+        // Se forem compatíveis, retorna sucesso
+        if(isset($data['hub_verify_token']) && $data['hub_verify_token'] === Config::get('meta.verify_token')){
+            return response($data['hub_challenge'], 200);
+        } else {
+            return response('Invalid Verify Token', 403);
+        }
+
+    }  
+
+    /**
+     * Função responsavel por receber o Webhook da Meta (Facebook, WhatsApp, Instagram etc)
+     */
+    public function return(Request $request, $logOld = null)
+    {
+
+        // Obtém dados
+        $data = $request->all();
+
+        // Dispara para a função que resolve
+        $this->handle($data, $logOld, $request->getHost());
+
+        // Retorno Sucesso imediato para o Meta (202 Accepted)
+        return response()->json([
+            'status' => 'Accepted',
+            'message' => 'Webhook recebido e será processado em background.'
+        ], 202);
+
+    }
+
+    public function handle(array $data, $logOld = null, $domain = null)
+    {
+
+        /**
+         * Salvamos em uma tabela interna no miCore
+         * para debugar e garantir que o webhook foi 
+         * recebido e salvo.
+         */
+        $logApi = LogsApi::create([
+            'api' => 'Meta',
+            'json' => json_encode($data),
+        ]);
+
+        // Se for um LogApi que está sendo reprocessado
+        if($logOld){
+            $logOld->new_log_id = $logApi->id;
+            $logOld->save();
+        }
+
     }
 
     /**
