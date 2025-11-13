@@ -76,6 +76,8 @@ class MetaApiController extends Controller
             'json' => json_encode($data),
         ]);
 
+        Log::info('Webhook recebido e será processado em background.', $data);
+
         // Se for um LogApi que está sendo reprocessado
         if($logOld){
             $logOld->new_log_id = $logApi->id;
