@@ -20,7 +20,7 @@ class MetaApiController extends Controller
     protected $RequestService;
     private $metaAppId;
     protected $metaService;
-    protected $scopesInstagram = 'instagram_manage_messages,instagram_basic,pages_show_list,business_management';
+    protected $scopesInstagram = 'instagram_manage_messages,instagram_basic,pages_show_list,pages_read_user_content,business_management,pages_messaging,pages_read_engagement';
     protected $scopesWhatsApp  = 'whatsapp_business_management,whatsapp_business_messaging,business_management,pages_show_list';
             
     // Carrega credenciais do Meta App a partir do config/meta.php
@@ -122,7 +122,7 @@ class MetaApiController extends Controller
          */
         if($response['status'] == 400){
             // Redireciona para aplicação
-            return redirect()->away('http://' . $data['decoded']['origin'] . '/callbacks/meta?code=' . $data['code'])->with([
+            return redirect()->away('http://' . $data['decoded']['origin'] . '/callbacks/meta/' . $type . '?code=' . $data['code'])->with([
                 'message' => 'Código de autorização inválido.',
             ]);
         }
@@ -134,7 +134,6 @@ class MetaApiController extends Controller
 
             // Extrai dados
             $accessToken = $response['data']['access_token'];
-            $expiresIn = $response['data']['expires_in'];
             
             /**
              * Troca o token de acesso (access_token) gerado na autenticação inicial do Meta
@@ -147,7 +146,6 @@ class MetaApiController extends Controller
 
             // Extrai dados
             $accessToken = $responseLongToken['data']['access_token'];
-            $expiresIn = $responseLongToken['data']['expires_in'];
 
             /**
              * Caso tenha erro
@@ -175,9 +173,6 @@ class MetaApiController extends Controller
              */
             $accountId = $accountInformations['data']['id'];
 
-            // Calcula a expiração
-            $expiresAt = now()->addSeconds($expiresIn);
-
             // Encontra o cliente que é dono do domínio
             $client = ClientDomain::where('domain', $data['decoded']['origin'])->first();
 
@@ -200,7 +195,6 @@ class MetaApiController extends Controller
             ], [
                 'scopes'                => $scopesList[$type],
                 'access_token'          => $accessToken,
-                'token_expires_at'      => $expiresAt,
             ]);
 
             // Redireciona para aplicação
