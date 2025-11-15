@@ -12,9 +12,10 @@ class ClientIntegration extends Model
     protected $fillable = [
         'client_id',
         'provider',
+        'type',
         'external_account_id',
         'access_token',
-        'refresh_token',
+        'scopes',
         'token_expires_at',
         'status',
     ];

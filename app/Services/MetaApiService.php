@@ -32,7 +32,7 @@ class MetaApiService
      * @param string $code Código de autorização retornado pelo Meta
      * @return array Resposta com token de acesso e metadados
      */
-    public function getAccessToken($code)
+    public function getAccessToken($code, $type)
     {
 
         // Envia requisição via RequestService
@@ -42,7 +42,7 @@ class MetaApiService
             [
                 'query' => [
                     'code'           => $code,
-                    'redirect_uri'   => route('callbacks.meta'),
+                    'redirect_uri'   => route('callbacks.meta.' . $type),
                     'client_id'      => $this->metaAppId,
                     'client_secret'  => $this->metaAppClientSecret,
                 ]

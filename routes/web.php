@@ -200,13 +200,29 @@ Route::middleware(['auth'])->group(function () {
 
 // Callback: para receber autorização OAuth
 Route::name('callbacks.')->prefix('callbacks')->group(function () {
-    Route::get('/meta', [MetaApiController::class, 'callback'])->name('meta');
-});
+    Route::prefix('meta')->group(function () {
+        Route::name('meta.')->group(function () {
 
+            /**
+             * Criamos rotas de callback separadas para WhatsApp e Instagram,
+             * mesmo que ambas chamem a mesma função. Isso facilita o processo
+             * de validação da Meta, pois cada produto possui um fluxo OAuth
+             * distinto e uma URL de redirecionamento específica.
+             *
+             * Ao manter endpoints independentes, deixamos explícito para o
+             * sistema da Meta e para o App Review que tratamos permissões
+             * e integrações de cada produto de forma isolada.
+             */
+            Route::get('/whatsapp',   [MetaApiController::class, 'callback'])->name('whatsapp');
+            Route::get('/instagram',  [MetaApiController::class, 'callback'])->name('instagram');
+
+        });
+    });
+});
 
 // Webhook: para receber notificações
 Route::prefix('webhooks')->withoutMiddleware(['web'])->group(function () {
-    Route::get('/meta',  [MetaApiController::class, 'token']);
+    Route::get('/meta',  [MetaApiController::class, 'authWebhooks']);
     Route::post('/meta', [MetaApiController::class, 'return'])->name('meta');
 });
 
