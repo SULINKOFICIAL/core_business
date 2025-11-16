@@ -109,11 +109,11 @@ class MetaApiController extends Controller
         // Obtém dados
         $data = $request->all();
 
-        // Decodifica o state
+       /*  // Decodifica o state
         $data['decoded'] = json_decode(base64_decode($request->get('state')), true);
 
         // Obtém o tipo
-        $type = $data['decoded']['type'];
+        $type = $data['decoded']['type']; */
 
         /**
         * Troca o código de autorização (code) gerado na autenticação inicial do Meta
@@ -278,7 +278,7 @@ class MetaApiController extends Controller
                 . "response_type=code&"
                 . "scope={$this->scopesInstagramAuth2}"
                 . "&state={$state}";
-                
+
             Log::info('URL de autenticação gerada:');
             Log::info($oauthUrl);
 
