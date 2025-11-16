@@ -271,7 +271,8 @@ class MetaApiController extends Controller
                 . "force_reauth=true&client_id=" . Config::get('meta.app_instagram_id') . "&"
                 . "redirect_uri=https://central.sulink.com.br/callbacks/meta/instagram&"
                 . "response_type=code&"
-                . "scope={$this->scopesInstagramAuth2}";
+                . "scope={$this->scopesInstagramAuth2}"
+                . "&state={$state}";
 
         }
 
