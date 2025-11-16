@@ -23,7 +23,7 @@ class MetaApiController extends Controller
     protected $metaService;
     protected $scopesWhatsApp  = 'whatsapp_business_management,whatsapp_business_messaging,business_management,pages_show_list';
     protected $scopesInstagram = 'instagram_manage_messages,instagram_basic,pages_show_list,pages_read_user_content,business_management,pages_messaging,pages_read_engagement';
-    protected $scopesInstagramAuth2 = 'instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments%2Cinstagram_business_content_publish%2Cinstagram_business_manage_insights';
+    protected $scopesInstagramAuth2 = 'instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights';
             
     // Carrega credenciais do Meta App a partir do config/meta.php
     public function __construct() {
