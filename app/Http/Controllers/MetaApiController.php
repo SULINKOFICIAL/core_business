@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Config;
 use App\Services\MetaApiService;
+use App\Services\RequestService;
 
 class MetaApiController extends Controller
 {
@@ -27,6 +28,7 @@ class MetaApiController extends Controller
     public function __construct() {
         $this->metaService = new MetaApiService();
         $this->metaAppId = config('meta.client_id');
+        $this->RequestService = new RequestService();
     }
 
     /**
@@ -336,6 +338,33 @@ class MetaApiController extends Controller
             'success' => true,
             'message' => $data['status'] ? 'Ativou os números dessa conta' : 'Desativou os números dessa conta',
         ]);
+    }
+
+    /**
+     * Desativa a conta do Meta
+     */
+    public function unsubscribed(Request $request)
+    {
+        
+        // Obtém dados
+        $data = $request->all();
+        
+        // Obtém o ID da página
+        $pageId = $data['page_id'];
+
+        // Envia requisição via RequestService
+        $response = $this->RequestService->request(
+            'DELETE',
+            'https://graph.facebook.com/v20.0/' . $pageId . '/subscribed_apps',
+            [
+                'query' => [
+                    'access_token'   => Config::get('meta.client_id') . '|' . Config::get('meta.client_secret'),
+                ]
+            ]
+        );
+
+        // Localiza o token e verifica a autorização
+        return response()->json($response);
     }
 
 }

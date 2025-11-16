@@ -54,6 +54,7 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
             Route::get('/auth/{type}/{host}', [MetaApiController::class, 'OAuth2']);
             Route::get('/token/{id}',         [MetaApiController::class, 'token']);
             Route::post('/inscricao',         [MetaApiController::class, 'subscribed']);
+            Route::delete('/desinscricao',    [MetaApiController::class, 'unsubscribed']);
         });
 
         /** API gerencia as notícias */
