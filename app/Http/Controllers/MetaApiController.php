@@ -105,29 +105,22 @@ class MetaApiController extends Controller
      */
     public function callback(Request $request)
     {
-  $data = $request->all();
-    
-    // Debug: verificar se a URL atual corresponde à esperada
-    $currentUrl = $request->url();
-    $expectedRoute = route('callbacks.meta.instagram');
-    
-    Log::info('Instagram Callback Debug', [
-        'current_url' => $currentUrl,
-        'expected_route' => $expectedRoute,
-        'received_code' => !empty($data['code']),
-        'data_received' => $data
-    ]);
-    
-    if (empty($data['code'])) {
-        return response()->json([
-            'error' => 'No authorization code received',
-            'current_url' => $currentUrl,
-            'expected_url' => $expectedRoute
-        ], 400);
-    }
 
-    $response = $this->metaService->getAccessTokenInstagram($data['code'], 'instagram');
-    dd($response);
+        // Obtém dados
+        $data = $request->all();
+
+        // Decodifica o state
+        $data['decoded'] = json_decode(base64_decode($request->get('state')), true);
+
+        // Obtém o tipo
+        $type = $data['decoded']['type'];
+
+        dd($data);
+
+        /**
+        * Troca o código de autorização (code) gerado na autenticação inicial do Meta
+        */
+        $response = $this->metaService->getAccessTokenInstagram($data['code'], $type);
 
         /**
          * Se o código não é mais válido
@@ -276,12 +269,18 @@ class MetaApiController extends Controller
             
         } elseif ($type == 'instagram') {
 
+            Log::info('Rota gerada na autorização do Instagram:');
+            Log::info(route('callbacks.meta.instagram'));
+
             $oauthUrl = "https://www.instagram.com/oauth/authorize?"
                 . "force_reauth=true&client_id=" . Config::get('meta.app_instagram_id') . "&"
                 . "redirect_uri=" . route('callbacks.meta.instagram') . "&"
                 . "response_type=code&"
                 . "scope={$this->scopesInstagramAuth2}"
                 . "&state={$state}";
+                
+            Log::info('URL de autenticação gerada:');
+            Log::info($oauthUrl);
 
         }
 

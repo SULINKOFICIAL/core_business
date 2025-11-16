@@ -2,9 +2,6 @@
 
 namespace App\Services;
 use App\Services\RequestService;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 class MetaApiService
 {
@@ -74,44 +71,26 @@ class MetaApiService
      */
     public function getAccessTokenInstagram($code, $type)
     {
-        $redirectUri = route('callbacks.meta.instagram');
-        
-        // Para Instagram Basic Display API, use este endpoint
-        $params = [
-            'client_id' => Config::get('meta.app_instagram_id'),
-            'client_secret' => Config::get('meta.app_instagram_secret'),
-            'grant_type' => 'authorization_code',
-            'redirect_uri' => $redirectUri,
-            'code' => $code
-        ];
 
-        Log::info('Token Exchange Request', [
-            'params' => $params,
-            'redirect_uri' => $redirectUri
-        ]);
+        // Envia requisição via RequestService
+        $response = $this->RequestService->request(
+            'POST',
+            'https://api.instagram.com/oauth/access_token',
+            [
+                'form_params' => [
+                    'client_id'     => $this->metaAppIdInstagram,
+                    'client_secret' => $this->metaAppClientSecretInstagram,
+                    'grant_type'    => 'authorization_code',
+                    'redirect_uri'  => route('callbacks.meta.' . $type),
+                    'code'          => $code,
+                ]
+            ]
+        );
 
-        // Fazer a requisição para o endpoint correto
-        $response = Http::asForm()->post('https://api.instagram.com/oauth/access_token', $params);
-        
-        Log::info('Token Exchange Response', [
-            'status' => $response->status(),
-            'body' => $response->json()
-        ]);
+        // Retorna a resposta
+        return $response;
 
-        if ($response->successful()) {
-            return [
-                'success' => true,
-                'data' => $response->json()
-            ];
-        }
-
-        return [
-            'success' => false,
-            'status' => $response->status(),
-            'data' => $response->json()
-        ];
     }
-
 
     /**
      * Busca dados do usuário autenticado.
