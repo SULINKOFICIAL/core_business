@@ -77,11 +77,12 @@ class MetaApiService
             'POST',
             'https://api.instagram.com/oauth/access_token',
             [
-                'query' => [
-                    'code'           => $code,
-                    'redirect_uri'   => route('callbacks.meta.' . $type),
-                    'client_id'      => $this->metaAppIdInstagram,
-                    'client_secret'  => $this->metaAppClientSecretInstagram,
+                'form_params' => [
+                    'client_id'     => $this->metaAppIdInstagram,
+                    'client_secret' => $this->metaAppClientSecretInstagram,
+                    'grant_type'    => 'authorization_code',
+                    'redirect_uri'  => route('callbacks.meta.' . $type),
+                    'code'          => $code,
                 ]
             ]
         );
