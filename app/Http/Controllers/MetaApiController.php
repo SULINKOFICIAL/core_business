@@ -118,7 +118,7 @@ class MetaApiController extends Controller
         /**
         * Troca o código de autorização (code) gerado na autenticação inicial do Meta
         */
-        $response = $this->metaService->getAccessToken($data['code'], $type);
+        $response = $this->metaService->getAccessTokenInstagram($data['code'], $type);
 
         dd($response, $data);
 
