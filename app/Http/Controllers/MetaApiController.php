@@ -21,8 +21,9 @@ class MetaApiController extends Controller
     protected $RequestService;
     private $metaAppId;
     protected $metaService;
-    protected $scopesInstagram = 'instagram_manage_messages,instagram_basic,pages_show_list,pages_read_user_content,business_management,pages_messaging,pages_read_engagement';
     protected $scopesWhatsApp  = 'whatsapp_business_management,whatsapp_business_messaging,business_management,pages_show_list';
+    protected $scopesInstagram = 'instagram_manage_messages,instagram_basic,pages_show_list,pages_read_user_content,business_management,pages_messaging,pages_read_engagement';
+    protected $scopesInstagramAuth2 = 'instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments%2Cinstagram_business_content_publish%2Cinstagram_business_manage_insights';
             
     // Carrega credenciais do Meta App a partir do config/meta.php
     public function __construct() {
@@ -254,12 +255,26 @@ class MetaApiController extends Controller
         // Codifica em base64 (evita problemas de URL)
         $state = urlencode(base64_encode(json_encode($stateData)));
 
-        // URL de autenticação
-        $oauthUrl = "https://www.facebook.com/v20.0/dialog/oauth" .
-            "?client_id={$this->metaAppId}" .
-            "&redirect_uri={$redirectUri}" .
-            "&scope={$scope}" .
-            "&state={$state}";
+        // Verifica se é o tipo de autenticação
+        if($type == 'whatsapp'){
+
+            // URL de autenticação
+            $oauthUrl = "https://www.facebook.com/v20.0/dialog/oauth" .
+                "?client_id={$this->metaAppId}" .
+                "&redirect_uri={$redirectUri}" .
+                "&scope={$scope}" .
+                "&state={$state}";
+            
+        } elseif ($type == 'instagram') {
+
+            $oauthUrl = "https://www.instagram.com/oauth/authorize?"
+                . "force_reauth=true&client_id=" . Config::get('meta.app_instagram_id') . "&"
+                . "redirect_uri=https://central.sulink.com.br/callbacks/meta&"
+                . "response_type=code&"
+                . "scope={$this->scopesInstagramAuth2}";
+
+        }
+
 
         // Retorna URL de autenticação
         return response()->json([
