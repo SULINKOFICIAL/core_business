@@ -87,7 +87,7 @@ class MetaApiService
                     'client_id'     => $this->metaAppIdInstagram,
                     'client_secret' => $this->metaAppClientSecretInstagram,
                     'grant_type'    => 'authorization_code',
-                    'redirect_uri'  => route('callbacks.meta.instagram') . '/',
+                    'redirect_uri'  => route('callbacks.meta.instagram'),
                     'code'          => $code,
                 ]
             ]
