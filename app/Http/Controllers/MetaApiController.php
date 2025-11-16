@@ -120,7 +120,7 @@ class MetaApiController extends Controller
         */
         $response = $this->metaService->getAccessTokenInstagram($data['code'], $type);
 
-        dd($response, $data);
+        dd($response, $data, route('callbacks.meta.' . $type));
 
         /**
          * Se o código não é mais válido
