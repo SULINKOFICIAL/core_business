@@ -278,6 +278,9 @@ class MetaApiController extends Controller
                 . "response_type=code&"
                 . "scope={$this->scopesInstagramAuth2}"
                 . "&state={$state}";
+                
+            Log::info('URL de autenticação gerada:');
+            Log::info($oauthUrl);
 
         }
 
