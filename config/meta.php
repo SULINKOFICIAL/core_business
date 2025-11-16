@@ -12,7 +12,7 @@ return [
     'client_id'     => '3920427851582223',
     'client_secret' => 'ae00838edd8b3d5d7bcbb480e47b95a4',
     
-    // 'app_instagram_id'  => '1161665978883900',
-    // 'app_instagram_key' => '1716c887fac84947971d192a47d4d55d',
+    'app_instagram_id'  => '1161665978883900',
+    'app_instagram_key' => '1716c887fac84947971d192a47d4d55d',
 
 ];
