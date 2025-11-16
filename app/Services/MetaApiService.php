@@ -2,6 +2,7 @@
 
 namespace App\Services;
 use App\Services\RequestService;
+use Illuminate\Support\Facades\Log;
 
 class MetaApiService
 {
@@ -72,6 +73,11 @@ class MetaApiService
     public function getAccessTokenInstagram($code, $type)
     {
 
+
+        Log::info('AUTORIZACAOOOOO:');
+        Log::info(route('callbacks.meta.instagram'));
+        Log::info('AUTORIZACAOOOOO');
+
         // Envia requisição via RequestService
         $response = $this->RequestService->request(
             'POST',
@@ -81,7 +87,7 @@ class MetaApiService
                     'client_id'     => $this->metaAppIdInstagram,
                     'client_secret' => $this->metaAppClientSecretInstagram,
                     'grant_type'    => 'authorization_code',
-                    'redirect_uri'  => route('callbacks.meta.' . $type),
+                    'redirect_uri'  => route('callbacks.meta.instagram'),
                     'code'          => $code,
                 ]
             ]
