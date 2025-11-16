@@ -15,5 +15,4 @@ return [
     
     'app_instagram_id'  => '1161665978883900',
     'app_instagram_key' => '1716c887fac84947971d192a47d4d55d',
-    'redirect'          => '',
 ];
