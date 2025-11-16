@@ -120,6 +120,8 @@ class MetaApiController extends Controller
         */
         $response = $this->metaService->getAccessToken($data['code'], $type);
 
+        dd($response);
+
         /**
          * Se o código não é mais válido
          */
