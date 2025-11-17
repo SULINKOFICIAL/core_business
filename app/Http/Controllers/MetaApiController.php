@@ -115,12 +115,10 @@ class MetaApiController extends Controller
         // Obtém o tipo
         $type = $data['decoded']['type'];
 
-        dd($data);
-
         /**
         * Troca o código de autorização (code) gerado na autenticação inicial do Meta
         */
-        $response = $this->metaService->getAccessTokenInstagram($data['code'], $type);
+        $response = $this->metaService->getAccessToken($data['code'], $type);
 
         /**
          * Se o código não é mais válido
@@ -268,6 +266,15 @@ class MetaApiController extends Controller
                 "&state={$state}";
             
         } elseif ($type == 'instagram') {
+
+            // URL de autenticação
+            $oauthUrl = "https://www.facebook.com/v20.0/dialog/oauth" .
+                "?client_id={$this->metaAppId}" .
+                "&redirect_uri={$redirectUri}" .
+                "&scope={$scope}" .
+                "&state={$state}";
+
+        } elseif ($type == 'instagram_auth2') {
 
             Log::info('Rota gerada na autorização do Instagram:');
             Log::info(route('callbacks.meta.instagram'));
