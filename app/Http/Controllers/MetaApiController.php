@@ -23,7 +23,6 @@ class MetaApiController extends Controller
     protected $metaService;
     protected $scopesWhatsApp  = 'whatsapp_business_management,whatsapp_business_messaging,business_management,pages_show_list';
     protected $scopesInstagram = 'instagram_manage_messages,instagram_basic,pages_show_list,pages_read_user_content,business_management,pages_messaging,pages_read_engagement,pages_manage_metadata';
-    protected $scopesInstagramAuth2 = 'instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights';
             
     // Carrega credenciais do Meta App a partir do config/meta.php
     public function __construct() {
@@ -274,23 +273,7 @@ class MetaApiController extends Controller
                 "&scope={$scope}" .
                 "&state={$state}";
 
-        } elseif ($type == 'instagram_auth2') {
-
-            Log::info('Rota gerada na autorização do Instagram:');
-            Log::info(route('callbacks.meta.instagram'));
-
-            $oauthUrl = "https://www.instagram.com/oauth/authorize?"
-                . "force_reauth=true&client_id=" . Config::get('meta.app_instagram_id') . "&"
-                . "redirect_uri=" . route('callbacks.meta.instagram') . "&"
-                . "response_type=code&"
-                . "scope={$this->scopesInstagramAuth2}"
-                . "&state={$state}";
-                
-            Log::info('URL de autenticação gerada:');
-            Log::info($oauthUrl);
-
         }
-
 
         // Retorna URL de autenticação
         return response()->json([
