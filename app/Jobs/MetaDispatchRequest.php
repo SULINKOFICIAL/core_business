@@ -48,11 +48,6 @@ class MetaDispatchRequest implements ShouldQueue
         // Obtem o cliente pelo id da meta
         $clientMeta = ClientMeta::where('meta_id', $id)->first();
 
-        Log::info($clientMeta);
-        Log::info($id);
-        Log::info($platform);
-        Log::info($this->data);
-
         // Se não encontrar retorna erro
         if(!$clientMeta){
             $this->logApi->update([
