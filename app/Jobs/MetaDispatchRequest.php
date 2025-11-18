@@ -26,7 +26,7 @@ class MetaDispatchRequest implements ShouldQueue
     public function handle(RequestService $requestService): void
     {
 
-
+        Log::info(123);
         Log::info(json_encode($this->data));
 
         // Busca o logApi
