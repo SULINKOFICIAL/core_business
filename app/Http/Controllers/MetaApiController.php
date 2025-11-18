@@ -90,8 +90,8 @@ class MetaApiController extends Controller
             $logOld->new_log_id = $logApi->id;
             $logOld->save();
         }
-        
-        Log::info($logApi);
+
+        Log::info($data, $logApi);
 
         // Dispara para a função de encontrar o dominio a ser enviado o conteudo
         MetaDispatchRequest::dispatch($data, $logApi->id);
