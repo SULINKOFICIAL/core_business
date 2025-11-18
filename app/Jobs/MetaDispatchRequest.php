@@ -25,8 +25,12 @@ class MetaDispatchRequest implements ShouldQueue
 
     public function handle(RequestService $requestService): void
     {
+
+
         // Busca o logApi
         $this->logApi = LogsApi::find($this->logApiId);
+        Log::info('Chegou aqui');
+        Log::info(json_encode($this->logApi));
 
         // Verifica qual o tipo da plataforma
         $platform = match($this->data['object']){
@@ -46,7 +50,6 @@ class MetaDispatchRequest implements ShouldQueue
 
         // Obtem o cliente pelo id da meta
         $clientMeta = ClientMeta::where('meta_id', $id)->first();
-
 
         Log::info(json_encode($this->data));
         Log::info(json_encode($clientMeta));
