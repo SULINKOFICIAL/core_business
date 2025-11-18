@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Models\LogsApi;
 use App\Services\RequestService;
+use Illuminate\Support\Facades\Log;
 
 class MetaDispatchRequest implements ShouldQueue
 {
@@ -45,6 +46,10 @@ class MetaDispatchRequest implements ShouldQueue
 
         // Obtem o cliente pelo id da meta
         $clientMeta = ClientMeta::where('meta_id', $id)->first();
+
+
+        Log::info(json_encode($this->data));
+        Log::info(json_encode($clientMeta));
 
         // Se não encontrar retorna erro
         if(!$clientMeta){
