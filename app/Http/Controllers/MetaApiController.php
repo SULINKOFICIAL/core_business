@@ -59,6 +59,8 @@ class MetaApiController extends Controller
     public function return(Request $request, $logOld = null)
     {
 
+        Log::info($request->all());
+
         // Obtém dados
         $data = $request->all();
 
