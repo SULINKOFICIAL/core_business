@@ -8,6 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Models\LogsApi;
 use App\Services\RequestService;
+use Illuminate\Support\Facades\Log;
 
 class MetaDispatchRequest implements ShouldQueue
 {
@@ -25,6 +26,7 @@ class MetaDispatchRequest implements ShouldQueue
 
     public function handle(RequestService $requestService): void
     {
+
         // Busca o logApi
         $this->logApi = LogsApi::find($this->logApiId);
 

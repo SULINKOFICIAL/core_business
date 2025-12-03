@@ -4,6 +4,7 @@ use App\Http\Controllers\ApisController;
 use App\Http\Controllers\ApisDomainsController;
 use App\Http\Controllers\ApisNewsController;
 use App\Http\Controllers\ApisTokensController;
+use App\Http\Controllers\MetaApiController;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -50,9 +51,10 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
 
         /** API gerencia os domínios */
         Route::prefix('meta')->group(function () {
-            Route::get('/url/{host}', [ApisTokensController::class, 'url']);
-            Route::get('/token/{id}', [ApisTokensController::class, 'token']);
-            Route::post('/inscricao', [ApisTokensController::class, 'subscribed']);
+            Route::get('/auth/{type}/{host}', [MetaApiController::class, 'OAuth2']);
+            Route::get('/token/{id}',         [MetaApiController::class, 'token']);
+            Route::post('/inscricao',         [MetaApiController::class, 'subscribed']);
+            Route::delete('/desinscricao',    [MetaApiController::class, 'unsubscribed']);
         });
 
         /** API gerencia as notícias */

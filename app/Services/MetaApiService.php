@@ -10,6 +10,8 @@ class MetaApiService
     protected $RequestService;
     private $metaAppId;
     private $metaAppClientSecret;
+    private $metaAppIdInstagram;
+    private $metaAppClientSecretInstagram;
 
     public function __construct()
     {
@@ -20,6 +22,10 @@ class MetaApiService
         // Carrega credenciais do Meta App a partir do config/meta.php
         $this->metaAppId = config('meta.client_id');
         $this->metaAppClientSecret = config('meta.client_secret');
+
+
+        $this->metaAppIdInstagram = config('meta.app_instagram_id');
+        $this->metaAppClientSecretInstagram = config('meta.app_instagram_secret');
 
     }
 
@@ -32,7 +38,7 @@ class MetaApiService
      * @param string $code Código de autorização retornado pelo Meta
      * @return array Resposta com token de acesso e metadados
      */
-    public function getAccessToken($code)
+    public function getAccessToken($code, $type)
     {
 
         // Envia requisição via RequestService
@@ -42,9 +48,41 @@ class MetaApiService
             [
                 'query' => [
                     'code'           => $code,
-                    'redirect_uri'   => route('callbacks.meta'),
+                    'redirect_uri'   => route('callbacks.meta.' . $type),
                     'client_id'      => $this->metaAppId,
                     'client_secret'  => $this->metaAppClientSecret,
+                ]
+            ]
+        );
+
+        // Retorna a resposta
+        return $response;
+
+    }
+
+    /**
+     * Troca o código de autorização (code) pelo token de acesso.
+     * 
+     * Este método deve ser chamado logo após o usuário autorizar a aplicação.
+     * Ele faz a requisição ao endpoint do Meta OAuth para obter o access_token.
+     *
+     * @param string $code Código de autorização retornado pelo Meta
+     * @return array Resposta com token de acesso e metadados
+     */
+    public function getAccessTokenInstagram($code, $type)
+    {
+
+        // Envia requisição via RequestService
+        $response = $this->RequestService->request(
+            'POST',
+            'https://api.instagram.com/oauth/access_token',
+            [
+                'form_params' => [
+                    'client_id'     => $this->metaAppIdInstagram,
+                    'client_secret' => $this->metaAppClientSecretInstagram,
+                    'grant_type'    => 'authorization_code',
+                    'redirect_uri'  => route('callbacks.meta.' . $type),
+                    'code'          => $code,
                 ]
             ]
         );
