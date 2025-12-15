@@ -21,7 +21,7 @@ class ClientSeeder extends Seeder
         $client = Client::create([
             'name'       => 'localhost',
             'email'      => 'micore@testes.com',
-            'token'      => '111',
+            'token'      => 'abc_123',
             'created_by' => 1,
         ]);
 

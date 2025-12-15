@@ -234,6 +234,9 @@ class ApisController extends Controller
         // Obtém plano atual do cliente
         $package = $client->package;
 
+        // Formata o pacote do cliente
+        $package['modules'] = $package->modules;
+
         // Se o cliente tiver plano
         if($package){
 
@@ -394,22 +397,17 @@ class ApisController extends Controller
         // Recebe dados
         $data = $request->all();
 
-         // Obtém dados do cliente
+        // Obtém dados do cliente
         $client = $data['client'];
         
         // Obtém Pacotes do micore junto com os modulos
         $packages = Package::with('modules')->orderBy('order', 'ASC')->where('show_website', true)->where('status', true)->get();
 
-        $modules = Module::where('status', true)->get();
-
         // Inicia Json
-        $packageJson = [];
+        $packageAvailable = [];
 
         // Formata dados Json
         foreach ($packages as $package) {
-
-            // Modulos do pacote
-            $packageModules = $package->modules()->pluck('module_id')->toArray();
 
             // Date formated
             $packageData['id']                 = $package->id;
@@ -419,32 +417,53 @@ class ApisController extends Controller
             $packageData['value']              = $package->value;
             $packageData['size_storage']       = $package->size_storage;
             $packageData['duration_days']      = $package->duration_days;
-            $packageData['modules']            = [];
-
-            foreach ($modules as $module) {
-
-                // Formata dados
-                $moduleFormated['name'] = $module->name; 
-                $moduleFormated['description'] = $module->description; 
-                $moduleFormated['in_package'] = in_array($module->id, $packageModules) ? true : false; 
-
-                // Adiciona modulo ao pacote
-                $packageData['modules'][] = $moduleFormated;
-
-            }
+            $packageData['modules_ids']        = $package->modules()->pluck('module_id')->toArray();
 
             // Obtém dados
-            $packageJson[] = $packageData;
+            $packageAvailable[] = $packageData;
+
         }
 
         // Retorna formatado em json
         return response()->json([
-            'packages' => $packageJson,
+            'packages' => $packageAvailable,
             'actual'   => [
-                'id'         => $client->package->id,
-                'name'       => $client->package->name,
-                ]
+                'id'         => $client->package?->id,
+                'name'       => $client->package?->name,
+            ]
         ], 200);
+    }
+
+    /**
+     * Retorna todos os módulos cadastrados
+     * na central e também os pacotes que ele pertence.
+     */
+    public function modules()
+    {
+
+        // Obtém todos os módulos do sistema
+        $modules = Module::where('status', true)->get();
+
+        // Inicia Json
+        $moduleJson = [];
+
+        // Formata dados Json
+        foreach ($modules as $module) {
+
+            // Date formated
+            $moduleData['id']                 = $module->id;
+            $moduleData['name']               = $module->name;
+            $moduleData['description']        = $module->description;
+            $moduleData['packages']           = $module->packages()->pluck('package_id')->toArray();
+           
+            // Obtém dados
+            $moduleJson[] = $moduleData;
+
+        }
+
+        // Retorna formatado em json
+        return response()->json($moduleJson, 200);
+
     }
 
     /**

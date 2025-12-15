@@ -17,6 +17,7 @@ class ModuleSeeder extends Seeder
     {
         Module::create([
             'name' => 'Gestão',
+            'description' => 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem',
             'value' => 20,
             'status' => 1,
             'created_by' => 1,
@@ -24,6 +25,7 @@ class ModuleSeeder extends Seeder
 
         Module::create([
             'name' => 'Atendimento',
+            'description' => 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem',
             'value' => 20,
             'status' => 1,
             'created_by' => 2,
@@ -31,6 +33,7 @@ class ModuleSeeder extends Seeder
 
         Module::create([
             'name' => 'Tarefas',
+            'description' => 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem',
             'value' => 20,
             'status' => 1,
             'created_by' => 2,
@@ -38,6 +41,7 @@ class ModuleSeeder extends Seeder
 
         Module::create([
             'name' => 'Recursos Humanos',
+            'description' => 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Humanos',
             'value' => 20,
             'status' => 1,
             'created_by' => 1,
@@ -45,6 +49,7 @@ class ModuleSeeder extends Seeder
 
         Module::create([
             'name' => 'Vendas, Produtos e Serviços',
+            'description' => 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem, Produtos e Serviços',
             'value' => 20,
             'status' => 1,
             'created_by' => 1,
@@ -52,6 +57,7 @@ class ModuleSeeder extends Seeder
 
         Module::create([
             'name' => 'Marketing',
+            'description' => 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem',
             'value' => 20,
             'status' => 1,
             'created_by' => 1,
@@ -59,6 +65,7 @@ class ModuleSeeder extends Seeder
 
         Module::create([
             'name' => 'Streaming',
+            'description' => 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem',
             'value' => 20,
             'status' => 1,
             'created_by' => 1,
@@ -66,6 +73,7 @@ class ModuleSeeder extends Seeder
 
         Module::create([
             'name' => 'Financias',
+            'description' => 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem',
             'value' => 20,
             'status' => 1,
             'created_by' => 1,

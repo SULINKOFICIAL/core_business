@@ -22,4 +22,10 @@ class Module extends Model
     {
         return $this->belongsToMany(Group::class, 'modules_group');
     }
+
+    public function packages(): BelongsToMany
+    {
+        return $this->belongsToMany(Package::class, 'packages_modules', 'module_id', 'package_id');
+    }
+
 }
