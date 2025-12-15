@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\Client;
 use App\Models\ClientMeta;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -42,22 +43,34 @@ class MetaDispatchRequest implements ShouldQueue
             'whatsapp'      => $this->data['entry'][0]['id'],
             'instagram'     => $this->data['entry'][0]['id'],
             'facebook'      => $this->data['entry'][0]['id'],
-            'whatsapp_web'  => $this->data['number'],
+            'whatsapp_web'  => $this->data['tenant_id'],
         };
 
-        // Obtem o cliente pelo id da meta
-        $clientMeta = ClientMeta::where('meta_id', $id)->first();
+        if(in_array($platform, ['whatsapp', 'instagram', 'facebook'])){
 
-        // Se não encontrar retorna erro
-        if(!$clientMeta){
-            $this->logApi->update([
-                'status' => 'Erro',
-            ]);
-            return;
+            // Obtem o cliente pelo id da meta
+            $clientMeta = ClientMeta::where('meta_id', $id)->first();
+
+            // Se não encontrar retorna erro
+            if(!$clientMeta){
+                $this->logApi->update([
+                    'status' => 'Erro',
+                ]);
+                return;
+            }
+
+            // Obtem os dominios do cliente
+            $clientDomains = $clientMeta->client->domains;
+            
+        } elseif ($platform == 'whatsapp_web') {
+
+            // Obtem o cliente
+            $client = Client::find($id);
+
+            // Obtem os dominios do cliente
+            $clientDomains = $client->domains;
+
         }
-
-        // Obtem os dominios do cliente
-        $clientDomains = $clientMeta->client->domains;
 
         // Realiza a requisição
         $response = $requestService->request('POST', "{$clientDomains[0]->domain}/webhooks/meta", [
