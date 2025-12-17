@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\Module;
 use App\Models\Resource;
 use App\Services\GuzzleService;
 use Illuminate\Http\Request;
@@ -130,10 +131,12 @@ class ClientsActionsController extends Controller
         $data = $request->all();
 
         // Encontra o Cliente modelo 1
-        $client = $this->repository->find(7);
-        
+        $client = $this->repository->find(2);
+
         // Realiza solicitação
         $modules = $this->guzzleService->request('post', 'sistema/permissoes-recursos', $client, $data);
+
+        $modules = json_decode($modules['data'], true);
 
         /**
          * Define o status de todos os registros como 0 antes da verificação.
@@ -148,17 +151,21 @@ class ClientsActionsController extends Controller
             'status' => 0,
         ]);
 
-        // Extrai data
-        $modules = json_decode($modules['data'], true);
-        dd($modules);
-        foreach ($modules as $permissions) {
+        foreach ($modules as $key => $module) {
 
             /**
              * Cria os módulos
              */
+            Module::updateOrCreate([
+                'slug' => $key
+            ], [
+                'name' => $module['name'],
+                'description' => $module['description'],
+                'created_by' => Auth::id()
+            ]);
 
-            foreach ($permissions as $permission) {
-                
+            foreach ($module['resources'] as $resource) {
+
                 /**
                  * Busca um registro onde o campo 'name' seja igual a $permission.
                  * 
@@ -168,7 +175,7 @@ class ClientsActionsController extends Controller
                  */
                 Resource::updateOrCreate(
                     [
-                        'name' => $permission
+                        'name' => $resource
                     ],
                     [
                         'status' => true,
