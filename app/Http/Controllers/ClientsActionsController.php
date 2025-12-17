@@ -130,7 +130,7 @@ class ClientsActionsController extends Controller
         $data = $request->all();
 
         // Encontra o Cliente modelo 1
-        $client = $this->repository->find(1);
+        $client = $this->repository->find(7);
         
         // Realiza solicitação
         $modules = $this->guzzleService->request('post', 'sistema/permissoes-recursos', $client, $data);
@@ -148,7 +148,15 @@ class ClientsActionsController extends Controller
             'status' => 0,
         ]);
 
+        // Extrai data
+        $modules = json_decode($modules['data'], true);
+        dd($modules);
         foreach ($modules as $permissions) {
+
+            /**
+             * Cria os módulos
+             */
+
             foreach ($permissions as $permission) {
                 
                 /**
@@ -159,10 +167,12 @@ class ClientsActionsController extends Controller
                  * e 'status' = true.
                  */
                 Resource::updateOrCreate(
-                    ['name' => $permission],
                     [
-                    'status' => true,
-                    'created_by' => Auth::id()
+                        'name' => $permission
+                    ],
+                    [
+                        'status' => true,
+                        'created_by' => Auth::id()
                     ]
                 );
             }

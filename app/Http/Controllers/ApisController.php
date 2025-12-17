@@ -251,7 +251,7 @@ class ApisController extends Controller
             
         } else {
             return response()->json([
-                'package' => 'Sem Plano',
+                'package' => null,
                 'renovation' => 0,
             ], 200);
         }
