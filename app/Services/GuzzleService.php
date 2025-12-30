@@ -39,6 +39,8 @@ class GuzzleService
             $options['json'] = $data;
         }
 
+        dd($options);
+
         try {
             $response = $guzzle->$method("http://{$client->domains[0]->domain}/api/$url", $options);
             $body = $response->getBody()->getContents();
