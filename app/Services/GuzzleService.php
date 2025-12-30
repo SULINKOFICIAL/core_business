@@ -40,17 +40,13 @@ class GuzzleService
         }
 
         try {
-            $response = $guzzle->$method("http://{$client->domains[0]->domain}/api/$url", $options);
+
+            // Monta URL
+            $url = "https://{$client->domains[0]->domain}/api/$url";
+
+            // Realiza requisição
+            $response = $guzzle->$method($url, $options);
             $body = $response->getBody()->getContents();
-
-            Log::info('URL: ' . "http://{$client->domains[0]->domain}/api/$url");
-            Log::info('Requisição: ' . json_encode([
-                'status' => $response->getStatusCode(),
-                'headers' => $response->getHeaders(),
-                'body' => $body,
-            ]));
-
-            Log::info('Body: ' . $body);
 
             return [
                 'success' => true,
@@ -63,12 +59,11 @@ class GuzzleService
                 'message' => 'Falha de conexão: ' . $e->getMessage(),
             ];
         } catch (ClientException | ServerException | RequestException $e) {
+
             // Captura qualquer erro HTTP e retorna sem quebrar o fluxo
             $response = $e->getResponse();
             $status = $response ? $response->getStatusCode() : null;
             $body = $response ? $response->getBody()->getContents() : null;
-
-            dd($method, "http://{$client->domains[0]->domain}/api/$url", $options, $response, $status, $body);
 
             return [
                 'success' => false,
