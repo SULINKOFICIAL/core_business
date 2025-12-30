@@ -67,6 +67,9 @@ class GuzzleService
             $response = $e->getResponse();
             $status = $response ? $response->getStatusCode() : null;
             $body = $response ? $response->getBody()->getContents() : null;
+
+            dd($response, $status, $body);
+
             return [
                 'success' => false,
                 'message' => "Erro HTTP {$status}",
