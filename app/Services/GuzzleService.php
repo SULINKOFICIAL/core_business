@@ -68,7 +68,7 @@ class GuzzleService
             $status = $response ? $response->getStatusCode() : null;
             $body = $response ? $response->getBody()->getContents() : null;
 
-            dd($response, $status, $body);
+            dd($method, "http://{$client->domains[0]->domain}/api/$url", $options, $response, $status, $body);
 
             return [
                 'success' => false,
