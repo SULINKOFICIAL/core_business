@@ -10,6 +10,7 @@
                 <tr class="fw-bold fs-6 text-white px-7">
                     <th class="">Nome do Cliente</th>
                     <th class="text-center px-0">Domínio</th>
+                    <th class="text-center px-0">Tipo de Instalação</th>
                     <th class="text-center px-0">Plano</th>
                     <th class="text-center px-0">Criado Em</th>
                     <th class="text-center px-0">Banco</th>
@@ -34,6 +35,11 @@
                             @else
                                 <span class="badge badge-light-danger">Sem domínio</span>
                             @endif
+                        </td>
+                        <td class="text-center">
+                            <span class="badge badge-info">
+                                {{ $client->typeInstalation() }}
+                            </span>
                         </td>
                         <td class="text-center">
                             @if ($client->package)
