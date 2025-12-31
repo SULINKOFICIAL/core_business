@@ -61,8 +61,11 @@
                                 <a href="{{ route('clients.show', $client->id) }}" class="btn btn-sm btn-primary btn-active-success fw-bolder text-uppercase py-2">
                                     Visualizar
                                 </a>
-                                <a href="{{ route('systems.update.database', $client->id) }}" target="_blank" class="text-gray-700" data-bs-toggle="tooltip" data-bs-placement="top" title="Atualizar banco de dados">
+                                <a href="{{ route('systems.update.database', $client->id) }}" class="text-gray-700" data-bs-toggle="tooltip" data-bs-placement="top" title="Atualizar banco de dados">
                                     <i class="fa-solid fa-database"></i>
+                                </a>
+                                <a href="{{ route('systems.update.git', $client->id) }}" class="text-gray-700" data-bs-toggle="tooltip" data-bs-placement="top" title="Atualizar git">
+                                    <i class="fa-brands fa-git"></i>
                                 </a>
                                 @if ($client->domains()->count() > 0)
                                     <a href="https://{{ $client->domains[0]->domain }}/acessar/{{ $client->token }}" target="_blank" class="text-gray-700" data-bs-toggle="tooltip" data-bs-placement="top" title="Acessar como sistema">

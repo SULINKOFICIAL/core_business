@@ -22,6 +22,8 @@ class Client extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'type_instalation',
+        'install',
         'name',
         'email',
         'whatsapp',
@@ -38,6 +40,8 @@ class Client extends Model
         'token',
         'db_last_version',
         'db_error',
+        'git_last_version',
+        'git_error',
         'status',
         'filed_by',
         'created_by',

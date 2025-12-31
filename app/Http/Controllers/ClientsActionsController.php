@@ -105,6 +105,32 @@ class ClientsActionsController extends Controller
         return $client->db_last_version == false;
 
     }
+    
+    // Atualiza o banco de dados do cliente via API
+    public function updateGit($id){
+
+        // Encontra o cliente
+        $client = $this->repository->find($id);
+
+        // Realiza solicitação
+        $response = $this->guzzleService->request('POST', 'sistema/atualizar-git', $client);
+
+        // Verifica a resposta antes de tentar acessar as chaves
+        if (!$response['success']) {
+            $client->git_last_version = false;
+            $client->git_error = $response['message'] ?? 'Erro desconhecido';
+        } else {
+            $client->git_last_version = true;
+            $client->git_error = null;
+        }
+
+        // Atualiza no banco de dados
+        $client->save();
+
+        // Retorna a página
+        return $client->git_last_version == false;
+
+    }
 
     // Atualiza o banco de dados do cliente via API
     public function updateDatabaseManual($id){
@@ -114,6 +140,22 @@ class ClientsActionsController extends Controller
 
         // Realiza solicitação
         $this->updateDatabase($client->id);
+
+        // Retorna a página
+        return redirect()
+                ->route('clients.index')
+                ->with('message', 'Migrate Executado');
+
+    }
+
+    // Atualiza os arquivos do cliente via API
+    public function updateGitManual($id){
+
+        // Encontra o cliente
+        $client = $this->repository->find($id);
+
+        // Realiza solicitação
+        $this->updateGit($client->id);
 
         // Retorna a página
         return redirect()
