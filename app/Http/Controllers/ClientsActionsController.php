@@ -78,6 +78,52 @@ class ClientsActionsController extends Controller
             ->with('message', $message);
     }
 
+    /**
+     * Atualiza todos os sistemas (banco de dados e git)
+     * de todos os clientes via API
+     */
+    public function updateAllSystems()
+    {
+
+        // Obtém todos os clientes
+        $clients = $this->repository->all();
+        
+        // Sinaliza todos como desatualizados
+        $this->repository->update([
+            'db_last_version'  => false, 
+            'git_last_version' => false
+        ]);
+        
+        // Loop para percorrer todos os clientes
+        foreach ($clients as $client) {
+            $this->updateDatabase($client->id);
+        }
+
+        // Obtém todos os clientes com instalações dedicadas
+        $clientsDedicateds = $clients->filter(function($client) {
+            return $client->type_installation == 'dedicated';
+        });
+
+        // Atualiza o Git de Todos os exclusívos
+        foreach ($clientsDedicateds as $client) {
+            $this->updateGit($client->id);
+        }
+
+        // Busca um cliente compartilhado e atualiza todos
+        $sharedClient = $clients->first(function($client) {
+            return $client->type_installation == 'shared';
+        });
+
+        if ($sharedClient) {
+            $this->updateGit($sharedClient->id);
+        }
+
+        // Redireciona com a mensagem final
+        return redirect()
+            ->route('index')
+            ->with('message', 'Processo de atualização concluído para todos os clientes.');
+    }
+
     // Atualiza o banco de dados do cliente via API
     public function updateDatabase($id){
 
@@ -106,7 +152,7 @@ class ClientsActionsController extends Controller
 
     }
     
-    // Atualiza o banco de dados do cliente via API
+    // Atualiza o Git do cliente via API
     public function updateGit($id){
 
         // Encontra o cliente
@@ -144,7 +190,7 @@ class ClientsActionsController extends Controller
         // Retorna a página
         return redirect()
                 ->route('clients.index')
-                ->with('message', 'Migrate Executado');
+                ->with('message', 'Migração executada com sucesso');
 
     }
 
@@ -160,7 +206,7 @@ class ClientsActionsController extends Controller
         // Retorna a página
         return redirect()
                 ->route('clients.index')
-                ->with('message', 'Migrate Executado');
+                ->with('message', 'GIT Pull executado com sucesso');
 
     }
 

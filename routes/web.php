@@ -184,6 +184,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/atualizar-git/{id}',      [ClientsActionsController::class, 'updateGitManual'])->name('update.git');
             Route::get('/atualizar-em-massa',      [ClientsActionsController::class, 'updateAllDatabase'])->name('update.all.db');
             Route::get('/ajustar-armazenamento',   [ClientsActionsController::class, 'updateSizeStorage'])->name('update.size.storage');
+            Route::get('/atualizar-sistemas',      [ClientsActionsController::class, 'updateAllSystems'])->name('update.all.systems');
         });
     });
 

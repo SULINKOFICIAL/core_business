@@ -99,11 +99,11 @@
     </div>
 </div>
 <div class="d-flex justify-content-between mt-4">
+    <a href="{{ route('systems.update.all.systems') }}" class="btn btn-sm btn-success btn-active-danger">
+        Atualizar Sistemas
+    </a>
     <a href="{{ route('clients.create') }}" class="btn btn-sm btn-primary btn-active-success">
         Adicionar Cliente
-    </a>
-    <a href="{{ route('systems.update.all.db') }}" class="btn btn-sm btn-success btn-active-danger">
-        Atualizar Bancos
     </a>
 </div>
 @endsection
