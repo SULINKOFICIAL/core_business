@@ -180,7 +180,7 @@ class ClientsActionsController extends Controller
         $client->save();
 
         // Retorna a página
-        return $client->git_last_version == false;
+        return $client->git_last_version;
 
     }
 
