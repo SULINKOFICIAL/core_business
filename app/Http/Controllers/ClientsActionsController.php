@@ -95,9 +95,9 @@ class ClientsActionsController extends Controller
         ]);
         
         // Loop para percorrer todos os clientes
-        foreach ($clients as $client) {
+        /* foreach ($clients as $client) {
             $this->updateDatabase($client->id);
-        }
+        } */
 
         // Obtém todos os clientes com instalações dedicadas
         $clientsDedicateds = $clients->filter(function($client) {
