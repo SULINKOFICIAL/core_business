@@ -115,7 +115,13 @@ class ClientsActionsController extends Controller
         });
 
         if ($sharedClient) {
-            $this->updateGit($sharedClient->id);
+            
+            // Verifica se o cliente compartilhado foi atualizado com sucesso
+            if($this->updateGit($sharedClient->id)){
+                // Atualiza o git de todas as hospedagens compartilhadas
+                $this->repository->update(['git_last_version' => true], ['type_installation' => 'shared']);
+            }
+
         }
 
         // Redireciona com a mensagem final
