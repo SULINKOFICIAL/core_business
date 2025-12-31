@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('clients', function (Blueprint $table) {
+        /* Schema::table('clients', function (Blueprint $table) {
             $table->renameColumn('type_instalation', 'type_installation');
-        });
+        }); */
 
         Schema::table('clients', function (Blueprint $table) {
             $table->enum('type_installation', ['dedicated', 'shared'])->default('shared')->change();
