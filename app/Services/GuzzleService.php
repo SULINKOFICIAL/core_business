@@ -39,10 +39,13 @@ class GuzzleService
             $options['json'] = $data;
         }
 
+        // Protocolo SSL
+        $protocol = env('APP_ENV') === 'local' ? 'http' : 'https';
+
         try {
 
             // Monta URL
-            $url = "https://{$client->domains[0]->domain}/api/$url";
+            $url = "$protocol://{$client->domains[0]->domain}/api/$url";
 
             // Realiza requisição
             $response = $guzzle->$method($url, $options);
