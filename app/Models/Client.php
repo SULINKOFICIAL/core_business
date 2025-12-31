@@ -83,19 +83,6 @@ class Client extends Model
     {
        return $this->hasMany(ClientSubscription::class, 'client_id', 'id');
     }
-    
-    // Tipo de instalação do cliente
-    public function typeInstalation()
-    {
-
-        $typeTranslated = match($this->type_instalation) {
-            'shared' => 'Compartilhada',
-            'exclusive' => 'Dedicada',
-            default => 'Não informado'
-        };
-
-        return $typeTranslated;
-    }
 
     // Retorna em quantos dias deve ser feita a próxima renovação
     public function renovation()

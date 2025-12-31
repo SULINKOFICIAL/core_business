@@ -37,9 +37,13 @@
                             @endif
                         </td>
                         <td class="text-center">
-                            <span class="badge badge-info">
-                                {{ $client->typeInstalation() }}
-                            </span>
+                            @if ($client->type_installation === 'shared')
+                                <span class="badge badge-success">Instalação Compartilhada</span>
+                            @elseif ($client->type_installation === 'exclusive')
+                                <span class="badge badge-info">Instalação Exclusiva</span>
+                            @else
+                                <span class="badge badge-secondary">Desconhecido</span>
+                            @endif
                         </td>
                         <td class="text-center">
                             @if ($client->package)
