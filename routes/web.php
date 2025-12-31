@@ -4,6 +4,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ClientInstallController;
 use App\Http\Controllers\ClientsActionsController;
 use App\Http\Controllers\CpanelController;
+use App\Http\Controllers\DeveloperController;
 use App\Http\Controllers\ERedeController;
 use App\Http\Controllers\ErrorMiCoreController;
 use App\Http\Controllers\GroupController;
@@ -196,6 +197,15 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/testar',                 [ERedeController::class, 'testar'])->name('test');
             Route::get('/token/{token}',          [ERedeController::class, 'verifySolicitation'])->name('verify.token');
             Route::get('/criptografia/{token}',   [ERedeController::class, 'cryptogram'])->name('cryptogram');
+        });
+    });
+
+    /**
+     * Rotas relacionadas aos comandos do desenvolvedor.
+     */
+    Route::prefix('desenvolvedores')->group(function () {
+        Route::name('developer.')->group(function () {
+            Route::get('/testar', [DeveloperController::class, 'test'])->name('test');
         });
     });
 
