@@ -116,11 +116,11 @@ class ClientsActionsController extends Controller
 
         if ($sharedClient) {
             
-            // Verifica se o cliente compartilhado foi atualizado com sucesso
-            if($this->updateGit($sharedClient->id)){
-                // Atualiza o git de todas as hospedagens compartilhadas
-                $this->repository->update(['git_last_version' => true], ['type_installation' => 'shared']);
-            }
+            // Verifica se o cliente compartilhado foi atualizado com sucesso.
+            $this->updateGit($sharedClient->id);
+
+            // Atualiza o git de todas as hospedagens compartilhadas
+            $this->repository->where('type_installation', 'shared')->update(['git_last_version' => true]);
 
         }
 
@@ -154,7 +154,7 @@ class ClientsActionsController extends Controller
         $client->save();
 
         // Retorna a página
-        return $client->db_last_version == false;
+        return $client->db_last_version;
 
     }
     
