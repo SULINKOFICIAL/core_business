@@ -37,10 +37,10 @@
                             @endif
                         </td>
                         <td class="text-center">
-                            @if ($client->type_installation === 'shared')
+                            @if ($client->type_installation == 'shared')
                                 <span class="badge badge-success">Instalação Compartilhada</span>
-                            @elseif ($client->type_installation === 'exclusive')
-                                <span class="badge badge-info">Instalação Exclusiva</span>
+                            @elseif ($client->type_installation == 'dedicated')
+                                <span class="badge badge-info">Instalação Dedicada</span>
                             @else
                                 <span class="badge badge-secondary">Desconhecido</span>
                             @endif
