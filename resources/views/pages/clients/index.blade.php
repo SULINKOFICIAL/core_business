@@ -13,6 +13,7 @@
                     <th class="text-center px-0">Plano</th>
                     <th class="text-center px-0">Criado Em</th>
                     <th class="text-center px-0">Banco</th>
+                    <th class="text-center px-0">GIT</th>
                     <th class="text-center px-0">Status</th>
                     <th class="text-end pe-12 w-100px"></th>
                 </tr>
@@ -47,6 +48,13 @@
                                 <i class="fa-solid fa-circle-xmark text-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ $client->db_error }}"></i>
                             @else
                                 <i class="fa-solid fa-circle-check text-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Banco de dados atualizado"></i>
+                            @endif
+                        </td>
+                        <td class="text-center">
+                            @if ($client->git_last_version == 0)
+                                <i class="fa-solid fa-circle-xmark text-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ $client->git_error }}"></i>
+                            @else
+                                <i class="fa-solid fa-circle-check text-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Git atualizado"></i>
                             @endif
                         </td>
                         <td class="text-center">
