@@ -38,9 +38,9 @@
                         </td>
                         <td class="text-center">
                             @if ($client->type_installation == 'shared')
-                                <span class="badge badge-success">Instalação Compartilhada</span>
+                                <span class="badge badge-success">Compartilhada</span>
                             @elseif ($client->type_installation == 'dedicated')
-                                <span class="badge badge-info">Instalação Dedicada</span>
+                                <span class="badge badge-info">Dedicada</span>
                             @else
                                 <span class="badge badge-secondary">Desconhecido</span>
                             @endif
