@@ -128,3 +128,122 @@ if (! function_exists('onlyNumbers')) {
         return preg_replace('/\D/', '', $number);
     }
 }
+
+if (! function_exists('header_menu_items')) {
+    function header_menu_items(): array
+    {
+        return [
+            [
+                'type' => 'link',
+                'label' => 'Cliente',
+                'route' => 'clients.index',
+                'active_routes' => ['clients.index'],
+            ],
+            [
+                'type' => 'submenu',
+                'label' => 'Notícias',
+                'active_routes' => ['news.index', 'news.categories.index'],
+                'width' => 'w-100px',
+                'children' => [
+                    [
+                        'label' => 'Notícias cadastradas',
+                        'route' => 'news.index',
+                        'active_routes' => ['news.index'],
+                    ],
+                    [
+                        'label' => 'Categorias',
+                        'route' => 'news.categories.index',
+                        'active_routes' => ['news.categories.index'],
+                    ],
+                ],
+            ],
+            [
+                'type' => 'link',
+                'label' => 'Pacotes',
+                'route' => 'packages.index',
+                'active_routes' => ['packages.index'],
+            ],
+            [
+                'type' => 'submenu',
+                'label' => 'Módulos',
+                'active_routes' => ['modules.index', 'groups.index', 'resources.index'],
+                'width' => 'w-100px',
+                'children' => [
+                    [
+                        'label' => 'Lista de modulos',
+                        'route' => 'modules.index',
+                        'active_routes' => ['modules.index'],
+                    ],
+                    [
+                        'label' => 'Grupo de Recursos',
+                        'route' => 'groups.index',
+                        'active_routes' => ['groups.index'],
+                    ],
+                    [
+                        'label' => 'Recursos',
+                        'route' => 'resources.index',
+                        'active_routes' => ['resources.index'],
+                    ],
+                ],
+            ],
+            [
+                'type' => 'submenu',
+                'label' => 'Configuração',
+                'active_routes' => [
+                    'subscriptions.generate',
+                    'subscriptions.charge',
+                    'subscriptions.expired',
+                    'tickets.index',
+                    'suggestions.index',
+                    'errors.index',
+                    'systems.update.all.db',
+                ],
+                'width' => 'w-175px',
+                'children' => [
+                    [
+                        'label' => 'Gerar Renovações',
+                        'route' => 'subscriptions.generate',
+                        'active_routes' => ['subscriptions.generate'],
+                        'icon' => ['class' => 'ki-duotone ki-chart-simple-2 fs-3', 'paths' => 4],
+                    ],
+                    [
+                        'label' => 'Cobrar',
+                        'route' => 'subscriptions.charge',
+                        'active_routes' => ['subscriptions.charge'],
+                        'icon' => ['class' => 'ki-duotone ki-chart-simple-2 fs-3', 'paths' => 4],
+                    ],
+                    [
+                        'label' => 'Expirar renovações',
+                        'route' => 'subscriptions.expired',
+                        'active_routes' => ['subscriptions.expired'],
+                        'icon' => ['class' => 'ki-duotone ki-chart-simple-2 fs-3', 'paths' => 4],
+                    ],
+                    [
+                        'label' => 'Tickets',
+                        'route' => 'tickets.index',
+                        'active_routes' => ['tickets.index'],
+                        'icon' => ['class' => 'ki-duotone ki-notification-on fs-3', 'paths' => 5],
+                    ],
+                    [
+                        'label' => 'Sugestões',
+                        'route' => 'suggestions.index',
+                        'active_routes' => ['suggestions.index'],
+                        'icon' => ['class' => 'ki-duotone ki-android fs-3', 'paths' => 5],
+                    ],
+                    [
+                        'label' => 'Errors',
+                        'route' => 'errors.index',
+                        'active_routes' => ['errors.index'],
+                        'icon' => ['class' => 'ki-duotone ki-calendar-2 fs-3', 'paths' => 5],
+                    ],
+                    [
+                        'label' => 'Atualizar em massa',
+                        'route' => 'systems.update.all.db',
+                        'active_routes' => ['systems.update.all.db'],
+                        'icon' => ['class' => 'ki-duotone ki-file-added fs-3', 'paths' => 5],
+                    ],
+                ],
+            ],
+        ];
+    }
+}
