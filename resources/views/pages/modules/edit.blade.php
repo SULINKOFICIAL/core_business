@@ -13,11 +13,11 @@
     <div class="d-flex justify-content-between mt-4">
         @if ($modules->status == 1)
             <a href="{{ route('modules.destroy', $modules->id) }}" class="btn btn-lg btn-danger me-2">
-                Desativar Setor
+                Desativar Módulo
             </a>
             @else
             <a href="{{ route('modules.destroy', $modules->id) }}" class="btn btn-lg btn-success me-2">
-                Ativar Setor
+                Ativar Módulo
             </a>
         @endif
             <div>
