@@ -16,12 +16,14 @@ Route::prefix('micore')->group(function () {
 });
 
 /**
- * API para comunicação com o WebSite micore.com.br
+ * API para comunicação com os sistemas miCore
  */
 Route::prefix('central')->middleware('auth.bearer')->group(function () {
 
     /** Retorna as informações do banco de dados */
     Route::get('/meu-banco',      [ApisController::class, 'getDatabase']);
+    Route::get('/pacotes',        [ApisController::class, 'packages']);
+    Route::get('/modulos',        [ApisController::class, 'modules']);
 
     /** APIS que necessitam de um cliente */
     Route::middleware('attach.client')->group(function () {
@@ -31,8 +33,6 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
         Route::get('/minhas-compras', [ApisController::class, 'orders']);
         Route::get('/compra/{id}',    [ApisController::class, 'order']);
         Route::get('/cartoes',        [ApisController::class, 'cards']);
-        Route::get('/pacotes',        [ApisController::class, 'packages']);
-        Route::get('/modulos',        [ApisController::class, 'modules']);
 
         /** API que recebe dados dos miCores */
         Route::post('/pagamento', [ApisController::class, 'payment']);

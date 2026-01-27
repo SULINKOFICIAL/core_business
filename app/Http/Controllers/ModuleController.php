@@ -82,6 +82,11 @@ class ModuleController extends Controller
         // Persiste as faixas de preço quando o tipo é por uso
         $this->syncPricingTiers($created, $request->input('tiers', []), $data['pricing_type']);
 
+        // Salva capa do módulo, se enviada
+        if ($request->hasFile('cover_image')) {
+            $this->saveCoverImage($created, $request->file('cover_image'));
+        }
+
             // Retorna a página
             return redirect()
                     ->route('modules.index')
@@ -146,6 +151,11 @@ class ModuleController extends Controller
         // Atualiza as faixas de preço quando o tipo é por uso
         $this->syncPricingTiers($modules, $request->input('tiers', []), $data['pricing_type']);
 
+        // Atualiza capa do módulo, se enviada
+        if ($request->hasFile('cover_image')) {
+            $this->saveCoverImage($modules, $request->file('cover_image'));
+        }
+
         // Retorna a página
         return redirect()
             ->route('modules.index')
@@ -187,6 +197,21 @@ class ModuleController extends Controller
                 'price' => $price,
             ]);
         }
+    }
+
+    private function saveCoverImage(Module $module, $coverImage): void
+    {
+        if (!$coverImage || !$coverImage->isValid()) {
+            return;
+        }
+
+        $extension = $coverImage->getClientOriginalExtension();
+        $filename = $extension ? "cover.{$extension}" : 'cover';
+        $path = "modules/{$module->id}";
+
+        $coverImage->storeAs($path, $filename, 'public');
+        $module->cover_image = $filename;
+        $module->save();
     }
 
     public function destroy($id)

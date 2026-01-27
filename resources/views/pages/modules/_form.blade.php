@@ -58,6 +58,15 @@
                 <textarea maxlength="170" class="form-control form-control-solid" name="description" required>{{ $modules->description ?? old('description') }}</textarea>
             </div>
             <div class="col-12 mb-4">
+                <label class="form-label fs-6 fw-bold text-gray-700 mb-2">Capa do módulo</label>
+                <input type="file" class="form-control form-control-solid" name="cover_image" accept="image/*">
+                @if (isset($modules) && !empty($modules->cover_image))
+                    <div class="mt-3">
+                        <img src="{{ asset('storage/modules/' . $modules->id . '/' . $modules->cover_image) }}" alt="Capa do módulo" class="img-fluid rounded" style="max-height: 160px;">
+                    </div>
+                @endif
+            </div>
+            <div class="col-12 mb-4">
                 <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Grupos de Recursos</label>
                 <select name="groups[]" class="form-select form-select-solid" data-control="select2" data-placeholder="Selecione" multiple>
                     <option value=""></option>

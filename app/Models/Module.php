@@ -15,6 +15,7 @@ class Module extends Model
         'name',
         'slug',
         'description',
+        'cover_image',
         'value',
         'pricing_type',
         'usage_label',
