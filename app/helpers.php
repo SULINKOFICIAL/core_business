@@ -166,13 +166,18 @@ if (! function_exists('header_menu_items')) {
             [
                 'type' => 'submenu',
                 'label' => 'Módulos',
-                'active_routes' => ['modules.index', 'groups.index', 'resources.index'],
+                'active_routes' => ['modules.index', 'modules.categories.index', 'groups.index', 'resources.index'],
                 'width' => 'w-100px',
                 'children' => [
                     [
                         'label' => 'Lista de modulos',
                         'route' => 'modules.index',
                         'active_routes' => ['modules.index'],
+                    ],
+                    [
+                        'label' => 'Categorias de módulos',
+                        'route' => 'modules.categories.index',
+                        'active_routes' => ['modules.categories.index'],
                     ],
                     [
                         'label' => 'Grupo de Recursos',

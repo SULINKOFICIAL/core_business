@@ -5,10 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\ModuleCategory;
 
 class Module extends Model
 {
     protected $fillable = [
+        'module_category_id',
         'name',
         'slug',
         'description',
@@ -30,6 +33,11 @@ class Module extends Model
     public function packages(): BelongsToMany
     {
         return $this->belongsToMany(Package::class, 'packages_modules', 'module_id', 'package_id');
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(ModuleCategory::class, 'module_category_id');
     }
 
     public function pricingTiers(): HasMany

@@ -460,6 +460,7 @@ class ApisController extends Controller
             $moduleData['id']                 = $module->id;
             $moduleData['name']               = $module->name;
             $moduleData['description']        = $module->description;
+            $moduleData['category']           = $module->category?->name;
             $moduleData['packages']           = $module->packages()->pluck('package_id')->toArray();
            
             // Obtém dados

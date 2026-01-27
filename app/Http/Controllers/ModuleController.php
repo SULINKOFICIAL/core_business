@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Group;
 use App\Models\Module;
+use App\Models\ModuleCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -30,7 +31,7 @@ class ModuleController extends Controller
     public function index()
     {
         // Carrega módulos com grupos e faixas de preço para exibição na listagem
-        $modules = Module::with(['groups', 'pricingTiers'])->get();
+        $modules = Module::with(['groups', 'pricingTiers', 'category'])->get();
 
         // Retorna a página
         return view('pages.modules.index')->with([
@@ -42,10 +43,12 @@ class ModuleController extends Controller
     {   
         // Obtém dados dos Grupos ativos
         $groups = Group::where('status', true)->get(); 
+        $categories = ModuleCategory::where('status', true)->get();
 
         // Retorna a página
         return view('pages.modules.create')->with([
             'groups' => $groups,
+            'categories' => $categories,
         ]);
 
     }
@@ -90,6 +93,7 @@ class ModuleController extends Controller
     {
         // Obtém dados dos Grupos ativos
         $groups = Group::where('status', true)->get();        
+        $categories = ModuleCategory::where('status', true)->get();
 
         // Obtém dados
         $modules = $this->repository->find($id);
@@ -100,7 +104,8 @@ class ModuleController extends Controller
         // Retorna a página
         return view('pages.modules.edit')->with([
             'modules' => $modules,
-            'groups' => $groups
+            'groups' => $groups,
+            'categories' => $categories,
         ]);
 
     }

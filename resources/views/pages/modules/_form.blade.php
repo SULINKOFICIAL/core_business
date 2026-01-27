@@ -45,6 +45,15 @@
                 <input type="text" class="form-control form-control-solid" placeholder="Nome" name="name" value="{{ $modules->name ?? old('name') }}" required>
             </div>
             <div class="col-12 mb-4">
+                <label class="form-label fs-6 fw-bold text-gray-700 mb-2">Categoria</label>
+                <select name="module_category_id" class="form-select form-select-solid" data-control="select2" data-placeholder="Selecione">
+                    <option value=""></option>
+                    @foreach ($categories ?? [] as $category)
+                    <option value="{{ $category->id }}" @if(old('module_category_id', $modules->module_category_id ?? null) == $category->id) selected @endif>{{ $category->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-12 mb-4">
                 <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Descrição</label>
                 <textarea maxlength="170" class="form-control form-control-solid" name="description" required>{{ $modules->description ?? old('description') }}</textarea>
             </div>

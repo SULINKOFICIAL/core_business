@@ -13,6 +13,7 @@ use App\Http\Controllers\MetaApiController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\ModuleController;
+use App\Http\Controllers\ModuleCategoryController;
 use App\Http\Controllers\NewsCategoryController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\OrderController;
@@ -100,6 +101,17 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/editar/{id}',      [ModuleController::class, 'edit'])->name('edit');
             Route::put('/editar/{id}',      [ModuleController::class, 'update'])->name('update');
             Route::get('/desabilitar/{id}', [ModuleController::class, 'destroy'])->name('destroy');
+
+            Route::prefix('categorias')->group(function () {
+                Route::name('categories.')->group(function () {
+                    Route::get('/',                 [ModuleCategoryController::class, 'index'])->name('index');
+                    Route::get('/adicionar',        [ModuleCategoryController::class, 'create'])->name('create');
+                    Route::post('/adicionar',       [ModuleCategoryController::class, 'store'])->name('store');
+                    Route::get('/editar/{id}',      [ModuleCategoryController::class, 'edit'])->name('edit');
+                    Route::put('/editar/{id}',      [ModuleCategoryController::class, 'update'])->name('update');
+                    Route::get('/desabilitar/{id}', [ModuleCategoryController::class, 'destroy'])->name('destroy');
+                });
+            });
         });
     });
 
