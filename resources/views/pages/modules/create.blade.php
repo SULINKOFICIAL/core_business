@@ -8,11 +8,7 @@
 </p>
 <form action="{{ route('modules.store') }}" method="POST" enctype="multipart/form-data">
     @csrf
-    <div class="card">
-        <div class="card-body">
-            @include('pages.modules._form')
-        </div>
-    </div>
+    @include('pages.modules._form')
     <div class="d-flex justify-content-end mt-4">
         <a href="{{ url()->previous() ?? route('modules.index') }}" class="btn btn-light text-muted me-2">
             Voltar
@@ -22,8 +18,4 @@
         </button>
     </div>
 </form>
-@endsection
-
-@section('custom-footer')
-    @include('pages.modules._form-script')
 @endsection
