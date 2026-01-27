@@ -116,34 +116,34 @@
     <script>
         $(function () {
             // Cacheia elementos principais do formulário
-            var $pricingTypeSelect = $('#pricing_type');
-            if (!$pricingTypeSelect.length) return;
+            var pricingTypeSelect = $('#pricing_type');
+            if (!pricingTypeSelect.length) return;
 
-            var $fixedBlocks = $('.pricing-fixed');
-            var $usageBlocks = $('.pricing-usage');
-            var $tiersContainer = $('#pricing-tiers');
-            var $addTierButton = $('#add-tier');
-            var $valueInput = $('input[name="value"]');
+            var fixedBlocks = $('.pricing-fixed');
+            var usageBlocks = $('.pricing-usage');
+            var tiersContainer = $('#pricing-tiers');
+            var addTierButton = $('#add-tier');
+            var valueInput = $('input[name="value"]');
 
             function togglePricingBlocks() {
                 // Alterna visibilidade entre preço fixo e por uso
-                var isUsage = $pricingTypeSelect.val() === 'usage';
-                $fixedBlocks.toggle(!isUsage);
-                $usageBlocks.toggle(isUsage);
+                var isUsage = pricingTypeSelect.val() === 'usage';
+                fixedBlocks.toggle(!isUsage);
+                usageBlocks.toggle(isUsage);
                 // Ajusta required do valor fixo
-                if ($valueInput.length) {
-                    $valueInput.prop('required', !isUsage);
+                if (valueInput.length) {
+                    valueInput.prop('required', !isUsage);
                 }
             }
 
             function nextTierIndex() {
                 // Calcula o próximo índice com base nas linhas existentes
-                return $tiersContainer.length ? $tiersContainer.find('.pricing-tier-row').length : 0;
+                return tiersContainer.length ? tiersContainer.find('.pricing-tier-row').length : 0;
             }
 
             function addTierRow() {
                 // Adiciona uma nova linha de faixa de preço
-                if (!$tiersContainer.length) return;
+                if (!tiersContainer.length) return;
                 var index = nextTierIndex();
                 var rowHtml = [
                     '<div class="row align-items-end pricing-tier-row mb-3">',
@@ -161,7 +161,7 @@
                     '</div>',
                 ].join('');
 
-                $tiersContainer.append(rowHtml);
+                tiersContainer.append(rowHtml);
                 // Reaplica máscara monetária nos novos campos
                 if (typeof window.generateMasks === 'function') {
                     window.generateMasks();
@@ -169,7 +169,7 @@
             }
 
             // Botão de adicionar faixa
-            $addTierButton.on('click', function () {
+            addTierButton.on('click', function () {
                 addTierRow();
             });
 
@@ -179,7 +179,7 @@
             });
 
             // Atualiza a UI quando muda o tipo de cobrança
-            $pricingTypeSelect.on('change', togglePricingBlocks);
+            pricingTypeSelect.on('change', togglePricingBlocks);
             togglePricingBlocks();
         });
     </script>
