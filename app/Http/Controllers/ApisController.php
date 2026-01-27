@@ -234,6 +234,12 @@ class ApisController extends Controller
         // Obtém plano atual do cliente
         $package = $client->package;
 
+        // Se o cliente não tiver pacote
+        if (!$package) return response()->json([
+            'package' => null,
+            'renovation' => 0,
+        ], 200);
+
         // Formata o pacote do cliente
         $package['modules'] = $package->modules;
 
