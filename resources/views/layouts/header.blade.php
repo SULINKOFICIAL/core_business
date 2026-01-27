@@ -10,26 +10,60 @@
                 <div class="col-8 d-flex align-items-center justify-content-center">
                     <div class="app-header-menu app-header-mobile-drawer align-items-center justify-content-center" data-kt-drawer="true" data-kt-drawer-name="app-header-menu" data-kt-drawer-activate="{default: true, lg: false}" data-kt-drawer-overlay="true" data-kt-drawer-width="250px" data-kt-drawer-direction="end" data-kt-drawer-toggle="#kt_app_header_menu_toggle" data-kt-swapper="true" data-kt-swapper-mode="{default: 'append', lg: 'prepend'}" data-kt-swapper-parent="{default: '#kt_app_body', lg: '#kt_app_header_wrapper'}">
                         <a href="{{ route('clients.index') }}" class="fw-bold text-hover-warning text-uppercase mx-8 fs-7 {{ Request::routeIs('clients.index') ? 'text-warning' : 'text-white' }}">
-                            Clientes
+                            Cliente
                         </a>
-                        <a href="{{ route('news.index') }}" class="fw-bold text-hover-warning text-uppercase mx-8 fs-7 {{ Request::routeIs('news.index') ? 'text-warning' : 'text-white' }}">
-                            Notícias
-                        </a>
-                        <a href="{{ route('news.categories.index') }}" class="fw-bold text-hover-warning text-uppercase mx-8 fs-7 {{ Request::routeIs('news.categories.index') ? 'text-warning' : 'text-white' }}">
-                            Categorias de Notícias
-                        </a>
+                        <div class="menu menu-column menu-gray-600 menu-active-primary menu-hover-light-primary menu-here-light-primary menu-show-light-primary fw-semibold w-100px" data-kt-menu="true">
+                            <div class="menu-item" data-kt-menu-trigger="hover" data-kt-menu-placement="bottom-start">
+                                <a href="#" class="menu-link">
+                                    <span class="menu-title text-uppercase fs-7 {{ Request::routeIs('news.index', 'news.categories.index') ? 'text-warning' : 'text-white' }}">
+                                        Notícias
+                                        <i class="fa-solid fa-angle-down fs-8 ms-2 {{ Request::routeIs('news.index', 'news.categories.index') ? 'text-warning' : 'text-white' }}"></i>
+                                    </span>
+                                </a>
+                                <div class="menu-sub menu-sub-dropdown w-175px py-2">
+                                    <div class="menu-item">
+                                        <a href="{{ route('news.index') }}" class="menu-link">
+                                            <span class="menu-title">Notícias cadastradas</span>
+                                        </a>
+                                    </div>
+                                    <div class="menu-item">
+                                        <a href="{{ route('news.categories.index') }}" class="menu-link">
+                                            <span class="menu-title">Categorias</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <a href="{{ route('packages.index') }}" class="fw-bold text-hover-warning text-uppercase mx-8 fs-7 {{ Request::routeIs('packages.index') ? 'text-warning' : 'text-white' }}">
                             Pacotes
                         </a>
-                        <a href="{{ route('modules.index') }}" class="fw-bold text-hover-warning text-uppercase mx-8 fs-7 {{ Request::routeIs('modules.index') ? 'text-warning' : 'text-white' }}">
-                            Módulos
-                        </a>
-                        <a href="{{ route('groups.index') }}" class="fw-bold text-hover-warning text-uppercase mx-8 fs-7 {{ Request::routeIs('groups.index') ? 'text-warning' : 'text-white' }}">
-                            Grupo de Recursos
-                        </a>
-                        <a href="{{ route('resources.index') }}" class="fw-bold text-hover-warning text-uppercase mx-8 fs-7 {{ Request::routeIs('resources.index') ? 'text-warning' : 'text-white' }}">
-                            Recursos
-                        </a>
+                        <div class="menu menu-column menu-gray-600 menu-active-primary menu-hover-light-primary menu-here-light-primary menu-show-light-primary fw-semibold w-100px" data-kt-menu="true">
+                            <div class="menu-item" data-kt-menu-trigger="hover" data-kt-menu-placement="bottom-start">
+                                <a href="#" class="menu-link">
+                                    <span class="menu-title text-uppercase fs-7 {{ Request::routeIs('modules.index', 'groups.index', 'resources.index') ? 'text-warning' : 'text-white' }}">
+                                        Módulos
+                                        <i class="fa-solid fa-angle-down fs-8 ms-2 {{ Request::routeIs('modules.index', 'groups.index', 'resources.index') ? 'text-warning' : 'text-white' }}"></i>
+                                    </span>
+                                </a>
+                                <div class="menu-sub menu-sub-dropdown w-175px py-2">
+                                    <div class="menu-item">
+                                        <a href="{{ route('modules.index') }}" class="menu-link">
+                                            <span class="menu-title">Lista de modulos</span>
+                                        </a>
+                                    </div>
+                                    <div class="menu-item">
+                                        <a href="{{ route('groups.index') }}" class="menu-link">
+                                            <span class="menu-title">Grupo de Recursos</span>
+                                        </a>
+                                    </div>
+                                    <div class="menu-item">
+                                        <a href="{{ route('resources.index') }}" class="menu-link">
+                                            <span class="menu-title">Recursos</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="menu menu-column menu-gray-600 menu-active-primary menu-hover-light-primary menu-here-light-primary menu-show-light-primary fw-semibold w-175px" data-kt-menu="true">
                             <div class="menu-item" data-kt-menu-trigger="hover" data-kt-menu-placement="bottom-start">
                                 <a href="#" class="menu-link">

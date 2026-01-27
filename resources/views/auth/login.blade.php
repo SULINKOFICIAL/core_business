@@ -8,7 +8,7 @@
 	<body id="kt_body" class="app-blank bgi-size-cover bgi-attachment-fixed bgi-position-center" style="background: url('{{ asset('assets/media/images/background_2026.png') }}');background-position: left top;background-size: cover;">
         @include('layouts.config')
 		<div class="min-vh-100 d-flex align-items-center justify-content-center py-4 px-3">
-			<div class="text-center w-100">
+			<div class="text-center w-100 w-md-600px">
 				<div class="card shadow-sm rounded-4">
 					<div class="card-body">
 						<img class="img-fluid mb-4 h-50px h-md-70px" src="{{ asset('assets/media/images/logo_dark.webp') }}" alt="" />
