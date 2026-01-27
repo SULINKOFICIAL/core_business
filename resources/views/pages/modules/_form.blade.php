@@ -101,72 +101,72 @@
 @section('custom-footer')
     @parent
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var pricingTypeSelect = document.getElementById('pricing_type');
-            if (!pricingTypeSelect) return;
+        $(function () {
+            // Cacheia elementos principais do formulário
+            var $pricingTypeSelect = $('#pricing_type');
+            if (!$pricingTypeSelect.length) return;
 
-            var fixedBlocks = document.querySelectorAll('.pricing-fixed');
-            var usageBlocks = document.querySelectorAll('.pricing-usage');
-            var tiersContainer = document.getElementById('pricing-tiers');
-            var addTierButton = document.getElementById('add-tier');
-            var valueInput = document.querySelector('input[name="value"]');
+            var $fixedBlocks = $('.pricing-fixed');
+            var $usageBlocks = $('.pricing-usage');
+            var $tiersContainer = $('#pricing-tiers');
+            var $addTierButton = $('#add-tier');
+            var $valueInput = $('input[name="value"]');
 
             function togglePricingBlocks() {
-                var isUsage = pricingTypeSelect.value === 'usage';
-                fixedBlocks.forEach(function (el) {
-                    el.style.display = isUsage ? 'none' : '';
-                });
-                usageBlocks.forEach(function (el) {
-                    el.style.display = isUsage ? '' : 'none';
-                });
-                if (valueInput) {
-                    valueInput.required = !isUsage;
+                // Alterna visibilidade entre preço fixo e por uso
+                var isUsage = $pricingTypeSelect.val() === 'usage';
+                $fixedBlocks.toggle(!isUsage);
+                $usageBlocks.toggle(isUsage);
+                // Ajusta required do valor fixo
+                if ($valueInput.length) {
+                    $valueInput.prop('required', !isUsage);
                 }
             }
 
             function nextTierIndex() {
-                var items = tiersContainer ? tiersContainer.querySelectorAll('.pricing-tier-row') : [];
-                return items.length;
+                // Calcula o próximo índice com base nas linhas existentes
+                return $tiersContainer.length ? $tiersContainer.find('.pricing-tier-row').length : 0;
             }
 
             function addTierRow() {
-                if (!tiersContainer) return;
+                // Adiciona uma nova linha de faixa de preço
+                if (!$tiersContainer.length) return;
                 var index = nextTierIndex();
-                var row = document.createElement('div');
-                row.className = 'row align-items-end pricing-tier-row mb-3';
-                row.innerHTML = [
-                    '<div class="col-5">',
-                    '  <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Até</label>',
-                    '  <input type="text" class="form-control form-control-solid" name="tiers[' + index + '][limit]" value="">',
-                    '</div>',
-                    '<div class="col-5">',
-                    '  <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Preço</label>',
-                    '  <input type="text" class="form-control form-control-solid input-money" name="tiers[' + index + '][price]" value="">',
-                    '</div>',
-                    '<div class="col-2">',
-                    '  <button type="button" class="btn btn-light-danger w-100 remove-tier">Remover</button>',
+                var rowHtml = [
+                    '<div class="row align-items-end pricing-tier-row mb-3">',
+                    '  <div class="col-5">',
+                    '    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Até</label>',
+                    '    <input type="text" class="form-control form-control-solid" name="tiers[' + index + '][limit]" value="">',
+                    '  </div>',
+                    '  <div class="col-5">',
+                    '    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Preço</label>',
+                    '    <input type="text" class="form-control form-control-solid input-money" name="tiers[' + index + '][price]" value="">',
+                    '  </div>',
+                    '  <div class="col-2">',
+                    '    <button type="button" class="btn btn-light-danger w-100 remove-tier">Remover</button>',
+                    '  </div>',
                     '</div>',
                 ].join('');
 
-                tiersContainer.appendChild(row);
+                $tiersContainer.append(rowHtml);
+                // Reaplica máscara monetária nos novos campos
                 if (typeof window.generateMasks === 'function') {
                     window.generateMasks();
                 }
             }
 
-            if (addTierButton) {
-                addTierButton.addEventListener('click', function () {
-                    addTierRow();
-                });
-            }
-
-            document.addEventListener('click', function (event) {
-                if (!event.target.classList.contains('remove-tier')) return;
-                var row = event.target.closest('.pricing-tier-row');
-                if (row) row.remove();
+            // Botão de adicionar faixa
+            $addTierButton.on('click', function () {
+                addTierRow();
             });
 
-            pricingTypeSelect.addEventListener('change', togglePricingBlocks);
+            // Remove faixa clicando no botão "Remover"
+            $(document).on('click', '.remove-tier', function () {
+                $(this).closest('.pricing-tier-row').remove();
+            });
+
+            // Atualiza a UI quando muda o tipo de cobrança
+            $pricingTypeSelect.on('change', togglePricingBlocks);
             togglePricingBlocks();
         });
     </script>
