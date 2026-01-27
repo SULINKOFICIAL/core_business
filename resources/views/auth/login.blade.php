@@ -3,7 +3,6 @@
 	<head>
         <base href="../../../" />
 		<title>Login</title>
-		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 		@include('layouts.head')
 	</head>
 	<body id="kt_body" class="app-blank bgi-size-cover bgi-attachment-fixed bgi-position-center" style="background: url('{{ asset('assets/media/images/background_2026.png') }}');background-position: left top;background-size: cover;">
