@@ -35,3 +35,7 @@
     </div>
 </form>
 @endsection
+
+@section('custom-footer')
+    @include('pages.modules._form-script')
+@endsection

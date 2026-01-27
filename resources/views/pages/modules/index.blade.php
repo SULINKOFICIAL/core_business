@@ -8,12 +8,19 @@
 </p>
 <div class="row">
     @foreach ($modules as $module)
+    @php
+        $pricingLabel = 'R$ ' . number_format($module->value, 2, ',', '.');
+        if (($module->pricing_type ?? 'fixed') === 'usage') {
+            $minTier = $module->pricingTiers->sortBy('usage_limit')->first();
+            $pricingLabel = $minTier ? 'A partir de R$ ' . number_format($minTier->price, 2, ',', '.') : 'Variável';
+        }
+    @endphp
     <div class="col-3 d-flex">
         <div class="card w-100 mb-6">
             <div class="card-header d-flex align-items-center justify-content-between min-h-60px px-6">
                 <div class="w-75">
                     <a href="{{ route('modules.edit', $module->id) }}" class="mb-0 fw-bolder @if ($module->status == 0) text-danger @else text-gray-700 @endif text-hover-primary m-0 fs-5 text-uppercase lh-1">{{ Str::limit($module->name, 25) }}</a>
-                    <p class="text-gray-500 mb-0 fw-semibold fs-7 lh-1">Grupo de Recursos <span class="text-success fs-8">R$ {{ number_format($module->value, 2, ',', '.') }}</span></p>
+                    <p class="text-gray-500 mb-0 fw-semibold fs-7 lh-1">Grupo de Recursos <span class="text-success fs-8">{{ $pricingLabel }}</span></p>
                 </div>
                 <a href="{{ route('modules.edit', $module->id) }}" class="btn btn-sm btn-icon btn-light-primary">
                     <i class="fa-solid fa-gear"></i>
