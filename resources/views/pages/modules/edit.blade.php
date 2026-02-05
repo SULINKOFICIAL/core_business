@@ -9,19 +9,15 @@
 <form action="{{ route('modules.update', $modules->id) }}" method="POST" enctype="multipart/form-data">
     @csrf
     @method('PUT')
-    <div class="card">
-        <div class="card-body">
-                @include('pages.modules._form')
-        </div>
-    </div>
+    @include('pages.modules._form')
     <div class="d-flex justify-content-between mt-4">
         @if ($modules->status == 1)
             <a href="{{ route('modules.destroy', $modules->id) }}" class="btn btn-lg btn-danger me-2">
-                Desativar Setor
+                Desativar Módulo
             </a>
             @else
             <a href="{{ route('modules.destroy', $modules->id) }}" class="btn btn-lg btn-success me-2">
-                Ativar Setor
+                Ativar Módulo
             </a>
         @endif
             <div>

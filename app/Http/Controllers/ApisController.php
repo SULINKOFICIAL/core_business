@@ -234,6 +234,12 @@ class ApisController extends Controller
         // Obtém plano atual do cliente
         $package = $client->package;
 
+        // Se o cliente não tiver pacote
+        if (!$package) return response()->json([
+            'package' => null,
+            'renovation' => 0,
+        ], 200);
+
         // Formata o pacote do cliente
         $package['modules'] = $package->modules;
 
@@ -442,7 +448,7 @@ class ApisController extends Controller
     {
 
         // Obtém todos os módulos do sistema
-        $modules = Module::where('status', true)->get();
+        $modules = Module::with(['category'])->where('status', true)->get();
 
         // Inicia Json
         $moduleJson = [];
@@ -454,7 +460,19 @@ class ApisController extends Controller
             $moduleData['id']                 = $module->id;
             $moduleData['name']               = $module->name;
             $moduleData['description']        = $module->description;
+            $moduleData['category']           = $module->category?->name;
+            $moduleData['cover_image']        = $module->cover_image ? asset('storage/modules/' . $module->id . '/' . $module->cover_image) : asset('assets/media/images/default.png');
             $moduleData['packages']           = $module->packages()->pluck('package_id')->toArray();
+
+            // Formata os preços
+            $moduleData['pricing']['type']   = $module->pricing_type;
+
+            // Se for cobrança unica
+            if($module->pricing_type == 'usage'){
+                $moduleData['pricing']['values'] = $module->pricing_type;
+            } else {
+                $moduleData['pricing']['value'] = $module->pricing_type;
+            }
            
             // Obtém dados
             $moduleJson[] = $moduleData;

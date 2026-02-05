@@ -4,6 +4,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ClientInstallController;
 use App\Http\Controllers\ClientsActionsController;
 use App\Http\Controllers\CpanelController;
+use App\Http\Controllers\DeveloperController;
 use App\Http\Controllers\ERedeController;
 use App\Http\Controllers\ErrorMiCoreController;
 use App\Http\Controllers\GroupController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\MetaApiController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\ModuleController;
+use App\Http\Controllers\ModuleCategoryController;
 use App\Http\Controllers\NewsCategoryController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\OrderController;
@@ -99,6 +101,17 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/editar/{id}',      [ModuleController::class, 'edit'])->name('edit');
             Route::put('/editar/{id}',      [ModuleController::class, 'update'])->name('update');
             Route::get('/desabilitar/{id}', [ModuleController::class, 'destroy'])->name('destroy');
+
+            Route::prefix('categorias')->group(function () {
+                Route::name('categories.')->group(function () {
+                    Route::get('/',                 [ModuleCategoryController::class, 'index'])->name('index');
+                    Route::get('/adicionar',        [ModuleCategoryController::class, 'create'])->name('create');
+                    Route::post('/adicionar',       [ModuleCategoryController::class, 'store'])->name('store');
+                    Route::get('/editar/{id}',      [ModuleCategoryController::class, 'edit'])->name('edit');
+                    Route::put('/editar/{id}',      [ModuleCategoryController::class, 'update'])->name('update');
+                    Route::get('/desabilitar/{id}', [ModuleCategoryController::class, 'destroy'])->name('destroy');
+                });
+            });
         });
     });
 
@@ -181,8 +194,10 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/recurso',                 [ClientsActionsController::class, 'feature'])->name('feature');
             Route::get('/acessar-recursos',        [ClientsActionsController::class, 'getResources'])->name('get.resources');
             Route::get('/atualizar-banco/{id}',    [ClientsActionsController::class, 'updateDatabaseManual'])->name('update.database');
+            Route::get('/atualizar-git/{id}',      [ClientsActionsController::class, 'updateGitManual'])->name('update.git');
             Route::get('/atualizar-em-massa',      [ClientsActionsController::class, 'updateAllDatabase'])->name('update.all.db');
             Route::get('/ajustar-armazenamento',   [ClientsActionsController::class, 'updateSizeStorage'])->name('update.size.storage');
+            Route::get('/atualizar-sistemas',      [ClientsActionsController::class, 'updateAllSystems'])->name('update.all.systems');
         });
     });
 
@@ -194,6 +209,15 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/testar',                 [ERedeController::class, 'testar'])->name('test');
             Route::get('/token/{token}',          [ERedeController::class, 'verifySolicitation'])->name('verify.token');
             Route::get('/criptografia/{token}',   [ERedeController::class, 'cryptogram'])->name('cryptogram');
+        });
+    });
+
+    /**
+     * Rotas relacionadas aos comandos do desenvolvedor.
+     */
+    Route::prefix('desenvolvedores')->group(function () {
+        Route::name('developer.')->group(function () {
+            Route::get('/testar', [DeveloperController::class, 'test'])->name('test');
         });
     });
 

@@ -10,9 +10,11 @@
                 <tr class="fw-bold fs-6 text-white px-7">
                     <th class="">Nome do Cliente</th>
                     <th class="text-center px-0">Domínio</th>
+                    <th class="text-center px-0">Tipo de Instalação</th>
                     <th class="text-center px-0">Plano</th>
                     <th class="text-center px-0">Criado Em</th>
                     <th class="text-center px-0">Banco</th>
+                    <th class="text-center px-0">GIT</th>
                     <th class="text-center px-0">Status</th>
                     <th class="text-end pe-12 w-100px"></th>
                 </tr>
@@ -35,6 +37,15 @@
                             @endif
                         </td>
                         <td class="text-center">
+                            @if ($client->type_installation == 'shared')
+                                <span class="badge badge-success">Compartilhada</span>
+                            @elseif ($client->type_installation == 'dedicated')
+                                <span class="badge badge-info">Dedicada</span>
+                            @else
+                                <span class="badge badge-secondary">Desconhecido</span>
+                            @endif
+                        </td>
+                        <td class="text-center">
                             @if ($client->package)
                             <span class="badge badge-light-success">{{ $client->package->name }}</span>
                             @else
@@ -50,6 +61,13 @@
                             @endif
                         </td>
                         <td class="text-center">
+                            @if ($client->git_last_version == 0)
+                                <i class="fa-solid fa-circle-xmark text-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ $client->git_error }}"></i>
+                            @else
+                                <i class="fa-solid fa-circle-check text-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Git atualizado"></i>
+                            @endif
+                        </td>
+                        <td class="text-center">
                             @if ($client->status == 0)
                                 <span class="badge badge-light-danger">Desabilitado</span>  
                                 @else
@@ -61,8 +79,11 @@
                                 <a href="{{ route('clients.show', $client->id) }}" class="btn btn-sm btn-primary btn-active-success fw-bolder text-uppercase py-2">
                                     Visualizar
                                 </a>
-                                <a href="{{ route('systems.update.database', $client->id) }}" target="_blank" class="text-gray-700" data-bs-toggle="tooltip" data-bs-placement="top" title="Atualizar banco de dados">
+                                <a href="{{ route('systems.update.database', $client->id) }}" class="text-gray-700" data-bs-toggle="tooltip" data-bs-placement="top" title="Atualizar banco de dados">
                                     <i class="fa-solid fa-database"></i>
+                                </a>
+                                <a href="{{ route('systems.update.git', $client->id) }}" class="text-gray-700" data-bs-toggle="tooltip" data-bs-placement="top" title="Atualizar git">
+                                    <i class="fa-brands fa-git"></i>
                                 </a>
                                 @if ($client->domains()->count() > 0)
                                     <a href="https://{{ $client->domains[0]->domain }}/acessar/{{ $client->token }}" target="_blank" class="text-gray-700" data-bs-toggle="tooltip" data-bs-placement="top" title="Acessar como sistema">
@@ -78,11 +99,11 @@
     </div>
 </div>
 <div class="d-flex justify-content-between mt-4">
+    <a href="{{ route('systems.update.all.systems') }}" class="btn btn-sm btn-success btn-active-danger">
+        Atualizar Sistemas
+    </a>
     <a href="{{ route('clients.create') }}" class="btn btn-sm btn-primary btn-active-success">
         Adicionar Cliente
-    </a>
-    <a href="{{ route('systems.update.all.db') }}" class="btn btn-sm btn-success btn-active-danger">
-        Atualizar Bancos
     </a>
 </div>
 @endsection
