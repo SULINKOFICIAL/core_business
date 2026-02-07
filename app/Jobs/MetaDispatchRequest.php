@@ -61,6 +61,8 @@ class MetaDispatchRequest implements ShouldQueue
 
             // Obtem os dominios do cliente
             $clientDomains = $clientMeta->client->domains;
+
+            $url = "{$clientDomains[0]->domain}/webhooks/meta";
             
         } elseif ($platform == 'whatsapp_web') {
 
@@ -70,10 +72,12 @@ class MetaDispatchRequest implements ShouldQueue
             // Obtem os dominios do cliente
             $clientDomains = $client->domains;
 
+            $url = "{$clientDomains[0]->domain}/webhooks/whatsapp/{$this->data['route']}";
+
         }
 
         // Realiza a requisição
-        $response = $requestService->request('POST', "{$clientDomains[0]->domain}/webhooks/meta", [
+        $response = $requestService->request('POST', $url, [
                         'json' => $this->data
                     ]);
 
