@@ -448,7 +448,7 @@ class ApisController extends Controller
     {
 
         // Obtém todos os módulos do sistema
-        $modules = Module::with(['category'])->where('status', true)->get();
+        $modules = Module::with(['category', 'pricingTiers'])->where('status', true)->get();
 
         // Inicia Json
         $moduleJson = [];
@@ -462,16 +462,28 @@ class ApisController extends Controller
             $moduleData['description']        = $module->description;
             $moduleData['category']           = $module->category?->name;
             $moduleData['cover_image']        = $module->cover_image ? asset('storage/modules/' . $module->id . '/' . $module->cover_image) : asset('assets/media/images/default.png');
-            $moduleData['packages']           = $module->packages()->pluck('package_id')->toArray();
+            // $moduleData['packages']           = $module->packages()->pluck('package_id')->toArray();
 
             // Formata os preços
-            $moduleData['pricing']['type']   = $module->pricing_type;
+            $moduleData['pricing']['type'] = $module->pricing_type;
 
-            // Se for cobrança unica
+            // Se for cobrança por uso, retorna as faixas (tiers)
             if($module->pricing_type == 'usage'){
-                $moduleData['pricing']['values'] = $module->pricing_type;
+
+                $pricingTiers = $module->pricingTiers->sortBy('usage_limit')
+                                                        ->values()
+                                                        ->map(function ($tier) {
+                                                            return [
+                                                                'usage_limit' => $tier->usage_limit,
+                                                                'price' => (float) $tier->price,
+                                                            ];
+                                                        })
+                                                        ->toArray();
+
+
+                $moduleData['pricing']['values'] = $pricingTiers;
             } else {
-                $moduleData['pricing']['value'] = $module->pricing_type;
+                $moduleData['pricing']['values'] = (float) $module->value;
             }
            
             // Obtém dados
@@ -482,6 +494,50 @@ class ApisController extends Controller
         // Retorna formatado em json
         return response()->json($moduleJson, 200);
 
+    }
+
+    /**
+     * Recebe os módulos que o cliente deseja assinar.
+     * Espera `modules` como array de IDs.
+     */
+    public function subscribeModules(Request $request)
+    {
+        // Recebe dados
+        $data = $request->all();
+
+        // Obtém dados do cliente
+        $client = $data['client'];
+
+        if (!isset($data['modules']) || !is_array($data['modules'])) {
+            return response()->json(['message' => 'Parâmetros faltando'], 400);
+        }
+
+        // Normaliza IDs
+        $moduleIds = array_values(array_unique(array_filter($data['modules'], function ($id) {
+            return is_numeric($id);
+        })));
+
+        if (empty($moduleIds)) {
+            return response()->json(['message' => 'Módulos inválidos'], 400);
+        }
+
+        // Filtra apenas módulos existentes/ativos
+        $validModuleIds = Module::whereIn('id', $moduleIds)
+            ->where('status', true)
+            ->pluck('id')
+            ->toArray();
+
+        if (empty($validModuleIds)) {
+            return response()->json(['message' => 'Módulos não encontrados'], 404);
+        }
+
+        // Adiciona módulos sem remover os atuais
+        $client->modules()->syncWithoutDetaching($validModuleIds);
+        $client->load('modules');
+
+        return response()->json([
+            'modules_ids' => $client->modules->pluck('id')->toArray(),
+        ], 200);
     }
 
     /**

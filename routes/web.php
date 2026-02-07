@@ -170,10 +170,7 @@ Route::middleware(['auth'])->group(function () {
      */
     Route::prefix('assinaturas')->group(function () {
         Route::name('subscriptions.')->group(function () {
-            Route::get('/renovar/{id}', [SubscriptionsController::class, 'renew'])->name('renew');
-            Route::get('/cobrar',       [SubscriptionsController::class, 'charge'])->name('charge');
-            Route::get('/expirar',      [SubscriptionsController::class, 'expired'])->name('expired');
-            Route::get('/emitir',       [SubscriptionsController::class, 'generate'])->name('generate');
+            Route::get('/', [SubscriptionsController::class, 'index'])->name('index');
         });
     });
 

@@ -195,9 +195,6 @@ if (! function_exists('header_menu_items')) {
                 'type' => 'submenu',
                 'label' => 'Configuração',
                 'active_routes' => [
-                    'subscriptions.generate',
-                    'subscriptions.charge',
-                    'subscriptions.expired',
                     'tickets.index',
                     'suggestions.index',
                     'errors.index',
@@ -205,24 +202,6 @@ if (! function_exists('header_menu_items')) {
                 ],
                 'width' => 'w-175px',
                 'children' => [
-                    [
-                        'label' => 'Gerar Renovações',
-                        'route' => 'subscriptions.generate',
-                        'active_routes' => ['subscriptions.generate'],
-                        'icon' => ['class' => 'ki-duotone ki-chart-simple-2 fs-3', 'paths' => 4],
-                    ],
-                    [
-                        'label' => 'Cobrar',
-                        'route' => 'subscriptions.charge',
-                        'active_routes' => ['subscriptions.charge'],
-                        'icon' => ['class' => 'ki-duotone ki-chart-simple-2 fs-3', 'paths' => 4],
-                    ],
-                    [
-                        'label' => 'Expirar renovações',
-                        'route' => 'subscriptions.expired',
-                        'active_routes' => ['subscriptions.expired'],
-                        'icon' => ['class' => 'ki-duotone ki-chart-simple-2 fs-3', 'paths' => 4],
-                    ],
                     [
                         'label' => 'Tickets',
                         'route' => 'tickets.index',
