@@ -451,15 +451,69 @@ class OrderService
             $total += $unitPrice;
         }
 
-        // Atualiza o total do pedido
-        $order->update([
-            'total_amount' => $total,
-        ]);
+        // Atualiza o total do pedido com base no cupom, se existir
+        $this->recalculateOrderTotals($order, $total);
 
         // Retorna o rascunho atualizado
         return $order;
     }
 
-    
+    /**
+     * Recalcula o total do pedido considerando o cupom aplicado.
+     */
+    private function recalculateOrderTotals(Order $order, ?float $subtotal = null): void
+    {
+
+        // Soma o subtotal atual caso não seja informado
+        $itemsSubtotal = $subtotal ?? (float) $order->items()->sum('subtotal_amount');
+        // Calcula desconto do cupom quando existir
+        $couponDiscount = $this->calculateCouponDiscount($order, $itemsSubtotal);
+        // Calcula o total final do pedido
+        $totalAmount = $itemsSubtotal - $couponDiscount;
+        if ($totalAmount < 0) {
+            $totalAmount = 0.0;
+        }
+
+        $order->update([
+            'total_amount' => $totalAmount,
+            'coupon_discount_amount' => $couponDiscount,
+        ]);
+
+    }
+
+    /**
+     * Calcula o desconto do cupom aplicado no pedido.
+     */
+    private function calculateCouponDiscount(Order $order, float $subtotal): float
+    {
+
+        if (!$order->coupon_id || !$order->coupon_type_snapshot) {
+            return 0.0;
+        }
+
+        $type = $order->coupon_type_snapshot;
+        $value = (float) ($order->coupon_value_snapshot ?? 0);
+
+        if ($subtotal <= 0) {
+            return 0.0;
+        }
+
+        if ($type === 'percent') {
+            $discount = $subtotal * ($value / 100);
+        } elseif ($type === 'fixed') {
+            $discount = $value;
+        } elseif ($type === 'trial') {
+            $discount = $subtotal;
+        } else {
+            $discount = 0.0;
+        }
+
+        if ($discount > $subtotal) {
+            $discount = $subtotal;
+        }
+
+        return $discount;
+
+    }
 
 }

@@ -14,6 +14,7 @@ class Order extends Model
     protected $casts = [
         'pricing_snapshot' => 'array',
         'rules_snapshot' => 'array',
+        'coupon_applied_at' => 'datetime',
         'locked_at' => 'datetime',
         'paid_at' => 'datetime',
         'canceled_at' => 'datetime',
@@ -26,8 +27,15 @@ class Order extends Model
         'current_step',
         'currency',
         'total_amount',
+        'coupon_discount_amount',
         'pricing_snapshot',
         'rules_snapshot',
+        'coupon_id',
+        'coupon_code_snapshot',
+        'coupon_type_snapshot',
+        'coupon_value_snapshot',
+        'coupon_trial_months',
+        'coupon_applied_at',
         'type',
         'key_id',
         'previous_key_id',
@@ -59,6 +67,11 @@ class Order extends Model
         return $this->hasOne(ClientSubscription::class, 'order_id');
     }
 
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class, 'coupon_id');
+    }
+
     public function package(): BelongsTo
     {
         return $this->belongsTo(Package::class, 'key_id');
@@ -77,7 +90,9 @@ class Order extends Model
 
         $subtotal = (float) $this->items()->sum('subtotal_amount');
         if ($subtotal > 0) {
-            return $subtotal;
+            $discount = (float) ($this->coupon_discount_amount ?? 0);
+            $total = $subtotal - $discount;
+            return $total > 0 ? $total : 0.0;
         }
 
         $legacyTotal = (float) $this->items()->sum('item_value');

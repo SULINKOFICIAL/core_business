@@ -17,6 +17,7 @@ use App\Http\Controllers\ModuleCategoryController;
 use App\Http\Controllers\NewsCategoryController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\CouponController;
 use App\Http\Controllers\SubscriptionsController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\WhatsAppApiController;
@@ -141,6 +142,17 @@ Route::middleware(['auth'])->group(function () {
         Route::name('orders.')->group(function () {
             Route::get('/', [OrderController::class, 'index'])->name('index');
             Route::get('/visualizar/{id}', [OrderController::class, 'show'])->name('show');
+        });
+    });
+
+    Route::prefix('cupons')->group(function () {
+        Route::name('coupons.')->group(function () {
+            Route::get('/', [CouponController::class, 'index'])->name('index');
+            Route::get('/adicionar', [CouponController::class, 'create'])->name('create');
+            Route::post('/adicionar', [CouponController::class, 'store'])->name('store');
+            Route::get('/editar/{id}', [CouponController::class, 'edit'])->name('edit');
+            Route::put('/editar/{id}', [CouponController::class, 'update'])->name('update');
+            Route::get('/desabilitar/{id}', [CouponController::class, 'destroy'])->name('destroy');
         });
     });
 

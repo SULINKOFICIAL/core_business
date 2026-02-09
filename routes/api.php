@@ -35,6 +35,8 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
         Route::get('/pedido/rascunho', [ApisController::class, 'orderDraft']);
         Route::post('/pedido/etapa', [ApisController::class, 'orderStep']);
         Route::post('/pedido/rota', [ApisController::class, 'orderRoute']);
+        Route::post('/pedido/cupom/aplicar', [ApisController::class, 'orderApplyCoupon']);
+        Route::post('/pedido/cupom/remover', [ApisController::class, 'orderRemoveCoupon']);
         Route::get('/pedido/uso', [ApisController::class, 'orderUsageOptions']);
         Route::get('/pedido/checkout', [ApisController::class, 'orderCheckout']);
         Route::get('/cartoes',        [ApisController::class, 'cards']);

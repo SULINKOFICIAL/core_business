@@ -8,6 +8,8 @@ use App\Models\ClientCard;
 use App\Models\ClientDomain;
 use App\Models\ErrorMiCore;
 use App\Models\IntegrationSuggestion;
+use App\Models\Coupon;
+use App\Models\CouponRedemption;
 use App\Models\Module;
 use App\Models\ModulePricingTier;
 use App\Models\Order;
@@ -366,6 +368,10 @@ class ApisController extends Controller
             ];
         });
 
+        // Calcula subtotal e desconto aplicado
+        $subtotalAmount = (float) $order->items()->sum('subtotal_amount');
+        $discountAmount = (float) ($order->coupon_discount_amount ?? 0);
+
         // Responde com o rascunho e os itens formatados
         return response()->json([
             // Identificador do pedido
@@ -374,10 +380,22 @@ class ApisController extends Controller
             'status' => $order->status,
             // Etapa atual do pedido
             'current_step' => $order->current_step,
+            // Subtotal antes de descontos
+            'subtotal_amount' => $subtotalAmount,
+            // Desconto aplicado por cupom
+            'discount_amount' => $discountAmount,
             // Total calculado do pedido
             'total_amount' => $order->total(),
             // Moeda do pedido
             'currency' => $order->currency,
+            // Dados do cupom aplicado
+            'coupon' => $order->coupon_id ? [
+                'code' => $order->coupon_code_snapshot,
+                'type' => $order->coupon_type_snapshot,
+                'value' => $order->coupon_value_snapshot,
+                'trial_months' => $order->coupon_trial_months,
+                'discount_amount' => $discountAmount,
+            ] : null,
             // Itens do pedido
             'items' => $items,
         ], 200);
@@ -499,10 +517,22 @@ class ApisController extends Controller
             ];
         });
 
+        $subtotalAmount = (float) $order->items()->sum('subtotal_amount');
+        $discountAmount = (float) ($order->coupon_discount_amount ?? 0);
+
         return response()->json([
             'order_id' => $order->id,
+            'subtotal_amount' => $subtotalAmount,
+            'discount_amount' => $discountAmount,
             'total_amount' => $order->total(),
             'currency' => $order->currency,
+            'coupon' => $order->coupon_id ? [
+                'code' => $order->coupon_code_snapshot,
+                'type' => $order->coupon_type_snapshot,
+                'value' => $order->coupon_value_snapshot,
+                'trial_months' => $order->coupon_trial_months,
+                'discount_amount' => $discountAmount,
+            ] : null,
             'items' => $items,
         ], 200);
     }
@@ -542,6 +572,237 @@ class ApisController extends Controller
             'order_id' => $order->id,
             'current_step' => $order->current_step,
         ], 200);
+    }
+
+    /**
+     * Aplica um cupom ao pedido em rascunho.
+     */
+    public function orderApplyCoupon(Request $request)
+    {
+        // Extrai dados e cliente já anexado pelo middleware
+        $data = $request->all();
+        $client = $data['client'];
+
+        if (!isset($data['order_id']) || !is_numeric($data['order_id'])) {
+            return response()->json(['message' => 'order_id inválido'], 400);
+        }
+        if (!isset($data['code']) || !is_string($data['code'])) {
+            return response()->json(['message' => 'code inválido'], 400);
+        }
+
+        $code = strtoupper(trim($data['code']));
+        if ($code === '') {
+            return response()->json(['message' => 'code inválido'], 400);
+        }
+
+        // Busca o pedido em rascunho do cliente
+        $order = Order::where('id', (int) $data['order_id'])
+            ->where('client_id', $client->id)
+            ->where('status', 'draft')
+            ->with(['items.configurations'])
+            ->first();
+
+        if (!$order) {
+            return response()->json(['message' => 'Pedido não encontrado'], 404);
+        }
+
+        // Busca cupom por código (case-insensitive)
+        $coupon = Coupon::whereRaw('upper(code) = ?', [$code])->first();
+        if (!$coupon || !$coupon->is_active) {
+            return response()->json(['message' => 'Cupom inválido'], 400);
+        }
+
+        $now = now();
+        if ($coupon->starts_at && $coupon->starts_at->gt($now)) {
+            return response()->json(['message' => 'Cupom ainda não está válido'], 400);
+        }
+        if ($coupon->ends_at && $coupon->ends_at->lt($now)) {
+            return response()->json(['message' => 'Cupom expirado'], 400);
+        }
+
+        if (!is_null($coupon->max_redemptions) && $coupon->redeemed_count >= $coupon->max_redemptions) {
+            return response()->json(['message' => 'Limite de uso do cupom atingido'], 400);
+        }
+
+        // Se já existe cupom diferente, remove a redenção antiga
+        $existingRedemption = CouponRedemption::where('order_id', $order->id)->first();
+        if ($existingRedemption && $existingRedemption->coupon_id !== $coupon->id) {
+            $previousCoupon = Coupon::find($existingRedemption->coupon_id);
+            if ($previousCoupon && $previousCoupon->redeemed_count > 0) {
+                $previousCoupon->decrement('redeemed_count');
+            }
+            $existingRedemption->delete();
+            $existingRedemption = null;
+        }
+
+        // Calcula subtotal e desconto do cupom
+        $subtotalAmount = (float) $order->items()->sum('subtotal_amount');
+        $discountAmount = $this->calculateCouponDiscountAmount($coupon, $subtotalAmount);
+
+        // Atualiza o pedido com o cupom aplicado
+        $order->update([
+            'coupon_id' => $coupon->id,
+            'coupon_code_snapshot' => $coupon->code,
+            'coupon_type_snapshot' => $coupon->type,
+            'coupon_value_snapshot' => $coupon->amount,
+            'coupon_trial_months' => $coupon->trial_months,
+            'coupon_applied_at' => $now,
+            'coupon_discount_amount' => $discountAmount,
+            'total_amount' => max(0, $subtotalAmount - $discountAmount),
+        ]);
+
+        // Registra redenção do cupom
+        if (!$existingRedemption) {
+            CouponRedemption::create([
+                'coupon_id' => $coupon->id,
+                'order_id' => $order->id,
+                'client_id' => $client->id,
+                'redeemed_at' => $now,
+                'amount_discounted' => $discountAmount,
+                'currency' => $order->currency,
+                'code_snapshot' => $coupon->code,
+                'type_snapshot' => $coupon->type,
+                'value_snapshot' => $coupon->amount,
+                'trial_months_snapshot' => $coupon->trial_months,
+            ]);
+            $coupon->increment('redeemed_count');
+        } else {
+            $existingRedemption->update([
+                'amount_discounted' => $discountAmount,
+                'currency' => $order->currency,
+                'code_snapshot' => $coupon->code,
+                'type_snapshot' => $coupon->type,
+                'value_snapshot' => $coupon->amount,
+                'trial_months_snapshot' => $coupon->trial_months,
+            ]);
+        }
+
+        return response()->json($this->buildOrderSummary($order), 200);
+    }
+
+    /**
+     * Remove o cupom aplicado no pedido em rascunho.
+     */
+    public function orderRemoveCoupon(Request $request)
+    {
+        // Extrai dados e cliente já anexado pelo middleware
+        $data = $request->all();
+        $client = $data['client'];
+
+        if (!isset($data['order_id']) || !is_numeric($data['order_id'])) {
+            return response()->json(['message' => 'order_id inválido'], 400);
+        }
+
+        // Busca o pedido em rascunho do cliente
+        $order = Order::where('id', (int) $data['order_id'])
+            ->where('client_id', $client->id)
+            ->where('status', 'draft')
+            ->with(['items.configurations'])
+            ->first();
+
+        if (!$order) {
+            return response()->json(['message' => 'Pedido não encontrado'], 404);
+        }
+
+        // Remove redenção do cupom, se existir
+        $existingRedemption = CouponRedemption::where('order_id', $order->id)->first();
+        if ($existingRedemption) {
+            $coupon = Coupon::find($existingRedemption->coupon_id);
+            if ($coupon && $coupon->redeemed_count > 0) {
+                $coupon->decrement('redeemed_count');
+            }
+            $existingRedemption->delete();
+        }
+
+        $subtotalAmount = (float) $order->items()->sum('subtotal_amount');
+
+        // Limpa campos de cupom no pedido
+        $order->update([
+            'coupon_id' => null,
+            'coupon_code_snapshot' => null,
+            'coupon_type_snapshot' => null,
+            'coupon_value_snapshot' => null,
+            'coupon_trial_months' => null,
+            'coupon_applied_at' => null,
+            'coupon_discount_amount' => 0,
+            'total_amount' => $subtotalAmount,
+        ]);
+
+        return response()->json($this->buildOrderSummary($order), 200);
+    }
+
+    /**
+     * Calcula o desconto do cupom para um subtotal.
+     */
+    private function calculateCouponDiscountAmount(Coupon $coupon, float $subtotal): float
+    {
+        if ($subtotal <= 0) {
+            return 0.0;
+        }
+
+        $discount = 0.0;
+        if ($coupon->type === 'percent') {
+            $discount = $subtotal * ((float) $coupon->amount / 100);
+        } elseif ($coupon->type === 'fixed') {
+            $discount = (float) $coupon->amount;
+        } elseif ($coupon->type === 'trial') {
+            $discount = $subtotal;
+        }
+
+        if ($discount > $subtotal) {
+            $discount = $subtotal;
+        }
+
+        return $discount;
+    }
+
+    /**
+     * Monta a resposta padrão de pedido para o front.
+     */
+    private function buildOrderSummary(Order $order): array
+    {
+        $items = $order->items->map(function ($item) {
+            $usageConfig = null;
+            $configItem = $item->configurations->firstWhere('key', 'usage');
+            if ($configItem) {
+                $usageConfig = $configItem->value;
+            } elseif (is_array($item->pricing_model_snapshot ?? null) && isset($item->pricing_model_snapshot['usage'])) {
+                $usageConfig = $item->pricing_model_snapshot['usage'];
+            }
+
+            return [
+                'id' => $item->id,
+                'item_type' => $item->item_type,
+                'item_name' => $item->item_name_snapshot,
+                'item_reference_id' => $item->item_reference_id,
+                'quantity' => $item->quantity,
+                'unit_price' => $item->unit_price_snapshot,
+                'subtotal' => $item->subtotal_amount,
+                'pricing_model_snapshot' => $item->pricing_model_snapshot,
+                'usage' => $usageConfig,
+            ];
+        });
+
+        $subtotalAmount = (float) $order->items()->sum('subtotal_amount');
+        $discountAmount = (float) ($order->coupon_discount_amount ?? 0);
+
+        return [
+            'order_id' => $order->id,
+            'status' => $order->status,
+            'current_step' => $order->current_step,
+            'subtotal_amount' => $subtotalAmount,
+            'discount_amount' => $discountAmount,
+            'total_amount' => $order->total(),
+            'currency' => $order->currency,
+            'coupon' => $order->coupon_id ? [
+                'code' => $order->coupon_code_snapshot,
+                'type' => $order->coupon_type_snapshot,
+                'value' => $order->coupon_value_snapshot,
+                'trial_months' => $order->coupon_trial_months,
+                'discount_amount' => $discountAmount,
+            ] : null,
+            'items' => $items,
+        ];
     }
 
     /**
@@ -890,37 +1151,7 @@ class ApisController extends Controller
         }
 
         // Responde com o pedido atualizado e seus itens
-        return response()->json([
-            // Identificador do pedido
-            'order_id' => $order->id,
-            // Status atual do pedido
-            'status' => $order->status,
-            // Total calculado
-            'total_amount' => $order->total(),
-            // Moeda do pedido
-            'currency' => $order->currency,
-            // Itens formatados para o front
-            'items' => $order->items()->get()->map(function ($item) {
-                return [
-                    // Identificador do item
-                    'id' => $item->id,
-                    // Tipo do item
-                    'item_type' => $item->item_type,
-                    // Nome imutável do item
-                    'item_name' => $item->item_name_snapshot,
-                    // Referência ao módulo original
-                    'item_reference_id' => $item->item_reference_id,
-                    // Quantidade do item
-                    'quantity' => $item->quantity,
-                    // Valor unitário do item
-                    'unit_price' => $item->unit_price_snapshot,
-                    // Subtotal do item
-                    'subtotal' => $item->subtotal_amount,
-                    // Snapshot de pricing
-                    'pricing_model_snapshot' => $item->pricing_model_snapshot,
-                ];
-            }),
-        ], 201);
+        return response()->json($this->buildOrderSummary($order), 201);
     }
 
     /**

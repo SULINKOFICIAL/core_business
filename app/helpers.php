@@ -166,13 +166,18 @@ if (! function_exists('header_menu_items')) {
             [
                 'type' => 'submenu',
                 'label' => 'Vendas',
-                'active_routes' => ['orders.index', 'orders.show'],
+                'active_routes' => ['orders.index', 'orders.show', 'coupons.index', 'coupons.create', 'coupons.edit'],
                 'width' => 'w-125px',
                 'children' => [
                     [
                         'label' => 'Pedidos',
                         'route' => 'orders.index',
                         'active_routes' => ['orders.index', 'orders.show'],
+                    ],
+                    [
+                        'label' => 'Cupons',
+                        'route' => 'coupons.index',
+                        'active_routes' => ['coupons.index', 'coupons.create', 'coupons.edit'],
                     ],
                 ],
             ],
