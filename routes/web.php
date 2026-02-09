@@ -139,6 +139,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::prefix('pedidos')->group(function () {
         Route::name('orders.')->group(function () {
+            Route::get('/', [OrderController::class, 'index'])->name('index');
             Route::get('/visualizar/{id}', [OrderController::class, 'show'])->name('show');
         });
     });

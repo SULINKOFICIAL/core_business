@@ -5,8 +5,10 @@ namespace App\Services;
 use App\Models\ClientModule;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderItemConfiguration;
 use App\Models\ClientSubscription;
 use App\Models\Package;
+use App\Models\Module;
 
 class OrderService
 {
@@ -84,16 +86,23 @@ class OrderService
             'key_id'          => $newPackage->id,
             'previous_key_id' => $oldPackage,
             'status'          => 'Pendente',
+            'currency'        => 'BRL',
         ]);
 
         // Adiciona pacote na compra
         OrderItem::create([
             'order_id'    => $order->id,
-            'type'        => 'Pacote',
+            'item_type'   => 'package',
             'action'      => 'Alteração',
+            'item_code'   => (string) $newPackage->id,
+            'item_name_snapshot' => $newPackage->name,
+            'quantity'    => 1,
+            'unit_price_snapshot' => $newPackage->value,
+            'subtotal_amount' => $newPackage->value,
+            // Legacy compatibility
+            'type'        => 'Pacote',
             'item_name'   => $newPackage->name,
             'item_key'    => $newPackage->id,
-            'quantity'    => 1,
             'item_value'  => $newPackage->value,
         ]);
 
@@ -101,11 +110,17 @@ class OrderService
         foreach ($newPackage->modules as $module) {
             OrderItem::create([
                 'order_id'  => $order->id,
-                'type'      => 'Módulo',
+                'item_type' => 'module',
                 'action'    => 'Adição',
+                'item_code' => (string) $module->id,
+                'item_name_snapshot' => $module->name,
+                'quantity'  => 1,
+                'unit_price_snapshot' => 0,
+                'subtotal_amount' => 0,
+                // Legacy compatibility
+                'type'      => 'Módulo',
                 'item_name' => $module->name,
                 'item_key'  => $module->id,
-                'quantity'  => 1,
                 'item_value' => 0,
             ]);
         }
@@ -114,13 +129,29 @@ class OrderService
         if ($credit > 0) {
             OrderItem::create([
                 'order_id'    => $order->id,
-                'type'        => 'Crédito',
+                'item_type'   => 'credit',
                 'action'      => 'Ajuste',
-                'item_name'   => 'Crédito proporcional',
+                'item_name_snapshot' => 'Crédito proporcional',
                 'quantity'    => 1,
+                'unit_price_snapshot' => -$credit,
+                'subtotal_amount' => -$credit,
+                // Legacy compatibility
+                'type'        => 'Crédito',
+                'item_name'   => 'Crédito proporcional',
                 'item_value'  => -$credit,
             ]);
         }
+
+        $totalAmount = (float) $order->items()->sum('subtotal_amount');
+        $order->update([
+            'total_amount' => $totalAmount,
+            'pricing_snapshot' => [
+                'package_id' => $newPackage->id,
+                'previous_package_id' => $oldPackage,
+                'items_count' => $order->items()->count(),
+                'calculated_at' => now()->toDateTimeString(),
+            ],
+        ]);
 
         return [
             'status' => 'Pedido Gerado', 
@@ -211,6 +242,222 @@ class OrderService
 
         return 'Pacote "' . $package->name . '" ativado com sucesso.';
         
+    }
+
+    /**
+     * Cria um pedido em rascunho com base nos módulos e configurações.
+     *
+     * @param  \\App\\Models\\Client $client
+     * @param  array $modulesInput Array de itens {id, config}
+     * @param  string $currency
+     * @return \\App\\Models\\Order
+     */
+    public function createDraftOrderFromModules($client, array $modulesInput, string $currency = 'BRL', ?int $orderId = null): Order
+    {
+        /**
+         * Monta o rascunho do pedido com base nos módulos enviados,
+         * preservando o mesmo pedido quando for uma atualização.
+         */
+        $moduleIds = [];
+        $configsById = [];
+
+        foreach ($modulesInput as $item) {
+            if (!is_array($item) || !isset($item['id'])) {
+                // Garante o formato correto do payload
+                continue;
+            }
+
+            // Converte para inteiro para evitar valores inválidos
+            $moduleId = (int) $item['id'];
+            if ($moduleId <= 0) {
+                // Impede ids não numéricos ou negativos
+                continue;
+            }
+
+            // Acumula ids e configs por módulo
+            $moduleIds[] = $moduleId;
+            $configsById[$moduleId] = isset($item['config']) && is_array($item['config']) ? $item['config'] : [];
+        }
+
+        // Remove duplicados
+        $moduleIds = array_values(array_unique($moduleIds));
+        if (empty($moduleIds)) {
+            // Não permite pedido sem módulos
+            return $orderId
+                ? (Order::where('id', $orderId)->where('client_id', $client->id)->where('status', 'draft')->first() ?? Order::create([
+                    'client_id' => $client->id,
+                    'status' => 'draft',
+                    'currency' => $currency,
+                    'pricing_snapshot' => [
+                        'source' => 'central',
+                        'modules_requested' => [],
+                        'calculated_at' => now()->toDateTimeString(),
+                    ],
+                ]))
+                : Order::create([
+                    'client_id' => $client->id,
+                    'status' => 'draft',
+                    'currency' => $currency,
+                    'pricing_snapshot' => [
+                        'source' => 'central',
+                        'modules_requested' => [],
+                        'calculated_at' => now()->toDateTimeString(),
+                    ],
+                ]);
+        }
+
+        // Carrega módulos válidos com seus tiers
+        $modules = Module::with('pricingTiers')->whereIn('id', $moduleIds)->where('status', true)->get();
+        if ($modules->isEmpty()) {
+            // Bloqueia módulos inexistentes ou inativos
+            $order = Order::create([
+                'client_id' => $client->id,
+                'status' => 'draft',
+                'currency' => $currency,
+                'pricing_snapshot' => [
+                    'source' => 'central',
+                    'modules_requested' => [],
+                    'calculated_at' => now()->toDateTimeString(),
+                ],
+            ]);
+            return $order;
+        }
+
+        $order = null;
+        if ($orderId) {
+            // Reusa o rascunho existente quando informado
+            $order = Order::where('id', $orderId)
+                ->where('client_id', $client->id)
+                ->where('status', 'draft')
+                ->first();
+        }
+
+        if (!$order) {
+            // Cria novo rascunho caso não exista
+            $order = Order::create([
+                'client_id' => $client->id,
+                'status' => 'draft',
+                'currency' => $currency,
+                'pricing_snapshot' => [
+                    'source' => 'central',
+                    'modules_requested' => $moduleIds,
+                    'calculated_at' => now()->toDateTimeString(),
+                ],
+            ]);
+        } else {
+            // Remove itens/configs para reconstruir o rascunho
+            $order->items()->delete();
+            $order->update([
+                // Atualiza moeda e snapshot
+                'currency' => $currency,
+                'pricing_snapshot' => [
+                    'source' => 'central',
+                    'modules_requested' => $moduleIds,
+                    'calculated_at' => now()->toDateTimeString(),
+                ],
+            ]);
+        }
+
+        // Inicia total do pedido
+        $total = 0.0;
+
+        foreach ($modules as $module) {
+            // Configuração dinâmica do módulo (quando existir)
+            $config = $configsById[$module->id] ?? [];
+
+            // Valor base do módulo
+            $unitPrice = 0.0;
+            $pricingModelSnapshot = [
+                'type' => $module->pricing_type,
+            ];
+
+            if ($module->pricing_type === 'usage') {
+                // Extrai o uso informado pelo cliente
+                $usage = null;
+                if (isset($config['usage']) && is_numeric($config['usage'])) {
+                    $usage = (float) $config['usage'];
+                } elseif (isset($config['volume']) && is_numeric($config['volume'])) {
+                    $usage = (float) $config['volume'];
+                }
+
+                // Ordena as faixas de preço por limite de uso
+                $tiers = $module->pricingTiers->sortBy('usage_limit')->values();
+                if ($tiers->isEmpty()) {
+                    // Bloqueia módulos por uso sem faixas configuradas
+                    continue;
+                }
+
+                if ($usage === null) {
+                    // Marca como pendente quando o uso não foi informado
+                    $pricingModelSnapshot['pending_usage'] = true;
+                    $unitPrice = 0.0;
+                } else {
+                    // Encontra o tier correspondente ao uso informado
+                    $matchedTier = null;
+                    foreach ($tiers as $tier) {
+                        if ($usage <= (float) $tier->usage_limit) {
+                            $matchedTier = $tier;
+                            break;
+                        }
+                    }
+                    if (!$matchedTier) {
+                        $matchedTier = $tiers->last();
+                    }
+
+                    // Aplica preço da faixa selecionada
+                    $unitPrice = (float) $matchedTier->price;
+                    // Salva detalhes do cálculo no snapshot
+                    $pricingModelSnapshot['usage'] = $usage;
+                    $pricingModelSnapshot['tier_limit'] = (float) $matchedTier->usage_limit;
+                    $pricingModelSnapshot['tier_price'] = (float) $matchedTier->price;
+                }
+            } else {
+                // Preço fixo para módulos sem cobrança por uso
+                $unitPrice = (float) $module->value;
+            }
+
+            // Cria item do pedido com snapshot imutável
+            $item = OrderItem::create([
+                'order_id' => $order->id,
+                'item_type' => 'module',
+                'action' => 'Adição',
+                'item_code' => (string) $module->id,
+                'item_name_snapshot' => $module->name,
+                'item_reference_type' => Module::class,
+                'item_reference_id' => $module->id,
+                'quantity' => 1,
+                'unit_price_snapshot' => $unitPrice,
+                'subtotal_amount' => $unitPrice,
+                'pricing_model_snapshot' => $pricingModelSnapshot,
+                // Legacy compatibility
+                'type' => 'Módulo',
+                'item_name' => $module->name,
+                'item_key' => $module->id,
+                'item_value' => $unitPrice,
+            ]);
+
+            foreach ($config as $key => $value) {
+                // Persiste cada configuração do módulo
+                OrderItemConfiguration::create([
+                    'order_item_id' => $item->id,
+                    'key' => (string) $key,
+                    'value' => is_scalar($value) ? (string) $value : json_encode($value),
+                    'value_type' => gettype($value),
+                    'derived_pricing_effect' => $pricingModelSnapshot,
+                ]);
+            }
+
+            // Soma ao total do pedido
+            $total += $unitPrice;
+        }
+
+        // Atualiza o total do pedido
+        $order->update([
+            'total_amount' => $total,
+        ]);
+
+        // Retorna o rascunho atualizado
+        return $order;
     }
 
     

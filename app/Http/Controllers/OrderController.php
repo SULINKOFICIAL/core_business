@@ -20,6 +20,22 @@ class OrderController extends Controller
     }
 
     /**
+     * Display a listing of the orders.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index()
+    {
+        $orders = Order::with(['client', 'items', 'transactions'])
+            ->orderBy('created_at', 'DESC')
+            ->paginate(50);
+
+        return view('pages.orders.index')->with([
+            'orders' => $orders,
+        ]);
+    }
+
+    /**
      * Display the specified resource.
      *
      * @param  int  $id
@@ -30,8 +46,13 @@ class OrderController extends Controller
         // Obtém dados do Lead
         $order = $this->repository->find($id);
 
-        // Retorna a página
-        return view('pages.clients._order')->with([
+        if (request()->ajax()) {
+            return view('pages.clients._order')->with([
+                'order' => $order,
+            ]);
+        }
+
+        return view('pages.orders.show')->with([
             'order' => $order,
         ]);
 

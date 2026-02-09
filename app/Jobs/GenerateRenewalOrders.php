@@ -67,10 +67,18 @@ class GenerateRenewalOrders implements ShouldQueue
                         // Cria item que representa renovação
                         OrderItem::create([
                             'order_id'   => $order->id,
+                            'item_type'  => 'package',
+                            'action'     => 'Renovação',
+                            'item_code'  => (string) $package->id,
+                            'item_name_snapshot' => $package->name,
+                            'quantity'   => 1,
+                            'unit_price_snapshot' => $package->value,
+                            'subtotal_amount' => $package->value,
+                            // Legacy compatibility
                             'amount'     => $package->value,
                             'type'       => 'Pacote',
-                            'action'     => 'Renovação',
-                            'quantity'   => 1,
+                            'item_name'  => $package->name,
+                            'item_key'   => $package->id,
                             'item_value' => $package->value,
                         ]);
                     }

@@ -9,6 +9,7 @@ use App\Models\ClientDomain;
 use App\Models\ErrorMiCore;
 use App\Models\IntegrationSuggestion;
 use App\Models\Module;
+use App\Models\ModulePricingTier;
 use App\Models\Order;
 use App\Models\OrderTransaction;
 use App\Models\Package;
@@ -308,6 +309,326 @@ class ApisController extends Controller
 
     }
 
+    /**
+     * Retorna o pedido em rascunho mais recente do cliente (se existir).
+     */
+    public function orderDraft(Request $request)
+    {
+        // Extrai dados e cliente já anexado pelo middleware
+        $data = $request->all();
+        $client = $data['client'];
+
+        // Busca o rascunho mais recente do cliente com itens e configurações
+        $order = Order::where('client_id', $client->id)
+            ->where('status', 'draft')
+            ->orderBy('created_at', 'DESC')
+            ->with(['items.configurations'])
+            ->first();
+
+        // Retorna vazio quando não há rascunho
+        if (!$order) {
+            return response()->json(['order' => null], 200);
+        }
+
+        // Monta os itens com os dados relevantes para o front
+        $items = $order->items->map(function ($item) {
+            // Procura configuração de uso no item
+            $usageConfig = null;
+            // Prioriza a configuração salva no item
+            $configItem = $item->configurations->firstWhere('key', 'usage');
+            if ($configItem) {
+                // Define o uso baseado na configuração
+                $usageConfig = $configItem->value;
+            } elseif (is_array($item->pricing_model_snapshot ?? null) && isset($item->pricing_model_snapshot['usage'])) {
+                // Fallback para uso no snapshot de pricing
+                $usageConfig = $item->pricing_model_snapshot['usage'];
+            }
+
+            return [
+                // Identificador do item
+                'id' => $item->id,
+                // Tipo do item (module/package/etc)
+                'item_type' => $item->item_type,
+                // Nome imutável do item
+                'item_name' => $item->item_name_snapshot,
+                // Referência ao módulo original
+                'item_reference_id' => $item->item_reference_id,
+                // Quantidade do item
+                'quantity' => $item->quantity,
+                // Valor unitário calculado
+                'unit_price' => $item->unit_price_snapshot,
+                // Subtotal do item
+                'subtotal' => $item->subtotal_amount,
+                // Snapshot de pricing para auditoria
+                'pricing_model_snapshot' => $item->pricing_model_snapshot,
+                // Uso configurado (quando existir)
+                'usage' => $usageConfig,
+            ];
+        });
+
+        // Responde com o rascunho e os itens formatados
+        return response()->json([
+            // Identificador do pedido
+            'order_id' => $order->id,
+            // Status do pedido (draft)
+            'status' => $order->status,
+            // Etapa atual do pedido
+            'current_step' => $order->current_step,
+            // Total calculado do pedido
+            'total_amount' => $order->total(),
+            // Moeda do pedido
+            'currency' => $order->currency,
+            // Itens do pedido
+            'items' => $items,
+        ], 200);
+    }
+
+    /**
+     * Retorna as opções de uso (tiers) para módulos do pedido.
+     */
+    public function orderUsageOptions(Request $request)
+    {
+        // Extrai dados e cliente já anexado pelo middleware
+        $data = $request->all();
+        $client = $data['client'];
+
+        // Valida order_id
+        if (!isset($data['order_id']) || !is_numeric($data['order_id'])) {
+            return response()->json(['message' => 'order_id inválido'], 400);
+        }
+
+        // Busca o rascunho do cliente
+        $order = Order::where('id', (int) $data['order_id'])
+            ->where('client_id', $client->id)
+            ->where('status', 'draft')
+            ->with(['items.configurations'])
+            ->first();
+
+        if (!$order) {
+            return response()->json(['message' => 'Pedido não encontrado'], 404);
+        }
+
+        // Monta opções de uso a partir dos módulos do pedido
+        $usageModules = [];
+
+        foreach ($order->items as $item) {
+            if ($item->item_type !== 'module' || !$item->item_reference_id) {
+                continue;
+            }
+
+            $module = Module::where('id', $item->item_reference_id)->where('pricing_type', 'usage')->first();
+            if (!$module) {
+                continue;
+            }
+
+            $tiers = ModulePricingTier::where('module_id', $module->id)
+                ->orderBy('usage_limit')
+                ->get()
+                ->map(function ($tier) {
+                    return [
+                        'usage_limit' => $tier->usage_limit,
+                        'price' => (float) $tier->price,
+                    ];
+                })
+                ->toArray();
+
+            $usageConfig = null;
+            $configItem = $item->configurations->firstWhere('key', 'usage');
+            if ($configItem) {
+                $usageConfig = $configItem->value;
+            } elseif (is_array($item->pricing_model_snapshot ?? null) && isset($item->pricing_model_snapshot['usage'])) {
+                $usageConfig = $item->pricing_model_snapshot['usage'];
+            }
+
+            $usageModules[] = [
+                'module_id' => $module->id,
+                'module_name' => $module->name,
+                'tiers' => $tiers,
+                'selected_usage' => $usageConfig,
+            ];
+        }
+
+        return response()->json([
+            'order_id' => $order->id,
+            'modules' => $usageModules,
+        ], 200);
+    }
+
+    /**
+     * Retorna o resumo de checkout do pedido.
+     */
+    public function orderCheckout(Request $request)
+    {
+        // Extrai dados e cliente já anexado pelo middleware
+        $data = $request->all();
+        $client = $data['client'];
+
+        // Valida order_id
+        if (!isset($data['order_id']) || !is_numeric($data['order_id'])) {
+            return response()->json(['message' => 'order_id inválido'], 400);
+        }
+
+        // Busca o rascunho do cliente
+        $order = Order::where('id', (int) $data['order_id'])
+            ->where('client_id', $client->id)
+            ->where('status', 'draft')
+            ->with(['items.configurations'])
+            ->first();
+
+        if (!$order) {
+            return response()->json(['message' => 'Pedido não encontrado'], 404);
+        }
+
+        $items = $order->items->map(function ($item) {
+            $usageConfig = null;
+            $configItem = $item->configurations->firstWhere('key', 'usage');
+            if ($configItem) {
+                $usageConfig = $configItem->value;
+            } elseif (is_array($item->pricing_model_snapshot ?? null) && isset($item->pricing_model_snapshot['usage'])) {
+                $usageConfig = $item->pricing_model_snapshot['usage'];
+            }
+
+            return [
+                'id' => $item->id,
+                'item_type' => $item->item_type,
+                'item_name' => $item->item_name_snapshot,
+                'quantity' => $item->quantity,
+                'unit_price' => $item->unit_price_snapshot,
+                'subtotal' => $item->subtotal_amount,
+                'usage' => $usageConfig,
+            ];
+        });
+
+        return response()->json([
+            'order_id' => $order->id,
+            'total_amount' => $order->total(),
+            'currency' => $order->currency,
+            'items' => $items,
+        ], 200);
+    }
+
+    /**
+     * Atualiza a etapa atual do pedido em rascunho.
+     */
+    public function orderStep(Request $request)
+    {
+        // Extrai dados e cliente já anexado pelo middleware
+        $data = $request->all();
+        $client = $data['client'];
+
+        // Validações básicas
+        if (!isset($data['order_id']) || !is_numeric($data['order_id'])) {
+            return response()->json(['message' => 'order_id inválido'], 400);
+        }
+        if (!isset($data['step']) || !is_string($data['step'])) {
+            return response()->json(['message' => 'step inválido'], 400);
+        }
+
+        // Busca o pedido em rascunho do cliente
+        $order = Order::where('id', (int) $data['order_id'])
+            ->where('client_id', $client->id)
+            ->where('status', 'draft')
+            ->first();
+
+        if (!$order) {
+            return response()->json(['message' => 'Pedido não encontrado'], 404);
+        }
+
+        // Atualiza a etapa atual
+        $order->current_step = $data['step'];
+        $order->save();
+
+        return response()->json([
+            'order_id' => $order->id,
+            'current_step' => $order->current_step,
+        ], 200);
+    }
+
+    /**
+     * Define a próxima etapa do fluxo do pedido.
+     */
+    public function orderRoute(Request $request)
+    {
+        // Extrai dados e cliente já anexado pelo middleware
+        $data = $request->all();
+        $client = $data['client'];
+
+        // Validações básicas
+        if (!isset($data['order_id']) || !is_numeric($data['order_id'])) {
+            return response()->json(['message' => 'order_id inválido'], 400);
+        }
+        if (!isset($data['direction']) || !in_array($data['direction'], ['next', 'back'], true)) {
+            return response()->json(['message' => 'direction inválido'], 400);
+        }
+
+        // Etapas aceitas
+        $validSteps = ['select_modules', 'select_usage', 'checkout'];
+        $currentStep = $data['current_step'] ?? 'select_modules';
+        if (!in_array($currentStep, $validSteps, true)) {
+            $currentStep = 'select_modules';
+        }
+
+        // Busca o pedido em rascunho do cliente
+        $order = Order::where('id', (int) $data['order_id'])
+            ->where('client_id', $client->id)
+            ->where('status', 'draft')
+            ->first();
+
+        if (!$order) {
+            return response()->json(['message' => 'Pedido não encontrado'], 404);
+        }
+
+        // Verifica se há módulos com uso/tiers no pedido
+        $hasUsageModules = $order->items->contains(function ($item) {
+            $snapshot = $item->pricing_model_snapshot ?? null;
+            if (is_array($snapshot) && isset($snapshot['type']) && $snapshot['type'] === 'usage') {
+                return true;
+            }
+            return false;
+        });
+
+        // Verifica se há módulos com uso pendente
+        $pendingUsageCount = $order->items->filter(function ($item) {
+            $snapshot = $item->pricing_model_snapshot ?? null;
+            if (is_array($snapshot) && isset($snapshot['pending_usage'])) {
+                return (bool) $snapshot['pending_usage'];
+            }
+            return false;
+        })->count();
+
+        // Calcula a próxima etapa com base na direção
+        $nextStep = $currentStep;
+        if ($data['direction'] === 'next') {
+            if ($currentStep === 'select_modules') {
+                $nextStep = $hasUsageModules ? 'select_usage' : 'checkout';
+            } elseif ($currentStep === 'select_usage') {
+                $nextStep = $pendingUsageCount > 0 ? 'select_usage' : 'checkout';
+            } elseif ($currentStep === 'checkout') {
+                $nextStep = 'checkout';
+            }
+        } else {
+            if ($currentStep === 'checkout') {
+                $nextStep = $hasUsageModules ? 'select_usage' : 'select_modules';
+            } elseif ($currentStep === 'select_usage') {
+                $nextStep = 'select_modules';
+            } else {
+                $nextStep = 'select_modules';
+            }
+        }
+
+        // Atualiza a etapa atual do pedido
+        $order->current_step = $nextStep;
+        $order->save();
+
+        return response()->json([
+            'order_id' => $order->id,
+            'current_step' => $currentStep,
+            'next_step' => $nextStep,
+            'has_usage_modules' => $hasUsageModules,
+            'pending_usage_count' => $pendingUsageCount,
+        ], 200);
+    }
+
     public function order(Request $request, $id) {
 
         // Recebe dados
@@ -538,6 +859,68 @@ class ApisController extends Controller
         return response()->json([
             'modules_ids' => $client->modules->pluck('id')->toArray(),
         ], 200);
+    }
+
+    /**
+     * Cria um pedido em rascunho (intenção de compra) com base nos módulos desejados.
+     * Espera `modules` como array de objetos { id, config }.
+     */
+    public function orderIntent(Request $request, OrderService $service)
+    {
+        // Extrai dados e cliente já anexado pelo middleware
+        $data = $request->all();
+        $client = $data['client'];
+
+        // Valida se os módulos foram enviados
+        if (!isset($data['modules']) || !is_array($data['modules'])) {
+            return response()->json(['message' => 'Parâmetros faltando'], 400);
+        }
+
+        // Define a moeda com fallback para BRL
+        $currency = isset($data['currency']) ? strtoupper((string) $data['currency']) : 'BRL';
+        // Usa order_id existente para atualizar o mesmo rascunho
+        $orderId = isset($data['order_id']) && is_numeric($data['order_id']) ? (int) $data['order_id'] : null;
+
+        try {
+            // Cria ou atualiza o rascunho com os módulos enviados
+            $order = $service->createDraftOrderFromModules($client, $data['modules'], $currency, $orderId);
+        } catch (\InvalidArgumentException $e) {
+            // Retorna erro de validação vindo do service
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        // Responde com o pedido atualizado e seus itens
+        return response()->json([
+            // Identificador do pedido
+            'order_id' => $order->id,
+            // Status atual do pedido
+            'status' => $order->status,
+            // Total calculado
+            'total_amount' => $order->total(),
+            // Moeda do pedido
+            'currency' => $order->currency,
+            // Itens formatados para o front
+            'items' => $order->items()->get()->map(function ($item) {
+                return [
+                    // Identificador do item
+                    'id' => $item->id,
+                    // Tipo do item
+                    'item_type' => $item->item_type,
+                    // Nome imutável do item
+                    'item_name' => $item->item_name_snapshot,
+                    // Referência ao módulo original
+                    'item_reference_id' => $item->item_reference_id,
+                    // Quantidade do item
+                    'quantity' => $item->quantity,
+                    // Valor unitário do item
+                    'unit_price' => $item->unit_price_snapshot,
+                    // Subtotal do item
+                    'subtotal' => $item->subtotal_amount,
+                    // Snapshot de pricing
+                    'pricing_model_snapshot' => $item->pricing_model_snapshot,
+                ];
+            }),
+        ], 201);
     }
 
     /**

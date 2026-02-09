@@ -266,11 +266,17 @@ class PackageController extends Controller
             // Registra o valor anterior do pacote
             OrderItem::create([
                 'order_id' => $order->id,
-                'type' => 'Pacote',
+                'item_type' => 'package',
                 'action' => 'Sem alteração',
+                'item_code' => (string) $client->package->id,
+                'item_name_snapshot' => "{$client->package->name} ({$client->users_limit} usuários)",
+                'quantity' => 1,
+                'unit_price_snapshot' => $client->current_value,
+                'subtotal_amount' => $client->current_value,
+                // Legacy compatibility
+                'type' => 'Pacote',
                 'item_name' => "{$client->package->name} ({$client->users_limit} usuários)",
                 'item_key' => $client->package->id,
-                'quantity' => 1,
                 'item_value' => $client->current_value,
             ]);
 
@@ -283,11 +289,17 @@ class PackageController extends Controller
                 // Cria item 
                 OrderItem::create([
                     'order_id' => $order->id,
-                    'type' => 'Usuários',
+                    'item_type' => 'users',
                     'action' => 'Alteração',
+                    'item_code' => (string) $data['users_limit'],
+                    'item_name_snapshot' => 'Quantidade alterada',
+                    'quantity' => 1,
+                    'unit_price_snapshot' => $priceLimitUsers,
+                    'subtotal_amount' => $priceLimitUsers,
+                    // Legacy compatibility
+                    'type' => 'Usuários',
                     'item_name' => 'Quantidade alterada',
                     'item_key' => $data['users_limit'],
-                    'quantity' => 1,
                     'item_value' => $priceLimitUsers,
                     'start_date' => now(),
                 ]);
@@ -302,11 +314,17 @@ class PackageController extends Controller
                 $module = Module::find($moduleId);
                 OrderItem::create([
                     'order_id' => $order->id,
-                    'type' => 'Modulo',
+                    'item_type' => 'module',
                     'action' => 'Upgrade',
+                    'item_code' => (string) $module->id,
+                    'item_name_snapshot' => $module->name,
+                    'quantity' => 1,
+                    'unit_price_snapshot' => $module->value,
+                    'subtotal_amount' => $module->value,
+                    // Legacy compatibility
+                    'type' => 'Modulo',
                     'item_name' => $module->name,
                     'item_key' => $module->id,
-                    'quantity' => 1,
                     'item_value' => $module->value,
                 ]);
             }
@@ -316,11 +334,17 @@ class PackageController extends Controller
                 $module = Module::find($moduleId);
                 OrderItem::create([
                     'order_id' => $order->id,
-                    'type' => 'Modulo',
+                    'item_type' => 'module',
                     'action' => 'Downgrade',
+                    'item_code' => (string) $module->id,
+                    'item_name_snapshot' => $module->name,
+                    'quantity' => 1,
+                    'unit_price_snapshot' => -$module->value,
+                    'subtotal_amount' => -$module->value,
+                    // Legacy compatibility
+                    'type' => 'Modulo',
                     'item_name' => $module->name,
                     'item_key' => $module->id,
-                    'quantity' => 1,
                     'item_value' => -$module->value,
                 ]);
             }
@@ -342,11 +366,16 @@ class PackageController extends Controller
             // Adiciona crédito
             OrderItem::create([
                 'order_id' => $order->id,
-                'type'        => 'Crédito',
-                'action'      => 'Ajuste',
-                'item_name'   => 'Crédito',
-                'quantity'    => 1,
-                'item_value'  => -$credit,
+                'item_type' => 'credit',
+                'action' => 'Ajuste',
+                'item_name_snapshot' => 'Crédito',
+                'quantity' => 1,
+                'unit_price_snapshot' => -$credit,
+                'subtotal_amount' => -$credit,
+                // Legacy compatibility
+                'type' => 'Crédito',
+                'item_name' => 'Crédito',
+                'item_value' => -$credit,
             ]);
             
             // O valor dos usuários deve ser calculado com base no limite de usuários

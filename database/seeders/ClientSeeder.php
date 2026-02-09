@@ -6,6 +6,9 @@ use App\Http\Controllers\PackageController;
 use App\Jobs\GenerateRenewalOrders;
 use App\Models\Client;
 use App\Models\ClientDomain;
+use App\Models\Package;
+use App\Services\OrderService;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Database\Seeder;
 
@@ -18,27 +21,42 @@ class ClientSeeder extends Seeder
     {
 
         // Cria usuário local para testes
-        $client = Client::create([
-            'name'       => 'localhost',
-            'email'      => 'micore@testes.com',
-            'token'      => 'abc_123',
-            'created_by' => 1,
-        ]);
+        $userId = User::query()->min('id') ?? 1;
 
-        ClientDomain::create([
-            'client_id'   => $client->id,
-            'domain'      => '127.0.0.1:8001',
-            'description' => 'Testes',
-        ]);
+        $client = Client::firstOrCreate(
+            ['email' => 'micore@testes.com'],
+            [
+                'name'       => 'localhost',
+                'token'      => 'abc_123',
+                'created_by' => $userId,
+            ]
+        );
 
-        // Adiciona o pacote inicial ao cliente
-        $request = new Request(['package_id' => 1]);
-        app(PackageController::class)->assign($request, 1);
+        ClientDomain::firstOrCreate(
+            ['client_id' => $client->id, 'domain' => '127.0.0.1:8001'],
+            ['description' => 'Testes']
+        );
+
+        // Adiciona o pacote inicial ao cliente via OrderService
+        $package = Package::query()->first();
+        if ($package) {
+            $orderService = new OrderService();
+            $orderResponse = $orderService->createOrder($client, $package);
+            if (isset($orderResponse['order'])) {
+                $orderService->confirmPaymentOrder($orderResponse['order']);
+            }
+        }
         
         // Adiciona o pacote "Começando" com 5 dias para testar a emissão de renovações.
         if(false){
-            $request = new Request(['package_id' => 2]);
-            app(PackageController::class)->assign($request, 1);
+            $package = Package::query()->skip(1)->first();
+            if ($package) {
+                $orderService = new OrderService();
+                $orderResponse = $orderService->createOrder($client, $package);
+                if (isset($orderResponse['order'])) {
+                    $orderService->confirmPaymentOrder($orderResponse['order']);
+                }
+            }
         }
 
         /* 

@@ -32,8 +32,14 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
         Route::get('/meu-plano',      [ApisController::class, 'plan']);
         Route::get('/minhas-compras', [ApisController::class, 'orders']);
         Route::get('/compra/{id}',    [ApisController::class, 'order']);
+        Route::get('/pedido/rascunho', [ApisController::class, 'orderDraft']);
+        Route::post('/pedido/etapa', [ApisController::class, 'orderStep']);
+        Route::post('/pedido/rota', [ApisController::class, 'orderRoute']);
+        Route::get('/pedido/uso', [ApisController::class, 'orderUsageOptions']);
+        Route::get('/pedido/checkout', [ApisController::class, 'orderCheckout']);
         Route::get('/cartoes',        [ApisController::class, 'cards']);
         Route::post('/modulos/assinar', [ApisController::class, 'subscribeModules']);
+        Route::post('/pedido/intencao', [ApisController::class, 'orderIntent']);
 
         /** API que recebe dados dos miCores */
         Route::post('/pagamento', [ApisController::class, 'payment']);

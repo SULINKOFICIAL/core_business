@@ -19,24 +19,21 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         // Cria usuário Jeandreo
-        User::create([
-            'name' => 'Ramon Piekarski',
-            'email' => 'ramon@sulink.com.br',
-            'password' => Hash::make('290192'),
-        ]);
+        User::firstOrCreate(
+            ['email' => 'ramon@sulink.com.br'],
+            ['name' => 'Ramon Piekarski', 'password' => Hash::make('290192')]
+        );
 
-        User::create([
-            'name' => 'Jeandreo Furquim',
-            'email' => 'jeandreo@sulink.com.br',
-            'password' => Hash::make('@Sucesso1243'),
-        ]);
+        User::firstOrCreate(
+            ['email' => 'jeandreo@sulink.com.br'],
+            ['name' => 'Jeandreo Furquim', 'password' => Hash::make('@Sucesso1243')]
+        );
 
         // Cria usuário Cauã
-        User::create([
-            'name' => 'Cauã Teixeira',
-            'email' => 'caua.teixeira@sulink.com.br',
-            'password' => Hash::make('@Ca11924180'),
-        ]);
+        User::firstOrCreate(
+            ['email' => 'caua.teixeira@sulink.com.br'],
+            ['name' => 'Cauã Teixeira', 'password' => Hash::make('@Ca11924180')]
+        );
 
         // Seeder para recursos
         $this->call(ResourceSeeder::class);
@@ -55,6 +52,9 @@ class DatabaseSeeder extends Seeder
 
         // Seeder para cartões de clientes
         $this->call(ClientCardSeeder::class);
+
+        // Seeder para fluxo completo de pedidos/assinaturas
+        $this->call(OrderFlowSeeder::class);
 
     }
 }

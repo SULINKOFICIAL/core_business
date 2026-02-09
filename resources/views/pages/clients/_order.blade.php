@@ -23,10 +23,11 @@
                     @else
                     <span class="badge badge-light-info">{{ $item->action }}</span>
                     @endif
-                    {{ $item->item_name }}
+                    {{ $item->item_name_snapshot ?? $item->item_name }}
                 </td>
                 <td class="text-start py-1">
-                    <span class="text-gray-700 lh-1">R$ {{ number_format($item->item_value, 2, ',', '.') }}</span>
+                    @php($itemValue = $item->item_value ?? $item->subtotal_amount ?? 0)
+                    <span class="text-gray-700 lh-1">R$ {{ number_format($itemValue, 2, ',', '.') }}</span>
                 </td>
                 <td class="p-0"></td>
                 <td class="p-0"></td>

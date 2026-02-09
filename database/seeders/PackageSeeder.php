@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Module;
 use App\Models\Package;
 use App\Models\PackageModule;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class PackageSeeder extends Seeder
@@ -14,6 +15,8 @@ class PackageSeeder extends Seeder
      */
     public function run(): void
     {
+        $userId = User::query()->min('id') ?? 1;
+
         Package::create([
             'name'          => 'Teste Gratuíto',
             'size_storage'  => 1073741824 * 1,
@@ -21,7 +24,7 @@ class PackageSeeder extends Seeder
             'value'         => 0,
             'duration_days' => 5,
             'order'         => 1,
-            'created_by'    => 1,
+            'created_by'    => $userId,
         ]);
         
         Package::create([
@@ -30,7 +33,7 @@ class PackageSeeder extends Seeder
             'value'         => 1,
             'duration_days' => 5, // 5 dias para testar renovação
             'order'         => 1,
-            'created_by'    => 1,
+            'created_by'    => $userId,
         ]);
 
         Package::create([
@@ -40,7 +43,7 @@ class PackageSeeder extends Seeder
             'value' => 2,
             'duration_days' => 30,
             'order' => 1,
-            'created_by' => 2,
+            'created_by' => $userId,
         ]);
 
         Package::create([
@@ -50,7 +53,7 @@ class PackageSeeder extends Seeder
             'value' => 3,
             'duration_days' => 30,
             'order' => 1,
-            'created_by' => 2,
+            'created_by' => $userId,
         ]);
  
         // Obtém os recuros e adiciona aos grupos
@@ -63,7 +66,7 @@ class PackageSeeder extends Seeder
                 PackageModule::create([
                     'module_id' => $module->id,
                     'package_id' => $package->id,
-                    'created_by' => 1,
+                    'created_by' => $userId,
                 ]);
             }
         }

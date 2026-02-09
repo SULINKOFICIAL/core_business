@@ -165,6 +165,19 @@ if (! function_exists('header_menu_items')) {
             ],
             [
                 'type' => 'submenu',
+                'label' => 'Vendas',
+                'active_routes' => ['orders.index', 'orders.show'],
+                'width' => 'w-125px',
+                'children' => [
+                    [
+                        'label' => 'Pedidos',
+                        'route' => 'orders.index',
+                        'active_routes' => ['orders.index', 'orders.show'],
+                    ],
+                ],
+            ],
+            [
+                'type' => 'submenu',
                 'label' => 'Módulos',
                 'active_routes' => ['modules.index', 'modules.categories.index', 'groups.index', 'resources.index'],
                 'width' => 'w-100px',
