@@ -284,6 +284,102 @@ class MetaApiController extends Controller
     }
 
     /**
+     * Retorna as configurações necessárias para iniciar o Embedded Signup.
+     */
+    public function embeddedConfig()
+    {
+        return response()->json([
+            'app_id' => config('meta.client_id'),
+            'config_id' => config('meta.embedded_config_id'),
+            'graph_version' => config('meta.graph_version', 'v20.0'),
+            'scopes' => $this->scopesWhatsApp,
+        ], 200);
+    }
+
+    /**
+     * Finaliza o fluxo de Embedded Signup (WhatsApp Coexistence).
+     * Recebe o access_token curto do login e registra integração do cliente.
+     */
+    public function embedded(Request $request)
+    {
+        $data = $request->all();
+
+        if (empty($data['access_token'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'access_token é obrigatório',
+            ], 422);
+        }
+
+        // Converte para token de longa duração
+        $responseLongToken = $this->metaService->getLongToken($data['access_token']);
+
+        if (!isset($responseLongToken['success']) || $responseLongToken['success'] == false) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao converter token',
+                'error' => $responseLongToken,
+            ], 400);
+        }
+
+        $accessToken = $responseLongToken['data']['access_token'] ?? null;
+
+        if (!$accessToken) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token inválido',
+            ], 400);
+        }
+
+        // Obtém dados da conta
+        $accountInformations = $this->metaService->me($accessToken);
+
+        if (!isset($accountInformations['success']) || $accountInformations['success'] == false) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao buscar dados da conta.',
+                'error' => $accountInformations,
+            ], 400);
+        }
+
+        $accountId = $accountInformations['data']['id'] ?? null;
+
+        if (!$accountId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Conta inválida',
+            ], 400);
+        }
+
+        $client = $request->get('client');
+
+        if (!$client) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cliente não encontrado',
+            ], 404);
+        }
+
+        $clientIntegration = ClientIntegration::updateOrCreate([
+            'external_account_id'   => $accountId,
+            'client_id'             => $client->id,
+            'provider'              => 'meta',
+            'type'                  => 'whatsapp',
+        ], [
+            'scopes'                => $this->scopesWhatsApp,
+            'access_token'          => $accessToken,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'integration_id' => $clientIntegration->id,
+            'waba_id' => $data['waba_id'] ?? null,
+            'phone_number_id' => $data['phone_number_id'] ?? null,
+            'business_id' => $data['business_id'] ?? null,
+        ], 200);
+    }
+
+    /**
      * API em que um MiCore solicita os dados de um token
      * em que um dos usuários dele autorizou através do 
      * sistema de atendimento. 

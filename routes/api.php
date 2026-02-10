@@ -63,6 +63,8 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
         Route::prefix('meta')->group(function () {
             Route::get('/auth/{type}/{host}', [MetaApiController::class, 'OAuth2']);
             Route::get('/token/{id}',         [MetaApiController::class, 'token']);
+            Route::get('/embedded-config',    [MetaApiController::class, 'embeddedConfig']);
+            Route::post('/embedded',          [MetaApiController::class, 'embedded']);
             Route::post('/inscricao',         [MetaApiController::class, 'subscribed']);
             Route::delete('/desinscricao',    [MetaApiController::class, 'unsubscribed']);
         });
