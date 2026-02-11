@@ -38,27 +38,34 @@ class MetaApiService
      * @param string $code Código de autorização retornado pelo Meta
      * @return array Resposta com token de acesso e metadados
      */
-    public function getAccessToken($code, $type)
+    public function getAccessToken($code, $type = null)
     {
 
         // Envia requisição via RequestService
+        $query = [
+            'code'          => $code,
+            'client_id'     => $this->metaAppId,
+            'client_secret' => $this->metaAppClientSecret,
+        ];
+
+        // Só adiciona redirect_uri se $type existir
+        if (!is_null($type)) {
+            $query['redirect_uri'] = route('callbacks.meta.' . $type);
+        }
+
+        // Envia requisição
         $response = $this->RequestService->request(
             'GET',
-            'https://graph.facebook.com/v20.0/oauth/access_token',
+            'https://graph.facebook.com/v24.0/oauth/access_token',
             [
-                'query' => [
-                    'code'           => $code,
-                    'redirect_uri'   => route('callbacks.meta.' . $type),
-                    'client_id'      => $this->metaAppId,
-                    'client_secret'  => $this->metaAppClientSecret,
-                ]
+                'query' => $query
             ]
         );
 
-        // Retorna a resposta
         return $response;
 
     }
+
 
     /**
      * Troca o código de autorização (code) pelo token de acesso.

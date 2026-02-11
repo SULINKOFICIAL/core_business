@@ -101,6 +101,23 @@ class MetaApiController extends Controller
      * redireciona para a URL de origem com parametros,
      * recebidos da meta
      */
+    public function subscribeCoexisting(Request $request)
+    {
+
+        return '123';
+        
+        /**
+        * Troca o código de autorização (code) gerado na autenticação inicial do Meta
+        */
+        $response = $this->metaService->getAccessToken($data['code'], $type);
+
+    }
+
+    /**
+     * Callback para receber autorização OAuth,
+     * redireciona para a URL de origem com parametros,
+     * recebidos da meta
+     */
     public function callback(Request $request)
     {
 
@@ -350,6 +367,43 @@ class MetaApiController extends Controller
         return response()->json([
             'success' => true,
             'message' => $data['status'] ? 'Ativou os números dessa conta' : 'Desativou os números dessa conta',
+        ]);
+    }
+
+    /**
+     * Quando um cliente utilizar o whatsapp do Meta através
+     * do modo WhatsApp Business (Coexistence), o Meta envia
+     * para a central o número.
+     */
+    public function exchange(Request $request)
+    {
+        
+        // Obtém dados
+        $data = $request->all();
+
+        // Troca o código de autorização (code) gerado na autenticação inicial do Meta
+        $response = $this->metaService->getAccessToken($data['code']);
+
+        // Log
+        Log::info($response);
+
+        // Obtém os dados
+        $response = $response['data'];
+
+        // Se retornou erro
+        if(isset($response['error'])){
+            return response()->json([
+                'success' => false,
+                'message' => $response['error']['message'],
+            ], 400);
+        }
+
+        dd($response);
+
+        // Localiza o token e verifica a autorização
+        return response()->json([
+            'success' => true,
+            'message' => 'Ativou os números dessa conta',
         ]);
     }
 
