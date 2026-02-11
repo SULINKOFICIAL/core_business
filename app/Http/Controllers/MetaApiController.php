@@ -59,8 +59,6 @@ class MetaApiController extends Controller
     public function return(Request $request, $logOld = null)
     {
 
-        Log::info($request->all());
-
         // Obtém dados
         $data = $request->all();
 
@@ -380,6 +378,22 @@ class MetaApiController extends Controller
 
         // Localiza o token e verifica a autorização
         return response()->json($response);
+    }
+
+    /**
+     * Recebe a requisição do Meta para receber as notificações
+     */
+    public function encharge(Request $request)
+    {
+
+
+        Log::info('Encharge');
+        Log::info($request->all());
+        Log::info('Encharge');
+        
+        // Localiza o token e verifica a autorização
+        return response()->json($request->all());
+
     }
 
 }
