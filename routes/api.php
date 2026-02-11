@@ -31,20 +31,26 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
         /** API que envia informações para os miCores */
         Route::get('/meu-plano',      [ApisController::class, 'plan']);
         Route::get('/minhas-compras', [ApisController::class, 'orders']);
-        Route::get('/compra/{id}',    [ApisController::class, 'order']);
-        Route::get('/pedido/rascunho', [ApisController::class, 'orderDraft']);
-        Route::post('/pedido/etapa', [ApisController::class, 'orderStep']);
-        Route::post('/pedido/rota', [ApisController::class, 'orderRoute']);
-        Route::post('/pedido/cupom/aplicar', [ApisController::class, 'orderApplyCoupon']);
-        Route::post('/pedido/cupom/remover', [ApisController::class, 'orderRemoveCoupon']);
-        Route::get('/pedido/uso', [ApisController::class, 'orderUsageOptions']);
-        Route::get('/pedido/checkout', [ApisController::class, 'orderCheckout']);
         Route::get('/cartoes',        [ApisController::class, 'cards']);
-        Route::post('/modulos/assinar', [ApisController::class, 'subscribeModules']);
-        Route::post('/pedido/intencao', [ApisController::class, 'orderIntent']);
+        
+        
+        /**
+         * API que gerencia os pedidos
+        */
+        Route::prefix('pedidos')->group(function () {
+            Route::get('/compra/{id}',       [ApisController::class, 'order']);
+            Route::get('/rascunho',          [ApisController::class, 'orderDraft']);
+            Route::post('/etapa',            [ApisController::class, 'orderStep']);
+            Route::post('/rota',             [ApisController::class, 'orderRoute']);
+            Route::post('/cupom/aplicar',    [ApisController::class, 'orderApplyCoupon']);
+            Route::post('/cupom/remover',    [ApisController::class, 'orderRemoveCoupon']);
+            Route::get('/uso',               [ApisController::class, 'orderUsageOptions']);
+            Route::get('/checkout',          [ApisController::class, 'orderCheckout']);
+            Route::post('/intencao',         [ApisController::class, 'orderIntent']);
+            Route::post('/pagamento',        [ApisController::class, 'orderPayment']);
+        });
 
         /** API que recebe dados dos miCores */
-        Route::post('/pagamento', [ApisController::class, 'payment']);
         Route::post('/tickets',   [ApisController::class, 'tickets']);
         Route::post('/sugestoes', [ApisController::class, 'suggestions']);
         Route::post('/cartao',    [ApisController::class, 'newCard']);
