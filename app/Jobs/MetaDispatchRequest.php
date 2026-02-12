@@ -27,6 +27,8 @@ class MetaDispatchRequest implements ShouldQueue
     public function handle(RequestService $requestService): void
     {
 
+        Log::info(['data' => $this->data]);
+
         // Busca o logApi
         $this->logApi = LogsApi::find($this->logApiId);
 
@@ -75,8 +77,6 @@ class MetaDispatchRequest implements ShouldQueue
             $url = "{$clientDomains[0]->domain}/webhooks/whatsapp/{$this->data['route']}";
 
         }
-
-        Log::info($url, ['data' => $this->data]);
 
         // Realiza a requisição
         $response = $requestService->request('POST', $url, [
