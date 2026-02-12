@@ -26,6 +26,8 @@ class MetaApiOnboardingController extends MetaApiController
         $type = $data['type'] ?? 'whatsapp';
         $host = $data['host'] ?? null;
 
+        Log::info($data);
+
         // Garante que o domínio realmente pertence ao cliente autenticado via token_micore.
         $domain = ClientDomain::where('domain', $host)->where('client_id', $data['client']->id)->first();
 
