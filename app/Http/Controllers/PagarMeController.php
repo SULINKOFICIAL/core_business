@@ -13,7 +13,7 @@ class PagarMeController extends Controller
         $data = $request->all();
 
         // Registra tempo
-        Log::info("Webhook PagarMe: " . $data);
+        Log::info('Webhook PagarMe: ' . json_encode($data));
 
         // Retorno Sucesso imediato para o PagarMe (202 Accepted)
         return response()->json([

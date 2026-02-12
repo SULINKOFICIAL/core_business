@@ -35,6 +35,8 @@ class DeveloperController extends Controller
          */
         $subscriptionId = (new PagarMeService())->findOrCreateSubscription($planId['id'], $customerId['id'], $cardId['id']);
 
+        dd($subscriptionId);
+
 
     }
 
