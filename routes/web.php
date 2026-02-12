@@ -10,6 +10,7 @@ use App\Http\Controllers\ErrorMiCoreController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\IntegrationSuggestionController;
 use App\Http\Controllers\MetaApiController;
+use App\Http\Controllers\MetaApiOnboardingController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\ModuleController;
@@ -232,6 +233,13 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
+});
+
+/**
+ * Embedded Signup da Meta deve rodar somente no domínio fixo da central.
+ */
+Route::prefix('integracoes/meta')->name('meta.embedded.')->group(function () {
+    Route::get('/onboarding', [MetaApiOnboardingController::class, 'embeddedOnboarding'])->name('onboarding');
 });
 
 // Callback: para receber autorização OAuth

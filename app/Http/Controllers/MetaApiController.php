@@ -19,7 +19,7 @@ class MetaApiController extends Controller
 
     // Serviço Guzzle
     protected $RequestService;
-    private $metaAppId;
+    protected $metaAppId;
     protected $metaService;
     protected $scopesWhatsApp  = 'whatsapp_business_management,whatsapp_business_messaging,business_management,pages_show_list';
     protected $scopesInstagram = 'instagram_manage_messages,instagram_basic,pages_show_list,pages_read_user_content,business_management,pages_messaging,pages_read_engagement,pages_manage_metadata';
@@ -350,80 +350,6 @@ class MetaApiController extends Controller
         return response()->json([
             'success' => true,
             'message' => $data['status'] ? 'Ativou os números dessa conta' : 'Desativou os números dessa conta',
-        ]);
-    }
-
-    /**
-     * Quando um cliente utilizar o whatsapp do Meta através
-     * do modo WhatsApp Business (Coexistence), o Meta envia
-     * para a central o número.
-     */
-    public function exchange(Request $request)
-    {
-        
-        // Obtém dados
-        $data = $request->all();
-
-        // Troca o código de autorização (code) gerado na autenticação inicial do Meta
-        $response = $this->metaService->getAccessToken($data['code']);
-
-        // Obtém os dados
-        $response = $response['data'];
-
-        // Se retornou erro
-        if(isset($response['error'])){
-            return response()->json([
-                'success' => false,
-                'message' => $response['error']['message'],
-            ], 400);
-        }
-        
-        /**
-         * Troca o token de acesso (access_token) gerado na autenticação inicial do Meta
-         * por um token de acesso e refresh_token.
-         *
-         * Este método deve ser chamado logo após o usuário autorizar a aplicação no fluxo OAuth2.
-         *
-         */
-        $responseLongToken = $this->metaService->getLongToken($response['access_token']);
-
-        // Extrai dados
-        $accessToken = $responseLongToken['data']['access_token'];
-
-        // Obtém dados da conta
-        $accountInformations = $this->metaService->waba($data['waba_id'], $accessToken);
-
-        // Busca escopos do token
-        $debug = $this->metaService->debugToken($accessToken);
-
-        // Invalida tokens antigos
-        ClientIntegration::where('client_id', $data['client']->id)
-                        ->where('external_account_id', $accountInformations['data']['id'])
-                        ->update([
-                            'status' => 'revoked',
-                        ]);
-
-        // Salva a integração do cliente
-        ClientIntegration::updateOrCreate([
-            'external_account_id'   => $accountInformations['data']['id'],
-            'access_token'          => $accessToken,
-        ],[
-            'client_id'             => $data['client']->id,
-            'provider'              => 'meta',
-            'type'                  => 'whatsapp',
-            'scopes'                => json_encode($debug['data']['data']['scopes'] ?? []),
-            'token_expires_at'      => date('Y-m-d H:i:s', $debug['data']['expires_at'] ?? null),
-        ]);
-
-        // Assina os webhooks
-        $subscribeApp = $this->metaService->subscribeApp($data['waba_id'], $accessToken);
-
-        // Localiza o token e verifica a autorização
-        return response()->json([
-            'success'    => true,
-            'name'       => $accountInformations['data']['name'],
-            'message'    => 'Ativou os números dessa conta',
-            'statusMeta' => $subscribeApp,
         ]);
     }
 

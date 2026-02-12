@@ -12,6 +12,8 @@ class ClientIntegration extends Model
     protected $fillable = [
         'client_id',
         'provider',
+        'client_provider_id',
+        'temporary',
         'type',
         'external_account_id',
         'access_token',
@@ -23,5 +25,10 @@ class ClientIntegration extends Model
     public function client(): HasOne
     {
         return $this->hasOne(Client::class, 'id', 'client_id');
+    }
+
+    public function meta(): HasOne
+    {
+        return $this->hasOne(ClientMeta::class, 'id', 'client_provider_id');
     }
 }
