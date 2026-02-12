@@ -294,10 +294,11 @@ class MetaApiOnboardingController extends MetaApiController
 
         // Caso ocorra erro
         if (isset($response['data']['error'])) {
-            return [
+            return response()->json([
                 'success' => false,
                 'message' => $response['error']['message'] ?? 'Erro ao obter access token.',
-            ];
+                'redirect_url' => 'https://' . $state['host'] . '/callbacks/meta?error=true',
+            ], 400);
         }
 
         // Extrai dados
@@ -311,14 +312,23 @@ class MetaApiOnboardingController extends MetaApiController
 
         // Verifica se o token foi gerado
         if (!$accessToken) {
-            return [
+            return response()->json([
                 'success' => false,
                 'message' => 'Erro ao gerar token de longa duração.',
-            ];
+                'redirect_url' => 'https://' . $state['host'] . '/callbacks/meta?error=true',
+            ], 400);
         }
 
         // Resgata a integração que iniciou o processo de onboarding
         $integration = ClientIntegration::where('client_id', $client->id)->where('temporary', $state['signup_session'])->first();
+        if (!$integration || !$integration->meta) {
+            return response()->json([
+                'success' => false,
+                'status' => 'integration_not_found',
+                'message' => 'Integração temporária não encontrada.',
+                'redirect_url' => 'https://' . $state['host'] . '/callbacks/meta?error=true',
+            ], 404);
+        }
         
         // Busca sua WABA ID
         $wabaId = $integration->meta->meta_id;
@@ -327,10 +337,11 @@ class MetaApiOnboardingController extends MetaApiController
         $accountInformations = $this->metaService->waba($wabaId, $accessToken);
 
         if (!isset($accountInformations['data']['id'])) {
-            return [
+            return response()->json([
                 'success' => false,
                 'message' => 'Erro ao obter dados da WABA.',
-            ];
+                'redirect_url' => 'https://' . $state['host'] . '/callbacks/meta?error=true',
+            ], 400);
         }
 
         // Consulta escopos e expiração reais do token para persistência.
@@ -354,16 +365,27 @@ class MetaApiOnboardingController extends MetaApiController
         // Solicita inscrição do app na WABA para recebimento de webhooks.
         $subscribeApp = $this->metaService->subscribeApp($wabaId, $accessToken);
 
-        // // Registra no miCore a integração
-        // $response = $this->guzzle('post', 'sistema/cadastrar-integracao', $client, [
-        //     'external_account_id' => $integration->external_account_id,
-        //     'waba_id' => $wabaId,
-        // ]);
+        // Finalização bem-sucedida: invalida sessão temporária.
+        Cache::forget($cacheKey);
 
-        // Retorna a rota de redirecionamento
-        $redirectUrl = 'https://' . $state['host'] . '/callbacks/meta';
+        // Monta URL de redirecionamento
+        $redirectUrl = 'https://' . $state['host'] . '/callbacks/meta/coexistence';
 
-        dd($redirectUrl);
+        // Monta query string
+        $redirectQuery = http_build_query([
+            'integration_id'      => $integration->id,
+            'external_account_id' => $integration->external_account_id,
+            'waba_id'             => $wabaId,
+            'name'                => $accountInformations['data']['name'] ?? 'WhatsApp Business',
+        ]);
+
+        // Retorna resposta JSON com redirect URL
+        return response()->json([
+            'success'       => true,
+            'status'        => 'code_received',
+            'redirect_url'  => $redirectUrl . '?' . $redirectQuery,
+            'statusMeta'    => $subscribeApp,
+        ]);
 
     }
 

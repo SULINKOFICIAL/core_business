@@ -174,8 +174,7 @@
 
             // Se o backend concluir o fluxo, segue para o callback final no miCore.
             if (callbackResponse.redirect_url) {
-                console.log(123);
-                // window.location.href = callbackResponse.redirect_url;
+                window.location.href = callbackResponse.redirect_url;
             }
         });
 

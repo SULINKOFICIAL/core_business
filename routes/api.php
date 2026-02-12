@@ -34,7 +34,6 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
         Route::get('/minhas-compras', [ApisController::class, 'orders']);
         Route::get('/cartoes',        [ApisController::class, 'cards']);
         
-        
         /**
          * API que gerencia os pedidos
         */
