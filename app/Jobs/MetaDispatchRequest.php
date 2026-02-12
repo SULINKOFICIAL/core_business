@@ -46,10 +46,6 @@ class MetaDispatchRequest implements ShouldQueue
             'whatsapp_web'  => $this->data['tenant_id'],
         };
 
-        Log::info($id);
-        Log::info($id);
-        Log::info($id);
-
         if(in_array($platform, ['whatsapp', 'instagram', 'facebook'])){
 
             // Obtem o cliente pelo id da meta
@@ -79,10 +75,6 @@ class MetaDispatchRequest implements ShouldQueue
             $url = "{$clientDomains[0]->domain}/webhooks/whatsapp/{$this->data['route']}";
 
         }
-
-        Log::info($url);
-        Log::info($url);
-
 
         // Realiza a requisição
         $response = $requestService->request('POST', $url, [
