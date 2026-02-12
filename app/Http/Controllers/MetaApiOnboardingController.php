@@ -29,7 +29,7 @@ class MetaApiOnboardingController extends MetaApiController
         Log::info($data);
 
         // Garante que o domínio realmente pertence ao cliente autenticado via token_micore.
-        $domain = ClientDomain::where('domain', $host)->where('client_id', $data['client']->id)->first();
+        $domain = ClientDomain::where('domain', $host)->first();
 
         if (!$domain) {
             return response()->json([
