@@ -76,6 +76,8 @@ class MetaDispatchRequest implements ShouldQueue
 
         }
 
+        Log::info($url, ['data' => $this->data]);
+
         // Realiza a requisição
         $response = $requestService->request('POST', $url, [
                         'json' => $this->data
