@@ -1079,50 +1079,6 @@ class ApisController extends Controller
     }
 
     /**
-     * Recebe os módulos que o cliente deseja assinar.
-     * Espera `modules` como array de IDs.
-     */
-    public function subscribeModules(Request $request)
-    {
-        // Recebe dados
-        $data = $request->all();
-
-        // Obtém dados do cliente
-        $client = $data['client'];
-
-        if (!isset($data['modules']) || !is_array($data['modules'])) {
-            return response()->json(['message' => 'Parâmetros faltando'], 400);
-        }
-
-        // Normaliza IDs
-        $moduleIds = array_values(array_unique(array_filter($data['modules'], function ($id) {
-            return is_numeric($id);
-        })));
-
-        if (empty($moduleIds)) {
-            return response()->json(['message' => 'Módulos inválidos'], 400);
-        }
-
-        // Filtra apenas módulos existentes/ativos
-        $validModuleIds = Module::whereIn('id', $moduleIds)
-            ->where('status', true)
-            ->pluck('id')
-            ->toArray();
-
-        if (empty($validModuleIds)) {
-            return response()->json(['message' => 'Módulos não encontrados'], 404);
-        }
-
-        // Adiciona módulos sem remover os atuais
-        $client->modules()->syncWithoutDetaching($validModuleIds);
-        $client->load('modules');
-
-        return response()->json([
-            'modules_ids' => $client->modules->pluck('id')->toArray(),
-        ], 200);
-    }
-
-    /**
      * Cria um pedido em rascunho (intenção de compra) com base nos módulos desejados.
      * Espera `modules` como array de objetos { id, config }.
      */
@@ -1158,10 +1114,12 @@ class ApisController extends Controller
      * Função responsável por processar pagamentos dos sistemas miCores.
      * Utilizamos junto a ele a integração através da eRede.
      */
-    public function payment(Request $request, OrderService $service) {
+    public function orderPayment(Request $request, OrderService $service) {
 
         // Obtém os dados enviados no formulário
         $data = $request->all();
+
+        return response()->json('Fazer pagamento Caua');
 
         // Caso seja um novo cartão
         if($data['card_id'] == 0){

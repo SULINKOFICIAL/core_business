@@ -59,8 +59,6 @@ class MetaApiController extends Controller
     public function return(Request $request, $logOld = null)
     {
 
-        Log::info($request->all());
-
         // Obtém dados
         $data = $request->all();
 
@@ -95,6 +93,23 @@ class MetaApiController extends Controller
 
         // Dispara para a função de encontrar o dominio a ser enviado o conteudo
         MetaDispatchRequest::dispatch($data, $logApi->id);
+
+    }
+
+    /**
+     * Callback para receber autorização OAuth,
+     * redireciona para a URL de origem com parametros,
+     * recebidos da meta
+     */
+    public function subscribeCoexisting(Request $request)
+    {
+
+        return '123';
+        
+        /**
+        * Troca o código de autorização (code) gerado na autenticação inicial do Meta
+        */
+        $response = $this->metaService->getAccessToken($data['code'], $type);
 
     }
 
@@ -356,6 +371,43 @@ class MetaApiController extends Controller
     }
 
     /**
+     * Quando um cliente utilizar o whatsapp do Meta através
+     * do modo WhatsApp Business (Coexistence), o Meta envia
+     * para a central o número.
+     */
+    public function exchange(Request $request)
+    {
+        
+        // Obtém dados
+        $data = $request->all();
+
+        // Troca o código de autorização (code) gerado na autenticação inicial do Meta
+        $response = $this->metaService->getAccessToken($data['code']);
+
+        // Log
+        Log::info($response);
+
+        // Obtém os dados
+        $response = $response['data'];
+
+        // Se retornou erro
+        if(isset($response['error'])){
+            return response()->json([
+                'success' => false,
+                'message' => $response['error']['message'],
+            ], 400);
+        }
+
+        dd($response);
+
+        // Localiza o token e verifica a autorização
+        return response()->json([
+            'success' => true,
+            'message' => 'Ativou os números dessa conta',
+        ]);
+    }
+
+    /**
      * Desativa a conta do Meta
      */
     public function unsubscribed(Request $request)
@@ -380,6 +432,22 @@ class MetaApiController extends Controller
 
         // Localiza o token e verifica a autorização
         return response()->json($response);
+    }
+
+    /**
+     * Recebe a requisição do Meta para receber as notificações
+     */
+    public function encharge(Request $request)
+    {
+
+
+        Log::info('Encharge');
+        Log::info($request->all());
+        Log::info('Encharge');
+        
+        // Localiza o token e verifica a autorização
+        return response()->json($request->all());
+
     }
 
 }
