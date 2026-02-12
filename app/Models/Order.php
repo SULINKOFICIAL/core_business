@@ -23,6 +23,7 @@ class Order extends Model
 
     protected $fillable = [
         'client_id',
+        'pagarme_plan_id',
         'status',
         'current_step',
         'currency',

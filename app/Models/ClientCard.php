@@ -18,5 +18,6 @@ class ClientCard extends Model
         'tokenization_id_at',
         'brand_tid',
         'brand_tid_at',
+        'pagarme_card_id',
     ];
 }

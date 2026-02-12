@@ -18,6 +18,7 @@ use App\Http\Controllers\NewsCategoryController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\CouponController;
+use App\Http\Controllers\PagarMeController;
 use App\Http\Controllers\SubscriptionsController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\WhatsAppApiController;
@@ -257,9 +258,12 @@ Route::name('callbacks.')->prefix('callbacks')->group(function () {
 
 // Webhook: para receber notificações
 Route::prefix('webhooks')->withoutMiddleware(['web'])->group(function () {
+
     Route::get('/meta',  [MetaApiController::class, 'authWebhooks']);
     Route::post('/meta', [MetaApiController::class, 'return'])->name('meta');
     Route::post('/whatsapp', [WhatsAppApiController::class, 'return'])->name('whatsapp');
+
+    Route::post('/pagarme', [PagarMeController::class, 'return'])->name('pagarme');
 });
 
 require __DIR__.'/auth.php';

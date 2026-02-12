@@ -26,6 +26,7 @@ class Client extends Model
         'install',
         'name',
         'email',
+        'pagarme_customer_id',
         'whatsapp',
         'company',
         'cnpj',

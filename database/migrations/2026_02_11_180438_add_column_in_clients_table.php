@@ -11,13 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("
-            ALTER TABLE clients
-            CHANGE type_instalation type_installation
-            ENUM('dedicated','shared')
-            NOT NULL
-            DEFAULT 'shared'
-        ");
+        Schema::table('clients', function (Blueprint $table) {
+            $table->string('pagarme_customer_id')->nullable()->after('email');
+        });
     }
 
     /**
