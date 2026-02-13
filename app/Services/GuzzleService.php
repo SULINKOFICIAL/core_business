@@ -45,7 +45,14 @@ class GuzzleService
         try {
 
             // Monta URL
-            $url = "$protocol://{$client->domains[0]->domain}/api/$url";
+            if($client->domains->count() > 0){
+                $url = "$protocol://{$client->domains[0]->domain}/api/$url";
+            } else {
+                return [
+                    'success' => false,
+                    'message' => 'Nenhum domínio encontrado para o cliente.',
+                ];
+            }
 
             // Realiza requisição
             $response = $guzzle->$method($url, $options);

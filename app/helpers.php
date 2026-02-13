@@ -217,6 +217,9 @@ if (! function_exists('header_menu_items')) {
                     'suggestions.index',
                     'errors.index',
                     'systems.update.all.db',
+                    'users.index',
+                    'users.create',
+                    'users.edit',
                 ],
                 'width' => 'w-175px',
                 'children' => [
@@ -243,6 +246,12 @@ if (! function_exists('header_menu_items')) {
                         'route' => 'systems.update.all.db',
                         'active_routes' => ['systems.update.all.db'],
                         'icon' => ['class' => 'ki-duotone ki-file-added fs-3', 'paths' => 5],
+                    ],
+                    [
+                        'label' => 'Usuários',
+                        'route' => 'users.index',
+                        'active_routes' => ['users.index', 'users.create', 'users.edit'],
+                        'icon' => ['class' => 'ki-duotone ki-profile-user fs-3', 'paths' => 5],
                     ],
                 ],
             ],

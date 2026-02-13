@@ -13,6 +13,7 @@ class ClientDomain extends Model
     protected $fillable = [
         'client_id',
         'domain',
+        'auto_generate',
         'description',
         'status',
     ];
