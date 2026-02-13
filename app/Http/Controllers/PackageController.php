@@ -6,15 +6,12 @@ use App\Models\Client;
 use App\Models\ClientModule;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\ClientSubscription;
 use App\Models\Package;
 use App\Models\Module;
 use App\Models\PackageModule;
 use App\Services\OrderService;
-use App\Services\PackageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use GuzzleHttp\Client as Guzzle;
 
 class PackageController extends Controller
 {
