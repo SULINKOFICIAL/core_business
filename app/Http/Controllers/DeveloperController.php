@@ -18,7 +18,7 @@ class DeveloperController extends Controller
         /**
          * Retorna o plano na PagarMe  
          */
-        $planId = (new PagarMeService())->findOrCreatePlan($order->id);
+        // $planId = (new PagarMeService())->findOrCreatePlan($order->id);
 
         /**
          * Retorna o customer na PagarMe 
@@ -33,7 +33,7 @@ class DeveloperController extends Controller
         /**
          * Retorna a assinatura na PagarMe 
          */
-        $subscriptionId = (new PagarMeService())->findOrCreateSubscription($planId['id'], $customerId['id'], $cardId['id']);
+        $subscriptionId = (new PagarMeService())->findOrCreateSubscription($customerId['id'], $cardId['id'], $order);
 
         dd($subscriptionId);
 
