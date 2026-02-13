@@ -22,6 +22,7 @@ use App\Http\Controllers\CouponController;
 use App\Http\Controllers\PagarMeController;
 use App\Http\Controllers\SubscriptionsController;
 use App\Http\Controllers\TicketController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\WhatsAppApiController;
 
 // Paínel de administração
@@ -176,6 +177,17 @@ Route::middleware(['auth'])->group(function () {
         Route::name('errors.')->group(function () {
             Route::get('/',                 [ErrorMiCoreController::class, 'index'])->name('index');
             Route::get('/visualizar',       [ErrorMiCoreController::class, 'show'])->name('show');
+        });
+    });
+
+    Route::prefix('usuarios')->group(function () {
+        Route::name('users.')->group(function () {
+            Route::get('/',                 [UserController::class, 'index'])->name('index');
+            Route::get('/adicionar',        [UserController::class, 'create'])->name('create');
+            Route::post('/adicionar',       [UserController::class, 'store'])->name('store');
+            Route::get('/editar/{id}',      [UserController::class, 'edit'])->name('edit');
+            Route::put('/editar/{id}',      [UserController::class, 'update'])->name('update');
+            Route::get('/desabilitar/{id}', [UserController::class, 'destroy'])->name('destroy');
         });
     });
 

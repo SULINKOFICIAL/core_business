@@ -109,6 +109,7 @@ class ClientController extends Controller
         // Registra o domínio do cliente
         ClientDomain::create([
             'client_id'     => $created->id,
+            'auto_generate' => true,
             'domain'        => $data['domain'] . '.micore.com.br',
             'description'   => 'Domínio cadastrado ao criar a conta do cliente',
             'status'        => true,

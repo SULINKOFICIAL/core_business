@@ -20,6 +20,12 @@
 							</p>
 							<input type="text" placeholder="Email" name="email" class="form-control bg-transparent mb-2" required />
 							<input type="password" placeholder="Password" name="password" class="form-control bg-transparent mb-3" required />
+							<div class="form-check d-flex align-items-center mb-3">
+								<input class="form-check-input me-2" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
+								<label class="form-check-label text-gray-700 fw-semibold" for="remember">
+									Lembrar de mim
+								</label>
+							</div>
 							<button type="submit" class="btn text-uppercase btn-success fw-bolder w-100">
 								Acessar
 							</button>

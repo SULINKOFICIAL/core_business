@@ -141,6 +141,24 @@ if (! function_exists('header_menu_items')) {
             ],
             [
                 'type' => 'submenu',
+                'label' => 'Vendas',
+                'active_routes' => ['orders.index', 'orders.show', 'coupons.index', 'coupons.create', 'coupons.edit'],
+                'width' => 'w-125px',
+                'children' => [
+                    [
+                        'label' => 'Pedidos',
+                        'route' => 'orders.index',
+                        'active_routes' => ['orders.index', 'orders.show'],
+                    ],
+                    [
+                        'label' => 'Cupons',
+                        'route' => 'coupons.index',
+                        'active_routes' => ['coupons.index', 'coupons.create', 'coupons.edit'],
+                    ],
+                ],
+            ],
+            [
+                'type' => 'submenu',
                 'label' => 'Notícias',
                 'active_routes' => ['news.index', 'news.categories.index'],
                 'width' => 'w-100px',
@@ -162,24 +180,6 @@ if (! function_exists('header_menu_items')) {
                 'label' => 'Pacotes',
                 'route' => 'packages.index',
                 'active_routes' => ['packages.index'],
-            ],
-            [
-                'type' => 'submenu',
-                'label' => 'Vendas',
-                'active_routes' => ['orders.index', 'orders.show', 'coupons.index', 'coupons.create', 'coupons.edit'],
-                'width' => 'w-125px',
-                'children' => [
-                    [
-                        'label' => 'Pedidos',
-                        'route' => 'orders.index',
-                        'active_routes' => ['orders.index', 'orders.show'],
-                    ],
-                    [
-                        'label' => 'Cupons',
-                        'route' => 'coupons.index',
-                        'active_routes' => ['coupons.index', 'coupons.create', 'coupons.edit'],
-                    ],
-                ],
             ],
             [
                 'type' => 'submenu',
@@ -217,6 +217,9 @@ if (! function_exists('header_menu_items')) {
                     'suggestions.index',
                     'errors.index',
                     'systems.update.all.db',
+                    'users.index',
+                    'users.create',
+                    'users.edit',
                 ],
                 'width' => 'w-175px',
                 'children' => [
@@ -243,6 +246,12 @@ if (! function_exists('header_menu_items')) {
                         'route' => 'systems.update.all.db',
                         'active_routes' => ['systems.update.all.db'],
                         'icon' => ['class' => 'ki-duotone ki-file-added fs-3', 'paths' => 5],
+                    ],
+                    [
+                        'label' => 'Usuários',
+                        'route' => 'users.index',
+                        'active_routes' => ['users.index', 'users.create', 'users.edit'],
+                        'icon' => ['class' => 'ki-duotone ki-profile-user fs-3', 'paths' => 5],
                     ],
                 ],
             ],
