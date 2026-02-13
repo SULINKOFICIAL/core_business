@@ -19,7 +19,7 @@ class MetaApiController extends Controller
 
     // Serviço Guzzle
     protected $RequestService;
-    private $metaAppId;
+    protected $metaAppId;
     protected $metaService;
     protected $scopesWhatsApp  = 'whatsapp_business_management,whatsapp_business_messaging,business_management,pages_show_list';
     protected $scopesInstagram = 'instagram_manage_messages,instagram_basic,pages_show_list,pages_read_user_content,business_management,pages_messaging,pages_read_engagement,pages_manage_metadata';
@@ -93,23 +93,6 @@ class MetaApiController extends Controller
 
         // Dispara para a função de encontrar o dominio a ser enviado o conteudo
         MetaDispatchRequest::dispatch($data, $logApi->id);
-
-    }
-
-    /**
-     * Callback para receber autorização OAuth,
-     * redireciona para a URL de origem com parametros,
-     * recebidos da meta
-     */
-    public function subscribeCoexisting(Request $request)
-    {
-
-        return '123';
-        
-        /**
-        * Troca o código de autorização (code) gerado na autenticação inicial do Meta
-        */
-        $response = $this->metaService->getAccessToken($data['code'], $type);
 
     }
 
@@ -367,43 +350,6 @@ class MetaApiController extends Controller
         return response()->json([
             'success' => true,
             'message' => $data['status'] ? 'Ativou os números dessa conta' : 'Desativou os números dessa conta',
-        ]);
-    }
-
-    /**
-     * Quando um cliente utilizar o whatsapp do Meta através
-     * do modo WhatsApp Business (Coexistence), o Meta envia
-     * para a central o número.
-     */
-    public function exchange(Request $request)
-    {
-        
-        // Obtém dados
-        $data = $request->all();
-
-        // Troca o código de autorização (code) gerado na autenticação inicial do Meta
-        $response = $this->metaService->getAccessToken($data['code']);
-
-        // Log
-        Log::info($response);
-
-        // Obtém os dados
-        $response = $response['data'];
-
-        // Se retornou erro
-        if(isset($response['error'])){
-            return response()->json([
-                'success' => false,
-                'message' => $response['error']['message'],
-            ], 400);
-        }
-
-        dd($response);
-
-        // Localiza o token e verifica a autorização
-        return response()->json([
-            'success' => true,
-            'message' => 'Ativou os números dessa conta',
         ]);
     }
 

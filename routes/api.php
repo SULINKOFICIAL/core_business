@@ -5,6 +5,7 @@ use App\Http\Controllers\ApisDomainsController;
 use App\Http\Controllers\ApisNewsController;
 use App\Http\Controllers\ApisTokensController;
 use App\Http\Controllers\MetaApiController;
+use App\Http\Controllers\MetaApiOnboardingController;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -32,7 +33,6 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
         Route::get('/meu-plano',      [ApisController::class, 'plan']);
         Route::get('/minhas-compras', [ApisController::class, 'orders']);
         Route::get('/cartoes',        [ApisController::class, 'cards']);
-        
         
         /**
          * API que gerencia os pedidos
@@ -68,6 +68,7 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
         /** API gerencia os domínios */
         Route::prefix('meta')->group(function () {
             Route::get('/auth/{type}/{host}', [MetaApiController::class, 'OAuth2']);
+            Route::post('/onboarding/start',  [MetaApiOnboardingController::class, 'startOnboarding']);
             Route::get('/token/{id}',         [MetaApiController::class, 'token']);
             Route::post('/inscricao',         [MetaApiController::class, 'subscribed']);
             Route::post('/intercambio',       [MetaApiController::class, 'exchange']);
@@ -83,4 +84,12 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
         });
     });
 
+});
+
+/**
+ * Callback técnico do Embedded Signup da Meta.
+ * Recebe payload bruto do frontend da central e valida no backend.
+ */
+Route::prefix('integracoes/meta')->group(function () {
+    Route::post('/onboarding/callback', [MetaApiOnboardingController::class, 'embeddedOnboardingCallback']);
 });

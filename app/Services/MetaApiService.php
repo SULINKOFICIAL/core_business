@@ -121,6 +121,71 @@ class MetaApiService
 
         // Retorna a resposta
         return $response;
+    }
+
+    /**
+     * Subscreve o app ao WABA
+     * 
+     * @param string $wabaId ID do WABA
+     * @param string $accessToken Token de acesso
+     * @return array Resposta com dados do usuário autenticado
+     */
+    public function subscribeApp($wabaId, $accessToken)
+    {
+        return $this->RequestService->request(
+            'POST',
+            "https://graph.facebook.com/v20.0/{$wabaId}/subscribed_apps",
+            [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $accessToken,
+                ]
+            ]
+        );
+    }
+
+
+    /**
+     * Busca dados do usuário autenticado.
+     *
+     * @param string $accessToken Token de acesso de curto prazo
+     * @return array Resposta com dados do usuário autenticado
+     */
+    public function debugToken($accessToken)
+    {
+        return $this->RequestService->request(
+            'GET',
+            'https://graph.facebook.com/debug_token',
+            [
+                'query' => [
+                    'input_token'  => $accessToken,
+                    'access_token' => config('meta.client_id') . '|' . config('meta.client_secret'),
+                ]
+            ]
+        );
+    }
+
+    /**
+     * Busca dados do usuário autenticado.
+     *
+     * @param string $accessToken Token de acesso de curto prazo
+     * @return array Resposta com dados do usuário autenticado
+     */
+    public function waba($wabaId, $accessToken)
+    {
+
+        // Envia requisição via RequestService
+        $response = $this->RequestService->request(
+            'GET',
+            'https://graph.facebook.com/v20.0/' . $wabaId . '?fields=id,name',
+            [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $accessToken,
+                ]
+            ]
+        );
+
+        // Retorna a resposta
+        return $response;
 
     }
 
