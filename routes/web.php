@@ -260,7 +260,7 @@ Route::prefix('webhooks')->withoutMiddleware(['web'])->group(function () {
     Route::post('/meta', [MetaApiController::class, 'return'])->name('meta');
     Route::post('/whatsapp', [WhatsAppApiController::class, 'return'])->name('whatsapp');
 
-    Route::post('/pagarme', [PagarMeController::class, 'return'])->name('pagarme');
+    Route::get('/pagarme', [PagarMeController::class, 'return'])->name('pagarme');
 });
 
 require __DIR__.'/auth.php';
