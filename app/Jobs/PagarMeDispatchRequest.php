@@ -2,6 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Models\Client;
+use App\Models\ClientCard;
+use App\Models\ClientSubscription;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Models\LogsApi;
@@ -47,8 +50,6 @@ class PagarMeDispatchRequest implements ShouldQueue
          */
         $PagarMeDTO = $pagarMeResponseService->process($this->requestData);
 
-        dd($PagarMeDTO, $this->logApi);
-
         match ($PagarMeDTO->type) {
             'charge.paid' => $this->handleChargePaid($PagarMeDTO),
             'charge.failed' => $this->handleChargeFailed($PagarMeDTO),
@@ -58,8 +59,15 @@ class PagarMeDispatchRequest implements ShouldQueue
 
     public function handleChargePaid($data)
     {
+        // Obtem o cliente
+        $client = Client::where('pagarme_customer_id', $data->customer->id)->first();
 
+        // Obtem o cartão que o cliente usou para pagar
+        $card = ClientCard::where('pagarme_card_id', $data->transaction->card->id)->first();
 
+        // Obtem o pedido criado atraves 
+        
+        dd($data);
 
     }
 
