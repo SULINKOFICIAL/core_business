@@ -12,11 +12,9 @@ use App\Models\Module;
 
 class OrderService
 {
-    private $pagarMeService;
 
-    public function __construct(PagarMeService $pagarMeService)
+    public function __construct()
     {
-        $this->pagarMeService = $pagarMeService;
     }
 
 
@@ -519,17 +517,6 @@ class OrderService
         }
 
         return $discount;
-
-    }
-
-    public function finalizeAndPayOrder(Order $order)
-    {
-        
-        $result = $this->pagarMeService->createDynamicOrder($order);
-
-        if(!$result['success']){
-            return ['status' => 'error', 'message' => $result['message']];
-        }
 
     }
 

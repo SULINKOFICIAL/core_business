@@ -20,6 +20,7 @@ class MetaApiOnboardingController extends MetaApiController
      */
     public function startOnboarding(Request $request)
     {
+        
         // Lê os dados enviados pelo miCore para iniciar o onboarding.
         $data = $request->all();
 

@@ -214,17 +214,6 @@ Route::middleware(['auth'])->group(function () {
     });
 
     /**
-     * Rotas relacionadas aos comandos da eRede.
-     */
-    Route::prefix('rede')->group(function () {
-        Route::name('rede.')->group(function () {
-            Route::get('/testar',                 [ERedeController::class, 'testar'])->name('test');
-            Route::get('/token/{token}',          [ERedeController::class, 'verifySolicitation'])->name('verify.token');
-            Route::get('/criptografia/{token}',   [ERedeController::class, 'cryptogram'])->name('cryptogram');
-        });
-    });
-
-    /**
      * Rotas relacionadas aos comandos do desenvolvedor.
      */
     Route::prefix('desenvolvedores')->group(function () {
