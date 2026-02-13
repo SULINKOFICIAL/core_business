@@ -17,7 +17,8 @@ class OrderTransaction extends Model
     ];
 
     protected $fillable = [
-        'order_id',
+        'subscription_id',
+        'pagarme_transaction_id',
         'gateway_id',
         'gateway_code',
         'external_transaction_id',
