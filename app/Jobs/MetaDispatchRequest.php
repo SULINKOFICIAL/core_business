@@ -106,11 +106,6 @@ class MetaDispatchRequest implements ShouldQueue
 
         }
 
-        // Marca data/hora do despacho
-        $this->logApi->update([
-            'dispatched_at' => now(),
-        ]);
-
         // Realiza a requisição
         $response = $requestService->request('POST', $url, [
                         'json' => $this->data
@@ -120,6 +115,7 @@ class MetaDispatchRequest implements ShouldQueue
         if($response['success'] && isset($response['data']['status']) && $response['data']['status'] == 'Accepted'){
             $this->logApi->update([
                 'status' => 'Processado',
+                'dispatched_at' => now(),
             ]);
         } else {
             $this->logApi->update([
