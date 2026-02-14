@@ -18,6 +18,9 @@
             {{ $latestMiCores->count() }} recentes
           </span>
         </h3>
+        <div class="card-toolbar">
+          <a href="{{ route('clients.index') }}" class="btn btn-sm btn-light">Ver MiCores</a>
+        </div>
       </div>
 
       <div class="card-body d-flex justify-content-between flex-column pt-3">

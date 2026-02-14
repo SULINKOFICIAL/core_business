@@ -9,7 +9,6 @@
             <thead class="rounded" style="background: #1c283e">
                 <tr class="fw-bold fs-6 text-white px-7">
                     <th class="">Nome do Cliente</th>
-                    <th class="text-center px-0">Domínio</th>
                     <th class="text-center px-0">Tipo de Instalação</th>
                     <th class="text-center px-0">Plano</th>
                     <th class="text-center px-0">Criado Em</th>
@@ -26,12 +25,14 @@
                             <a href="{{ route('clients.show', $client->id) }}" class="text-gray-700 text-hover-primary fw-bold">
                                 {{ $client->name }}
                             </a>
-                        </td>
-                        <td class="text-center">
+                            <br>
                             @if ($client->domains()->count() > 0)
-                                <a href="https://{{ $client->domains()->first()->domain }}" target="_blank" class="text-gray-600 text-hover-danger m-0 text-center">
-                                    {{ $client->domains()->first()->domain }} ({{ $client->domains()->count() }})
+                                <a href="https://{{ $client->domains()->first()->domain }}" target="_blank" class="text-gray-600 text-hover-primary m-0 text-center">
+                                    {{ $client->domains()->first()->domain }} 
                                 </a>
+                                @if ($client->domains()->count() > 1)
+                                    <i class="fa-solid fa-circle-plus text-gray-500 fs-9"></i>
+                                @endif
                             @else
                                 <span class="badge badge-light-danger">Sem domínio</span>
                             @endif
@@ -79,17 +80,42 @@
                                 <a href="{{ route('clients.show', $client->id) }}" class="btn btn-sm btn-primary btn-active-success fw-bolder text-uppercase py-2">
                                     Visualizar
                                 </a>
-                                <a href="{{ route('systems.update.database', $client->id) }}" class="text-gray-700" data-bs-toggle="tooltip" data-bs-placement="top" title="Atualizar banco de dados">
-                                    <i class="fa-solid fa-database"></i>
+                                
+                                <a href="#" class="btn btn-success btn-active-light-primary btn-sm" data-kt-menu-trigger="hover" data-kt-menu-placement="bottom-end" data-kt-menu-flip="top-end">
+                                    <i class="fa-solid fa-ellipsis-vertical p-0"></i>
                                 </a>
-                                <a href="{{ route('systems.update.git', $client->id) }}" class="text-gray-700" data-bs-toggle="tooltip" data-bs-placement="top" title="Atualizar git">
-                                    <i class="fa-brands fa-git"></i>
-                                </a>
-                                @if ($client->domains()->count() > 0)
-                                    <a href="https://{{ $client->domains[0]->domain }}/acessar/{{ $client->token }}" target="_blank" class="text-gray-700" data-bs-toggle="tooltip" data-bs-placement="top" title="Acessar como sistema">
-                                        <i class="fa-solid fa-up-right-from-square"></i>
-                                    </a>
-                                @endif
+                                <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-bold fs-7 w-200px py-4" data-kt-menu="true">
+                                    <div class="menu-item px-3">
+                                        <a href="{{ route('systems.update.database', $client->id) }}" class="menu-link px-3">
+                                            <i class="fa-solid fa-database me-2"></i>
+                                            Atualiza banco de dados
+                                        </a>
+                                    </div>
+                                    <div class="menu-item px-3">
+                                        <a href="{{ route('systems.update.git', $client->id) }}" class="menu-link px-3">
+                                            <i class="fa-solid fa-code me-2"></i>
+                                            Atualiza git
+                                        </a>
+                                    </div>
+                                    <div class="menu-item px-3">
+                                        <a href="{{ route('clients.destroy', $client->id) }}" class="menu-link px-3">
+                                            <i class="fa-solid fa-toggle-off me-2"></i>
+                                            @if ($client->status == 0)
+                                                Ativar
+                                            @else
+                                                Desativar
+                                            @endif
+                                        </a>
+                                    </div>
+                                    @if ($client->domains()->count() > 0)
+                                        <div class="menu-item px-3">
+                                            <a href="https://{{ $client->domains[0]->domain }}/acessar/{{ $client->token }}" target="_blank" class="menu-link px-3" data-kt-docs-table-filter="delete_row">
+                                                <i class="fa-solid fa-globe me-2"></i>
+                                                Acessar como sistema
+                                            </a>
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
                         </td>
                     </tr>
