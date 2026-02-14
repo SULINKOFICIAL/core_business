@@ -56,9 +56,10 @@ class LogsApiProcessingController extends Controller
      */
     public function filters($query, $data)
     {
+
         // Filtra por status (ativo/inativo)
-        if (isset($data['client_status']) && $data['client_status'] !== 'all') {
-            $query->where('logs_apis.status', (int) $data['client_status']);
+        if (isset($data['log_status']) && $data['log_status'] !== 'all') {
+            $query->where('logs_apis.status', $data['log_status']);
         }
 
         return $query;

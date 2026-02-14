@@ -20,8 +20,14 @@
                     <div class="app-navbar flex-shrink-0 justify-content-end">
                         @php($avatarUrl = Auth::user()->avatar ? asset('storage/' . Auth::user()->avatar) : asset('assets/media/images/blank.png'))
                         <div class="app-navbar-item ms-1 ms-md-4" id="kt_header_user_menu_toggle">
-                            <div class="cursor-pointer symbol symbol-35px" data-kt-menu-trigger="{default: 'click', lg: 'hover'}" data-kt-menu-attach="parent" data-kt-menu-placement="bottom-end">
+                            <div class="cursor-pointer symbol symbol-35px d-flex gap-4" data-kt-menu-trigger="{default: 'click', lg: 'hover'}" data-kt-menu-attach="parent" data-kt-menu-placement="bottom-end">
                                 <img src="{{ $avatarUrl }}" class="rounded-3" alt="user" />
+                                <div class="flex-grow-1">
+                                    <span class="text-white fs-7 fw-bold">{{ Auth::user()->name }}</span>
+                                    <div class="d-flex align-items-center text-success fs-9">
+                                        {{ Auth::user()->email }}
+                                    </div>
+                                </div>
                             </div>
                             <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-800 menu-state-bg menu-state-color fw-semibold py-4 fs-6 w-275px" data-kt-menu="true">
                                 <div class="menu-item px-3">
