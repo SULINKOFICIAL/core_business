@@ -196,7 +196,7 @@ class LogsApiProcessingController extends Controller
             })
             ->addColumn('status', function ($row) {
                 return match ((string) $row->status) {
-                    'Processado' => '<span class="badge badge-light-success">Dispachado</span>',
+                    'Processado' => '<span class="badge badge-light-success">Processado</span>',
                     'Aguardando' => '<span class="badge badge-light-warning">Aguardando</span>',
                     'Erro' => '<span class="badge badge-light-danger">Erro</span>',
                     default => '<span class="badge badge-light-info">'.$row->status.'</span>',
