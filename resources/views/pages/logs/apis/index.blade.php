@@ -2,6 +2,13 @@
 
 @section('title', 'Logs APIs')
 
+@section('custom-head')
+    @parent
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" integrity="sha512-7Z9J3l1+EYfeaPKcGXu3MS/7T+w19WtKQY/n+xzmw4hZhJ9tyYmcUS+4QqAlzhicE5LAfMQSF3iFTK9bQdTxXg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js" integrity="sha512-SkmBfuA2hqjzEVpmnMt/LINrjop3GKWqsuLSSB3e7iBmYK7JuWw4ldmmxwD9mdm2IRTTi0OxSAfEGvgEi0i2Kw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+@endsection
+
 @section('content')
 <div class="card">
     <div class="card-body">
@@ -45,17 +52,16 @@
                 </div>
             </div>
         </div>
-
         <table id="datatables-logs-apis" data-dt-manual="true" class="table table-striped table-row-bordered gy-2 gs-7 align-middle">
             <thead class="rounded">
                 <tr class="fw-bold fs-6 text-gray-700 px-7">
                     <th class="text-start">ID</th>
                     <th class="text-start">API</th>
+                    <th class="text-start">Cliente</th>
                     <th class="text-start">JSON</th>
                     <th class="text-center">Reprocessado</th>
-                    <th class="text-center">Novo Log</th>
                     <th class="text-center">Status</th>
-                    <th class="text-start">Criado Em</th>
+                    <th class="text-start">Despachado Em</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -64,11 +70,66 @@
 </div>
 @endsection
 
+@section('modals')
+<div class="modal fade" tabindex="-1" id="modal_json">
+    <div class="modal-dialog modal-dialog-centered mw-1000px">
+        <div class="modal-content">
+            <div class="modal-header py-3 bg-dark border-0">
+                <h5 class="modal-title text-white">Visualizando JSON</h5>
+                <div class="btn btn-icon bg-dark ms-2" data-bs-dismiss="modal" aria-label="Close">
+                    <span class="svg-icon svg-icon-2x fw-bolder">X</span>
+                </div>
+            </div>
+            <div class="modal-body p-0">
+                {{-- JSON HERE --}}
+                {{-- JSON HERE --}}
+                {{-- JSON HERE --}}
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
 @section('custom-footer')
+@parent
 <script>
+    /**
+     * Abre a fatura desejada baseado em qual foi clicado.
+     */
+    $(document).on('click', '.open-json', function(e) {
+
+        // Obtém o ID do JSON
+        var id = $(this).data('json');
+
+        // AJAX
+        $.ajax({
+            url: "{{ route('logs.apis.show', '') }}/" + id,
+            type: 'GET',
+            success: function(response) {
+
+                // Formata o JSON e insere no modal
+                var formattedJson = JSON.stringify(JSON.parse(response), null, 4);
+                var highlightedJson = `<pre class="m-0 rounded-0 rounded-bottom-2"><code class="language-json">${formattedJson}</code></pre>`;
+
+                $('#modal_json .modal-body').html(highlightedJson);
+                $('#modal_json').modal('show');
+
+                // Ativa o Prism.js após o conteúdo ser carregado
+                Prism.highlightAll();
+            },
+            error: function(xhr) {
+                $('#modal_json .modal-body').html('<p class="text-danger">Erro ao carregar JSON.</p>');
+                $('#modal_json').modal('show');
+            }
+        });
+        
+    });
+
+    // Carrega tabelas
     const dataTable = $('#datatables-logs-apis').DataTable({
         serverSide: true,
         processing: true,
+        pageLength: 25,
         ajax: {
             url: '{{ route("logs.apis.process") }}',
             data: function (data) {
@@ -81,11 +142,11 @@
         columns: [
             { data: 'id', name: 'id' },
             { data: 'api', name: 'api' },
+            { data: 'client', name: 'client' },
             { data: 'json', name: 'json', orderable: false, searchable: false },
             { data: 'reprocessed', name: 'reprocessed', orderable: false, searchable: false, className: 'text-center' },
-            { data: 'new_log_id', name: 'new_log_id', className: 'text-center' },
             { data: 'status', name: 'status', orderable: false, searchable: false, className: 'text-center' },
-            { data: 'created_at', name: 'created_at' },
+            { data: 'dispatched_at', name: 'dispatched_at' },
         ],
         pagingType: 'simple_numbers',
     });

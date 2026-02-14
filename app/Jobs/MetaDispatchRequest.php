@@ -8,7 +8,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Models\LogsApi;
 use App\Services\RequestService;
-use Illuminate\Support\Facades\Log;
 
 class MetaDispatchRequest implements ShouldQueue
 {
@@ -29,6 +28,9 @@ class MetaDispatchRequest implements ShouldQueue
 
         // Busca o logApi
         $this->logApi = LogsApi::find($this->logApiId);
+        if (!$this->logApi) {
+            return;
+        }
 
         // Verifica qual o tipo da plataforma
         $platform = match($this->data['object']){
@@ -59,8 +61,19 @@ class MetaDispatchRequest implements ShouldQueue
                 return;
             }
 
+            // Salva cliente vinculado ao log
+            $this->logApi->update([
+                'client_id' => $clientMeta->client_id,
+            ]);
+
             // Obtem os dominios do cliente
             $clientDomains = $clientMeta->client->domains;
+            if ($clientDomains->isEmpty()) {
+                $this->logApi->update([
+                    'status' => 'Erro',
+                ]);
+                return;
+            }
 
             $url = "{$clientDomains[0]->domain}/webhooks/meta";
             
@@ -68,13 +81,35 @@ class MetaDispatchRequest implements ShouldQueue
 
             // Obtem o cliente
             $client = Client::find($id);
+            if (!$client) {
+                $this->logApi->update([
+                    'status' => 'Erro',
+                ]);
+                return;
+            }
+
+            // Salva cliente vinculado ao log
+            $this->logApi->update([
+                'client_id' => $client->id,
+            ]);
 
             // Obtem os dominios do cliente
             $clientDomains = $client->domains;
+            if ($clientDomains->isEmpty()) {
+                $this->logApi->update([
+                    'status' => 'Erro',
+                ]);
+                return;
+            }
 
             $url = "{$clientDomains[0]->domain}/webhooks/whatsapp/{$this->data['route']}";
 
         }
+
+        // Marca data/hora do despacho
+        $this->logApi->update([
+            'dispatched_at' => now(),
+        ]);
 
         // Realiza a requisição
         $response = $requestService->request('POST', $url, [
@@ -85,6 +120,10 @@ class MetaDispatchRequest implements ShouldQueue
         if($response['success'] && isset($response['data']['status']) && $response['data']['status'] == 'Accepted'){
             $this->logApi->update([
                 'status' => 'Processado',
+            ]);
+        } else {
+            $this->logApi->update([
+                'status' => 'Erro',
             ]);
         }
         
