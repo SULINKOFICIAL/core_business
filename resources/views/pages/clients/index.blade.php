@@ -46,6 +46,25 @@
                                     </label>
                                 </div>
                             </div>
+                            <div class="mb-10">
+                                <label class="form-label fs-5 fw-semibold mb-3">Status:</label>
+                                <div class="d-flex flex-column flex-wrap fw-semibold" data-kt-docs-table-filter="client_status">
+
+                                    <label class="form-check form-check-sm form-check-custom form-check-solid mb-3 me-5">
+                                        <input class="form-check-input" type="radio" name="client_status" value="1" checked>
+                                        <span class="form-check-label text-gray-600">
+                                            Ativos
+                                        </span>
+                                    </label>
+
+                                    <label class="form-check form-check-sm form-check-custom form-check-solid mb-3">
+                                        <input class="form-check-input" type="radio" name="client_status" value="0">
+                                        <span class="form-check-label text-gray-600">
+                                            Inativos
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
                             <div class="d-flex justify-content-end">
                                 <button type="reset" class="btn btn-light btn-active-light-primary me-2" data-kt-menu-dismiss="true" data-kt-docs-table-filter="reset">Reset</button>
                                 <button type="submit" class="btn btn-primary" data-kt-menu-dismiss="true" data-kt-docs-table-filter="filter">Aplicar</button>
@@ -101,6 +120,8 @@
                 data.searchBy       = data.search.value;
                 data.order_by       = data.columns[data.order[0].column].data;
                 data.per_page       = data.length;
+                data.payment_type   = $('input[name="payment_type"]:checked').val();
+                data.client_status  = $('input[name="client_status"]:checked').val();
             },
         },
         buttons: false,
@@ -140,12 +161,22 @@
     };
 
     // Renderiza tabela
-    table.DataTable(dataTableOptions);
+    const dataTable = table.DataTable(dataTableOptions);
+
+    // Busca pelo campo no topo
+    $('[data-kt-docs-table-filter="search"]').on('keyup', function () {
+        dataTable.search($(this).val()).draw();
+    });
 
     // Filtra a tabela
     $('#clients-filters').on('submit', function(e) {
         e.preventDefault();
-        table.DataTable().ajax.reload();
+        dataTable.ajax.reload();
+    });
+
+    // Reseta filtros do menu
+    $('#clients-filters').on('reset', function() {
+        setTimeout(() => dataTable.ajax.reload(), 0);
     });
 </script>
 @endsection

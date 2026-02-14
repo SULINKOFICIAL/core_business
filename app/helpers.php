@@ -141,7 +141,7 @@ if (! function_exists('header_menu_items')) {
             ],
             [
                 'type' => 'link',
-                'label' => 'Cliente',
+                'label' => 'Clientes',
                 'route' => 'clients.index',
                 'active_routes' => ['clients.index'],
             ],

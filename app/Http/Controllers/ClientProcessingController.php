@@ -59,13 +59,19 @@ class ClientProcessingController extends Controller
      */
     public function filters($query, $data)
     {
+        // Filtra por tipo de instalação
+        if (!empty($data['payment_type']) && $data['payment_type'] !== 'all') {
+            $query->where('clients.type_installation', $data['payment_type']);
+        }
 
-        // Obtém dados da consulta
-        $filters = $data;
+        // Filtra por status (ativo/inativo)
+        if (isset($data['client_status']) && $data['client_status'] !== 'all') {
+            $query->where('clients.status', (int) $data['client_status']);
+        }
 
-        // Filtra por status
-        if (isset($filters['status'])) {
-            $query->whereIn('clients.status', $filters['status']);
+        // Mantém compatibilidade com filtro antigo por array de status
+        if (isset($data['status']) && is_array($data['status']) && !empty($data['status'])) {
+            $query->whereIn('clients.status', $data['status']);
         }
 
         return $query;
