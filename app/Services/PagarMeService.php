@@ -84,54 +84,6 @@ class PagarMeService
     }
 
     /**
-     ** Função responsável por
-     * 
-     *? Verificar se o pedido está atrelado a um plano na PagarMe
-     * 
-     *? Se nao existir, cria um
-     */
-    public function findOrCreatePlan($orderId)
-    {
-        // Obtem o pedido
-        $order = Order::find($orderId);
-
-        // Verifica se o pedido ja possui um plano na PagarMe
-        if(isset($order) && $order->pagarme_plan_id) {
-
-            // Cria o plano na PagarMe 
-            $response = Http::withBasicAuth($this->apiKey, '')->get($this->baseUrl . '/plans/' . $order->pagarme_plan_id)->json();
-            
-            // Verifica se a resposta foi bem sucedida
-            if(isset($response) && isset($response['id'])) {
-                return $response;
-            }
-
-        }
-
-        // Se nao possui cria um
-        else {
-
-            return null;
-
-            // Cria o plano na PagarMe 
-            $response = Http::withBasicAuth($this->apiKey, '')->post($this->baseUrl . '/plans', $payload)->json();
-
-            // Verifica se a resposta foi bem sucedida
-            if(isset($response) && isset($response['id'])) {
-
-                // Atualiza o pedido com o id do plano na PagarMe
-                $order->update([
-                    'pagarme_plan_id' => $response['id']
-                ]);
-
-                // Retorna o id do plano
-                return $response;
-            }
-
-        }
-    }
-
-    /**
      * Função responsável por
      * 
      *? Verificar se o cartão está atrelado a um customer na PagarMe
@@ -216,7 +168,6 @@ class PagarMeService
     public function findOrCreateSubscription($customerId, $cardId, $order)
     {
 
-
         /**
          * Cria um array de items obrigatorio para o plano
          * Cria um item com o preço total do pedido
@@ -253,12 +204,16 @@ class PagarMeService
         // Cria a assinatura na PagarMe
         $response = Http::withBasicAuth($this->apiKey, '')->post($this->baseUrl . '/subscriptions', $payload)->json();
 
-        dd($response);
-
         // Verifica se a resposta foi bem sucedida
         if(isset($response) && isset($response['id'])) {
             return $response;
         }
 
     }
+
+    public function getSubscriptionInvoices(string $subscriptionId)
+    {
+        return Http::withBasicAuth($this->apiKey, '')->get("{$this->baseUrl}/invoices", ['subscription_id' => $subscriptionId])->json();
+    }
+
 }

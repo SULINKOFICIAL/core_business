@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\OrderSubscription;
+use App\Models\OrderTransaction;
 use App\Services\PagarMeService;
+use Carbon\Carbon;
 
 class DeveloperController extends Controller
 {
@@ -20,11 +23,6 @@ class DeveloperController extends Controller
         $client = $order->client;
 
         /**
-         * Retorna o plano na PagarMe  
-         */
-        // $planId = (new PagarMeService())->findOrCreatePlan($order->id);
-
-        /**
          * Retorna o customer na PagarMe 
          */
         $customerId = (new PagarMeService())->findOrCreateCustomer($client->id);
@@ -37,15 +35,40 @@ class DeveloperController extends Controller
         /**
          * Retorna a assinatura na PagarMe 
          */
-        $subscriptionId = (new PagarMeService())->findOrCreateSubscription($customerId['id'], $cardId['id'], $order);
+        $subscription = (new PagarMeService())->findOrCreateSubscription($customerId['id'], $cardId['id'], $order);
 
-        dd($subscriptionId);
+        $orderSubscription = OrderSubscription::updateOrCreate([
+            'order_id'                => $order->id,
+            'pagarme_subscription_id' => $subscription['id'],
+        ], [
+            'pagarme_card_id'         => $subscription['card']['id'],
+            'interval'                => $subscription['interval'],
+            'payment_method'          => $subscription['payment_method'],
+            'currency'                => $subscription['currency'],
+            'installments'            => $subscription['installments'],
+            'status'                  => $subscription['status'],
+            'billing_at'              => Carbon::parse($subscription['current_cycle']['billing_at']),
+            'next_billing_at'         => Carbon::parse($subscription['next_billing_at']),
+        ]);
 
+        $transaction = (new PagarMeService())->getSubscriptionInvoices($orderSubscription->pagarme_subscription_id);
 
-    }
+        $charge = $transaction['data'][0]['charge'] ?? null;
 
-    private function infos()
-    {
-        'cus_RLg5KR3fZDTJJPdw';
+        $orderCharge = OrderTransaction::updateOrCreate([
+            'subscription_id'         => $orderSubscription->id,
+            'pagarme_transaction_id'  => $charge['id'],
+        ], [
+            'gateway_code'            => $charge['gateway_id'],
+            'amount'                  => $charge['paid_amount'],
+            'currency'                => $charge['currency'],
+            'method'                  => $charge['payment_method'],
+            'response'                => $transaction,
+            'response'                => json_encode($transaction),
+
+        ]);
+
+        dd($orderCharge);
+
     }
 }
