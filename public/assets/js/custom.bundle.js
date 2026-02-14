@@ -13,7 +13,7 @@
  * Local: "/public/assets/js/datatable-input.js"
  */
 function loadTables(seletor = '.datatables', items = 25, order = undefined) {
-    const table = $(seletor);
+    const table = $(seletor).not('[data-dt-manual="true"]');
     const dataTableOptions = {
         pageLength: items,
         order: order,

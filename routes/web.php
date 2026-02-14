@@ -26,6 +26,7 @@ use App\Http\Controllers\SubscriptionsController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WhatsAppApiController;
+use App\Http\Controllers\ClientProcessingController;
 
 // Paínel de administração
 Route::middleware(['auth'])->group(function () {
@@ -39,6 +40,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('clientes')->group(function () {
         Route::name('clients.')->group(function () {
             Route::get('/',                 [ClientController::class, 'index'])->name('index');
+            Route::get('/processar',        [ClientProcessingController::class, 'process'])->name('process');
             Route::get('/adicionar',        [ClientController::class, 'create'])->name('create');
             Route::post('/adicionar',       [ClientController::class, 'store'])->name('store');
             Route::get('/visualizar/{id}',  [ClientController::class, 'show'])->name('show');

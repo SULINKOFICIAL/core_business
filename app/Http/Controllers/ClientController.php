@@ -33,13 +33,8 @@ class ClientController extends Controller
      */
     public function index()
     {
-        // Obtém dados
-        $contents = $this->repository->orderBy('id', 'DESC')->get();
-
-        // Retorna a página
-        return view('pages.clients.index')->with([
-            'contents' => $contents,
-        ]);
+        // Retorna a página. Os dados são carregados por AJAX (DataTables server-side).
+        return view('pages.clients.index');
 
     }
 
