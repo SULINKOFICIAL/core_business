@@ -5,28 +5,7 @@
 @section('content')
 <div class="row gx-5 gx-xl-10">
   <div class="col-xl-12 mb-5 mb-xl-10">
-    <div class="card card-flush h-xl-100">
-      <div class="card-header py-7">
-        <div class="m-0">
-          <div class="d-flex align-items-center mb-2">
-            <span class="fs-2hx fw-bold text-gray-800 me-2 lh-1 ls-n2"
-              >Relatório de Vendas</span
-            >
-
-            <span class="badge badge-light-success fs-base">
-              <i class="ki-outline ki-arrow-up fs-5 text-success ms-n1"></i>
-              2.2%
-            </span>
-          </div>
-
-          <span class="fs-6 fw-semibold text-gray-500">Vendas ao Longo</span>
-        </div>
-      </div>
-
-      <div class="card-body d-flex align-items-end p-0">
-        @include('pages.dashboard.widgets.relatorySalles')
-      </div>
-    </div>
+    @include('pages.dashboard.widgets.relatorySalles')
   </div>
   <div class="col-xxl-4 mb-5 mb-xl-10">
     <div class="card card-flush h-xl-100">

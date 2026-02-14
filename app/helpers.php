@@ -149,7 +149,6 @@ if (! function_exists('header_menu_items')) {
                 'type' => 'submenu',
                 'label' => 'Vendas',
                 'active_routes' => ['orders.index', 'orders.show', 'coupons.index', 'coupons.create', 'coupons.edit'],
-                'width' => 'w-125px',
                 'children' => [
                     [
                         'label' => 'Pedidos',
@@ -167,7 +166,6 @@ if (! function_exists('header_menu_items')) {
                 'type' => 'submenu',
                 'label' => 'Notícias',
                 'active_routes' => ['news.index', 'news.categories.index'],
-                'width' => 'w-100px',
                 'children' => [
                     [
                         'label' => 'Notícias cadastradas',
@@ -191,7 +189,6 @@ if (! function_exists('header_menu_items')) {
                 'type' => 'submenu',
                 'label' => 'Módulos',
                 'active_routes' => ['modules.index', 'modules.categories.index', 'groups.index', 'resources.index'],
-                'width' => 'w-100px',
                 'children' => [
                     [
                         'label' => 'Lista de modulos',
@@ -227,7 +224,6 @@ if (! function_exists('header_menu_items')) {
                     'users.create',
                     'users.edit',
                 ],
-                'width' => 'w-175px',
                 'children' => [
                     [
                         'label' => 'Tickets',
@@ -246,12 +242,6 @@ if (! function_exists('header_menu_items')) {
                         'route' => 'errors.index',
                         'active_routes' => ['errors.index'],
                         'icon' => ['class' => 'ki-duotone ki-calendar-2 fs-3', 'paths' => 5],
-                    ],
-                    [
-                        'label' => 'Atualizar em massa',
-                        'route' => 'systems.update.all.db',
-                        'active_routes' => ['systems.update.all.db'],
-                        'icon' => ['class' => 'ki-duotone ki-file-added fs-3', 'paths' => 5],
                     ],
                     [
                         'label' => 'Usuários',

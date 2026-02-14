@@ -5,15 +5,6 @@
 @section('content')
 <div class="card mb-4">
     <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h3 class="mb-1">Pedidos</h3>
-                <span class="text-muted">Acompanhe os pedidos gerados em tempo real</span>
-            </div>
-            <div class="text-end text-muted">
-                Total: {{ $orders->total() }}
-            </div>
-        </div>
         <table class="table table-striped table-row-bordered gy-2 gs-7 align-middle datatables">
             <thead class="rounded" style="background: #1c283e">
                 <tr class="fw-bold fs-6 text-white px-7">

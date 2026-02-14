@@ -7,7 +7,7 @@
             {{ $item['label'] }}
         </a>
     @else
-        <div class="menu menu-column menu-gray-600 menu-active-primary menu-hover-light-primary menu-here-light-primary menu-show-light-primary fw-semibold {{ $item['width'] ?? 'w-175px' }}" data-kt-menu="true">
+        <div class="menu menu-column menu-gray-600 menu-active-primary menu-hover-light-primary menu-here-light-primary menu-show-light-primary fw-semibold" data-kt-menu="true">
             <div class="menu-item" data-kt-menu-trigger="hover" data-kt-menu-placement="bottom-start">
                 <a href="#" class="menu-link">
                     <span class="menu-title text-uppercase fs-7 {{ $isActive ? 'text-warning' : 'text-white' }}">

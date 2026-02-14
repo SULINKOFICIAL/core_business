@@ -1,4 +1,28 @@
-<div id="graph_salles" class="w-100" style="height: 350px;"></div>
+<div class="card h-xl-100">
+    <div class="card-header">
+    <h3 class="card-title align-items-start flex-column">
+        <span class="card-label fw-bold text-gray-800">Relatório de vendas</span>
+        <span class="text-gray-500 mt-1 fw-semibold fs-6">
+        Sistemas gerados em {{ $dailyChartMonthLabel }}
+        </span>
+    </h3>
+    <div class="card-toolbar">
+        <div class="d-flex gap-2 align-items-center">
+        <a href="#" class="btn btn-sm btn-icon btn-light">
+            <i class="ki-outline ki-arrow-left"></i>
+        </a>
+        <a href="#" class="btn btn-sm btn-light">Fevereiro</a>
+        <a href="#" class="btn btn-sm btn-icon btn-light">
+            <i class="ki-outline ki-arrow-right"></i>
+        </a>
+        </div>
+    </div>
+    </div>
+    <div class="card-body d-flex align-items-end p-2">
+        <div id="graph_salles" class="w-100" style="height: 350px;">
+        </div>
+    </div>
+</div>
 
 @section('custom-footer')
 <script>
@@ -11,12 +35,11 @@ if (!element) {
     var labelColor = '#6C757D';
     var borderColor = '#E9ECEF';
     var baseColor = '#0D6EFD';
-    var lightColor = '#B6D4FE';
 
     var options = {
         series: [{
-            name: 'Net Profit',
-            data: [30, 40, 40, 90, 90, 70, 70]
+            name: 'Sistemas gerados',
+            data: @json($dailyChartSeries)
         }],
         chart: {
             fontFamily: 'inherit',
@@ -36,8 +59,16 @@ if (!element) {
             enabled: false
         },
         fill: {
-            type: 'solid',
-            opacity: 1
+            type: 'gradient',
+            gradient: {
+                shade: 'light',
+                type: 'vertical',
+                shadeIntensity: 0.6,
+                inverseColors: false,
+                opacityFrom: 0.85,
+                opacityTo: 0,
+                stops: [0, 100]
+            }
         },
         stroke: {
             curve: 'smooth',
@@ -46,7 +77,7 @@ if (!element) {
             colors: [baseColor]
         },
         xaxis: {
-            categories: ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
+            categories: @json($dailyChartLabels),
             axisBorder: {
                 show: false,
             },
@@ -111,11 +142,11 @@ if (!element) {
             },
             y: {
                 formatter: function (val) {
-                    return '$' + val + ' thousands'
+                    return val + ' sistema(s)'
                 }
             }
         },
-        colors: [lightColor],
+        colors: [baseColor],
         grid: {
             borderColor: borderColor,
             strokeDashArray: 4,

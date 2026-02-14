@@ -51,6 +51,28 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        // Define o intervalo do mês atual para montar o gráfico diário.
+        $monthStartDate = now()->startOfMonth();
+        $monthEndDate = now()->endOfMonth();
+        $daysInMonth = $monthStartDate->daysInMonth;
+
+        // Agrupa os sistemas criados por dia do mês atual.
+        $createdByDay = Client::whereBetween('created_at', [$monthStartDate, $monthEndDate])
+            ->get(['created_at'])
+            ->groupBy(fn (Client $client) => Carbon::parse($client->created_at)->day)
+            ->map(fn ($items) => $items->count());
+
+        // Gera os rótulos dos dias (01..31) e os valores de cada dia.
+        $dailyChartLabels = collect(range(1, $daysInMonth))
+            ->map(fn (int $day) => str_pad((string) $day, 2, '0', STR_PAD_LEFT))
+            ->values();
+
+        $dailyChartSeries = collect(range(1, $daysInMonth))
+            ->map(fn (int $day) => (int) ($createdByDay[$day] ?? 0))
+            ->values();
+
+        $dailyChartMonthLabel = $monthStartDate->translatedFormat('F/Y');
+
         // Retorna a view com os dados consolidados da dashboard.
         return view('pages.dashboard.index', [
             'monthlyActiveSystems' => $monthlyActiveSystems,
@@ -58,6 +80,9 @@ class DashboardController extends Controller
             'activeSystemsThisMonth' => $activeSystemsThisMonth,
             'maxMonthlyValue' => max(1, $monthlyActiveSystems->max('value')),
             'latestMiCores' => $latestMiCores,
+            'dailyChartLabels' => $dailyChartLabels,
+            'dailyChartSeries' => $dailyChartSeries,
+            'dailyChartMonthLabel' => $dailyChartMonthLabel,
         ]);
     }
 }
