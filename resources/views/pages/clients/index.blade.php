@@ -91,9 +91,9 @@
             <thead class="rounded">
                 <tr class="fw-bold fs-6 text-gray-700 px-7">
                     <th class="">Nome do Cliente</th>
-                    <th class="text-center px-0">Tipo de Instalação</th>
-                    <th class="text-center px-0">Expira em</th>
-                    <th class="text-center px-0">Banco</th>
+                    <th class="">Tipo de Instalação</th>
+                    <th class="">Expira em</th>
+                    <th class="text-center px-0">DB</th>
                     <th class="text-center px-0">GIT</th>
                     <th class="text-center px-0">Status</th>
                     <th class="text-end pe-12 w-100px">Ações</th>
@@ -152,6 +152,18 @@
             }
         },
         columnDefs: [
+            {   
+                targets: 3,
+                className: 'text-center',
+            },
+            {   
+                targets: 4,
+                className: 'text-center',
+            },
+            {   
+                targets: 5,
+                className: 'text-center',
+            },
             {   
                 targets: 6,
                 className: 'text-end',
