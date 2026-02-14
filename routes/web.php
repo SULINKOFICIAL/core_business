@@ -19,6 +19,7 @@ use App\Http\Controllers\NewsCategoryController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\CouponController;
+use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PagarMeController;
 use App\Http\Controllers\SubscriptionsController;
@@ -31,6 +32,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/', [DashboardController::class, 'index'])->name('index');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/conta/configuracoes', [AccountSettingsController::class, 'edit'])->name('account.settings.edit');
+    Route::put('/conta/configuracoes', [AccountSettingsController::class, 'update'])->name('account.settings.update');
 
     Route::prefix('clientes')->group(function () {
         Route::name('clients.')->group(function () {
