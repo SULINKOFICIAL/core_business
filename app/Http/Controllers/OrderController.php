@@ -26,13 +26,7 @@ class OrderController extends Controller
      */
     public function index()
     {
-        $orders = Order::with(['client', 'items', 'transactions'])
-            ->orderBy('created_at', 'DESC')
-            ->paginate(50);
-
-        return view('pages.orders.index')->with([
-            'orders' => $orders,
-        ]);
+        return view('pages.orders.index');
     }
 
     /**

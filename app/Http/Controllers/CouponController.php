@@ -23,11 +23,7 @@ class CouponController extends Controller
      */
     public function index()
     {
-        $coupons = Coupon::orderBy('created_at', 'DESC')->paginate(50);
-
-        return view('pages.coupons.index')->with([
-            'coupons' => $coupons,
-        ]);
+        return view('pages.coupons.index');
     }
 
     public function create()
