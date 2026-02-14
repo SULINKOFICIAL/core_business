@@ -26,8 +26,10 @@ use App\Http\Controllers\SubscriptionsController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WhatsAppApiController;
+use App\Http\Controllers\LogsApiController;
 use App\Http\Controllers\ClientProcessingController;
 use App\Http\Controllers\CouponProcessingController;
+use App\Http\Controllers\LogsApiProcessingController;
 use App\Http\Controllers\ModuleCategoryProcessingController;
 use App\Http\Controllers\NewsCategoryProcessingController;
 use App\Http\Controllers\NewsProcessingController;
@@ -202,6 +204,13 @@ Route::middleware(['auth'])->group(function () {
         Route::name('errors.')->group(function () {
             Route::get('/',                 [ErrorMiCoreController::class, 'index'])->name('index');
             Route::get('/visualizar',       [ErrorMiCoreController::class, 'show'])->name('show');
+        });
+    });
+
+    Route::prefix('logs/apis')->group(function () {
+        Route::name('logs.apis.')->group(function () {
+            Route::get('/', [LogsApiController::class, 'index'])->name('index');
+            Route::get('/processar', [LogsApiProcessingController::class, 'process'])->name('process');
         });
     });
 

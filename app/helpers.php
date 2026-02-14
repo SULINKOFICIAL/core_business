@@ -219,6 +219,7 @@ if (! function_exists('header_menu_items')) {
                     'tickets.index',
                     'suggestions.index',
                     'errors.index',
+                    'logs.apis.index',
                     'users.index',
                     'users.create',
                     'users.edit',
@@ -242,6 +243,12 @@ if (! function_exists('header_menu_items')) {
                         'route' => 'errors.index',
                         'active_routes' => ['errors.index'],
                         'icon' => ['class' => 'ki-duotone ki-calendar-2 fs-3', 'paths' => 5],
+                    ],
+                    [
+                        'label' => 'Logs APIs',
+                        'route' => 'logs.apis.index',
+                        'active_routes' => ['logs.apis.index'],
+                        'icon' => ['class' => 'ki-duotone ki-notepad-edit fs-3', 'paths' => 5],
                     ],
                     [
                         'label' => 'Usuários',
