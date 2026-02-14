@@ -51,6 +51,10 @@ class NewsProcessingController extends Controller
      */
     public function filters($query, $data)
     {
+        if (!empty($data['priority_filter']) && $data['priority_filter'] !== 'all') {
+            $query->where('priority', $data['priority_filter']);
+        }
+
         if (isset($data['client_status']) && $data['client_status'] !== 'all') {
             $query->where('status', (int) $data['client_status']);
         }

@@ -51,6 +51,10 @@ class SuggestionProcessingController extends Controller
      */
     public function filters($query, $data)
     {
+        if (!empty($data['progress_filter']) && $data['progress_filter'] !== 'all') {
+            $query->where('progress', $data['progress_filter']);
+        }
+
         if (isset($data['client_status']) && $data['client_status'] !== 'all') {
             $query->where('status', (int) $data['client_status']);
         }

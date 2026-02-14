@@ -51,6 +51,10 @@ class OrderProcessingController extends Controller
      */
     public function filters($query, $data)
     {
+        if (!empty($data['order_status']) && $data['order_status'] !== 'all') {
+            $query->where('status', $data['order_status']);
+        }
+
         return $query;
     }
 
