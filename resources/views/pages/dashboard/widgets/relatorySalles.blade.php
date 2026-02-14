@@ -1,18 +1,18 @@
 <div class="card h-xl-100">
     <div class="card-header">
     <h3 class="card-title align-items-start flex-column">
-        <span class="card-label fw-bold text-gray-800">Relatório de vendas</span>
-        <span class="text-gray-500 mt-1 fw-semibold fs-6">
-        Sistemas gerados em {{ $dailyChartMonthLabel }}
+        <span class="card-label fw-bold text-gray-800">Sistemas X Vendas</span>
+        <span id="salesMonthLabel" class="text-gray-500 mt-1 fw-semibold fs-6">
+        Relatório referente a {{ $dailyChartMonthLabel }}
         </span>
     </h3>
     <div class="card-toolbar">
         <div class="d-flex gap-2 align-items-center">
-        <a href="#" class="btn btn-sm btn-icon btn-light">
+        <a href="#" id="prevMonthButton" class="btn btn-sm btn-icon btn-light">
             <i class="ki-outline ki-arrow-left"></i>
         </a>
-        <a href="#" class="btn btn-sm btn-light">Fevereiro</a>
-        <a href="#" class="btn btn-sm btn-icon btn-light">
+        <span id="salesMonthBadge" class="btn btn-sm btn-light">{{ $dailyChartMonthLabel }}</span>
+        <a href="#" id="nextMonthButton" class="btn btn-sm btn-icon btn-light">
             <i class="ki-outline ki-arrow-right"></i>
         </a>
         </div>
@@ -27,6 +27,11 @@
 @section('custom-footer')
 <script>
 var element = document.getElementById('graph_salles');
+var salesMonthLabel = document.getElementById('salesMonthLabel');
+var salesMonthBadge = document.getElementById('salesMonthBadge');
+var prevMonthButton = document.getElementById('prevMonthButton');
+var nextMonthButton = document.getElementById('nextMonthButton');
+var currentMonthValue = '{{ $dailyChartMonthValue }}';
 
 if (!element) {
     console.warn('Elemento #graph_salles não encontrado.');
@@ -34,13 +39,20 @@ if (!element) {
     var height = parseInt(KTUtil.css(element, 'height'));
     var labelColor = '#6C757D';
     var borderColor = '#E9ECEF';
-    var baseColor = '#0D6EFD';
+    var systemsColor = '#0D6EFD';
+    var salesColor = '#198754';
 
     var options = {
-        series: [{
-            name: 'Sistemas gerados',
-            data: @json($dailyChartSeries)
-        }],
+        series: [
+            {
+                name: 'Sistemas gerados',
+                data: @json($dailyChartSystemsSeries)
+            },
+            {
+                name: 'Vendas pagas',
+                data: @json($dailyChartSalesSeries)
+            }
+        ],
         chart: {
             fontFamily: 'inherit',
             type: 'area',
@@ -74,7 +86,7 @@ if (!element) {
             curve: 'smooth',
             show: true,
             width: 3,
-            colors: [baseColor]
+            colors: [systemsColor, salesColor]
         },
         xaxis: {
             categories: @json($dailyChartLabels),
@@ -93,7 +105,7 @@ if (!element) {
             crosshairs: {
                 position: 'front',
                 stroke: {
-                    color: baseColor,
+                    color: systemsColor,
                     width: 1,
                     dashArray: 3
                 }
@@ -142,11 +154,11 @@ if (!element) {
             },
             y: {
                 formatter: function (val) {
-                    return val + ' sistema(s)'
+                    return val + ' registro(s)'
                 }
             }
         },
-        colors: [baseColor],
+        colors: [systemsColor, salesColor],
         grid: {
             borderColor: borderColor,
             strokeDashArray: 4,
@@ -157,13 +169,90 @@ if (!element) {
             }
         },
         markers: {
-            strokeColor: baseColor,
+            strokeColor: '#FFFFFF',
             strokeWidth: 3
         }
     };
 
     var chart = new ApexCharts(element, options);
     chart.render();
+
+    function formatMonthLabel(monthValue) {
+        var parts = monthValue.split('-');
+        var year = parseInt(parts[0], 10);
+        var month = parseInt(parts[1], 10);
+        var monthNames = [
+            'janeiro',
+            'fevereiro',
+            'março',
+            'abril',
+            'maio',
+            'junho',
+            'julho',
+            'agosto',
+            'setembro',
+            'outubro',
+            'novembro',
+            'dezembro'
+        ];
+
+        return monthNames[month - 1] + '/' + year;
+    }
+
+    function shiftMonth(monthValue, offset) {
+        var parts = monthValue.split('-');
+        var year = parseInt(parts[0], 10);
+        var month = parseInt(parts[1], 10) - 1;
+        var date = new Date(year, month + offset, 1);
+        var newYear = date.getFullYear();
+        var newMonth = String(date.getMonth() + 1).padStart(2, '0');
+
+        return newYear + '-' + newMonth;
+    }
+
+    function updateMonthUi(monthLabel, monthValue) {
+        salesMonthLabel.textContent = 'Sistemas e vendas em ' + monthLabel;
+        salesMonthBadge.textContent = monthLabel;
+        currentMonthValue = monthValue;
+    }
+
+    function loadMonthData(monthValue) {
+        $.ajax({
+            url: '{{ route('dashboard.daily.systems') }}',
+            method: 'GET',
+            dataType: 'json',
+            data: { month: monthValue },
+            success: function(response) {
+                chart.updateOptions({
+                    xaxis: {
+                        categories: response.labels
+                    }
+                });
+                chart.updateSeries([{
+                    name: 'Sistemas gerados',
+                    data: response.systemsSeries
+                }, {
+                    name: 'Vendas pagas',
+                    data: response.salesSeries
+                }]);
+
+                updateMonthUi(response.monthLabel, response.monthValue);
+            },
+            error: function() {
+                console.warn('Não foi possível atualizar os dados do gráfico.');
+            }
+        });
+    }
+
+    prevMonthButton.addEventListener('click', function(event) {
+        event.preventDefault();
+        loadMonthData(shiftMonth(currentMonthValue, -1));
+    });
+
+    nextMonthButton.addEventListener('click', function(event) {
+        event.preventDefault();
+        loadMonthData(shiftMonth(currentMonthValue, 1));
+    });
 }
 </script>
 @endsection

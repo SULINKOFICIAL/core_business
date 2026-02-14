@@ -3,7 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\CouponRedemption;
+use App\Models\Order;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -51,27 +55,25 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        // Define o intervalo do mês atual para montar o gráfico diário.
-        $monthStartDate = now()->startOfMonth();
-        $monthEndDate = now()->endOfMonth();
-        $daysInMonth = $monthStartDate->daysInMonth;
+        // Carrega as últimas vendas pagas para o card de vendas recentes.
+        $latestSales = Order::with('client')
+            ->whereNotNull('paid_at')
+            ->orderByDesc('paid_at')
+            ->limit(6)
+            ->get();
 
-        // Agrupa os sistemas criados por dia do mês atual.
-        $createdByDay = Client::whereBetween('created_at', [$monthStartDate, $monthEndDate])
-            ->get(['created_at'])
-            ->groupBy(fn (Client $client) => Carbon::parse($client->created_at)->day)
-            ->map(fn ($items) => $items->count());
+        // Busca os cupons mais usados considerando os últimos 3 meses.
+        $topCoupons = CouponRedemption::query()
+            ->where('redeemed_at', '>=', now()->subMonths(3)->startOfDay())
+            ->whereNotNull('code_snapshot')
+            ->selectRaw('code_snapshot, COUNT(*) as total_uses')
+            ->groupBy('code_snapshot')
+            ->orderByDesc('total_uses')
+            ->limit(6)
+            ->get();
 
-        // Gera os rótulos dos dias (01..31) e os valores de cada dia.
-        $dailyChartLabels = collect(range(1, $daysInMonth))
-            ->map(fn (int $day) => str_pad((string) $day, 2, '0', STR_PAD_LEFT))
-            ->values();
-
-        $dailyChartSeries = collect(range(1, $daysInMonth))
-            ->map(fn (int $day) => (int) ($createdByDay[$day] ?? 0))
-            ->values();
-
-        $dailyChartMonthLabel = $monthStartDate->translatedFormat('F/Y');
+        // Carrega o gráfico diário já com o mês atual.
+        $dailyChartData = $this->buildDailyChartData();
 
         // Retorna a view com os dados consolidados da dashboard.
         return view('pages.dashboard.index', [
@@ -80,9 +82,81 @@ class DashboardController extends Controller
             'activeSystemsThisMonth' => $activeSystemsThisMonth,
             'maxMonthlyValue' => max(1, $monthlyActiveSystems->max('value')),
             'latestMiCores' => $latestMiCores,
-            'dailyChartLabels' => $dailyChartLabels,
-            'dailyChartSeries' => $dailyChartSeries,
-            'dailyChartMonthLabel' => $dailyChartMonthLabel,
+            'latestSales' => $latestSales,
+            'topCoupons' => $topCoupons,
+            'dailyChartLabels' => $dailyChartData['labels'],
+            'dailyChartSystemsSeries' => $dailyChartData['systemsSeries'],
+            'dailyChartSalesSeries' => $dailyChartData['salesSeries'],
+            'dailyChartMonthLabel' => $dailyChartData['monthLabel'],
+            'dailyChartMonthValue' => $dailyChartData['monthValue'],
         ]);
+    }
+
+    /**
+     * Retorna os dados do gráfico diário para o mês informado via query string.
+     * Usado pelo AJAX para trocar o período do gráfico sem recarregar a página.
+     */
+    public function dailySystemsByMonth(Request $request): JsonResponse
+    {
+        $validatedData = $request->validate([
+            'month' => ['nullable', 'regex:/^\d{4}-\d{2}$/'],
+        ]);
+
+        $monthValue = $validatedData['month'] ?? null;
+        $dailyChartData = $this->buildDailyChartData($monthValue);
+
+        return response()->json($dailyChartData);
+    }
+
+    /**
+     * Gera labels e séries diárias de sistemas e vendas no mês informado.
+     * Quando o mês não é informado, usa automaticamente o mês atual.
+     */
+    private function buildDailyChartData(?string $monthValue = null): array
+    {
+        // Interpreta o mês recebido (YYYY-MM) com fallback para o mês atual.
+        $parsedMonth = $monthValue
+            ? Carbon::createFromFormat('Y-m', $monthValue)->startOfMonth()
+            : now()->startOfMonth();
+
+        $monthStartDate = $parsedMonth->copy()->startOfMonth();
+        $monthEndDate = $parsedMonth->copy()->endOfMonth();
+        $daysInMonth = $monthStartDate->daysInMonth;
+
+        // Agrupa os sistemas por dia de criação dentro do mês selecionado.
+        $createdByDay = Client::whereBetween('created_at', [$monthStartDate, $monthEndDate])
+            ->get(['created_at'])
+            ->groupBy(fn (Client $client) => Carbon::parse($client->created_at)->day)
+            ->map(fn ($items) => $items->count());
+
+        // Agrupa as vendas por dia com base no campo paid_at.
+        $salesByDay = Order::whereNotNull('paid_at')
+            ->whereBetween('paid_at', [$monthStartDate, $monthEndDate])
+            ->get(['paid_at'])
+            ->groupBy(fn (Order $order) => Carbon::parse($order->paid_at)->day)
+            ->map(fn ($items) => $items->count());
+
+        $labels = collect(range(1, $daysInMonth))
+            ->map(fn (int $day) => str_pad((string) $day, 2, '0', STR_PAD_LEFT))
+            ->values()
+            ->all();
+
+        $systemsSeries = collect(range(1, $daysInMonth))
+            ->map(fn (int $day) => (int) ($createdByDay[$day] ?? 0))
+            ->values()
+            ->all();
+
+        $salesSeries = collect(range(1, $daysInMonth))
+            ->map(fn (int $day) => (int) ($salesByDay[$day] ?? 0))
+            ->values()
+            ->all();
+
+        return [
+            'labels' => $labels,
+            'systemsSeries' => $systemsSeries,
+            'salesSeries' => $salesSeries,
+            'monthLabel' => $monthStartDate->translatedFormat('F/Y'),
+            'monthValue' => $monthStartDate->format('Y-m'),
+        ];
     }
 }

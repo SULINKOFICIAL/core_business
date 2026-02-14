@@ -5,7 +5,10 @@
 
 body {
   font-family: "Jost", sans-serif;
-  background: #F4F6FA !important;
+}
+
+[data-bs-theme="light"] body {
+    background: #F4F6FA !important;
 }
 
 .card {

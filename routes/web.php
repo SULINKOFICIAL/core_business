@@ -32,6 +32,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/', [DashboardController::class, 'index'])->name('index');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/sistemas-por-dia', [DashboardController::class, 'dailySystemsByMonth'])->name('dashboard.daily.systems');
     Route::get('/conta/configuracoes', [AccountSettingsController::class, 'edit'])->name('account.settings.edit');
     Route::put('/conta/configuracoes', [AccountSettingsController::class, 'update'])->name('account.settings.update');
 
