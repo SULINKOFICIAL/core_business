@@ -1,8 +1,8 @@
 <div class="card mb-4">
     <div class="card-body">
         <table class="table table-striped table-row-bordered gy-2 gs-7 align-middle datatables">
-            <thead class="rounded" style="background: #1c283e">
-                <tr class="fw-bold fs-6 text-white px-7">
+            <thead class="rounded">
+                <tr class="fw-bold fs-6 text-gray-700 px-7">
                     <th class="text-start">ID</th>
                     <th class="w-150px text-center px-6">Pacote</th>
                     <th class="">Data Inicio</th>

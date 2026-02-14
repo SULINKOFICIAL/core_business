@@ -1,5 +1,5 @@
 <table id="dataTables" class="table table-striped table-row-bordered gy-2 gs-7 align-middle datatables">
-    <thead class="rounded" style="background: #1c283e">
+    <thead class="rounded">
         <tr class="fw-bold fs-6 text-white px-7">
             <th class="text-start" width="3%">Cliente</th>
             <th class="text-start">Mensagem</th>

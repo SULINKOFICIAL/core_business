@@ -8,9 +8,9 @@
     </p>
     <div class="card">
         <div class="card-body">
-            <table class="table table-striped table-row-bordered gy-2 gs-7 align-middle datatables">
-                <thead class="rounded" style="background: #1c283e">
-                    <tr class="fw-bold fs-6 text-white px-7">
+            <table id="datatables-users" data-dt-manual="true" class="table table-striped table-row-bordered gy-2 gs-7 align-middle">
+                <thead class="rounded">
+                    <tr class="fw-bold fs-6 text-gray-700 px-7">
                         <th class="text-start" width="35%">Nome</th>
                         <th class="text-start" width="30%">Email</th>
                         <th class="text-center px-0">Criado Em</th>
@@ -18,29 +18,7 @@
                         <th class="text-center">Ações</th>
                     </tr>
                 </thead>
-                <tbody>
-                    @foreach ($users as $user)
-                        <tr>
-                            <td>
-                                <a href="{{ route('users.edit', $user->id) }}" class="text-gray-700 text-hover-primary">{{ $user->name }}</a>
-                            </td>
-                            <td>{{ $user->email }}</td>
-                            <td class="text-center">{{ $user->created_at->format('d/m/Y') }}</td>
-                            <td class="text-center">
-                                @if ($user->status == 0)
-                                    <span class="badge badge-light-danger">Desabilitado</span>
-                                @else
-                                    <span class="badge badge-light-success">Habilitado</span>
-                                @endif
-                            </td>
-                            <td class="text-center">
-                                <a href="{{ route('users.edit', $user->id) }}" class="text-gray-600 w-45px" title="Editar">
-                                    <i class="fa-solid fa-pen-to-square"></i>
-                                </a>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
+                <tbody></tbody>
             </table>
         </div>
     </div>
@@ -49,4 +27,23 @@
             Criar Usuário
         </a>
     </div>
+@endsection
+
+@section('custom-footer')
+<script>
+    $('#datatables-users').DataTable({
+        serverSide: true,
+        processing: true,
+        ajax: '{{ route("users.process") }}',
+        order: [[0, 'asc']],
+        columns: [
+            { data: 'name', name: 'name' },
+            { data: 'email', name: 'email' },
+            { data: 'created_at', name: 'created_at', className: 'text-center' },
+            { data: 'status_label', name: 'status', orderable: false, searchable: false, className: 'text-center' },
+            { data: 'actions', orderable: false, searchable: false, className: 'text-center' },
+        ],
+        pagingType: 'simple_numbers',
+    });
+</script>
 @endsection

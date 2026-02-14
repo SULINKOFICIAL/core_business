@@ -50,8 +50,8 @@
 
         <h5 class="mb-3">Itens</h5>
         <table class="table table-striped table-row-bordered gy-2 gs-7 align-middle">
-            <thead class="rounded" style="background: #1c283e">
-                <tr class="fw-bold fs-6 text-white px-7">
+            <thead class="rounded">
+                <tr class="fw-bold fs-6 text-gray-700 px-7">
                     <th>Tipo</th>
                     <th>Nome</th>
                     <th>Qtd</th>
@@ -74,8 +74,8 @@
 
         <h5 class="mt-6 mb-3">Transações</h5>
         <table class="table table-striped table-row-bordered gy-2 gs-7 align-middle">
-            <thead class="rounded" style="background: #1c283e">
-                <tr class="fw-bold fs-6 text-white px-7">
+            <thead class="rounded">
+                <tr class="fw-bold fs-6 text-gray-700 px-7">
                     <th>ID</th>
                     <th>Status</th>
                     <th>Método</th>

@@ -5,9 +5,9 @@
 @section('content')
 <div class="card">
     <div class="card-body">
-        <table class="table table-striped table-row-bordered gy-2 gs-7 align-middle datatables">
-            <thead class="rounded" style="background: #1c283e">
-                <tr class="fw-bold fs-6 text-white px-7">
+        <table id="datatables-news" data-dt-manual="true" class="table table-striped table-row-bordered gy-2 gs-7 align-middle">
+            <thead class="rounded">
+                <tr class="fw-bold fs-6 text-gray-700 px-7">
                     <th class="text-start" style="width: 30%">Título</th>
                     <th class="text-start">Exibir durante</th>
                     <th class="text-start">Categoria</th>
@@ -16,54 +16,7 @@
                     <th class="text-start" style="width: 10%">Ações</th>
                 </tr>
             </thead>
-            <tbody>
-                @foreach ($news as $new)
-                    <tr>
-                        <td class="text-start">
-                            <a href="{{ route('news.show', $new->id) }}" class="text-gray-700 text-hover-primary fw-bold">
-                                {{ $new->title }}
-                            </a>
-                            <a href="{{ $new->cta_url }}" class="badge badge-success bg-hover-primary" target="_blank">
-                                {{ $new->cta_text }}
-                            </a>
-                        </td>
-                        <td class="text-start">
-                            <p class="text-gray-700 fw-bold mb-0">
-                                {{ $new->start_date->format('d/m/Y') }} até {{ $new->end_date->format('d/m/Y') }}
-                            </p>
-                        </td>
-                        <td class="text-start">
-                            <span class="badge badge-light-success" style="background: {{ hex2rgb($new->category->color, 15) }}; color: {{ $new->category->color }}">{{ $new->category->name }}</span>
-                        </td>
-                        <td>
-                            @if ($new->priority == 'high')
-                                <span class="badge badge-light-success">Alta</span>
-                            @elseif ($new->priority == 'medium')
-                                <span class="badge badge-light-warning">Média</span>
-                            @else
-                                <span class="badge badge-light-danger">Baixa</span>
-                            @endif
-                        </td>
-                        <td class="text-start">
-                            @if ($new->status == 0)
-                                <span class="badge badge-light-danger">Desabilitado</span>  
-                                @else
-                                <span class="badge badge-light-success">Habilitado</span>
-                            @endif
-                        </td>
-                        <td class="text-end">
-                            <div class="d-flex gap-4 align-items-center justify-content-center">
-                                <a href="{{ route('news.edit', $new->id) }}" class="btn btn-sm btn-primary btn-active-success fw-bolder text-uppercase py-2">
-                                    Editar
-                                </a>
-                                <a href="{{ route('news.show', $new->id) }}" class="btn btn-sm btn-primary btn-active-success fw-bolder text-uppercase py-2">
-                                    Visualizar
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
+            <tbody></tbody>
         </table>
     </div>
 </div>
@@ -72,4 +25,24 @@
         Adicionar Notícia
     </a>
 </div>
+@endsection
+
+@section('custom-footer')
+<script>
+    $('#datatables-news').DataTable({
+        serverSide: true,
+        processing: true,
+        ajax: '{{ route("news.process") }}',
+        order: [[0, 'desc']],
+        columns: [
+            { data: 'title', name: 'title' },
+            { data: 'period', orderable: false, searchable: false },
+            { data: 'category_label', orderable: false, searchable: false },
+            { data: 'priority_label', name: 'priority', orderable: false, searchable: false },
+            { data: 'status_label', name: 'status', orderable: false, searchable: false },
+            { data: 'actions', orderable: false, searchable: false, className: 'text-end' },
+        ],
+        pagingType: 'simple_numbers',
+    });
+</script>
 @endsection

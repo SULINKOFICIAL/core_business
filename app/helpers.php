@@ -179,12 +179,12 @@ if (! function_exists('header_menu_items')) {
                     ],
                 ],
             ],
-            [
-                'type' => 'link',
-                'label' => 'Pacotes',
-                'route' => 'packages.index',
-                'active_routes' => ['packages.index'],
-            ],
+            // [
+            //     'type' => 'link',
+            //     'label' => 'Pacotes',
+            //     'route' => 'packages.index',
+            //     'active_routes' => ['packages.index'],
+            // ],
             [
                 'type' => 'submenu',
                 'label' => 'Módulos',

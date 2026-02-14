@@ -5,41 +5,16 @@
 @section('content')
 <div class="card">
     <div class="card-body">
-        <table class="table table-striped table-row-bordered gy-2 gs-7 align-middle datatables">
-            <thead class="rounded" style="background: #1c283e">
-                <tr class="fw-bold fs-6 text-white px-7">
+        <table id="datatables-modules-categories" data-dt-manual="true" class="table table-striped table-row-bordered gy-2 gs-7 align-middle">
+            <thead class="rounded">
+                <tr class="fw-bold fs-6 text-gray-700 px-7">
                     <th class="text-start" style="width: 40%">Nome</th>
                     <th class="text-start">Status</th>
                     <th class="text-start">Criado Em</th>
                     <th class="text-start" style="width: 10%">Ações</th>
                 </tr>
             </thead>
-            <tbody>
-                @foreach ($categories as $category)
-                    <tr>
-                        <td class="text-start">
-                            {{ $category->name }}
-                        </td>
-                        <td class="text-start">
-                            @if ($category->status == 0)
-                                <span class="badge badge-light-danger">Desabilitado</span>
-                                @else
-                                <span class="badge badge-light-success">Habilitado</span>
-                            @endif
-                        </td>
-                        <td class="text-start text-gray-600">
-                            {{ $category->created_at->format('d/m/Y') }}
-                        </td>
-                        <td class="text-end">
-                            <div class="d-flex gap-4 align-items-center justify-content-center">
-                                <a href="{{ route('modules.categories.edit', $category->id) }}" class="btn btn-sm btn-primary btn-active-success fw-bolder text-uppercase py-2">
-                                    Editar
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
+            <tbody></tbody>
         </table>
     </div>
 </div>
@@ -48,4 +23,22 @@
         Adicionar Categoria
     </a>
 </div>
+@endsection
+
+@section('custom-footer')
+<script>
+    $('#datatables-modules-categories').DataTable({
+        serverSide: true,
+        processing: true,
+        ajax: '{{ route("modules.categories.process") }}',
+        order: [[2, 'desc']],
+        columns: [
+            { data: 'name', name: 'name' },
+            { data: 'status_label', name: 'status', orderable: false, searchable: false },
+            { data: 'created_at', name: 'created_at' },
+            { data: 'actions', orderable: false, searchable: false, className: 'text-end' },
+        ],
+        pagingType: 'simple_numbers',
+    });
+</script>
 @endsection

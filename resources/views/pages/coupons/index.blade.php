@@ -19,9 +19,9 @@
                 </a>
             </div>
         </div>
-        <table class="table table-striped table-row-bordered gy-2 gs-7 align-middle datatables">
-            <thead class="rounded" style="background: #1c283e">
-                <tr class="fw-bold fs-6 text-white px-7">
+        <table id="datatables-coupons" data-dt-manual="true" class="table table-striped table-row-bordered gy-2 gs-7 align-middle">
+            <thead class="rounded">
+                <tr class="fw-bold fs-6 text-gray-700 px-7">
                     <th class="text-start">Código</th>
                     <th class="text-start">Tipo</th>
                     <th class="text-start">Valor</th>
@@ -31,67 +31,41 @@
                     <th class="text-end"></th>
                 </tr>
             </thead>
-            <tbody>
-                @foreach ($coupons as $coupon)
-                <tr>
-                    <td class="text-start">
-                        <span class="fw-bolder text-gray-700">{{ $coupon->code }}</span>
-                    </td>
-                    <td class="text-start">
-                        @if ($coupon->type === 'percent')
-                            <span class="badge badge-light-primary">Percentual</span>
-                        @elseif ($coupon->type === 'fixed')
-                            <span class="badge badge-light-success">Valor fixo</span>
-                        @else
-                            <span class="badge badge-light-warning">Trial</span>
-                        @endif
-                    </td>
-                    <td class="text-start">
-                        @if ($coupon->type === 'trial')
-                            <span class="text-gray-700">{{ $coupon->trial_months ?? 1 }} mês(es)</span>
-                        @elseif ($coupon->type === 'percent')
-                            <span class="text-gray-700">{{ number_format($coupon->amount ?? 0, 2, ',', '.') }}%</span>
-                        @else
-                            <span class="text-gray-700">R$ {{ number_format($coupon->amount ?? 0, 2, ',', '.') }}</span>
-                        @endif
-                    </td>
-                    <td class="text-start">
-                        <span class="text-gray-600">
-                            {{ $coupon->starts_at?->format('d/m/Y') ?? '—' }} →
-                            {{ $coupon->ends_at?->format('d/m/Y') ?? '—' }}
-                        </span>
-                    </td>
-                    <td class="text-start">
-                        <span class="text-gray-700">
-                            {{ $coupon->redeemed_count ?? 0 }}
-                            @if ($coupon->max_redemptions)
-                                / {{ $coupon->max_redemptions }}
-                            @endif
-                        </span>
-                    </td>
-                    <td class="text-start">
-                        @if ($coupon->is_active)
-                            <span class="badge badge-light-success">Ativo</span>
-                        @else
-                            <span class="badge badge-light-danger">Inativo</span>
-                        @endif
-                    </td>
-                    <td class="text-end">
-                        <a href="{{ route('coupons.edit', $coupon->id) }}" class="btn btn-sm btn-primary btn-active-success me-2">
-                            Editar
-                        </a>
-                        <a href="{{ route('coupons.destroy', $coupon->id) }}" class="btn btn-sm btn-light">
-                            {{ $coupon->is_active ? 'Desabilitar' : 'Ativar' }}
-                        </a>
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
+            <tbody></tbody>
         </table>
     </div>
 </div>
+@endsection
 
-<div class="d-flex justify-content-end">
-    {{ $coupons->links() }}
-</div>
+@section('custom-footer')
+<script>
+    $('#datatables-coupons').DataTable({
+        serverSide: true,
+        processing: true,
+        ajax: '{{ route("coupons.process") }}',
+        order: [[0, 'desc']],
+        columns: [
+            { data: 'code', name: 'code' },
+            { data: 'type_label', name: 'type', orderable: false, searchable: false },
+            { data: 'amount_label', name: 'amount', orderable: false, searchable: false },
+            { data: 'validity', name: 'starts_at', orderable: false, searchable: false },
+            { data: 'uses', name: 'redeemed_count', orderable: false, searchable: false },
+            { data: 'status_label', name: 'is_active', orderable: false, searchable: false },
+            { data: 'actions', orderable: false, searchable: false, className: 'text-end' },
+        ],
+        pagingType: 'simple_numbers',
+        language: {
+            "search": "Pesquisar:",
+            "zeroRecords": "Ops, não encontramos nenhum resultado :(",
+            "info": "Mostrando _START_ até _END_ de _TOTAL_ registros",
+            "infoEmpty": "Nenhum registro disponível",
+            "infoFiltered": "(Filtrando _MAX_ registros)",
+            "processing": "Carregando dados...",
+            "paginate": {
+                "previous": "Anterior",
+                "next": "Próximo"
+            }
+        }
+    });
+</script>
 @endsection

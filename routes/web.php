@@ -27,6 +27,15 @@ use App\Http\Controllers\TicketController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WhatsAppApiController;
 use App\Http\Controllers\ClientProcessingController;
+use App\Http\Controllers\CouponProcessingController;
+use App\Http\Controllers\ModuleCategoryProcessingController;
+use App\Http\Controllers\NewsCategoryProcessingController;
+use App\Http\Controllers\NewsProcessingController;
+use App\Http\Controllers\OrderProcessingController;
+use App\Http\Controllers\ResourceProcessingController;
+use App\Http\Controllers\SuggestionProcessingController;
+use App\Http\Controllers\TicketProcessingController;
+use App\Http\Controllers\UserProcessingController;
 
 // Paínel de administração
 Route::middleware(['auth'])->group(function () {
@@ -70,6 +79,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('noticias')->group(function () {
         Route::name('news.')->group(function () {
             Route::get('/',                 [NewsController::class, 'index'])->name('index');
+            Route::get('/processar',        [NewsProcessingController::class, 'process'])->name('process');
             Route::get('/adicionar',        [NewsController::class, 'create'])->name('create');
             Route::post('/adicionar',       [NewsController::class, 'store'])->name('store');
             Route::get('/visualizar/{id}',  [NewsController::class, 'show'])->name('show');
@@ -80,6 +90,7 @@ Route::middleware(['auth'])->group(function () {
             Route::prefix('categorias')->group(function () {
                 Route::name('categories.')->group(function () {
                     Route::get('/',                 [NewsCategoryController::class, 'index'])->name('index');
+                    Route::get('/processar',        [NewsCategoryProcessingController::class, 'process'])->name('process');
                     Route::get('/adicionar',        [NewsCategoryController::class, 'create'])->name('create');
                     Route::post('/adicionar',       [NewsCategoryController::class, 'store'])->name('store');
                     Route::get('/editar/{id}',      [NewsCategoryController::class, 'edit'])->name('edit');
@@ -117,6 +128,7 @@ Route::middleware(['auth'])->group(function () {
             Route::prefix('categorias')->group(function () {
                 Route::name('categories.')->group(function () {
                     Route::get('/',                 [ModuleCategoryController::class, 'index'])->name('index');
+                    Route::get('/processar',        [ModuleCategoryProcessingController::class, 'process'])->name('process');
                     Route::get('/adicionar',        [ModuleCategoryController::class, 'create'])->name('create');
                     Route::post('/adicionar',       [ModuleCategoryController::class, 'store'])->name('store');
                     Route::get('/editar/{id}',      [ModuleCategoryController::class, 'edit'])->name('edit');
@@ -141,6 +153,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('recursos')->group(function () {
         Route::name('resources.')->group(function () {
             Route::get('/',                 [ResourceController::class, 'index'])->name('index');
+            Route::get('/processar',        [ResourceProcessingController::class, 'process'])->name('process');
             Route::get('/adicionar',        [ResourceController::class, 'create'])->name('create');
             Route::post('/adicionar',       [ResourceController::class, 'store'])->name('store');
             Route::get('/editar/{id}',      [ResourceController::class, 'edit'])->name('edit');
@@ -152,6 +165,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('pedidos')->group(function () {
         Route::name('orders.')->group(function () {
             Route::get('/', [OrderController::class, 'index'])->name('index');
+            Route::get('/processar', [OrderProcessingController::class, 'process'])->name('process');
             Route::get('/visualizar/{id}', [OrderController::class, 'show'])->name('show');
         });
     });
@@ -159,6 +173,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('cupons')->group(function () {
         Route::name('coupons.')->group(function () {
             Route::get('/', [CouponController::class, 'index'])->name('index');
+            Route::get('/processar', [CouponProcessingController::class, 'process'])->name('process');
             Route::get('/adicionar', [CouponController::class, 'create'])->name('create');
             Route::post('/adicionar', [CouponController::class, 'store'])->name('store');
             Route::get('/editar/{id}', [CouponController::class, 'edit'])->name('edit');
@@ -170,6 +185,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('tickets')->group(function () {
         Route::name('tickets.')->group(function () {
             Route::get('/',                 [TicketController::class, 'index'])->name('index');
+            Route::get('/processar',        [TicketProcessingController::class, 'process'])->name('process');
             Route::put('/editar/{id}',      [TicketController::class, 'update'])->name('update');
         });
     });
@@ -177,6 +193,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('sugestoes')->group(function () {
         Route::name('suggestions.')->group(function () {
             Route::get('/',                 [IntegrationSuggestionController::class, 'index'])->name('index');
+            Route::get('/processar',        [SuggestionProcessingController::class, 'process'])->name('process');
             Route::put('/editar/{id}',      [IntegrationSuggestionController::class, 'update'])->name('update');
         });
     });
@@ -191,6 +208,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('usuarios')->group(function () {
         Route::name('users.')->group(function () {
             Route::get('/',                 [UserController::class, 'index'])->name('index');
+            Route::get('/processar',        [UserProcessingController::class, 'process'])->name('process');
             Route::get('/adicionar',        [UserController::class, 'create'])->name('create');
             Route::post('/adicionar',       [UserController::class, 'store'])->name('store');
             Route::get('/editar/{id}',      [UserController::class, 'edit'])->name('edit');
