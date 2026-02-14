@@ -19,6 +19,7 @@ use App\Http\Controllers\NewsCategoryController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\CouponController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PagarMeController;
 use App\Http\Controllers\SubscriptionsController;
 use App\Http\Controllers\TicketController;
@@ -28,7 +29,8 @@ use App\Http\Controllers\WhatsAppApiController;
 // Paínel de administração
 Route::middleware(['auth'])->group(function () {
 
-    Route::get('/', [ClientController::class, 'index'])->name('index');
+    Route::get('/', [DashboardController::class, 'index'])->name('index');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::prefix('clientes')->group(function () {
         Route::name('clients.')->group(function () {
@@ -230,6 +232,7 @@ Route::middleware(['auth'])->group(function () {
      */
     Route::prefix('desenvolvedores')->group(function () {
         Route::name('developer.')->group(function () {
+            Route::get('/', [DeveloperController::class, 'index'])->name('index');
             Route::get('/testar', [DeveloperController::class, 'test'])->name('test');
         });
     });

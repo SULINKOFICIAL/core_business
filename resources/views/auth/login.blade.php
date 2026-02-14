@@ -11,7 +11,7 @@
 			<div class="text-center w-100 w-md-600px">
 				<div class="card shadow-sm rounded-4">
 					<div class="card-body">
-						<img class="img-fluid mb-4 h-50px h-md-70px" src="{{ asset('assets/media/images/logo_dark.webp') }}" alt="" />
+						<img class="img-fluid mb-4 h-50px h-md-70px" src="{{ asset('assets/media/images/logo_black.png') }}" alt="" />
 						<form class="w-100" method="POST" action="{{ route('login') }}">
 							@csrf
 							<h1 class="text-gray-800 fs-3 fw-bold text-center mb-3">Acessar Gerenciamento de miCore</h1>

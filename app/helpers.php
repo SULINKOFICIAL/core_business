@@ -135,6 +135,12 @@ if (! function_exists('header_menu_items')) {
         return [
             [
                 'type' => 'link',
+                'label' => 'Dashboard',
+                'route' => 'dashboard',
+                'active_routes' => ['dashboard', 'index'],
+            ],
+            [
+                'type' => 'link',
                 'label' => 'Cliente',
                 'route' => 'clients.index',
                 'active_routes' => ['clients.index'],

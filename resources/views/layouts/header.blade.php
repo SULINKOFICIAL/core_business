@@ -1,10 +1,10 @@
-<div id="kt_app_header" class="app-header" data-kt-sticky="true" data-kt-sticky-activate="{default: true, lg: true}" data-kt-sticky-name="app-header-minimize" data-kt-sticky-offset="{default: '200px', lg: '0'}" data-kt-sticky-animation="false">
+<div id="kt_app_header" class="app-header bg-dark" data-kt-sticky="true" data-kt-sticky-activate="{default: true, lg: true}" data-kt-sticky-name="app-header-minimize" data-kt-sticky-offset="{default: '200px', lg: '0'}" data-kt-sticky-animation="false">
     <div class="app-container container-fluid d-flex align-items-center slk-dark shadow-lg" id="kt_app_header_container">
-        <div class="w-100">
+        <div class="w-100 container">
             <div class="row align-items-center">
                 <div class="col-2">
                     <a href="{{ route('index') }}" class="d-flex align-items-center">
-                        <img src="{{ asset('assets/media/logos/logo-central-dark.svg') }}" class="w-200px">
+                        <img src="{{ asset('assets/media/images/logo_white_48px.png') }}" class="h-35px">
                     </a>
                 </div>
                 <div class="col-8 d-flex align-items-center justify-content-center">

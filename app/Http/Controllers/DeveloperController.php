@@ -7,6 +7,10 @@ use App\Services\PagarMeService;
 
 class DeveloperController extends Controller
 {
+    public function index(){
+
+
+    }
     public function test()
     {
         // Obtem o pedido
