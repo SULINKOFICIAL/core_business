@@ -85,7 +85,7 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse ($order->transactions as $transaction)
+                {{-- @forelse ($order->transactions as $transaction)
                 <tr>
                     <td>OT{{ $transaction->id }}</td>
                     <td>{{ $transaction->status }}</td>
@@ -98,7 +98,7 @@
                 <tr>
                     <td colspan="6" class="text-center text-muted">Nenhuma transação registrada</td>
                 </tr>
-                @endforelse
+                @endforelse --}}
             </tbody>
         </table>
     </div>
