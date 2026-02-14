@@ -20,7 +20,7 @@ function loadTables(seletor = '.datatables', items = 25, order = undefined) {
         aaSorting: [],
         language: {
             search: 'Pesquisar:',
-            lengthMenu: 'Mostrando _MENU_ registros por página',
+            lengthMenu: '_MENU_',
             zeroRecords: 'Ops, não encontramos nenhum resultado :(',
             info: 'Mostrando _START_ até _END_ de _TOTAL_ registros',
             infoEmpty: 'Nenhum registro disponível',
@@ -33,16 +33,6 @@ function loadTables(seletor = '.datatables', items = 25, order = undefined) {
                 last: '<i class="fa-solid fa-angles-right text-gray-300 text-hover-primary cursor-pointer"></i>',
             },
         },
-        dom:
-            "<'row'" +
-                "<'col-sm-6 d-flex align-items-center justify-content-start'l>" +
-                "<'col-sm-6 d-flex align-items-center justify-content-end'f>" +
-            '>' +
-            "<'table-responsive'tr>" +
-            "<'row'" +
-            "<'col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start'i>" +
-            "<'col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end'p>" +
-            '>',
     };
     table.DataTable(dataTableOptions);
 }

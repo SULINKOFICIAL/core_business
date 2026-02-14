@@ -219,10 +219,10 @@ if (! function_exists('header_menu_items')) {
                     'tickets.index',
                     'suggestions.index',
                     'errors.index',
-                    'systems.update.all.db',
                     'users.index',
                     'users.create',
                     'users.edit',
+                    'systems.update.all.systems',
                 ],
                 'children' => [
                     [
@@ -248,6 +248,12 @@ if (! function_exists('header_menu_items')) {
                         'route' => 'users.index',
                         'active_routes' => ['users.index', 'users.create', 'users.edit'],
                         'icon' => ['class' => 'ki-duotone ki-profile-user fs-3', 'paths' => 5],
+                    ],
+                    [
+                        'label' => 'Atualizar Sistemas',
+                        'route' => 'systems.update.all.systems',
+                        'active_routes' => ['systems.update.all.systems'],
+                        'icon' => ['class' => 'ki-duotone ki-abstract-14 fs-3', 'paths' => 5],
                     ],
                 ],
             ],
