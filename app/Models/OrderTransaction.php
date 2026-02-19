@@ -27,6 +27,7 @@ class OrderTransaction extends Model
         'currency',
         // Legacy
         'method',
+        'recurrency',
         'brand_tid_at',
         'brand_tid',
         'response',
@@ -35,9 +36,9 @@ class OrderTransaction extends Model
         'paid_at',
     ];
 
-    public function order(): BelongsTo
+    public function subscription(): BelongsTo
     {
-        return $this->belongsTo(Order::class, 'order_id');
+        return $this->belongsTo(OrderSubscription::class, 'subscription_id');
     }
 
     public function gateway(): BelongsTo

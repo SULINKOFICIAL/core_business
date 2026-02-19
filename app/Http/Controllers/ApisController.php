@@ -1119,364 +1119,70 @@ class ApisController extends Controller
         // Obtém os dados enviados no formulário
         $data = $request->all();
 
-        return response()->json('Fazer pagamento Caua');
+        // Verifica se veio o id do pedido
+        if(isset($data['order_id'])) {
 
-        // Caso seja um novo cartão
-        if($data['card_id'] == 0){
+            // Obtem o pedido
+            $order = Order::find($data['order_id']);
 
-            // Verifica se todos os dados para um cartão novo são validos
-            if (
-                !isset($data['token_micore'])     || 
-                !isset($data['package_id'])       || 
-                !isset($data['card_name'])        || 
-                !isset($data['card_number'])      || 
-                !isset($data['expiration_month']) || 
-                !isset($data['expiration_year'])
-            ){
-                return response()->json(['message' => 'Parâmetros faltando'], 400);
+            // Se ele existir atualiza para pendente
+            if($order) {
+                $order->update([
+                    'status' => 'pending'
+                ]);
             }
 
+        } else {
+            $order = Order::where('client_id', $data['client']->id)->orderBy('id', 'DESC')->first();
         }
 
-        // Obtém cliente associado ao miCore através do Token dele
-        $client = Client::where('token', $data['token_micore'])->first();
-
-        // Se não encontrar o cliente
-        if(!$client) return response()->json(['message' => 'Cliente não encontrado'], 404);
-
-        // Obtém o pacote que o cliente quer realizar o upgrade
-        $package = Package::find($data['package_id']);
+        // Verifica se existe o cartão
+        if(isset($data['card']) && isset($data['card']['card_id'])) {
+            $cardId = $data['card']['card_id'];
+        }
 
         // Encontra o cartão do cliente para reutilizar
-        if($data['card_id'] != 0){
+        if(isset($cardId)){
 
             // Encontra o cartão do cliente
-            $card = ClientCard::where('client_id', $client->id)->where('id', $data['card_id'])->first();
+            $card = ClientCard::where('client_id', $data['client']->id)->where('id', $cardId)->first();
 
             // Se não encontrar o cliente
             if(!$card) return response()->json(['message' => 'Cartão não encontrado para esse cliente'], 404);
 
-        } else {
+        } else if(isset($data['card']) && (!isset($data['card']['name']) || !isset($data['card']['number']) || !isset($data['card']['expiration']) || !isset($data['card']['cvv']))) {
+            return response()->json(['message' => 'Parâmetros faltando'], 400);
+        }
+        
+        // Verifica se veio todos os dados do cartão
+        if (isset($data['card']) && (isset($data['card']['name']) && isset($data['card']['number']) && isset($data['card']['expiration']) && isset($data['card']['cvv']))) {
 
             // Limpa os dados do cartão
-            $data['card_number'] = (int) str_replace(' ', '', $data['card_number']);
+            $data['card']['number'] = (int) str_replace(' ', '', $data['card']['number']);
     
             // Busca o cartão do cliente
-            $card = ClientCard::where('client_id', $client->id)->where('number', $data['card_number'])->first();
-            
-            // Salvamos o cartão do cliente
-            $card = ClientCard::create([
-                'client_id'        => $client->id,
-                'main'             => true,
-                'name'             => $data['card_name'],
-                'number'           => $data['card_number'],
-                'expiration_month' => $data['expiration_month'],
-                'expiration_year'  => $data['expiration_year'],
-            ]);
+            $card = ClientCard::where('client_id', $data['client']->id)->where('number', $data['card']['number'])->first();
+
+            if(!$card) {
+                // Salvamos o cartão do cliente
+                $card = ClientCard::create([
+                    'client_id'        => $data['client']->id,
+                    'main'             => true,
+                    'name'             => $data['card']['name'],
+                    'number'           => $data['card']['number'],
+                    'expiration_month' => substr($data['card']['expiration'], 0, 2),
+                    'expiration_year' => '20' . substr($data['card']['expiration'], -2),
+                ]);
+            }
 
         }
 
         // Retorna o cliente atualizado
-        $orderResponse = $service->createOrder($client, $package);
+        $response = $service->createOrderPayment($order, $data['client'], $card, $data['card']['cvv'] ?? null, $data['billing_cycle'], $data['card']['address']);
 
-        // Se o cliente estiver tentando comprar o mesmo plano
-        if($orderResponse['status'] == 'Falha'){
-            // Retorna pacote atualizado
-            return response()->json([
-                'status' => 'Falha',
-                'message' => $orderResponse['message'],
-            ]);
-        }
-
-        // Extrai a intenção de pagamento
-        $order = $orderResponse['order'];
-
-        // Verifica se já não foi pago
-        if($order->status == 'Pago'){
-            return response()->json([
-                'status' => 'Falha',
-                'message' => 'Seu pedido já foi pago.',
-            ]);
-        }
-
-        // Gera transação para processar o pedido
-        $transaction = OrderTransaction::create([
-            'order_id'   => $order->id,
-            'amount'     => $order->total(),
-            'method'     => 'Gateway',
-            'gateway_id' => 1,
-        ]);
-        
-        // Realiza transação do eRedeController aqui
-        $responseRede = $this->eRedeService->transaction($transaction, $card, ($data['ccv'] ?? null));
-
-        // Se foi pago atribui o pacote ao cliente
-        if($responseRede['returnCode'] == '00'){
-
-            /**
-             * Aqui armazenamos a primeiro brandTid ao cartão
-             * para próximas cobranças sejam atreladas a esse primeira.
-             */
-            if(!$card->brand_tid){
-                $card->brand_tid = $responseRede['brandTid'];
-                $card->brand_tid_at = now();
-                $card->save();
-            }
-
-            // Salta o brandTid referente a transação em questão.
-            $transaction->brand_tid = $responseRede['brandTid'];
-            $transaction->brand_tid_at = now();
-            $transaction->status = 'Pago';
-            $transaction->response = json_encode($responseRede);
-            $transaction->save();
-
-            // Retorna o cliente atualizado
-            $service->confirmPaymentOrder($order);
-
-            // Retorna pacote atualizado
-            return response()->json([
-                'status'  => 'Sucesso',
-                'package' => $client->package,
-                'message' => 'Compra realizada com sucesso.',
-            ]);
-
-        } else {
-
-            // Atualiza para pago
-            $transaction->status = 'Falhou';
-            $transaction->response = json_encode($responseRede);
-            $transaction->save();
-
-            /**
-             * Traduz os erros da Rede.
-             */
-            $redeErrors = [
-
-                // RETORNOS DO EMISSOR
-                0 => 'Sucesso',
-                101 => 'Não autorizado. Problemas no cartão, entre em contato com o emissor.',
-                102 => 'Não autorizado. Verifique a situação da loja junto ao emissor.',
-                103 => 'Não autorizado. Tente novamente.',
-                104 => 'Não autorizado. Tente novamente.',
-                105 => 'Não autorizado. Cartão restrito.',
-                106 => 'Erro no processamento pelo emissor. Tente novamente.',
-                107 => 'Não autorizado. Tente novamente.',
-                108 => 'Não autorizado. Valor não permitido para este tipo de cartão.',
-                109 => 'Não autorizado. Cartão inexistente.',
-                110 => 'Não autorizado. Tipo de transação não permitido para este cartão.',
-                111 => 'Não autorizado. Fundos insuficientes.',
-                112 => 'Não autorizado. Data de validade expirada.',
-                113 => 'Não autorizado. Risco moderado identificado pelo emissor.',
-                114 => 'Não autorizado. O cartão não pertence à rede de pagamento.',
-                115 => 'Não autorizado. Limite de transações permitidas no período excedido.',
-                116 => 'Não autorizado. Entre em contato com o emissor do cartão.',
-                117 => 'Transação não encontrada.',
-                118 => 'Não autorizado. Cartão bloqueado.',
-                119 => 'Não autorizado. Código de segurança inválido.',
-                121 => 'Erro no processamento. Tente novamente.',
-                122 => 'Transação previamente enviada.',
-                123 => 'Não autorizado. Portador solicitou o término das recorrências junto ao emissor.',
-                124 => 'Não autorizado. Entre em contato com a Rede.',
-                170 => 'Transação de zero dólar não permitida para este cartão.',
-                172 => 'CVC2 necessário para Transação de Zero Dólar ELO.',
-                174 => 'Transação de zero dólar bem-sucedida.',
-                175 => 'Transação de zero dólar negada.',
-
-                // RETORNOS DE INTEGRAÇÃO
-                1 => 'expirationYear: Tamanho de parâmetro inválido',
-                2 => 'expirationYear: Formato de parâmetro inválido',
-                3 => 'expirationYear: Parâmetro obrigatório ausente',
-                4 => 'cavv: Tamanho de parâmetro inválido',
-                5 => 'cavv: Formato de parâmetro inválido',
-                6 => 'postalCode: Tamanho de parâmetro inválido',
-                7 => 'postalCode: Formato de parâmetro inválido',
-                8 => 'postalCode: Parâmetro obrigatório ausente',
-                9 => 'complement: Tamanho de parâmetro inválido',
-                10 => 'complement: Formato de parâmetro inválido',
-                11 => 'departureTax: Formato de parâmetro inválido',
-                12 => 'documentNumber: Tamanho de parâmetro inválido',
-                13 => 'documentNumber: Formato de parâmetro inválido',
-                14 => 'documentNumber: Parâmetro obrigatório ausente',
-                15 => 'securityCode: Tamanho de parâmetro inválido',
-                16 => 'securityCode: Formato de parâmetro inválido',
-                17 => 'distributorAffiliation: Tamanho de parâmetro inválido',
-                18 => 'distributorAffiliation: Formato de parâmetro inválido',
-                19 => 'xid: Tamanho de parâmetro inválido',
-                20 => 'eci: Formato de parâmetro inválido',
-                21 => 'xid: Parâmetro obrigatório ausente para cartão Visa',
-                22 => 'street: Parâmetro obrigatório ausente',
-                23 => 'street: Formato de parâmetro inválido',
-                24 => 'affiliation: Tamanho de parâmetro inválido',
-                25 => 'affiliation: Formato de parâmetro inválido',
-                26 => 'affiliation: Parâmetro obrigatório ausente',
-                27 => 'Parâmetro cavv ou eci ausente',
-                28 => 'code: Tamanho de parâmetro inválido',
-                29 => 'code: Formato de parâmetro inválido',
-                30 => 'code: Parâmetro obrigatório ausente',
-                31 => 'softdescriptor: Tamanho de parâmetro inválido',
-                32 => 'softdescriptor: Formato de parâmetro inválido',
-                33 => 'Mês: Formato de parâmetro inválido',
-                34 => 'code: Formato de parâmetro inválido',
-                35 => 'Mês: Parâmetro obrigatório ausente',
-                36 => 'cardNumber: Tamanho de parâmetro inválido',
-                37 => 'cardNumber: Formato de parâmetro inválido',
-                38 => 'cardNumber: Parâmetro obrigatório ausente',
-                39 => 'reference: Tamanho de parâmetro inválido',
-                40 => 'reference: Formato de parâmetro inválido',
-                41 => 'reference: Parâmetro obrigatório ausente',
-                42 => 'reference: Número de pedido já existe',
-                43 => 'number: Tamanho de parâmetro inválido',
-                44 => 'number: Formato de parâmetro inválido',
-                45 => 'number: Parâmetro obrigatório ausente',
-                46 => 'installments: Não corresponde à transação de autorização',
-                47 => 'origin: Formato de parâmetro inválido',
-                48 => 'brandTid: Tamanho de parâmetro inválido',
-                49 => 'O valor da transação excede o autorizado',
-                50 => 'installments: Formato de parâmetro inválido',
-                51 => 'Produto ou serviço desativado para este comerciante. Contate a Rede',
-                53 => 'Transação não permitida para o emissor. Contate a Rede',
-                54 => 'installments: Parâmetro não permitido para esta transação',
-                55 => 'cardHolderName: Tamanho de parâmetro inválido',
-                56 => 'Erro nos dados informados. Tente novamente',
-                57 => 'affiliation: Comerciante inválido',
-                58 => 'Não autorizado. Contate o emissor',
-                59 => 'cardHolderName: Formato de parâmetro inválido',
-                60 => 'street: Tamanho de parâmetro inválido',
-                61 => 'subscription: Formato de parâmetro inválido',
-                63 => 'softdescriptor: Não habilitado para este comerciante',
-                64 => 'Transação não processada. Tente novamente',
-                65 => 'token: Token inválido',
-                66 => 'departureTax: Tamanho de parâmetro inválido',
-                67 => 'departureTax: Formato de parâmetro inválido',
-                68 => 'departureTax: Parâmetro obrigatório ausente',
-                69 => 'Transação não permitida para este produto ou serviço',
-                70 => 'amount: Tamanho de parâmetro inválido',
-                71 => 'amount: Formato de parâmetro inválido',
-                72 => 'Contate o emissor',
-                73 => 'amount: Parâmetro obrigatório ausente',
-                74 => 'Falha na comunicação. Tente novamente',
-                75 => 'departureTax: Parâmetro não deve ser enviado para este tipo de transação',
-                76 => 'kind: Formato de parâmetro inválido',
-                78 => 'Transação não existe',
-                79 => 'Cartão expirado. Transação não pode ser reenviada. Contate o emissor',
-                80 => 'Não autorizado. Contate o emissor (Fundos insuficientes)',
-                82 => 'Transação não autorizada para cartão de débito',
-                83 => 'Não autorizado. Contate o emissor',
-                84 => 'Não autorizado. Transação não pode ser reenviada. Contate o emissor',
-                85 => 'complement: Tamanho de parâmetro inválido',
-                86 => 'Cartão expirado',
-                87 => 'Pelo menos um dos campos a seguir deve ser preenchido: tid ou reference',
-                88 => 'Comerciante não aprovado. Regularize seu site e contate a Rede para voltar a transacionar',
-                89 => 'token: Token inválido',
-                97 => 'tid: Tamanho de parâmetro inválido',
-                98 => 'tid: Formato de parâmetro inválido',
-                99 => 'BusinessApplicationIdentifier: Formato de parâmetro inválido',
-                100 => 'WalletId: Formato de parâmetro inválido',
-                132 => 'DirectoryServerTransactionId: Tamanho de parâmetro inválido',
-                133 => 'ThreedIndicator: Valor de parâmetro inválido',
-                150 => 'Tempo esgotado. Tente novamente',
-                151 => 'installments: Maior do que o permitido',
-                153 => 'documentNumber: Número inválido',
-                154 => 'embedded: Formato de parâmetro inválido',
-                155 => 'eci: Parâmetro obrigatório ausente',
-                156 => 'eci: Tamanho de parâmetro inválido',
-                157 => 'cavv: Parâmetro obrigatório ausente',
-                158 => 'capture: Tipo não permitido para esta transação',
-                159 => 'userAgent: Tamanho de parâmetro inválido',
-                160 => 'urls: Parâmetro obrigatório ausente (kind)',
-                161 => 'urls: Formato de parâmetro inválido',
-                167 => 'JSON de solicitação inválido',
-                169 => 'Tipo de Conteúdo inválido',
-                171 => 'Operação não permitida para esta transação',
-                173 => 'Autorização expirada',
-                176 => 'urls: Parâmetro obrigatório ausente (url)',
-                898 => 'PV com IP de origem inválido',
-                899 => 'Sem sucesso. Contate a Rede',
-                1002 => 'Wallet Id: Tamanho de parâmetro inválido',
-                1003 => 'Wallet Id: Parâmetro obrigatório ausente',
-                1018 => 'MCC Tamanho Inválido',
-                1019 => 'Parâmetro MCC Requerido',
-                1020 => 'MCC Formato Inválido',
-                1021 => 'PaymentFacilitatorID Tamanho Inválido',
-                1023 => 'PaymentFacilitatorID Formato Inválido',
-                1027 => 'SubMerchant: SubMerchantID Tamanho Inválido',
-                1030 => 'CitySubMerchant Tamanho Inválido',
-                1032 => 'SubMerchant: Estate Tamanho Inválido',
-                1034 => 'CountrySubMerchant Tamanho Inválido',
-                1036 => 'CepSubMerchant Tamanho Inválido',
-                1038 => 'CnpjSubMerchant Tamanho Inválido',
-                3025 => 'Negar Categoria 01: Este cartão não deve ser usado',
-                3026 => 'Negar Categoria 02: Este cartão não deve ser usado neste PV',
-                3027 => 'Negar Categoria 03: Nenhum cartão deve ser usado neste PV',
-                3028 => 'Wallet Processing Type: Parâmetro obrigatório ausente',
-                3029 => 'Wallet Processing Type: Tamanho de parâmetro inválido',
-                3030 => 'Wallet Processing Type: Formato de parâmetro inválido',
-                3031 => 'Wallet Sender Tax Identification: Parâmetro obrigatório ausente',
-                3032 => 'Wallet Sender Tax Identification: Tamanho de parâmetro inválido',
-                3033 => 'Wallet Sender Tax Identification: Formato de parâmetro inválido',
-                3034 => 'SubMerchant: Tax Identification Number Tamanho Inválido',
-                3035 => 'SubMerchant: Tax Identification Number Formato Inválido',
-                3052 => 'Wallet Code: Parâmetro obrigatório ausente',
-                3053 => 'Wallet Code: Formato de parâmetro inválido',
-                3054 => 'Wallet Code: Tamanho de parâmetro inválido',
-                3055 => 'Wallet Code: Parâmetro não permitido',
-                3056 => 'Wallet Id: Parâmetro não permitido',
-                3064 => 'Sai: Tamanho de parâmetro inválido',
-                3065 => 'Sai: Formato de parâmetro inválido',
-                3066 => 'Sai: Parâmetro obrigatório ausente',
-                3067 => 'Cryptogram: Parâmetro obrigatório ausente',
-                3068 => 'Credential Id: Parâmetro obrigatório ausente',
-                3069 => 'Credential Id: Formato de parâmetro inválido',
-                3070 => 'Credential Id: Tamanho de parâmetro inválido',
-
-                // RETORNOS 3DS
-                200 => 'Titular do cartão autenticado com sucesso',
-                201 => 'Autenticação não necessária',
-                202 => 'Titular do cartão não autenticado',
-                203 => 'Serviço de autenticação não registrado para o comerciante. Entre em contato com a Rede',
-                204 => 'Titular do cartão não registrado no programa de autenticação do emissor',
-                220 => 'Solicitação de transação com autenticação recebida. URL de redirecionamento enviada',
-                250 => 'onFailure: Parâmetro obrigatório ausente',
-                251 => 'onFailure: Formato de parâmetro inválido',
-                252 => 'urls: Parâmetro obrigatório ausente (url/threeDSecureFailure)',
-                253 => 'urls: Tamanho de parâmetro inválido (url/threeDSecureFailure)',
-                254 => 'urls: Formato de parâmetro inválido (url/threeDSecureFailure)',
-                255 => 'urls: Parâmetro obrigatório ausente (url/threeDSecureSuccess)',
-                256 => 'urls: Tamanho de parâmetro inválido (url/threeDSecureSuccess)',
-                257 => 'urls: Formato de parâmetro inválido (url/threeDSecureSuccess)',
-                258 => 'userAgent: Parâmetro obrigatório ausente',
-                259 => 'urls: Parâmetro obrigatório ausente',
-                260 => 'urls: Parâmetro obrigatório ausente (kind/threeDSecureFailure)',
-                261 => 'urls: Parâmetro obrigatório ausente (kind/threeDSecureSuccess)',
-
-                // RETORNOS DE CANCELAMENTO
-                351 => 'Proibido',
-                353 => 'Transação não encontrada',
-                354 => 'Transação com período expirado para reembolso',
-                355 => 'Transação já cancelada',
-                357 => 'Soma dos reembolsos maior que o valor da transação',
-                358 => 'Soma dos reembolsos maior que o valor processado disponível para reembolso',
-                359 => 'Reembolso bem-sucedido',
-                360 => 'Solicitação de reembolso foi bem-sucedida',
-                362 => 'RefundId não encontrado',
-                363 => 'Caracteres de URL de retorno excederam 500',
-                365 => 'Reembolso parcial não disponível',
-                368 => 'Sem sucesso. Tente novamente',
-                369 => 'Reembolso não encontrado',
-                370 => 'Solicitação falhou. Contate a Rede',
-                371 => 'Transação não disponível para reembolso. Tente novamente em algumas horas',
-                373 => 'Nenhum reembolso adicional permitido',
-                374 => 'Reembolso não permitido. Contestação solicitada',
-
-            ];
-
-            // Retorna pacote atualizado
-            return response()->json([
-                'status' => 'Falha',
-                'message' => 'Ocorreu um problema ao realizar a compra: ' . $redeErrors[$responseRede['returnCode']],
-            ]);
-            
-        }
+        return response()->json([
+            'message' => $response
+        ], 200);
 
     }
 

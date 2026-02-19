@@ -9,6 +9,9 @@ use App\Models\OrderItemConfiguration;
 use App\Models\ClientSubscription;
 use App\Models\Package;
 use App\Models\Module;
+use App\Models\OrderSubscription;
+use App\Models\OrderTransaction;
+use Carbon\Carbon;
 
 class OrderService
 {
@@ -161,6 +164,138 @@ class OrderService
             'status' => 'Pedido Gerado', 
             'order' => $order
         ];
+    }
+
+    public function createOrderPayment($orderPayment, $client, $card, $cvv, $intervalCicle, $address)
+    {
+        $pagarMeService = new PagarMeService;
+
+        /**
+         * Retorna o customer na PagarMe 
+         */
+        $customer = $pagarMeService->findOrCreateCustomer($client->id);
+
+        /**
+         * Retorna o cartão na PagarMe 
+         */
+        $card = $pagarMeService->findOrCreateCard($client->id, $card->id, $cvv, $address);
+
+        /**
+         * Retorna a assinatura na PagarMe 
+         */
+        $subscription = $pagarMeService->createSubscription($customer['id'], $card['id'], $orderPayment, $intervalCicle);
+
+        if(isset($subscription) && isset($subscription['id'])) {
+
+            $orderSubscription = OrderSubscription::updateOrCreate([
+                'order_id'                => $orderPayment->id,
+                'pagarme_subscription_id' => $subscription['id'],
+            ], [
+                'pagarme_card_id'         => $subscription['card']['id'],
+                'interval'                => $subscription['interval'],
+                'payment_method'          => $subscription['payment_method'],
+                'currency'                => $subscription['currency'],
+                'installments'            => $subscription['installments'],
+                'status'                  => $subscription['status'],
+                'billing_at'              => Carbon::parse($subscription['current_cycle']['billing_at']),
+                'next_billing_at'         => Carbon::parse($subscription['next_billing_at']),
+            ]);
+
+            $transaction = $pagarMeService->getSubscriptionInvoices($orderSubscription->pagarme_subscription_id);
+
+            if(isset($transaction) && isset($transaction['data']) && isset($transaction['data'][0]['charge'])) {
+
+                $charge = $transaction['data'][0]['charge'] ?? null;
+
+                OrderTransaction::updateOrCreate([
+                    'subscription_id'         => $orderSubscription->id,
+                    'pagarme_transaction_id'  => $charge['id'],
+                ], [
+                    'status'                  => $charge['status'],
+                    'gateway_code'            => $charge['gateway_id'],
+                    'amount'                  => $charge['paid_amount'] / 100,
+                    'currency'                => $charge['currency'],
+                    'method'                  => $charge['payment_method'],
+                    'recurrency'              => $charge['recurrence_cycle'],
+                    'response'                => json_encode($transaction),
+                    'paid_at'                 => $charge['paid_at'],
+        
+                ]);
+
+                $orderPayment->update([
+                    'status'  => $charge['status'],
+                ]);
+
+                switch ($charge['status']) {
+
+                    case 'paid':
+                        $orderSubscription->update([
+                            'status' => 'active',
+                        ]);
+
+                        $orderPayment->update([
+                            'paid_at' => $charge['paid_at'],
+                            'method'  => $charge['payment_method'],
+                        ]);
+
+                        return 'Assinatura aprovada com sucesso.';
+                        break;
+                
+                    case 'pending':
+
+                        $orderSubscription->update([
+                            'status' => 'pending',
+                        ]);
+
+                        return 'Pagamento pendente.';
+
+                        break;
+                
+
+                    case 'processing':
+                        $orderSubscription->update([
+                            'status' => 'pending',
+                        ]);
+
+                        return 'Pagamento em processamento.';
+
+                        break;
+                
+                    case 'failed':
+                        $orderSubscription->update([
+                            'status' => 'failed',
+                        ]);
+
+                        return 'Pagamento recusado.';
+                        
+                        break;
+                
+                    case 'canceled':
+                        $orderSubscription->update([
+                            'status' => 'canceled',
+                        ]);
+
+                        return 'Pagamento cancelado.';
+
+                        break;
+                
+                    case 'refunded':
+                        $orderSubscription->update([
+                            'status' => 'refunded',
+                        ]);
+
+                        return 'Pagamento estornado.';
+
+                        break;
+
+                    default:
+                        return 'Status desconhecido.';
+                }
+                
+            }
+
+        }
+
     }
 
     public function confirmPaymentOrder($order)

@@ -19,17 +19,21 @@ class PagarMeResponseService
     /**
      * Normaliza os dados recebidos do Webhook da PagarMe
      */
-    public function process(array $data): PagarMeDTO
+    public function process(array $data): ?PagarMeDTO
     {
         $type = $this->getTypeRequest($data);
 
-        return new PagarMeDTO(
-            type: $type,
-            charge: $this->getCharge($type, $data),
-            invoice: $this->getInvoice($type, $data),
-            transaction: $this->getTransaction($type, $data),
-            customer: $this->getCustomer($type, $data),
-        );
+        return match ($type) {
+            'charge.paid',
+            'charge.antifraud_approved' => new PagarMeDTO(
+                type: $type,
+                charge: $this->getCharge($type, $data),
+                invoice: $this->getInvoice($type, $data),
+                transaction: $this->getTransaction($type, $data),
+                customer: $this->getCustomer($type, $data),
+            ),
+            default => null,
+        };
     }
 
     public function getTypeRequest(array $data): string
@@ -40,7 +44,8 @@ class PagarMeResponseService
     public function getInvoice(string $type, array $data): InvoiceDTO
     {
         return match ($type) {
-            'charge.paid' => new InvoiceDTO(
+            'charge.paid',
+            'charge.antifraud_approved' => new InvoiceDTO(
                 id: $data['data']['invoice']['id'],
                 subscriptionId: $data['data']['invoice']['subscriptionId'] ?? null,
                 status: $data['data']['invoice']['status'],
@@ -55,7 +60,8 @@ class PagarMeResponseService
     public function getTransaction(string $type, array $data): TransactionDTO
     {
         return match ($type) {
-            'charge.paid' => new TransactionDTO(
+            'charge.paid',
+            'charge.antifraud_approved' => new TransactionDTO(
                 id: $data['data']['last_transaction']['id'],
                 status: $data['data']['last_transaction']['status'],
                 type: $data['data']['last_transaction']['transaction_type'],
@@ -90,7 +96,8 @@ class PagarMeResponseService
     public function getCustomer(string $type, array $data): CustomerDTO
     {
         return match ($type) {
-            'charge.paid' => new CustomerDTO(
+            'charge.paid',
+            'charge.antifraud_approved' => new CustomerDTO(
                 id: $data['data']['customer']['id'],
                 name: $data['data']['customer']['name'],
                 email: $data['data']['customer']['email'],
@@ -108,7 +115,8 @@ class PagarMeResponseService
     public function getCharge(string $type, array $data): ChargeDTO
     {
         return match ($type) {
-            'charge.paid' => new ChargeDTO(
+            'charge.paid',
+            'charge.antifraud_approved' => new ChargeDTO(
                 id: $data['data']['id'],
                 code: $data['data']['code'],
                 paidAmount: $data['data']['paid_amount'],

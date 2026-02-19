@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Order extends Model
@@ -58,14 +59,21 @@ class Order extends Model
         return $this->hasMany(OrderItem::class, 'order_id');
     }
 
-    public function transactions(): HasMany
+    public function transactions(): HasManyThrough
     {
-        return $this->hasMany(OrderTransaction::class, 'order_id');
+        return $this->hasManyThrough(
+            OrderTransaction::class,
+            OrderSubscription::class,
+            'order_id',
+            'subscription_id',
+            'id',
+            'id'
+        );
     }
 
     public function subscription(): HasOne
     {
-        return $this->hasOne(ClientSubscription::class, 'order_id');
+        return $this->hasOne(OrderSubscription::class, 'order_id');
     }
 
     public function coupon(): BelongsTo

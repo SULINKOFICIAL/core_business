@@ -90,39 +90,13 @@ class PagarMeService
      * 
      *? Se nao existir, cria um
      */
-    public function findOrCreateCard($clientId, $cardId)
+    public function findOrCreateCard($clientId, $cardId, $cvv, $address)
     {
         // Obtem o cliente
         $client = Client::find($clientId);
 
         // Verifica se o cliente já tem um cartão na PagarMe
         $card = ClientCard::find($cardId);
-            
-        // Monta o payload para a criação do cliente
-        $payload = [
-            'number'          => '4000000000000010',
-            'holder_name'     => 'Teste',
-            'exp_month'       => 12,
-            'exp_year'        => 2030,
-            'cvv'             => '123',
-            'billing_address' => [
-                'line_1'   => 'Rua Rio Uruguai, 123',
-                'zip_code' => '83322220',
-                'city'     => 'Pinhais',
-                'state'    => 'PR',
-                'country'  => 'BR',
-            ]
-        ];
-
-        // Cria ou atualiza o cartão
-        $card = ClientCard::updateOrCreate([
-            'client_id' => $clientId,
-            'number' => '4000000000000010'
-        ], [
-            'name'      => 'Teste',
-            'expiration_month' => 12,
-            'expiration_year'  => 2030,
-        ]);
 
         // Verifica se o cartão ja existe
         if(isset($card) && $card->pagarme_card_id) {
@@ -139,6 +113,22 @@ class PagarMeService
 
         // Se nao possui cria um
         else {
+
+            // Monta o payload para a criação do cliente
+            $payload = [
+                'number'          => $card->number,
+                'holder_name'     => $card->name,
+                'exp_month'       => $card->expiration_month,
+                'exp_year'        => $card->expiration_year,
+                'cvv'             => $cvv,
+                'billing_address' => [
+                    'line_1'   => $address['address'],
+                    'zip_code' => $address['cep'],
+                    'city'     => $address['city'],
+                    'state'    => $address['state'],
+                    'country'  => $address['country'],
+                ]
+            ];
 
             // Cria o cliente na PagarMe
             $response = Http::withBasicAuth($this->apiKey, '')->post($this->baseUrl . '/customers/' . $client->pagarme_customer_id . '/cards', $payload)->json();
@@ -165,7 +155,7 @@ class PagarMeService
      * 
      *? Se nao existir, cria um
      */
-    public function findOrCreateSubscription($customerId, $cardId, $order)
+    public function createSubscription($customerId, $cardId, $order, $intervalCycle)
     {
 
         /**
@@ -190,7 +180,7 @@ class PagarMeService
         $payload = [
             'name'           => "Assinatura Cliente - {$order->client->name} #{$order->client->id}",
             'description'    => $description,
-            'interval'       => 'month',
+            'interval'       => $intervalCycle,
             'interval_count' => 1,
             'billing_type'   => 'prepaid',
             'currency'       => $order->currency,

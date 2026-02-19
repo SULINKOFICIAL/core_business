@@ -32,3 +32,10 @@ table.table.dataTable.table-striped>tbody>tr:nth-of-type(2n+1)>* {
 .table:not(.table-bordered).table-row-bordered tr {
     border-bottom-color: #f7f7f7 !important;
 }
+
+.table {
+    border-collapse: separate !important;
+    border-spacing: 0;
+    border-radius: 6px;
+    overflow: hidden;
+}

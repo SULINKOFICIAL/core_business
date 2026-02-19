@@ -115,7 +115,7 @@
                 @include('pages.clients._orders')
             </div>
             <div class="divs-sections div-signatures" style="display: none;">
-                @include('pages.clients._signatures')
+                {{-- @include('pages.clients._signatures') --}}
             </div>
         </div>
     </div>
