@@ -24,7 +24,7 @@
                                 <img src="{{ $avatarUrl }}" class="rounded-3" alt="user" />
                                 <div class="flex-grow-1">
                                     <span class="text-white fs-7 fw-bold">{{ Auth::user()->name }}</span>
-                                    <div class="d-flex align-items-center text-success fs-9">
+                                    <div class="d-flex align-items-center text-success fs-8">
                                         {{ Auth::user()->email }}
                                     </div>
                                 </div>

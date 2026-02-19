@@ -210,6 +210,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('logs/apis')->group(function () {
         Route::name('logs.apis.')->group(function () {
             Route::get('/',                 [LogsApiController::class, 'index'])->name('index');
+            Route::get('/relatorio',        [LogsApiController::class, 'relatoryGraphic'])->name('relatory.graphic');
             Route::get('/processar',        [LogsApiProcessingController::class, 'process'])->name('process');
             Route::get('/visualizar/{id}',  [LogsApiController::class, 'show'])->name('show');
         });
