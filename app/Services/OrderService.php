@@ -17,6 +17,44 @@ use Illuminate\Support\Facades\Log;
 class OrderService
 {
 
+    /**
+     * Cria um pedido em rascunho com base nos módulos e configurações.
+     */
+    public function getOrderInProgress($client): Order
+    {
+        return Order::firstOrCreate(
+            [
+                'client_id' => $client->id,
+                'status' => 'draft',
+            ],
+        );
+    }
+
+    /**
+     * Recalcula o total do pedido considerando o cupom aplicado.
+     */
+    public function recalculateOrderTotals(Order $order, ?float $subtotal = null): void
+    {
+
+        // Soma o subtotal atual caso não seja informado
+        $itemsSubtotal = $subtotal ?? (float) $order->items()->sum('amount');
+
+        // Calcula desconto do cupom quando existir
+        $couponDiscount = $this->calculateCouponDiscount($order, $itemsSubtotal);
+
+        // Calcula o total final do pedido
+        $totalAmount = $itemsSubtotal - $couponDiscount;
+        if ($totalAmount < 0) {
+            $totalAmount = 0.0;
+        }
+
+        $order->update([
+            'total_amount' => $totalAmount,
+            'coupon_discount_amount' => $couponDiscount,
+        ]);
+
+    }
+
     public function createOrder($client, $newPackage)
     {
 
@@ -583,29 +621,6 @@ class OrderService
 
         // Retorna o rascunho atualizado
         return $order;
-    }
-
-    /**
-     * Recalcula o total do pedido considerando o cupom aplicado.
-     */
-    private function recalculateOrderTotals(Order $order, ?float $subtotal = null): void
-    {
-
-        // Soma o subtotal atual caso não seja informado
-        $itemsSubtotal = $subtotal ?? (float) $order->items()->sum('subtotal_amount');
-        // Calcula desconto do cupom quando existir
-        $couponDiscount = $this->calculateCouponDiscount($order, $itemsSubtotal);
-        // Calcula o total final do pedido
-        $totalAmount = $itemsSubtotal - $couponDiscount;
-        if ($totalAmount < 0) {
-            $totalAmount = 0.0;
-        }
-
-        $order->update([
-            'total_amount' => $totalAmount,
-            'coupon_discount_amount' => $couponDiscount,
-        ]);
-
     }
 
     /**
