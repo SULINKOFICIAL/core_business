@@ -36,7 +36,7 @@ class PagarMeService
             $response = Http::withBasicAuth($this->apiKey, '')->get($this->baseUrl . '/customers/' . $client->pagarme_customer_id)->json();
 
             // Se vier vazio, atualiza com o email do cliente
-            if (!empty($response['email']) && !empty($client->email)) {
+            if (empty($response['email']) && !empty($client->email)) {
 
                 // Monta o array com email
                 $payload = [
