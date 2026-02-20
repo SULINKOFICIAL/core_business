@@ -8,7 +8,7 @@ body {
 }
 
 [data-bs-theme="light"] body {
-    background: #F4F6FA !important;
+    background: #F4F6FA;
 }
 
 .card {

@@ -13,6 +13,7 @@ use App\Models\CouponRedemption;
 use App\Models\Module;
 use App\Models\ModulePricingTier;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\OrderTransaction;
 use App\Models\Package;
 use App\Models\PackageModule;
@@ -37,14 +38,16 @@ class ApisController extends Controller
     private $repository;
     private $cpanelMiCore;
     protected $eRedeService;
+    protected $orderService;
 
-    public function __construct(Request $request, Client $content, ERedeService $eRedeService)
+    public function __construct(Request $request, Client $content, ERedeService $eRedeService, OrderService $orderService)
     {
 
         $this->request = $request;
         $this->repository = $content;
         $this->cpanelMiCore = new CpanelController();
         $this->eRedeService = $eRedeService;
+        $this->orderService = $orderService;
 
     }
 
@@ -313,91 +316,61 @@ class ApisController extends Controller
 
     /**
      * Retorna o pedido em rascunho mais recente do cliente (se existir).
+     * Obs.: Geralmente é o pedido em andamento.
      */
     public function orderDraft(Request $request)
     {
-        // Extrai dados e cliente já anexado pelo middleware
+
+        /**
+         * Extrai os dados
+         */
         $data = $request->all();
+
+        /**
+         * Etrai o cliente
+         */
         $client = $data['client'];
 
-        // Busca o rascunho mais recente do cliente com itens e configurações
+        /**
+         * Busca o pedido em andamento
+         */
         $order = Order::where('client_id', $client->id)
-            ->where('status', 'draft')
-            ->orderBy('created_at', 'DESC')
-            ->with(['items.configurations'])
-            ->first();
+                            ->where('status', 'draft')
+                            ->orderBy('created_at', 'DESC')
+                            ->with(['items.configurations'])
+                            ->first();
 
-        // Retorna vazio quando não há rascunho
-        if (!$order) {
-            return response()->json(['order' => null], 200);
-        }
-
-        // Monta os itens com os dados relevantes para o front
+        /**
+         * Monta os itens com os dados relevantes para o front
+         */
         $items = $order->items->map(function ($item) {
-            // Procura configuração de uso no item
-            $usageConfig = null;
-            // Prioriza a configuração salva no item
-            $configItem = $item->configurations->firstWhere('key', 'usage');
-            if ($configItem) {
-                // Define o uso baseado na configuração
-                $usageConfig = $configItem->value;
-            } elseif (is_array($item->pricing_model_snapshot ?? null) && isset($item->pricing_model_snapshot['usage'])) {
-                // Fallback para uso no snapshot de pricing
-                $usageConfig = $item->pricing_model_snapshot['usage'];
-            }
-
             return [
-                // Identificador do item
-                'id' => $item->id,
-                // Tipo do item (module/package/etc)
-                'item_type' => $item->item_type,
-                // Nome imutável do item
-                'item_name' => $item->item_name_snapshot,
-                // Referência ao módulo original
-                'item_reference_id' => $item->item_reference_id,
-                // Quantidade do item
-                'quantity' => $item->quantity,
-                // Valor unitário calculado
-                'unit_price' => $item->unit_price_snapshot,
-                // Subtotal do item
-                'subtotal' => $item->subtotal_amount,
-                // Snapshot de pricing para auditoria
-                'pricing_model_snapshot' => $item->pricing_model_snapshot,
-                // Uso configurado (quando existir)
-                'usage' => $usageConfig,
+                'id'                => $item->id,                  // Identificador do item
+                'type'              => $item->type,                // Tipo do item (module/package/etc)
+                'name'              => $item->item_name,           // Nome do item
+                'item_key'          => $item->item_key,            // Chave do item
+                'billing_type'      => $item->item_billing_type,   // Tipo de cobrança do item
             ];
         });
 
-        // Calcula subtotal e desconto aplicado
-        $subtotalAmount = (float) $order->items()->sum('subtotal_amount');
+        /**
+         * Calcula subtotal e desconto aplicado
+         */
+        $subtotalAmount = (float) $order->items()->sum('amount');
         $discountAmount = (float) ($order->coupon_discount_amount ?? 0);
 
-        // Responde com o rascunho e os itens formatados
+        /**
+         * Responde com o rascunho e os itens formatados
+         */
         return response()->json([
-            // Identificador do pedido
-            'order_id' => $order->id,
-            // Status do pedido (draft)
-            'status' => $order->status,
-            // Etapa atual do pedido
-            'current_step' => $order->current_step,
-            // Subtotal antes de descontos
-            'subtotal_amount' => $subtotalAmount,
-            // Desconto aplicado por cupom
-            'discount_amount' => $discountAmount,
-            // Total calculado do pedido
-            'total_amount' => $order->total(),
-            // Moeda do pedido
-            'currency' => $order->currency,
-            // Dados do cupom aplicado
-            'coupon' => $order->coupon_id ? [
-                'code' => $order->coupon_code_snapshot,
-                'type' => $order->coupon_type_snapshot,
-                'value' => $order->coupon_value_snapshot,
-                'trial_months' => $order->coupon_trial_months,
-                'discount_amount' => $discountAmount,
-            ] : null,
-            // Itens do pedido
-            'items' => $items,
+            'order_id'          => $order->id,           // Identificador do pedido
+            'status'            => $order->status,       // Status do pedido (draft)
+            'current_step'      => $order->current_step, // Etapa atual do pedido
+            'amount'            => $subtotalAmount,      // Subtotal antes de descontos
+            'discount_amount'   => $discountAmount,      // Desconto aplicado por cupom
+            'total_amount'      => $order->total(),      // Total calculado do pedido
+            'currency'          => $order->currency,     // Moeda do pedido
+            'items'             => $items,               // Itens do pedido
         ], 200);
     }
 
@@ -406,50 +379,54 @@ class ApisController extends Controller
      */
     public function orderUsageOptions(Request $request)
     {
+
         // Extrai dados e cliente já anexado pelo middleware
         $data = $request->all();
         $client = $data['client'];
 
-        // Valida order_id
-        if (!isset($data['order_id']) || !is_numeric($data['order_id'])) {
-            return response()->json(['message' => 'order_id inválido'], 400);
-        }
+        // Busca o rascunho do cliente com itens e configurações
+        $order = Order::where('client_id', $client->id)
+                            ->where('status', 'draft')
+                            ->with(['items.configurations'])
+                            ->first();
 
-        // Busca o rascunho do cliente
-        $order = Order::where('id', (int) $data['order_id'])
-            ->where('client_id', $client->id)
-            ->where('status', 'draft')
-            ->with(['items.configurations'])
-            ->first();
-
-        if (!$order) {
-            return response()->json(['message' => 'Pedido não encontrado'], 404);
-        }
-
-        // Monta opções de uso a partir dos módulos do pedido
+        // Inicia lista de módulos que exigem seleção de uso
         $usageModules = [];
 
+        /**
+         * Percorre os itens do pedido e filtra apenas módulos com
+         * cobrança por uso para montar as opções de faixa.
+         */
         foreach ($order->items as $item) {
-            if ($item->item_type !== 'module' || !$item->item_reference_id) {
+
+            // Ignora itens que não são módulo ou sem chave de referência
+            if ($item->type !== 'Módulo') {
                 continue;
             }
 
-            $module = Module::where('id', $item->item_reference_id)->where('pricing_type', 'usage')->first();
+            // Busca módulo por uso relacionado ao item do pedido
+            $module = Module::where('id', $item->item_key)
+                ->where('pricing_type', 'Preço Por Uso')
+                ->first();
+
+            // Ignora módulos fixos ou inexistentes
             if (!$module) {
                 continue;
             }
 
+            // Carrega as faixas (tiers) do módulo ordenadas por limite
             $tiers = ModulePricingTier::where('module_id', $module->id)
                 ->orderBy('usage_limit')
                 ->get()
                 ->map(function ($tier) {
                     return [
-                        'usage_limit' => $tier->usage_limit,
-                        'price' => (float) $tier->price,
+                        'usage_limit' => $tier->usage_limit, // Limite da faixa
+                        'price' => (float) $tier->price,     // Preço da faixa
                     ];
                 })
                 ->toArray();
 
+            // Obtém uso já escolhido para o item (configuração ou snapshot)
             $usageConfig = null;
             $configItem = $item->configurations->firstWhere('key', 'usage');
             if ($configItem) {
@@ -458,17 +435,19 @@ class ApisController extends Controller
                 $usageConfig = $item->pricing_model_snapshot['usage'];
             }
 
+            // Adiciona módulo formatado para consumo no front
             $usageModules[] = [
-                'module_id' => $module->id,
-                'module_name' => $module->name,
-                'tiers' => $tiers,
-                'selected_usage' => $usageConfig,
+                'module_id' => $module->id,           // ID do módulo
+                'module_name' => $module->name,       // Nome do módulo
+                'tiers' => $tiers,                    // Faixas disponíveis
+                'selected_usage' => $usageConfig,     // Uso selecionado (se houver)
             ];
         }
 
+        // Retorna opções de uso dos módulos do pedido
         return response()->json([
-            'order_id' => $order->id,
-            'modules' => $usageModules,
+            'order_id' => $order->id,         // Identificador do pedido
+            'modules'  => $usageModules,       // Módulos com opções de uso
         ], 200);
     }
 
@@ -512,17 +491,17 @@ class ApisController extends Controller
                 'item_name' => $item->item_name_snapshot,
                 'quantity' => $item->quantity,
                 'unit_price' => $item->unit_price_snapshot,
-                'subtotal' => $item->subtotal_amount,
+                'subtotal' => $item->amount,
                 'usage' => $usageConfig,
             ];
         });
 
-        $subtotalAmount = (float) $order->items()->sum('subtotal_amount');
+        $subtotalAmount = (float) $order->items()->sum('amount');
         $discountAmount = (float) ($order->coupon_discount_amount ?? 0);
 
         return response()->json([
             'order_id' => $order->id,
-            'subtotal_amount' => $subtotalAmount,
+            'amount' => $subtotalAmount,
             'discount_amount' => $discountAmount,
             'total_amount' => $order->total(),
             'currency' => $order->currency,
@@ -636,7 +615,7 @@ class ApisController extends Controller
         }
 
         // Calcula subtotal e desconto do cupom
-        $subtotalAmount = (float) $order->items()->sum('subtotal_amount');
+        $subtotalAmount = (float) $order->items()->sum('amount');
         $discountAmount = $this->calculateCouponDiscountAmount($coupon, $subtotalAmount);
 
         // Atualiza o pedido com o cupom aplicado
@@ -714,7 +693,7 @@ class ApisController extends Controller
             $existingRedemption->delete();
         }
 
-        $subtotalAmount = (float) $order->items()->sum('subtotal_amount');
+        $subtotalAmount = (float) $order->items()->sum('amount');
 
         // Limpa campos de cupom no pedido
         $order->update([
@@ -774,23 +753,23 @@ class ApisController extends Controller
                 'id' => $item->id,
                 'item_type' => $item->item_type,
                 'item_name' => $item->item_name_snapshot,
-                'item_reference_id' => $item->item_reference_id,
+                'item_key' => $item->item_key,
                 'quantity' => $item->quantity,
                 'unit_price' => $item->unit_price_snapshot,
-                'subtotal' => $item->subtotal_amount,
+                'subtotal' => $item->amount,
                 'pricing_model_snapshot' => $item->pricing_model_snapshot,
                 'usage' => $usageConfig,
             ];
         });
 
-        $subtotalAmount = (float) $order->items()->sum('subtotal_amount');
+        $subtotalAmount = (float) $order->items()->sum('amount');
         $discountAmount = (float) ($order->coupon_discount_amount ?? 0);
 
         return [
             'order_id' => $order->id,
             'status' => $order->status,
             'current_step' => $order->current_step,
-            'subtotal_amount' => $subtotalAmount,
+            'amount' => $subtotalAmount,
             'discount_amount' => $discountAmount,
             'total_amount' => $order->total(),
             'currency' => $order->currency,
@@ -803,91 +782,6 @@ class ApisController extends Controller
             ] : null,
             'items' => $items,
         ];
-    }
-
-    /**
-     * Define a próxima etapa do fluxo do pedido.
-     */
-    public function orderRoute(Request $request)
-    {
-        // Extrai dados e cliente já anexado pelo middleware
-        $data = $request->all();
-        $client = $data['client'];
-
-        // Validações básicas
-        if (!isset($data['order_id']) || !is_numeric($data['order_id'])) {
-            return response()->json(['message' => 'order_id inválido'], 400);
-        }
-        if (!isset($data['direction']) || !in_array($data['direction'], ['next', 'back'], true)) {
-            return response()->json(['message' => 'direction inválido'], 400);
-        }
-
-        // Etapas aceitas
-        $validSteps = ['select_modules', 'select_usage', 'checkout'];
-        $currentStep = $data['current_step'] ?? 'select_modules';
-        if (!in_array($currentStep, $validSteps, true)) {
-            $currentStep = 'select_modules';
-        }
-
-        // Busca o pedido em rascunho do cliente
-        $order = Order::where('id', (int) $data['order_id'])
-            ->where('client_id', $client->id)
-            ->where('status', 'draft')
-            ->first();
-
-        if (!$order) {
-            return response()->json(['message' => 'Pedido não encontrado'], 404);
-        }
-
-        // Verifica se há módulos com uso/tiers no pedido
-        $hasUsageModules = $order->items->contains(function ($item) {
-            $snapshot = $item->pricing_model_snapshot ?? null;
-            if (is_array($snapshot) && isset($snapshot['type']) && $snapshot['type'] === 'usage') {
-                return true;
-            }
-            return false;
-        });
-
-        // Verifica se há módulos com uso pendente
-        $pendingUsageCount = $order->items->filter(function ($item) {
-            $snapshot = $item->pricing_model_snapshot ?? null;
-            if (is_array($snapshot) && isset($snapshot['pending_usage'])) {
-                return (bool) $snapshot['pending_usage'];
-            }
-            return false;
-        })->count();
-
-        // Calcula a próxima etapa com base na direção
-        $nextStep = $currentStep;
-        if ($data['direction'] === 'next') {
-            if ($currentStep === 'select_modules') {
-                $nextStep = $hasUsageModules ? 'select_usage' : 'checkout';
-            } elseif ($currentStep === 'select_usage') {
-                $nextStep = $pendingUsageCount > 0 ? 'select_usage' : 'checkout';
-            } elseif ($currentStep === 'checkout') {
-                $nextStep = 'checkout';
-            }
-        } else {
-            if ($currentStep === 'checkout') {
-                $nextStep = $hasUsageModules ? 'select_usage' : 'select_modules';
-            } elseif ($currentStep === 'select_usage') {
-                $nextStep = 'select_modules';
-            } else {
-                $nextStep = 'select_modules';
-            }
-        }
-
-        // Atualiza a etapa atual do pedido
-        $order->current_step = $nextStep;
-        $order->save();
-
-        return response()->json([
-            'order_id' => $order->id,
-            'current_step' => $currentStep,
-            'next_step' => $nextStep,
-            'has_usage_modules' => $hasUsageModules,
-            'pending_usage_count' => $pendingUsageCount,
-        ], 200);
     }
 
     public function order(Request $request, $id) {
@@ -1044,13 +938,12 @@ class ApisController extends Controller
             $moduleData['description']        = $module->description;
             $moduleData['category']           = $module->category?->name;
             $moduleData['cover_image']        = $module->cover_image ? asset('storage/modules/' . $module->id . '/' . $module->cover_image) : asset('assets/media/images/default.png');
-            // $moduleData['packages']           = $module->packages()->pluck('package_id')->toArray();
 
             // Formata os preços
             $moduleData['pricing']['type'] = $module->pricing_type;
 
             // Se for cobrança por uso, retorna as faixas (tiers)
-            if($module->pricing_type == 'usage'){
+            if($module->pricing_type === 'Preço Por Uso'){
 
                 $pricingTiers = $module->pricingTiers->sortBy('usage_limit')
                                                         ->values()
@@ -1082,32 +975,110 @@ class ApisController extends Controller
      * Cria um pedido em rascunho (intenção de compra) com base nos módulos desejados.
      * Espera `modules` como array de objetos { id, config }.
      */
-    public function orderIntent(Request $request, OrderService $service)
+    public function orderUpdate(Request $request)
     {
-        // Extrai dados e cliente já anexado pelo middleware
+
+        // Obtém dados
         $data = $request->all();
+
+        // Extrai cliente
         $client = $data['client'];
 
-        // Valida se os módulos foram enviados
-        if (!isset($data['modules']) || !is_array($data['modules'])) {
-            return response()->json(['message' => 'Parâmetros faltando'], 400);
+        // Cria ou atualiza o rascunho com os módulos enviados
+        $order = $this->orderService->getOrderInProgress($client);
+
+        // Realiza ação desejada
+        $action = match($data['action']) {
+            'change_module' => $this->toggleModule($order, $data['value']),
+            'step'          => $this->updateStep($order, $data['value']),
+            default => null,
+        };
+
+        // Retorna resposta
+        return response()->json([
+            'message' => $action['message'],
+            'order' => $order
+        ]);
+
+        return ($order);
+
+     
+    }
+
+    /**
+     * Atualiza o passo do pedido
+     */
+    private function updateStep($order, $step){
+        
+        // Atualiza a etapa
+        $order->current_step = $step;
+        $order->save();
+        
+        return [
+            'message' => 'Passo atualizado com sucesso',
+            'order' => $order
+        ];
+        
+    }
+
+    /**
+     * Adiciona ou remove o módulo
+     */
+    private function toggleModule($order, $moduleId){
+
+        /**
+         * Busca dados do módulo
+         */
+        $module = Module::find($moduleId);
+
+        /**
+         * Verifica se esse pedido já tem esse item
+         */
+        $existingItem = OrderItem::where('order_id', $order->id)
+                                    ->where('type', 'Módulo')
+                                    ->where('item_key', $moduleId)
+                                    ->first();
+
+        /**
+         * Se o módulo já existe, remove
+         */
+        if ($existingItem) {
+
+            // Apaga o item
+            $existingItem->delete();
+
+            // Recalcula os totais
+            $this->orderService->recalculateOrderTotals($order);
+
+            // Retorno
+            return [
+                'message' => 'Módulo removido com sucesso.',
+                'action'  => 'removed',
+            ];
         }
 
-        // Define a moeda com fallback para BRL
-        $currency = isset($data['currency']) ? strtoupper((string) $data['currency']) : 'BRL';
-        // Usa order_id existente para atualizar o mesmo rascunho
-        $orderId = isset($data['order_id']) && is_numeric($data['order_id']) ? (int) $data['order_id'] : null;
+        // Cria item de módulo no pedido
+        OrderItem::create([
+            'order_id'                  => $order->id,
+            'type'                      => 'Módulo',
+            'item_name'                 => $module->name,
+            'item_key'                  => $module->id,
+            'item_billing_type'         => $module->pricing_type,
+            'item_usage_quantity'       => 1,
+            'item_value'                => $module->value,
+            'amount'                    => $module->value,
+            'payload'                   => json_encode($module->toArray()),
+        ]);
 
-        try {
-            // Cria ou atualiza o rascunho com os módulos enviados
-            $order = $service->createDraftOrderFromModules($client, $data['modules'], $currency, $orderId);
-        } catch (\InvalidArgumentException $e) {
-            // Retorna erro de validação vindo do service
-            return response()->json(['message' => $e->getMessage()], 422);
-        }
+        // Recalcula os totais
+        $this->orderService->recalculateOrderTotals($order);
 
-        // Responde com o pedido atualizado e seus itens
-        return response()->json($this->buildOrderSummary($order), 201);
+        // Retorno
+        return [
+            'message' => 'Módulo adicionado com sucesso.',
+            'action'  => 'added',
+        ];
+
     }
 
     /**

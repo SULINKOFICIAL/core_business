@@ -17,25 +17,14 @@ class OrderItem extends Model
 
     protected $fillable = [
         'order_id',
-        'item_type',
-        'action',
-        'item_code',
-        'item_name_snapshot',
-        'item_reference_type',
-        'item_reference_id',
-        'quantity',
-        'unit_price_snapshot',
-        'subtotal_amount',
-        'pricing_model_snapshot',
-        'rules_snapshot',
-        // Legacy
         'type',
         'item_name',
         'item_key',
+        'item_billing_type',
+        'item_usage_quantity',
         'item_value',
         'amount',
-        'start_date',
-        'end_date',
+        'payload',
     ];
 
     public function order(): BelongsTo

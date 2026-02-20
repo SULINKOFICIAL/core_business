@@ -62,9 +62,9 @@ class ModuleController extends Controller
         $data['created_by'] = Auth::id();
 
         // Define o tipo de cobrança (fixo por padrão)
-        $data['pricing_type'] = $data['pricing_type'] ?? 'fixed';
+        $data['pricing_type'] = $data['pricing_type'];
 
-        if ($data['pricing_type'] === 'usage') {
+        if ($data['pricing_type'] === 'Preço Por Uso') {
             // Em preço por uso, o valor fixo não é utilizado
             $data['value'] = 0;
         } else {
@@ -131,9 +131,9 @@ class ModuleController extends Controller
         $data['updated_by'] = Auth::id();
         
         // Define o tipo de cobrança (fixo por padrão)
-        $data['pricing_type'] = $data['pricing_type'] ?? 'fixed';
+        $data['pricing_type'] = $data['pricing_type'];
 
-        if ($data['pricing_type'] === 'usage') {
+        if ($data['pricing_type'] === 'Preço Por Uso') {
             // Em preço por uso, o valor fixo não é utilizado
             $data['value'] = 0;
         } else {
@@ -166,7 +166,9 @@ class ModuleController extends Controller
     // Sincroniza as faixas de preço do módulo quando a cobrança é por uso
     private function syncPricingTiers(Module $module, array $tiers, string $pricingType): void
     {
-        if ($pricingType !== 'usage') {
+        $isUsage = $pricingType === 'Preço Por Uso';
+
+        if (!$isUsage) {
             // Se não for por uso, remove faixas antigas
             $module->pricingTiers()->delete();
             return;

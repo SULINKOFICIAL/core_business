@@ -34,7 +34,7 @@ class OrderFlowSeeder extends Seeder
                     'name' => 'Gestão',
                     'description' => 'Módulo de gestão',
                     'value' => 29.90,
-                    'pricing_type' => 'fixed',
+                    'pricing_type' => 'Preço Fixo',
                     'status' => 1,
                     'created_by' => 1,
                 ]),
@@ -42,7 +42,7 @@ class OrderFlowSeeder extends Seeder
                     'name' => 'Atendimento',
                     'description' => 'Módulo de atendimento',
                     'value' => 19.90,
-                    'pricing_type' => 'fixed',
+                    'pricing_type' => 'Preço Fixo',
                     'status' => 1,
                     'created_by' => 1,
                 ]),
@@ -50,7 +50,7 @@ class OrderFlowSeeder extends Seeder
                     'name' => 'Vendas',
                     'description' => 'Módulo de vendas',
                     'value' => 49.90,
-                    'pricing_type' => 'usage',
+                    'pricing_type' => 'Preço Por Uso',
                     'usage_label' => 'Pedidos/mês',
                     'status' => 1,
                     'created_by' => 1,
@@ -59,7 +59,7 @@ class OrderFlowSeeder extends Seeder
         }
 
         // Configure a usage-based module with tiers
-        $usageModule = $modules->firstWhere('pricing_type', 'usage');
+        $usageModule = $modules->firstWhere('pricing_type', 'Preço Por Uso');
         if ($usageModule) {
             if (ModulePricingTier::where('module_id', $usageModule->id)->count() === 0) {
                 ModulePricingTier::create([
@@ -208,7 +208,7 @@ class OrderFlowSeeder extends Seeder
                 'type' => $module->pricing_type,
             ];
 
-            if ($module->pricing_type === 'usage') {
+            if ($module->pricing_type === 'Preço Por Uso') {
                 $usage = rand(500, 9000);
                 $tier = ModulePricingTier::where('module_id', $module->id)
                     ->where('usage_limit', '>=', $usage)
@@ -248,7 +248,7 @@ class OrderFlowSeeder extends Seeder
                 'item_value' => $unitPrice,
             ]);
 
-            if ($includeConfigs && $module->pricing_type === 'usage') {
+            if ($includeConfigs && $module->pricing_type === 'Preço Por Uso') {
                 OrderItemConfiguration::create([
                     'order_item_id' => $item->id,
                     'key' => 'usage',

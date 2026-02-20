@@ -18,7 +18,6 @@ class PackageController extends Controller
 
     protected $request;
     private $repository;
-    private $orderService;
 
     public function __construct(Request $request, Package $content)
     {
@@ -173,23 +172,7 @@ class PackageController extends Controller
     public function assign(Request $request, $id)
     {
 
-        // Obtém os dados da requisição
-        $data = $request->all();
-
-        // Obtém cliente e pacote
-        $client = Client::findOrFail($id);
-        $package = Package::findOrFail($data['package_id']);
-
-        // Retorna o cliente atualizado
-        $response = $this->orderService->createOrder($client, $package);
-
-        // Libera alteração dos módulos do cliente
-        $this->orderService->confirmPaymentOrder($response['order']);
-
-        // Retorna a página
-        return redirect()
-            ->route('clients.show', $client->id)
-            ->with('message', 'Pacote <b>'. $package->name . ' adicionado com sucesso.');
+       
 
     }
 
@@ -392,29 +375,4 @@ class PackageController extends Controller
             ->with('message', 'Configurações da conta do cliente atualizadas com sucesso.');
     }
 
-
-
-    /**
-     * Troca o pacote do cliente.
-     */
-    public function new(Request $request, $id)
-    {
-        // Obtém os dados da requisição
-        $data = $request->all();
-
-        // Obtém cliente e pacote
-        $client = Client::findOrFail($id);
-        $package = Package::findOrFail($data['package_id']);
-
-        // Retorna o cliente atualizado
-        $response = $this->orderService->createOrder($client, $package);
-        $this->orderService->confirmPaymentOrder($response['order']);
-
-        // Realiza consulta para alterar o armazenamento do cliente no micore
-        $this->guzzle('post', 'sistema/ajustar-armazenamento', $client, ['size' => $package['size_storage']]);
-
-        return redirect()
-            ->route('clients.show', $client->id)
-            ->with(['message' => 'Pacote trocado']);
-    }
 }

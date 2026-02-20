@@ -10,7 +10,7 @@
     @foreach ($modules as $module)
     @php
         $pricingLabel = 'R$ ' . number_format($module->value, 2, ',', '.');
-        if (($module->pricing_type ?? 'fixed') === 'usage') {
+        if (($module->pricing_type ?? 'Preço Fixo') === 'Preço Por Uso') {
             $minTier = $module->pricingTiers->sortBy('usage_limit')->first();
             $pricingLabel = $minTier ? 'A partir de R$ ' . number_format($minTier->price, 2, ',', '.') : 'Variável';
         }

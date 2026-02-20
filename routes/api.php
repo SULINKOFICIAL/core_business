@@ -41,12 +41,11 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
             Route::get('/compra/{id}',       [ApisController::class, 'order']);
             Route::get('/rascunho',          [ApisController::class, 'orderDraft']);
             Route::post('/etapa',            [ApisController::class, 'orderStep']);
-            Route::post('/rota',             [ApisController::class, 'orderRoute']);
             Route::post('/cupom/aplicar',    [ApisController::class, 'orderApplyCoupon']);
             Route::post('/cupom/remover',    [ApisController::class, 'orderRemoveCoupon']);
             Route::get('/uso',               [ApisController::class, 'orderUsageOptions']);
             Route::get('/checkout',          [ApisController::class, 'orderCheckout']);
-            Route::post('/intencao',         [ApisController::class, 'orderIntent']);
+            Route::post('/atualizar',        [ApisController::class, 'orderUpdate']);
             Route::post('/pagamento',        [ApisController::class, 'orderPayment']);
         });
 
