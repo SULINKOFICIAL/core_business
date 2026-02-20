@@ -214,47 +214,6 @@ class ApisController extends Controller
 
     }
 
-    public function plan(Request $request) {
-
-        // Recebe dados
-        $data = $request->all();
-
-        // Obtém dados do cliente
-        $client = $data['client'];
-
-        // Obtém plano atual do cliente
-        $package = $client->package;
-
-        // Se o cliente não tiver pacote
-        if (!$package) return response()->json([
-            'package' => null,
-            'renovation' => 0,
-        ], 200);
-
-        // Formata o pacote do cliente
-        $package['modules'] = $package->modules;
-
-        // Se o cliente tiver plano
-        if($package){
-
-            // Obtém pedido de renovação do cliente
-            $existsRenovation = $client->orders()->where('type', 'Renovação')->where('status', 'pendente')->exists();
-
-            return response()->json([
-                'package'     => $package,
-                'renovation'  => $client->renovation(),
-                'existsOrder' => $existsRenovation, 
-            ], 200);
-            
-        } else {
-            return response()->json([
-                'package' => null,
-                'renovation' => 0,
-            ], 200);
-        }
-
-    }
-
 
     /**
      * Retorna todos os módulos cadastrados

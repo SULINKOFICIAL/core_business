@@ -18,47 +18,6 @@ class ApisOrdersController extends Controller
         $this->orderService = $orderService;
     }
 
-    public function orders(Request $request)
-    {
-        // Recebe dados
-        $data = $request->all();
-
-        // Obtém dados do cliente
-        $client = $data['client'];
-
-        // Obtém plano atual do cliente
-        $orders = $client->orders()->orderBy('created_at', 'DESC')->get();
-
-        // Inicia Json
-        $ordersJson = [];
-
-        // Formata dados Json
-        foreach ($orders as $order) {
-
-            // Date formated
-            $buy['id'] = $order->id;
-            $buy['date_created'] = $order->created_at;
-            $buy['date_paid'] = $order->paid_at;
-            $buy['type'] = $order->type;
-            $buy['amount'] = $order->total();
-            $buy['method'] = $order->method;
-            $buy['description'] = $order->description;
-            $buy['status'] = $order->status;
-            $buy['packageName'] = $order->package->name;
-            $buy['transactions'] = $order->transactions->count();
-
-            // Se for a atribuição de um pacote
-            if ($buy['type'] == 'Pacote Trocado') {
-                $buy['previousPackageName'] = $order->previousPackage->name;
-            }
-
-            // Obtém dados
-            $ordersJson[] = $buy;
-        }
-
-        // Se o cliente tiver plano
-        return response()->json($ordersJson, 200);
-    }
 
     /**
      * Retorna o pedido em rascunho mais recente do cliente (se existir).
@@ -112,6 +71,7 @@ class ApisOrdersController extends Controller
      */
     public function orderUsageOptions(Request $request)
     {
+
         // Extrai dados e cliente já anexado pelo middleware
         $data = $request->all();
         $client = $data['client'];
@@ -131,9 +91,8 @@ class ApisOrdersController extends Controller
                 continue;
             }
 
-            $module = Module::where('id', $item->item_key)
-                ->where('pricing_type', 'Preço Por Uso')
-                ->first();
+            // Busca o módulo com cobrança por uso
+            $module = Module::where('id', $item->item_key)->where('pricing_type', 'Preço Por Uso')->first();
 
             if (!$module) {
                 continue;

@@ -9,34 +9,6 @@ use Illuminate\Http\Request;
 
 class ApisPaymentsController extends Controller
 {
-    public function cards(Request $request)
-    {
-        // Recebe dados
-        $data = $request->all();
-
-        // Obtém dados do cliente
-        $client = $data['client'];
-
-        // Obtém cartões do cliente
-        $cards = $client->cards()->orderBy('created_at', 'DESC')->get();
-
-        // Inicia Json
-        $cardsJson = [];
-
-        // Formata dados Json
-        foreach ($cards as $card) {
-            $cardData['id'] = $card->id;
-            $cardData['main'] = $card->main;
-            $cardData['name'] = $card->name;
-            $cardData['number'] = '**** **** **** ' . substr($card->number, -4);
-            $cardData['expiration'] = str_pad($card->expiration_month, 2, '0', STR_PAD_LEFT) . '/' . $card->expiration_year;
-
-            // Obtém dados
-            $cardsJson[] = $cardData;
-        }
-
-        return response()->json($cardsJson, 200);
-    }
 
     /**
      * Função responsável por processar pagamentos dos sistemas miCores.
