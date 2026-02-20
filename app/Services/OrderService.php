@@ -12,6 +12,7 @@ use App\Models\Module;
 use App\Models\OrderSubscription;
 use App\Models\OrderTransaction;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class OrderService
 {
@@ -166,24 +167,35 @@ class OrderService
         ];
     }
 
-    public function createOrderPayment($orderPayment, $client, $card, $cvv, $intervalCicle, $address)
+    public function createOrderPayment($orderPayment, $client, $clientInfo, $card, $cvv = null, $intervalCicle, $address = null)
     {
         $pagarMeService = new PagarMeService;
 
         /**
          * Retorna o customer na PagarMe 
          */
-        $customer = $pagarMeService->findOrCreateCustomer($client->id);
+        $customer = $pagarMeService->findOrCreateCustomer([
+            'id'           => $client->id,
+            'name'         => $client->name ?? $clientInfo['name'],
+            'email'        => $client->email ?? $clientInfo['email'],
+            'type'         => (isset($client->company) || $clientInfo['type'] == 1) ? 'company' : 'individual',
+            'document'     => isset($client->company) ? ($client->cnpj ?? $clientInfo['document']) : ($client->cpf ?? $clientInfo['document']),
+            'country_code' => $clientInfo['phone']['country_code'],
+            'area_code'    => $clientInfo['phone']['area_code'],
+            'number'       => $clientInfo['phone']['phone'],
+        ]);
 
         /**
          * Retorna o cartão na PagarMe 
          */
-        $card = $pagarMeService->findOrCreateCard($client->id, $card->id, $cvv, $address);
+        $card = $pagarMeService->findOrCreateCard($client->id, $card->id, $cvv ?? null, $address ?? null);
 
         /**
          * Retorna a assinatura na PagarMe 
          */
         $subscription = $pagarMeService->createSubscription($customer['id'], $card['id'], $orderPayment, $intervalCicle);
+
+        Log::info("Assinatura: " . json_encode($subscription));
 
         if(isset($subscription) && isset($subscription['id'])) {
 
@@ -203,6 +215,8 @@ class OrderService
 
             $transaction = $pagarMeService->getSubscriptionInvoices($orderSubscription->pagarme_subscription_id);
 
+            Log::info("Transação da Assinatura: " . json_encode($transaction));
+
             if(isset($transaction) && isset($transaction['data']) && isset($transaction['data'][0]['charge'])) {
 
                 $charge = $transaction['data'][0]['charge'] ?? null;
@@ -212,7 +226,7 @@ class OrderService
                     'pagarme_transaction_id'  => $charge['id'],
                 ], [
                     'status'                  => $charge['status'],
-                    'gateway_code'            => $charge['gateway_id'],
+                    'gateway_code'            => $charge['gateway_id'] ?? null,
                     'amount'                  => $charge['paid_amount'] / 100,
                     'currency'                => $charge['currency'],
                     'method'                  => $charge['payment_method'],
@@ -227,67 +241,46 @@ class OrderService
                 ]);
 
                 switch ($charge['status']) {
-
                     case 'paid':
                         $orderSubscription->update([
                             'status' => 'active',
                         ]);
-
                         $orderPayment->update([
                             'paid_at' => $charge['paid_at'],
                             'method'  => $charge['payment_method'],
                         ]);
-
                         return 'Assinatura aprovada com sucesso.';
                         break;
-                
                     case 'pending':
-
                         $orderSubscription->update([
                             'status' => 'pending',
                         ]);
-
                         return 'Pagamento pendente.';
-
                         break;
-                
-
                     case 'processing':
                         $orderSubscription->update([
                             'status' => 'pending',
                         ]);
-
                         return 'Pagamento em processamento.';
-
                         break;
-                
                     case 'failed':
                         $orderSubscription->update([
                             'status' => 'failed',
                         ]);
-
                         return 'Pagamento recusado.';
-                        
                         break;
-                
                     case 'canceled':
                         $orderSubscription->update([
                             'status' => 'canceled',
                         ]);
-
                         return 'Pagamento cancelado.';
-
                         break;
-                
                     case 'refunded':
                         $orderSubscription->update([
                             'status' => 'refunded',
                         ]);
-
                         return 'Pagamento estornado.';
-
                         break;
-
                     default:
                         return 'Status desconhecido.';
                 }
