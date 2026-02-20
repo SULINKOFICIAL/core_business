@@ -24,16 +24,38 @@ class PagarMeService
      * 
      *? Se nao existir, cria um
      */
-    public function findOrCreateCustomer($clientId)
+    public function findOrCreateCustomer($clientInfo)
     {
         // Obtem o cliente
-        $client = Client::find($clientId);
+        $client = Client::find($clientInfo['id']);
 
         // Verifica se o cliente ja possui um customer na PagarMe
         if(isset($client) && $client->pagarme_customer_id) {
             
             // Cria o cliente na PagarMe
             $response = Http::withBasicAuth($this->apiKey, '')->get($this->baseUrl . '/customers/' . $client->pagarme_customer_id)->json();
+
+            // Monta o array
+            $payload = [
+                'name'      => $clientInfo['name'],
+                'email'     => $clientInfo['email'],
+                'document'  => $clientInfo['document'],
+                'phones'    => [
+                    'mobile_phone' => [
+                        'country_code' => $clientInfo['country_code'],
+                        'area_code'    => $clientInfo['area_code'],
+                        'number'       => $clientInfo['number'],
+                    ]
+                ],
+                'code'      => "client_{$clientInfo['id']}",
+                'type'      => $clientInfo['type'],
+            ];
+        
+            // Atualiza na PagarMe
+            Http::withBasicAuth($this->apiKey, '')->put($this->baseUrl . '/customers/' . $response['id'], $payload);
+        
+            // Adiciona o email ao response
+            $response['email'] = $client->email;
 
             // Verifica se a resposta foi bem sucedida
             if(isset($response) && isset($response['id'])) {
@@ -47,18 +69,18 @@ class PagarMeService
 
             // Monta o payload para a criação do cliente
             $payload = [
-                'name'      => $client->name,
-                'email'     => $client->email,
-                'document'  => '09842558932',
+                'name'      => $clientInfo['name'],
+                'email'     => $clientInfo['email'],
+                'document'  => $clientInfo['document'],
                 'phones'    => [
                     'mobile_phone' => [
-                        'country_code' => '55',
-                        'area_code'    => '41',
-                        'number'       => '996718404',
+                        'country_code' => $clientInfo['country_code'],
+                        'area_code'    => $clientInfo['area_code'],
+                        'number'       => $clientInfo['number'],
                     ]
                 ],
-                'code'      => "client_{$client->id}",
-                'type'      => 'individual',
+                'code'      => "client_{$clientInfo['id']}",
+                'type'      => $clientInfo['type'],
             ];
 
             // Cria o cliente na PagarMe
@@ -90,7 +112,7 @@ class PagarMeService
      * 
      *? Se nao existir, cria um
      */
-    public function findOrCreateCard($clientId, $cardId, $cvv, $address)
+    public function findOrCreateCard($clientId, $cardId, $cvv = null, $address = null)
     {
         // Obtem o cliente
         $client = Client::find($clientId);

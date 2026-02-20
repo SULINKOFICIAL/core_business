@@ -1107,16 +1107,11 @@ class ApisController extends Controller
             $order = Order::where('client_id', $data['client']->id)->orderBy('id', 'DESC')->first();
         }
 
-        // Verifica se existe o cartão
-        if(isset($data['card']) && isset($data['card']['card_id'])) {
-            $cardId = $data['card']['card_id'];
-        }
-
         // Encontra o cartão do cliente para reutilizar
-        if(isset($cardId)){
+        if(isset($data['card_id'])){
 
             // Encontra o cartão do cliente
-            $card = ClientCard::where('client_id', $data['client']->id)->where('id', $cardId)->first();
+            $card = ClientCard::where('client_id', $data['client']->id)->where('id', $data['card_id'])->first();
 
             // Se não encontrar o cliente
             if(!$card) return response()->json(['message' => 'Cartão não encontrado para esse cliente'], 404);
@@ -1149,7 +1144,7 @@ class ApisController extends Controller
         }
 
         // Retorna o cliente atualizado
-        $response = $service->createOrderPayment($order, $data['client'], $card, $data['card']['cvv'] ?? null, $data['billing_cycle'], $data['card']['address']);
+        $response = $service->createOrderPayment($order, $data['client'], $data['client_info'] ,$card, isset($data['card']['cvv']) ? $data['card']['cvv'] : null, $data['billing_cycle'], isset($data['card']['address']) ? $data['card']['address'] : null);
 
         return response()->json([
             'message' => $response

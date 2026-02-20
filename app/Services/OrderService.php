@@ -12,28 +12,191 @@ use App\Models\Module;
 use App\Models\OrderSubscription;
 use App\Models\OrderTransaction;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class OrderService
 {
 
-    public function createOrderPayment($orderPayment, $client, $card, $cvv, $intervalCicle, $address)
+    public function __construct()
+    {
+    }
+
+
+    public function createOrder($client, $newPackage)
+    {
+
+        // Verifica se não esta atualizando para o mesmo pacote
+        if ($client->package_id == $newPackage->id) {
+
+            // Obtém pedido de renovação do cliente
+            $orderRenovation = $client->orders()->where('type', 'Renovação')->where('status', 'pendente')->first();
+
+            // Retorna ordem ou falha
+            if($orderRenovation){
+                return [
+                    'status' => 'Pedido de renovação encontrado.', 
+                    'order' => $orderRenovation
+                ];
+            } else {
+                return [
+                    'status' => 'Falha', 
+                    'message' => 'O cliente já esta com esse plano atribuido e não possui renovação pendentes.',
+                ];
+            }
+            
+        }
+
+        // Se já existir um pedido em andamento referente aquele item/produtos.
+        $existsOrder = Order::where('client_id', $client->id)
+                            ->where('key_id', $newPackage->id)
+                            ->where('status', 'Pendente')
+                            ->first();
+
+        // Retorna o pedido em andamento
+        if($existsOrder){
+            return [
+                'status' => 'Pedido já foi gerado.', 
+                'order' => $existsOrder
+            ];
+        }
+
+        // Obtém pacote atual
+        $currentPackage = $client->package;
+
+        // Inicia variável que vai calcular o crédito do cliente
+        $credit = 0;
+
+        /**
+         * Verifica se o cliente estava em um pacote
+         * gratuito, se estiver não calcula créditos.
+         */
+        if ($currentPackage && !$currentPackage->free) {
+            $daysInMonth   = now()->daysInMonth;
+            $daysUsed      = now()->day;
+            $daysRemaining = $daysInMonth - $daysUsed;
+            $dailyRate     = $currentPackage->value / $daysInMonth;
+            $credit        = $dailyRate * $daysRemaining;
+        }
+
+        // Se for uma troca
+        if($currentPackage){
+            $type = 'Pacote Trocado';
+            $oldPackage = $currentPackage->id;
+        } else {
+            $type = 'Pacote Atribuido';
+            $oldPackage = null;
+        }
+
+        // Criar intenção de compra
+        $order = Order::create([
+            'client_id'       => $client->id,
+            'type'            => $type,
+            'key_id'          => $newPackage->id,
+            'previous_key_id' => $oldPackage,
+            'status'          => 'Pendente',
+            'currency'        => 'BRL',
+        ]);
+
+        // Adiciona pacote na compra
+        OrderItem::create([
+            'order_id'    => $order->id,
+            'item_type'   => 'package',
+            'action'      => 'Alteração',
+            'item_code'   => (string) $newPackage->id,
+            'item_name_snapshot' => $newPackage->name,
+            'quantity'    => 1,
+            'unit_price_snapshot' => $newPackage->value,
+            'subtotal_amount' => $newPackage->value,
+            // Legacy compatibility
+            'type'        => 'Pacote',
+            'item_name'   => $newPackage->name,
+            'item_key'    => $newPackage->id,
+            'item_value'  => $newPackage->value,
+        ]);
+
+        // Adiciona os novos módulos
+        foreach ($newPackage->modules as $module) {
+            OrderItem::create([
+                'order_id'  => $order->id,
+                'item_type' => 'module',
+                'action'    => 'Adição',
+                'item_code' => (string) $module->id,
+                'item_name_snapshot' => $module->name,
+                'quantity'  => 1,
+                'unit_price_snapshot' => 0,
+                'subtotal_amount' => 0,
+                // Legacy compatibility
+                'type'      => 'Módulo',
+                'item_name' => $module->name,
+                'item_key'  => $module->id,
+                'item_value' => 0,
+            ]);
+        }
+
+        // Adiciona crédito se necessário
+        if ($credit > 0) {
+            OrderItem::create([
+                'order_id'    => $order->id,
+                'item_type'   => 'credit',
+                'action'      => 'Ajuste',
+                'item_name_snapshot' => 'Crédito proporcional',
+                'quantity'    => 1,
+                'unit_price_snapshot' => -$credit,
+                'subtotal_amount' => -$credit,
+                // Legacy compatibility
+                'type'        => 'Crédito',
+                'item_name'   => 'Crédito proporcional',
+                'item_value'  => -$credit,
+            ]);
+        }
+
+        $totalAmount = (float) $order->items()->sum('subtotal_amount');
+        $order->update([
+            'total_amount' => $totalAmount,
+            'pricing_snapshot' => [
+                'package_id' => $newPackage->id,
+                'previous_package_id' => $oldPackage,
+                'items_count' => $order->items()->count(),
+                'calculated_at' => now()->toDateTimeString(),
+            ],
+        ]);
+
+        return [
+            'status' => 'Pedido Gerado', 
+            'order' => $order
+        ];
+    }
+
+    public function createOrderPayment($orderPayment, $client, $clientInfo, $card, $cvv = null, $intervalCicle, $address = null)
+>>>>>>> origin
     {
         $pagarMeService = new PagarMeService;
 
         /**
          * Retorna o customer na PagarMe 
          */
-        $customer = $pagarMeService->findOrCreateCustomer($client->id);
+        $customer = $pagarMeService->findOrCreateCustomer([
+            'id'           => $client->id,
+            'name'         => $client->name ?? $clientInfo['name'],
+            'email'        => $client->email ?? $clientInfo['email'],
+            'type'         => (isset($client->company) || $clientInfo['type'] == 1) ? 'company' : 'individual',
+            'document'     => isset($client->company) ? ($client->cnpj ?? $clientInfo['document']) : ($client->cpf ?? $clientInfo['document']),
+            'country_code' => $clientInfo['phone']['country_code'],
+            'area_code'    => $clientInfo['phone']['area_code'],
+            'number'       => $clientInfo['phone']['phone'],
+        ]);
 
         /**
          * Retorna o cartão na PagarMe 
          */
-        $card = $pagarMeService->findOrCreateCard($client->id, $card->id, $cvv, $address);
+        $card = $pagarMeService->findOrCreateCard($client->id, $card->id, $cvv ?? null, $address ?? null);
 
         /**
          * Retorna a assinatura na PagarMe 
          */
         $subscription = $pagarMeService->createSubscription($customer['id'], $card['id'], $orderPayment, $intervalCicle);
+
+        Log::info("Assinatura: " . json_encode($subscription));
 
         if(isset($subscription) && isset($subscription['id'])) {
 
@@ -53,6 +216,8 @@ class OrderService
 
             $transaction = $pagarMeService->getSubscriptionInvoices($orderSubscription->pagarme_subscription_id);
 
+            Log::info("Transação da Assinatura: " . json_encode($transaction));
+
             if(isset($transaction) && isset($transaction['data']) && isset($transaction['data'][0]['charge'])) {
 
                 $charge = $transaction['data'][0]['charge'] ?? null;
@@ -62,7 +227,7 @@ class OrderService
                     'pagarme_transaction_id'  => $charge['id'],
                 ], [
                     'status'                  => $charge['status'],
-                    'gateway_code'            => $charge['gateway_id'],
+                    'gateway_code'            => $charge['gateway_id'] ?? null,
                     'amount'                  => $charge['paid_amount'] / 100,
                     'currency'                => $charge['currency'],
                     'method'                  => $charge['payment_method'],
@@ -77,67 +242,46 @@ class OrderService
                 ]);
 
                 switch ($charge['status']) {
-
                     case 'paid':
                         $orderSubscription->update([
                             'status' => 'active',
                         ]);
-
                         $orderPayment->update([
                             'paid_at' => $charge['paid_at'],
                             'method'  => $charge['payment_method'],
                         ]);
-
                         return 'Assinatura aprovada com sucesso.';
                         break;
-                
                     case 'pending':
-
                         $orderSubscription->update([
                             'status' => 'pending',
                         ]);
-
                         return 'Pagamento pendente.';
-
                         break;
-                
-
                     case 'processing':
                         $orderSubscription->update([
                             'status' => 'pending',
                         ]);
-
                         return 'Pagamento em processamento.';
-
                         break;
-                
                     case 'failed':
                         $orderSubscription->update([
                             'status' => 'failed',
                         ]);
-
                         return 'Pagamento recusado.';
-                        
                         break;
-                
                     case 'canceled':
                         $orderSubscription->update([
                             'status' => 'canceled',
                         ]);
-
                         return 'Pagamento cancelado.';
-
                         break;
-                
                     case 'refunded':
                         $orderSubscription->update([
                             'status' => 'refunded',
                         ]);
-
                         return 'Pagamento estornado.';
-
                         break;
-
                     default:
                         return 'Status desconhecido.';
                 }
