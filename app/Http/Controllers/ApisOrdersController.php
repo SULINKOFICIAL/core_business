@@ -23,7 +23,7 @@ class ApisOrdersController extends Controller
      * Retorna o pedido em rascunho mais recente do cliente (se existir).
      * Obs.: Geralmente é o pedido em andamento.
      */
-    public function orderDraft(Request $request)
+    public function draft(Request $request)
     {
         // Extrai os dados
         $data = $request->all();
@@ -69,7 +69,7 @@ class ApisOrdersController extends Controller
     /**
      * Retorna as opções de uso (tiers) para módulos do pedido.
      */
-    public function orderUsageOptions(Request $request)
+    public function usageOptions(Request $request)
     {
 
         // Extrai dados e cliente já anexado pelo middleware
@@ -133,7 +133,7 @@ class ApisOrdersController extends Controller
         ], 200);
     }
 
-    public function order(Request $request, $id)
+    public function details(Request $request, $id)
     {
         // Recebe dados
         $data = $request->all();
@@ -187,7 +187,7 @@ class ApisOrdersController extends Controller
     /**
      * Cria um pedido em rascunho (intenção de compra) com base nos módulos desejados.
      */
-    public function orderUpdate(Request $request)
+    public function update(Request $request)
     {
         // Obtém dados
         $data = $request->all();

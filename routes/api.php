@@ -40,17 +40,17 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
          * API que gerencia os pedidos
         */
         Route::prefix('pedidos')->group(function () {
-            Route::get('/compra/{id}',       [ApisOrdersController::class, 'order']);
-            Route::get('/rascunho',          [ApisOrdersController::class, 'orderDraft']);
-            Route::get('/uso',               [ApisOrdersController::class, 'orderUsageOptions']);
-            Route::post('/atualizar',        [ApisOrdersController::class, 'orderUpdate']);
+            Route::get('/compra/{id}',       [ApisOrdersController::class, 'details']);
+            Route::get('/rascunho',          [ApisOrdersController::class, 'draft']);
+            Route::get('/uso',               [ApisOrdersController::class, 'usageOptions']);
+            Route::post('/atualizar',        [ApisOrdersController::class, 'update']);
         });
 
         /**
          * API que gerencia os pagamentos
         */
         Route::prefix('pagamento')->group(function () {
-            Route::post('/pagar',        [ApisPaymentsController::class, 'orderPayment']);
+            Route::post('/pagar', [ApisPaymentsController::class, 'orderPayment']);
         });
 
         /** API que recebe dados dos miCores */
