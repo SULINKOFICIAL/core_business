@@ -6,6 +6,7 @@ use App\Models\Module;
 use App\Models\ModulePricingTier;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderItemConfiguration;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
 
@@ -201,6 +202,7 @@ class ApisOrdersController extends Controller
         // Realiza ação desejada
         $action = match ($data['action']) {
             'change_module' => $this->toggleModule($order, $data['value']),
+            'usage' => $this->updateUsage($order, $data['value'] ?? []),
             'step' => $this->updateStep($order, $data['value']),
             default => null,
         };
@@ -273,6 +275,82 @@ class ApisOrdersController extends Controller
         return [
             'message' => 'Módulo adicionado com sucesso.',
             'action' => 'added',
+        ];
+    }
+
+    /**
+     * Salva a configuração de uso do módulo no pedido em andamento.
+     */
+    private function updateUsage($order, $value): array
+    {
+        // Extrai identificadores do payload enviado pelo front.
+        $moduleId = is_array($value) ? ($value['module_id'] ?? null) : null;
+        $usageLimit = is_array($value) ? ($value['usage'] ?? null) : null;
+
+        // Valida dados mínimos obrigatórios para processar o uso.
+        if (!$moduleId || !$usageLimit) {
+            return [
+                'message' => 'Parâmetros de uso inválidos.',
+                'action' => 'invalid',
+            ];
+        }
+
+        // Busca o item do pedido referente ao módulo selecionado.
+        $orderItem = OrderItem::where('order_id', $order->id)
+            ->where('type', 'Módulo')
+            ->where('item_key', $moduleId)
+            ->first();
+
+        // Interrompe quando o módulo não existe no pedido atual.
+        if (!$orderItem) {
+            return [
+                'message' => 'Módulo não encontrado no pedido.',
+                'action' => 'not_found',
+            ];
+        }
+
+        // Busca a faixa de preço do módulo com base no limite escolhido.
+        $pricingTier = ModulePricingTier::where('module_id', $moduleId)
+            ->where('usage_limit', $usageLimit)
+            ->first();
+
+        // Garante que o limite selecionado pertence a uma faixa válida.
+        if (!$pricingTier) {
+            return [
+                'message' => 'Faixa de uso inválida para este módulo.',
+                'action' => 'invalid_tier',
+            ];
+        }
+
+        // Persiste a configuração de uso para auditoria e retomada do fluxo.
+        OrderItemConfiguration::updateOrCreate(
+            [
+                'order_item_id' => $orderItem->id,
+                'key' => 'usage',
+            ],
+            [
+                'value' => (string) $usageLimit,
+                'value_type' => 'integer',
+                'derived_pricing_effect' => [
+                    'usage_limit' => (int) $pricingTier->usage_limit,
+                    'price' => (float) $pricingTier->price,
+                ],
+            ]
+        );
+
+        // Atualiza quantidade de uso e valor do item com base na faixa escolhida.
+        $orderItem->item_usage_quantity = (int) $usageLimit;
+        $orderItem->item_value = (float) $pricingTier->price;
+        $orderItem->amount = (float) $pricingTier->price;
+        $orderItem->save();
+
+        // Recalcula os totais do pedido após alteração de uso.
+        $this->orderService->recalculateOrderTotals($order);
+
+        // Retorna status de sucesso para o front.
+        return [
+            'message' => 'Uso do módulo atualizado com sucesso.',
+            'action' => 'updated',
         ];
     }
 }

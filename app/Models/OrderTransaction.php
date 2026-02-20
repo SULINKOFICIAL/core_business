@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OrderTransaction extends Model
 {
-    protected $table = 'order_transactions';
+    protected $table = 'orders_transactions';
 
     protected $casts = [
         'raw_response_snapshot' => 'array',

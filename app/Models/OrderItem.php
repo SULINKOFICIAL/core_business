@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OrderItem extends Model
 {
-    protected $table = 'order_items';
+    protected $table = 'orders_items';
 
     protected $casts = [
         'pricing_model_snapshot' => 'array',

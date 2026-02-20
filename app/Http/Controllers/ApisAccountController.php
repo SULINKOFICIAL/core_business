@@ -103,7 +103,6 @@ class ApisAccountController extends Controller
             $cardData['name'] = $card->name;
             $cardData['number'] = '**** **** **** ' . substr($card->number, -4);
             $cardData['expiration'] = str_pad($card->expiration_month, 2, '0', STR_PAD_LEFT) . '/' . $card->expiration_year;
-
             $cardsJson[] = $cardData;
         }
 
