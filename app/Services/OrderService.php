@@ -17,11 +17,6 @@ use Illuminate\Support\Facades\Log;
 class OrderService
 {
 
-    public function __construct()
-    {
-    }
-
-
     public function createOrder($client, $newPackage)
     {
 
@@ -168,7 +163,6 @@ class OrderService
     }
 
     public function createOrderPayment($orderPayment, $client, $clientInfo, $card, $cvv = null, $intervalCicle, $address = null)
->>>>>>> origin
     {
         $pagarMeService = new PagarMeService;
 
@@ -379,29 +373,228 @@ class OrderService
 
     /**
      * Cria um pedido em rascunho com base nos módulos e configurações.
+     *
+     * @param  \\App\\Models\\Client $client
+     * @param  array $modulesInput Array de itens {id, config}
+     * @param  string $currency
+     * @return \\App\\Models\\Order
      */
-    public function getOrderInProgress($client): Order
+    public function createDraftOrderFromModules($client, array $modulesInput, string $currency = 'BRL', ?int $orderId = null): Order
     {
-        return Order::firstOrCreate(
-            [
+        /**
+         * Monta o rascunho do pedido com base nos módulos enviados,
+         * preservando o mesmo pedido quando for uma atualização.
+         */
+        $moduleIds = [];
+        $configsById = [];
+
+        foreach ($modulesInput as $item) {
+            if (!is_array($item) || !isset($item['id'])) {
+                // Garante o formato correto do payload
+                continue;
+            }
+
+            // Converte para inteiro para evitar valores inválidos
+            $moduleId = (int) $item['id'];
+            if ($moduleId <= 0) {
+                // Impede ids não numéricos ou negativos
+                continue;
+            }
+
+            // Acumula ids e configs por módulo
+            $moduleIds[] = $moduleId;
+            $configsById[$moduleId] = isset($item['config']) && is_array($item['config']) ? $item['config'] : [];
+        }
+
+        // Remove duplicados
+        $moduleIds = array_values(array_unique($moduleIds));
+        if (empty($moduleIds)) {
+            // Não permite pedido sem módulos
+            return $orderId
+                ? (Order::where('id', $orderId)->where('client_id', $client->id)->where('status', 'draft')->first() ?? Order::create([
+                    'client_id' => $client->id,
+                    'status' => 'draft',
+                    'currency' => $currency,
+                    'pricing_snapshot' => [
+                        'source' => 'central',
+                        'modules_requested' => [],
+                        'calculated_at' => now()->toDateTimeString(),
+                    ],
+                ]))
+                : Order::create([
+                    'client_id' => $client->id,
+                    'status' => 'draft',
+                    'currency' => $currency,
+                    'pricing_snapshot' => [
+                        'source' => 'central',
+                        'modules_requested' => [],
+                        'calculated_at' => now()->toDateTimeString(),
+                    ],
+                ]);
+        }
+
+        // Carrega módulos válidos com seus tiers
+        $modules = Module::with('pricingTiers')->whereIn('id', $moduleIds)->where('status', true)->get();
+        if ($modules->isEmpty()) {
+            // Bloqueia módulos inexistentes ou inativos
+            $order = Order::create([
                 'client_id' => $client->id,
                 'status' => 'draft',
-            ],
-        );
+                'currency' => $currency,
+                'pricing_snapshot' => [
+                    'source' => 'central',
+                    'modules_requested' => [],
+                    'calculated_at' => now()->toDateTimeString(),
+                ],
+            ]);
+            return $order;
+        }
+
+        $order = null;
+        if ($orderId) {
+            // Reusa o rascunho existente quando informado
+            $order = Order::where('id', $orderId)
+                ->where('client_id', $client->id)
+                ->where('status', 'draft')
+                ->first();
+        }
+
+        if (!$order) {
+            // Cria novo rascunho caso não exista
+            $order = Order::create([
+                'client_id' => $client->id,
+                'status' => 'draft',
+                'currency' => $currency,
+                'pricing_snapshot' => [
+                    'source' => 'central',
+                    'modules_requested' => $moduleIds,
+                    'calculated_at' => now()->toDateTimeString(),
+                ],
+            ]);
+        } else {
+            // Remove itens/configs para reconstruir o rascunho
+            $order->items()->delete();
+            $order->update([
+                // Atualiza moeda e snapshot
+                'currency' => $currency,
+                'pricing_snapshot' => [
+                    'source' => 'central',
+                    'modules_requested' => $moduleIds,
+                    'calculated_at' => now()->toDateTimeString(),
+                ],
+            ]);
+        }
+
+        // Inicia total do pedido
+        $total = 0.0;
+
+        foreach ($modules as $module) {
+            // Configuração dinâmica do módulo (quando existir)
+            $config = $configsById[$module->id] ?? [];
+
+            // Valor base do módulo
+            $unitPrice = 0.0;
+            $pricingModelSnapshot = [
+                'type' => $module->pricing_type,
+            ];
+
+            if ($module->pricing_type === 'usage') {
+                // Extrai o uso informado pelo cliente
+                $usage = null;
+                if (isset($config['usage']) && is_numeric($config['usage'])) {
+                    $usage = (float) $config['usage'];
+                } elseif (isset($config['volume']) && is_numeric($config['volume'])) {
+                    $usage = (float) $config['volume'];
+                }
+
+                // Ordena as faixas de preço por limite de uso
+                $tiers = $module->pricingTiers->sortBy('usage_limit')->values();
+                if ($tiers->isEmpty()) {
+                    // Bloqueia módulos por uso sem faixas configuradas
+                    continue;
+                }
+
+                if ($usage === null) {
+                    // Marca como pendente quando o uso não foi informado
+                    $pricingModelSnapshot['pending_usage'] = true;
+                    $unitPrice = 0.0;
+                } else {
+                    // Encontra o tier correspondente ao uso informado
+                    $matchedTier = null;
+                    foreach ($tiers as $tier) {
+                        if ($usage <= (float) $tier->usage_limit) {
+                            $matchedTier = $tier;
+                            break;
+                        }
+                    }
+                    if (!$matchedTier) {
+                        $matchedTier = $tiers->last();
+                    }
+
+                    // Aplica preço da faixa selecionada
+                    $unitPrice = (float) $matchedTier->price;
+                    // Salva detalhes do cálculo no snapshot
+                    $pricingModelSnapshot['usage'] = $usage;
+                    $pricingModelSnapshot['tier_limit'] = (float) $matchedTier->usage_limit;
+                    $pricingModelSnapshot['tier_price'] = (float) $matchedTier->price;
+                }
+            } else {
+                // Preço fixo para módulos sem cobrança por uso
+                $unitPrice = (float) $module->value;
+            }
+
+            // Cria item do pedido com snapshot imutável
+            $item = OrderItem::create([
+                'order_id' => $order->id,
+                'item_type' => 'module',
+                'action' => 'Adição',
+                'item_code' => (string) $module->id,
+                'item_name_snapshot' => $module->name,
+                'item_reference_type' => Module::class,
+                'item_reference_id' => $module->id,
+                'quantity' => 1,
+                'unit_price_snapshot' => $unitPrice,
+                'subtotal_amount' => $unitPrice,
+                'pricing_model_snapshot' => $pricingModelSnapshot,
+                // Legacy compatibility
+                'type' => 'Módulo',
+                'item_name' => $module->name,
+                'item_key' => $module->id,
+                'item_value' => $unitPrice,
+            ]);
+
+            foreach ($config as $key => $value) {
+                // Persiste cada configuração do módulo
+                OrderItemConfiguration::create([
+                    'order_item_id' => $item->id,
+                    'key' => (string) $key,
+                    'value' => is_scalar($value) ? (string) $value : json_encode($value),
+                    'value_type' => gettype($value),
+                    'derived_pricing_effect' => $pricingModelSnapshot,
+                ]);
+            }
+
+            // Soma ao total do pedido
+            $total += $unitPrice;
+        }
+
+        // Atualiza o total do pedido com base no cupom, se existir
+        $this->recalculateOrderTotals($order, $total);
+
+        // Retorna o rascunho atualizado
+        return $order;
     }
 
     /**
      * Recalcula o total do pedido considerando o cupom aplicado.
      */
-    public function recalculateOrderTotals(Order $order, ?float $subtotal = null): void
+    private function recalculateOrderTotals(Order $order, ?float $subtotal = null): void
     {
 
         // Soma o subtotal atual caso não seja informado
-        $itemsSubtotal = $subtotal ?? (float) $order->items()->sum('amount');
-
+        $itemsSubtotal = $subtotal ?? (float) $order->items()->sum('subtotal_amount');
         // Calcula desconto do cupom quando existir
         $couponDiscount = $this->calculateCouponDiscount($order, $itemsSubtotal);
-
         // Calcula o total final do pedido
         $totalAmount = $itemsSubtotal - $couponDiscount;
         if ($totalAmount < 0) {
