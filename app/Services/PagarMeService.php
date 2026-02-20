@@ -40,6 +40,7 @@ class PagarMeService
 
                 // Monta o array com email
                 $payload = [
+                    'name'  => $client->name,
                     'email' => $client->email
                 ];
             
