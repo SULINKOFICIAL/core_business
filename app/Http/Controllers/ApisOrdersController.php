@@ -33,11 +33,7 @@ class ApisOrdersController extends Controller
         $client = $data['client'];
 
         // Busca o pedido em andamento
-        $order = Order::where('client_id', $client->id)
-            ->where('status', 'draft')
-            ->orderBy('created_at', 'DESC')
-            ->with(['items.configurations'])
-            ->first();
+        $order = $this->orderService->getOrderInProgress($client);
 
         // Monta os itens com os dados relevantes para o front
         $items = $order->items->map(function ($item) {
@@ -56,14 +52,14 @@ class ApisOrdersController extends Controller
 
         // Responde com o rascunho e os itens formatados
         return response()->json([
-            'order_id' => $order->id,
-            'status' => $order->status,
-            'current_step' => $order->current_step,
-            'amount' => $subtotalAmount,
-            'discount_amount' => $discountAmount,
-            'total_amount' => $order->total(),
-            'currency' => $order->currency,
-            'items' => $items,
+            'order_id'          => $order->id,
+            'status'            => $order->status,
+            'current_step'      => $order->current_step,
+            'amount'            => $subtotalAmount,
+            'discount_amount'   => $discountAmount,
+            'total_amount'      => $order->total_amount,
+            'currency'          => $order->currency,
+            'items'             => $items,
         ], 200);
     }
 
@@ -150,7 +146,7 @@ class ApisOrdersController extends Controller
         $orderJson['date_created'] = $order->created_at;
         $orderJson['date_paid'] = $order->paid_at;
         $orderJson['type'] = $order->type;
-        $orderJson['amount'] = $order->total();
+        $orderJson['amount'] = $order->total_amount;
         $orderJson['method'] = $order->method;
         $orderJson['description'] = $order->description;
         $orderJson['status'] = $order->status;
