@@ -35,21 +35,27 @@ class PagarMeService
             // Cria o cliente na PagarMe
             $response = Http::withBasicAuth($this->apiKey, '')->get($this->baseUrl . '/customers/' . $client->pagarme_customer_id)->json();
 
-            // Se vier vazio, atualiza com o email do cliente
-            if (empty($response['email']) && !empty($client->email)) {
-
-                // Monta o array com email
-                $payload = [
-                    'name'  => $client->name,
-                    'email' => $client->email
-                ];
-            
-                // Atualiza na PagarMe
-                Http::withBasicAuth($this->apiKey, '')->put($this->baseUrl . '/customers/' . $response['id'], $payload);
-            
-                // Adiciona o email ao response
-                $response['email'] = $client->email;
-            }
+            // Monta o array
+            $payload = [
+                'name'      => $clientInfo['name'],
+                'email'     => $clientInfo['email'],
+                'document'  => $clientInfo['document'],
+                'phones'    => [
+                    'mobile_phone' => [
+                        'country_code' => $clientInfo['country_code'],
+                        'area_code'    => $clientInfo['area_code'],
+                        'number'       => $clientInfo['number'],
+                    ]
+                ],
+                'code'      => "client_{$clientInfo['id']}",
+                'type'      => $clientInfo['type'],
+            ];
+        
+            // Atualiza na PagarMe
+            Http::withBasicAuth($this->apiKey, '')->put($this->baseUrl . '/customers/' . $response['id'], $payload);
+        
+            // Adiciona o email ao response
+            $response['email'] = $client->email;
 
             // Verifica se a resposta foi bem sucedida
             if(isset($response) && isset($response['id'])) {
