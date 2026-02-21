@@ -325,7 +325,7 @@ class CpanelController extends Controller
     private function makeSubdomain($domain)
     {
 
-        $documentRoot = "/home/" . $this->cpanelPrefix . "/core";
+        $documentRoot = "/home/" . $this->cpanelPrefix . "/public_html";
 
         // Envia a solicitação para criar o subdomínio
         $response = $this->guzzle('GET', "{$this->cpanelUrl}/execute/SubDomain/addsubdomain", $this->cpanelUser, $this->cpanelPass, [
@@ -489,43 +489,4 @@ class CpanelController extends Controller
         return json_decode($response->getBody()->getContents(), true);
     }
 
-
-    /**
-     * Clona o repositório Laravel para o subdomínio via SSH.
-     *
-     * @param string $domain Nome do subdomínio
-     * @return string Saída do comando SSH
-     * @throws Exception Se a autenticação SSH falhar
-     */
-    private function cloneRepository($domain)
-    {
-        $repoUrl = 'https://github.com/SULINKOFICIAL/coresulink.git';
-        $path = "/home/" . $this->cpanelPrefix . "/{$domain}";
-
-        $ssh = new SSH2(env('WHM_IP'));
-        if (!$ssh->login($this->cpanelUser, $this->cpanelPass)) {
-            throw new Exception('Falha na autenticação SSH');
-        }
-
-        // Comando para clonar o repositório
-        $command = "git clone {$repoUrl} {$path}";
-        return $ssh->exec($command);
-    }
-
-    /**
-     * Cria um arquivo de teste no servidor via API do cPanel.
-     *
-     * @return array Resposta da API do cPanel
-     */
-    private function createTestFileCpanel()
-    {
-        $path = "/home/" . $this->cpanelPrefix;
-        $content = "Arquivo de teste criado via API em " . date('Y-m-d H:i:s');
-
-        return $this->guzzle('POST', "{$this->cpanelUrl}/execute/Fileman/save_file_content", $this->cpanelUser, $this->cpanelPass, [
-            "dir"     => $path,
-            "file"    => "teste.txt",
-            "content" => $content,
-        ]);
-    }
 }
