@@ -115,7 +115,7 @@
                   </td>
                   <td class="text-end">
                     <span class="text-gray-900 fw-bold fs-6">
-                      R$ {{ number_format($sale->total(), 2, ',', '.') }}
+                      R$ {{ number_format($sale->total_amount, 2, ',', '.') }}
                     </span>
                   </td>
                   <td class="text-end">
