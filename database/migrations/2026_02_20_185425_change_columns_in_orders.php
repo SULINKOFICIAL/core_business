@@ -19,7 +19,11 @@ return new class extends Migration
             $table->enum('current_step', ['Módulos', 'Uso', 'Pagamento'])->default('Módulos')->change();
         });
 
-         Schema::table('orders', function (Blueprint $table) {
+        Schema::table('orders', function (Blueprint $table) {
+            $table->dropForeign(['coupon_id']);
+        });
+
+        Schema::table('orders', function (Blueprint $table) {
             $table->dropColumn([
                 'coupon_discount_amount',
                 'pricing_snapshot',
