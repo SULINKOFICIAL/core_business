@@ -160,6 +160,10 @@
             },
         ],
         pagingType: 'simple_numbers',
+        drawCallback: function () {
+            // Inicializa os menus após cada renderização da tabela
+            KTMenu.createInstances();
+        },
     };
 
     // Renderiza tabela
