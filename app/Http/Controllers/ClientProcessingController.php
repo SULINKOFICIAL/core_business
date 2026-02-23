@@ -251,16 +251,15 @@ class ClientProcessingController extends Controller
                 $html .= '<i class="fa-solid fa-ellipsis-vertical p-0"></i>';
                 $html .= '</a>';
                 $html .= '<div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-bold fs-7 w-200px py-4" data-kt-menu="true">';
-                $html .= '<div class="menu-item px-3"><a href="' . route('systems.update.database', $row->id) . '" class="menu-link px-3"><i class="fa-solid fa-database me-2"></i>Atualiza banco de dados</a></div>';
-                $html .= '<div class="menu-item px-3"><a href="' . route('systems.update.git', $row->id) . '" class="menu-link px-3"><i class="fa-solid fa-code me-2"></i>Atualiza git</a></div>';
-                $html .= '<div class="menu-item px-3"><a href="' . route('clients.destroy', $row->id) . '" class="menu-link px-3"><i class="fa-solid fa-toggle-off me-2"></i>' . $toggleText . '</a></div>';
-
                 if ((int) $row->domains_count > 0 && !empty($row->first_domain) && !empty($row->token)) {
                     $html .= '<div class="menu-item px-3">';
                     $html .= '<a href="https://' . e($row->first_domain) . '/acessar/' . e($row->token) . '" target="_blank" class="menu-link px-3" data-kt-docs-table-filter="delete_row">';
                     $html .= '<i class="fa-solid fa-globe me-2"></i>Acessar como sistema</a>';
                     $html .= '</div>';
                 }
+                $html .= '<div class="menu-item px-3"><a href="' . route('systems.update.database', $row->id) . '" class="menu-link px-3"><i class="fa-solid fa-database me-2"></i>Atualiza banco de dados</a></div>';
+                $html .= '<div class="menu-item px-3"><a href="' . route('systems.update.git', $row->id) . '" class="menu-link px-3"><i class="fa-solid fa-code me-2"></i>Atualiza git</a></div>';
+                $html .= '<div class="menu-item px-3"><a href="' . route('clients.destroy', $row->id) . '" class="menu-link px-3"><i class="fa-solid fa-toggle-off me-2"></i>' . $toggleText . '</a></div>';
 
                 $html .= '</div></div>';
 
