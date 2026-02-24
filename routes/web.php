@@ -1,6 +1,7 @@
 <?php
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\ClientIntegrationController;
 use App\Http\Controllers\ClientInstallController;
 use App\Http\Controllers\ClientsActionsController;
 use App\Http\Controllers\CpanelController;
@@ -28,6 +29,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\WhatsAppApiController;
 use App\Http\Controllers\LogsApiController;
 use App\Http\Controllers\ClientProcessingController;
+use App\Http\Controllers\ClientIntegrationProcessingController;
 use App\Http\Controllers\CouponProcessingController;
 use App\Http\Controllers\LogsApiProcessingController;
 use App\Http\Controllers\ModuleCategoryProcessingController;
@@ -197,6 +199,13 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/',                 [IntegrationSuggestionController::class, 'index'])->name('index');
             Route::get('/processar',        [SuggestionProcessingController::class, 'process'])->name('process');
             Route::put('/editar/{id}',      [IntegrationSuggestionController::class, 'update'])->name('update');
+        });
+    });
+
+    Route::prefix('integracoes-clientes')->group(function () {
+        Route::name('clients.integrations.')->group(function () {
+            Route::get('/',                 [ClientIntegrationController::class, 'index'])->name('index');
+            Route::get('/processar',        [ClientIntegrationProcessingController::class, 'process'])->name('process');
         });
     });
 

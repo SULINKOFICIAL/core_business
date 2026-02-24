@@ -37,28 +37,6 @@ class ClientSeeder extends Seeder
             ['description' => 'Testes']
         );
 
-        // Adiciona o pacote inicial ao cliente via OrderService
-        $package = Package::query()->first();
-        if ($package) {
-            $orderService = new OrderService();
-            $orderResponse = $orderService->createOrder($client, $package);
-            if (isset($orderResponse['order'])) {
-                $orderService->confirmPaymentOrder($orderResponse['order']);
-            }
-        }
-        
-        // Adiciona o pacote "Começando" com 5 dias para testar a emissão de renovações.
-        if(false){
-            $package = Package::query()->skip(1)->first();
-            if ($package) {
-                $orderService = new OrderService();
-                $orderResponse = $orderService->createOrder($client, $package);
-                if (isset($orderResponse['order'])) {
-                    $orderService->confirmPaymentOrder($orderResponse['order']);
-                }
-            }
-        }
-
         /* 
         Client::create([
             'name' => 'Coca Cola',

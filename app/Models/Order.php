@@ -31,17 +31,9 @@ class Order extends Model
         'current_step',
         'currency',
         'total_amount',
-        'coupon_discount_amount',
         'pagarme_message',
-        'pricing_snapshot',
-        'rules_snapshot',
-        'coupon_id',
-        'coupon_code_snapshot',
-        'coupon_type_snapshot',
-        'coupon_value_snapshot',
-        'coupon_trial_months',
-        'coupon_applied_at',
         'type',
+        
         'key_id',
         'previous_key_id',
         'method',
@@ -96,24 +88,4 @@ class Order extends Model
         return $this->belongsTo(Package::class, 'previous_key_id');
     }
 
-    public function total(): float
-    {
-        if (!is_null($this->total_amount) && (float) $this->total_amount !== 0.0) {
-            return (float) $this->total_amount;
-        }
-
-        $subtotal = (float) $this->items()->sum('subtotal_amount');
-        if ($subtotal > 0) {
-            $discount = (float) ($this->coupon_discount_amount ?? 0);
-            $total = $subtotal - $discount;
-            return $total > 0 ? $total : 0.0;
-        }
-
-        $legacyTotal = (float) $this->items()->sum('item_value');
-        if ($legacyTotal !== 0.0) {
-            return $legacyTotal;
-        }
-
-        return (float) $this->items()->sum('amount');
-    }
 }

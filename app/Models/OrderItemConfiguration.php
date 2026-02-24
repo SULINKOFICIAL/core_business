@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OrderItemConfiguration extends Model
 {
-    protected $table = 'order_item_configurations';
+    protected $table = 'orders_item_configurations';
 
     protected $casts = [
         'derived_pricing_effect' => 'array',

@@ -1,6 +1,6 @@
 @php
     // Resolve tipo de cobrança e valores iniciais (old() tem prioridade)
-    $pricingType = old('pricing_type', $modules->pricing_type ?? 'fixed');
+    $pricingType = old('pricing_type', $modules->pricing_type ?? 'Preço Fixo');
     $usageLabel = old('usage_label', $modules->usage_label ?? '');
     $tiers = old('tiers');
 
@@ -88,8 +88,8 @@
             <div class="col-6 mb-4">
                 <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Tipo de Cobrança</label>
                 <select name="pricing_type" class="form-select form-select-solid" id="pricing_type">
-                    <option value="fixed" @selected($pricingType === 'fixed')>Preço fixo</option>
-                    <option value="usage" @selected($pricingType === 'usage')>Preço por uso</option>
+                    <option value="Preço Fixo" @selected($pricingType === 'Preço Fixo')>Preço Fixo</option>
+                    <option value="Preço Por Uso" @selected($pricingType === 'Preço Por Uso')>Preço Por Uso</option>
                 </select>
             </div>
             {{-- Bloco visível apenas para cobrança fixa (controlado via JS) --}}
@@ -144,8 +144,8 @@
             var valueInput = $('input[name="value"]');
 
             function togglePricingBlocks() {
-                // Alterna visibilidade entre preço fixo e por uso
-                var isUsage = pricingTypeSelect.val() === 'usage';
+                // Alterna visibilidade entre Preço Fixo e Preço Por Uso
+                var isUsage = pricingTypeSelect.val() === 'Preço Por Uso';
                 fixedBlocks.toggle(!isUsage);
                 usageBlocks.toggle(isUsage);
                 // Ajusta required do valor fixo
