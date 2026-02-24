@@ -19,6 +19,7 @@ use App\Models\PackageModule;
 use App\Models\Ticket;
 use App\Services\ERedeService;
 use App\Services\OrderService;
+use App\Services\PagarMeService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -235,25 +236,27 @@ class ApisController extends Controller
         $client = $data['client'];
 
         // Obtém plano atual do cliente
-        $package = $client->package;
+        $order = $client->orders()->orderBy('id', 'DESC')->first();
 
         // Se o cliente não tiver pacote
-        if (!$package) return response()->json([
+        if (!$order) return response()->json([
             'package' => null,
             'renovation' => 0,
         ], 200);
 
-        // Formata o pacote do cliente
-        $package['modules'] = $package->modules;
+        // Obtem os items do pedido
+        $order['modules'] = $order->items->pluck('module')->values();
+
+        $order['subscription'] = $order->subscription;
 
         // Se o cliente tiver plano
-        if($package){
+        if($order){
 
             // Obtém pedido de renovação do cliente
-            $existsRenovation = $client->orders()->where('type', 'Renovação')->where('status', 'pendente')->exists();
+            $existsRenovation = $client->orders()->exists();
 
             return response()->json([
-                'package'     => $package,
+                'package'     => $order,
                 'renovation'  => $client->renovation(),
                 'existsOrder' => $existsRenovation, 
             ], 200);
@@ -1172,12 +1175,91 @@ class ApisController extends Controller
 
         }
 
+        // Verifica se veio o ciclo
+        if(isset($data['billing_cycle'])) {
+
+            // De acordo com o ciclo define a data de expiração
+            $billing_cycle = $data['billing_cycle'];
+
+            // Se for mensal
+            if($billing_cycle == 'month') {
+                $order->update([
+                    'start_date' => now(),
+                    'end_date' => now()->addMonth(1)
+                ]);
+            }
+
+            // Se for anual
+            if($billing_cycle == 'year') {
+                $order->update([
+                    'start_date' => now(),
+                    'end_date' => now()->addYear(1)
+                ]);
+            }
+
+            // Se for diário
+            if($billing_cycle == 'day') {
+                $order->update([
+                    'start_date' => now(),
+                    'end_date' => now()->addDay(1)
+                ]);
+            }
+
+        }
+
         // Retorna o cliente atualizado
-        $response = $service->createOrderPayment($order, $data['client'], $data['client_info'] ,$card, isset($data['card']['cvv']) ? $data['card']['cvv'] : null, $data['billing_cycle'], isset($data['card']['address']) ? $data['card']['address'] : null);
+        $response = $service->createOrderPayment($order, $data['client'], $data['client_info'] ,$card, isset($data['card']['cvv']) ? $data['card']['cvv'] : null, $billing_cycle, isset($data['card']['address']) ? $data['card']['address'] : null);
 
         return response()->json([
             'message' => $response
         ], 200);
+
+    }
+
+    public function orderCancel(Request $request) {
+
+        // Obtém os dados enviados no formulário
+        $data = $request->all();
+
+        // Verifica se veio o id do pedido
+        if(isset($data['client'])) {
+
+            // Encontra o pedido do cliente
+            $order = $data['client']->lastOrder();
+
+            // Se ele existir atualiza para cancelado
+            if($order) {
+
+                // Inicia o serviço da pagarme
+                $pagarme = new PagarMeService();
+
+                // Cancela a assinatura
+                $response = $pagarme->cancelSubscription($order->subscription->pagarme_subscription_id);
+
+                // Se a assinatura foi cancelada
+                if((isset($response['status']) && $response['status'] == 'canceled') || $response['message'] == 'This subscription is canceled.') {
+
+                    $order->update([
+                        'status' => 'canceled'
+                    ]);
+
+                    $order->subscription->update([
+                        'status' => 'canceled'
+                    ]);
+
+                    // Retorna o cliente atualizado
+                    return response()->json([
+                        'message' => 'Assinatura cancelada com sucesso'
+                    ], 200);
+                }
+            }
+
+        }
+
+        // Retorna o cliente atualizado
+        return response()->json([
+            'message' => 'Ocorreu um erro ao cancelar a assinatura. Tente novamente mais tarde.'
+        ], 500);
 
     }
 

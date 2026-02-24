@@ -228,4 +228,14 @@ class PagarMeService
         return Http::withBasicAuth($this->apiKey, '')->get("{$this->baseUrl}/invoices", ['subscription_id' => $subscriptionId])->json();
     }
 
+    public function findSubscription($subscriptionId)
+    {
+        return Http::withBasicAuth($this->apiKey, '')->get("{$this->baseUrl}/subscriptions/{$subscriptionId}")->json();
+    }
+
+    public function cancelSubscription($subscriptionId)
+    {
+        return Http::withBasicAuth($this->apiKey, '')->delete("{$this->baseUrl}/subscriptions/{$subscriptionId}")->json();
+    }
+
 }

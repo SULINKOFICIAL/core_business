@@ -227,12 +227,12 @@ class OrderService
                 ], [
                     'status'                  => $charge['status'],
                     'gateway_code'            => $charge['gateway_id'] ?? null,
-                    'amount'                  => $charge['paid_amount'] / 100,
-                    'currency'                => $charge['currency'],
-                    'method'                  => $charge['payment_method'],
-                    'recurrency'              => $charge['recurrence_cycle'],
+                    'amount'                  => $charge['paid_amount'] / 100 ?? null,
+                    'currency'                => $charge['currency'] ?? null,
+                    'method'                  => $charge['payment_method'] ?? null,
+                    'recurrency'              => $charge['recurrence_cycle'] ?? null,
                     'response'                => json_encode($transaction),
-                    'paid_at'                 => $charge['paid_at'],
+                    'paid_at'                 => $charge['paid_at'] ?? null,
         
                 ]);
 

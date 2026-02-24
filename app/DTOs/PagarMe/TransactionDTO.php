@@ -11,10 +11,10 @@ final class TransactionDTO
         public readonly bool $success,
         public readonly int $amount,
         public readonly int $installments,
-        public readonly AntifraudDTO $antifraud,
         public readonly AcquirerDTO $acquirer,
         public readonly string $gatewayId,
         public readonly string $operationType,
         public readonly CardDTO $card,
+        public readonly ?AntifraudDTO $antifraud = null,
     ) {}
 }

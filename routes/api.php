@@ -48,6 +48,7 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
             Route::get('/checkout',          [ApisController::class, 'orderCheckout']);
             Route::post('/intencao',         [ApisController::class, 'orderIntent']);
             Route::post('/pagamento',        [ApisController::class, 'orderPayment']);
+            Route::get('/cancelar',          [ApisController::class, 'orderCancel']);
         });
 
         /** API que recebe dados dos miCores */

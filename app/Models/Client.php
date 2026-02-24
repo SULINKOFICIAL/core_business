@@ -5,6 +5,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Http;
 
@@ -80,28 +81,38 @@ class Client extends Model
     }
     
     // Assinaturas realizadas pelo cliente
-    public function subscriptions(): HasMany
+    public function subscriptions(): HasManyThrough
     {
-       return $this->hasMany(ClientSubscription::class, 'client_id', 'id');
+        return $this->hasManyThrough(
+            OrderSubscription::class,
+            Order::class,            
+            'client_id',             
+            'order_id',              
+            'id',                    
+            'id'                     
+        );
+    }
+
+    // Retorna a última compra realizada pelo cliente
+    public function lastOrder()
+    {
+        return $this->orders()->latest('created_at')->first();
     }
 
     // Retorna em quantos dias deve ser feita a próxima renovação
     public function renovation()
     {
         // Obtém assinatura do cliente
-        $latestSubscription = $this->subscriptions()->latest('end_date')->first();
+        $latestOrder = $this->lastOrder();
 
         // Caso não encontre
-        if (!$latestSubscription || !$latestSubscription->end_date) {
-            return null; // Sem assinatura ativa
+        if (!$latestOrder) {
+            return null;
         }
-
-        // Obtém últilo dia
-        $endDate = $latestSubscription->end_date;
 
         // Obtém data de expiração
         $now = Carbon::now();
-        return round($now->diffInDays($endDate));
+        return round($now->diffInDays($latestOrder->end_date));
 
     }
 

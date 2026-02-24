@@ -11,6 +11,11 @@ class OrderSubscription extends Model
 
     protected $table = 'orders_subscriptions';
 
+    protected $casts = [
+        'billing_at' => 'datetime',
+        'next_billing_at' => 'datetime',
+    ];
+
     protected $fillable = [
         'order_id',
         'pagarme_subscription_id',

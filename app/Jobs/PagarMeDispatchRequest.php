@@ -9,8 +9,10 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Models\LogsApi;
 use App\Models\Order;
+use App\Models\OrderSubscription;
 use App\Models\OrderTransaction;
 use App\Services\PagarMeResponseService;
+use App\Services\PagarMeService;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
@@ -50,132 +52,145 @@ class PagarMeDispatchRequest implements ShouldQueue
         /**
          * DTO Formatado da PagarMe
          */
-        $PagarMeDTO = $pagarMeResponseService->process($this->requestData);
+        $pagarMeDTO = $pagarMeResponseService->process($this->requestData);
 
-        return match ($PagarMeDTO->type) {
+        /**
+         * Se for Webhook com lógica de duplicidade
+         * Retorna
+         */
+        if(!$pagarMeDTO) {
+            return true;
+        }
+
+        return match ($pagarMeDTO->type) {
+            'charge.created',
+            'invoice.created'
+                => $this->chargeCreated($pagarMeDTO),
             'charge.paid',
-            'charge.antifraud_approved' => $this->handleChargePaid($PagarMeDTO),
-            'charge.failed'             => $this->handleChargeFailed($PagarMeDTO),
+            'charge.antifraud_approved', 
+            'charge.payment_failed',
+            'invoice.paid',
+            'invoice.payment_failed'
+                => $this->chargeUpdated($pagarMeDTO),
             default => true
         };
 
     }
 
-    public function handleChargePaid($data)
+    public function chargeCreated($data)
     {
-        // Verifica se é a primeira transação
-        if($data->charge->recurrency == 'first') {
+        // Verifica se existe uma transação com esse id
+        $transaction = OrderTransaction::where('pagarme_transaction_id', $data->charge->id)->first();
 
-            // Obtem o transação
-            $transaction = OrderTransaction::where('pagarme_transaction_id', $data->charge->id)->orderBy('id', 'DESC')->first();
-
-            // Verifica se existe o item
-            if($transaction) {
-
-                // Atualiza as informações da transação
-                $transaction->update([
-                    'recurrency'   => $data->charge->recurrency,
-                    'status'       => $data->charge->status,
-                    'paid_at'      => $data->charge->paidAt,
-                    'amount'       => $data->charge->paidAmount / 100,
-                    'currency'     => $data->charge->currency,
-                    'method'       => $data->invoice->method,
-                ]);
-
-                $order = $transaction->subscription->order;
-
-                $order->update([
-                    'status'      => $data->charge->status,
-                    'currency'    => $data->charge->currency,
-                    'paid_at'     => $data->charge->paidAt,
-                    'method'      => $data->invoice->method,
-                ]);
-
-            }
-
-        } else {
+        // Se existir uma transação
+        if(!$transaction) {
 
             // Obtem o cliente
             $client = Client::where('pagarme_customer_id', $data->customer->id)->first();
 
-            if($client) {
+            // Obtem o ultimo pedido do cliente
+            $lastOrder = Order::where('client_id', $client->id)->orderBy('id', 'DESC')->first();
 
-                // Obtem o ultimo pedido desse cliente
-                $lastOrder = Order::where('client_id', $client->id)->orderBy('id', 'DESC')->first();
+            // Se existir um pedido
+            if($lastOrder) {
 
-                // Se existir um pedido
-                if($lastOrder) {
+                // Replica o pedido
+                $newOrder = $lastOrder->replicate();
 
-                    // Replica o pedido
-                    $newOrder = $lastOrder->replicate();
+                // Atualiza com as novas informações da PagarMe
+                $newOrder->fill([
+                    'status'      => $data->charge->status,
+                    'currency'    => $data->charge->currency,
+                    'paid_at'     => null,
+                    'method'      => null,
+                ]);
 
-                    // Atualiza com as novas informações da PagarMe
-                    $newOrder->fill([
-                        'status'      => $data->charge->status,
-                        'currency'    => $data->charge->currency,
-                        'paid_at'     => $data->charge->paidAt,
-                        'method'      => $data->invoice->method,
-                    ]);
+                // Salva
+                $newOrder->save();
 
+                // Faz looping em todos os itens do pedido
+                foreach ($lastOrder->items as $item) {
+
+                    // Replica
+                    $newItem = $item->replicate();
+                
+                    // Atualiza com o novo id
+                    $newItem->order_id = $newOrder->id;
+                
                     // Salva
-                    $newOrder->save();
+                    $newItem->save();
+                }
 
-                    // Faz looping em todos os itens do pedido
-                    foreach ($lastOrder->items as $item) {
+                // Obtem a assinatura
+                $subscription = (new PagarMeService())->findSubscription($data->invoice->subscriptionId);
 
-                        // Replica
-                        $newItem = $item->replicate();
-                    
-                        // Atualiza com o novo id
-                        $newItem->order_id = $newOrder->id;
-                    
-                        // Salva
-                        $newItem->save();
-                    }
+                // Se view alguma assinatura na requisição
+                if(isset($subscription) && isset($subscription['id'])) {
 
-                    // Obtem a assinatura do pedido
-                    $lastSubscription = $lastOrder->subscription;
-
-                    // Replica a assinatura
-                    $newSubscription = $lastSubscription->replicate();
-
-                    // Atualiza as informações da assinatura
-                    $newSubscription->fill([
+                    // Cria uma nova assinatura
+                    $createSubscription = OrderSubscription::create([
                         'order_id'                => $newOrder->id,
-                        'pagarme_subscription_id' => $data->invoice->subscriptionId,
-                        'pagarme_card_id'         => $data->transaction->card->id,
-                        'currency'                => $data->charge->currency,
+                        'pagarme_subscription_id' => $subscription['id'],
+                        'pagarme_card_id'         => $subscription['card']['id'],
+                        'interval'                => $subscription['interval'],
+                        'payment_method'          => $subscription['payment_method'],
+                        'currency'                => $subscription['currency'],
+                        'installments'            => $subscription['installments'],
+                        'status'                  => $subscription['status'],
+                        'billing_at'              => $subscription['current_cycle']['billing_at'],
+                        'next_billing_at'         => $subscription['next_billing_at'],
                     ]);
 
-                    // Salva
-                    $newSubscription->save();
-
-                    // Cria uma nova transação com as informações da PagarMe
-                    $transaction = OrderTransaction::create([
-                        'subscription_id'        => $newSubscription->id,
+                    // Cria a transação
+                    OrderTransaction::create([
+                        'subscription_id'        => $createSubscription->id,
                         'pagarme_transaction_id' => $data->charge->id,
                         'gateway_code'           => $data->transaction->gatewayId,
                         'status'                 => $data->charge->status,
-                        'amount'                 => $data->charge->paidAmount / 100,
                         'currency'               => $data->charge->currency,
                         'recurrency'             => $data->charge->recurrency,
-                        'paid_at'                => $data->charge->paidAt,
-                        'method'                 => $data->invoice->method,
                         'response'               => json_encode($data),
                     ]);
 
                 }
-
+                
             }
+
+        }
+
+    }
+
+    public function chargeUpdated($data)
+    {
+        // Obtem o transação
+        $transaction = OrderTransaction::where('pagarme_transaction_id', $data->charge->id)->orderBy('id', 'DESC')->first();
+
+        // Verifica se existe o item
+        if($transaction) {
+
+            // Atualiza as informações da transação
+            $transaction->update([
+                'recurrency'   => $data->charge->recurrency,
+                'status'       => $data->charge->status,
+                'paid_at'      => $data->charge->paidAt ?? null,
+                'amount'       => $data->charge->paidAmount / 100 ?? 0,
+                'currency'     => $data->charge->currency,
+                'method'       => $data->invoice->method,
+            ]);
+
+            $order = $transaction->subscription->order;
+
+            $order->update([
+                'status'      => $data->charge->status,
+                'currency'    => $data->charge->currency,
+                'paid_at'     => $data->charge->paidAt ?? null,
+                'method'      => $data->invoice->method,
+                'pagarme_message'   => $data->transaction->acquirer->message,
+            ]);
 
         }
 
         return true;
 
-    }
-
-    public function handleChargeFailed($data)
-    {
-        
     }
 }
