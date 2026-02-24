@@ -15,11 +15,10 @@ class ClientProcessingController extends Controller
      */
     public function process(Request $request)
     {
-
         // Extrai dados
         $data = $request->all();
 
-        // Incia consulta
+        // Inicia consulta
         $query = $this->loadTables();
 
         // Filtra dados relevantes
@@ -33,27 +32,21 @@ class ClientProcessingController extends Controller
 
         // Retorna dados
         return $this->formatResults($query);
-
     }
 
-     /**
+    /**
      * Inicializa a consulta com junções e seleção de colunas.
      *
      * @return \Illuminate\Database\Query\Builder
      */
-    public function loadTables(){
-
+    public function loadTables()
+    {
         // Tabela principal
-        $query = DB::table('clients');
-
-        // Retorna consulta
-        return $query;
-
+        return DB::table('clients');
     }
 
-
     /**
-     * Inicializa a consulta com junções e seleção de colunas.
+     * Aplica os filtros estruturados informados na listagem.
      *
      * @return \Illuminate\Database\Query\Builder
      */
@@ -75,7 +68,6 @@ class ClientProcessingController extends Controller
         }
 
         return $query;
-
     }
 
     /**
@@ -98,7 +90,7 @@ class ClientProcessingController extends Controller
         
         }
 
-        // Retorna a query
+        // Retorna consulta filtrada
         return $query;
     }
 
@@ -111,7 +103,6 @@ class ClientProcessingController extends Controller
      */
     public function ordering($query, $data)
     {
-
         // Ordena de acordo com a coluna desejada
         if (!empty($data['order'])) {
 
@@ -140,14 +131,14 @@ class ClientProcessingController extends Controller
 
             // Ordena a coluna
             return $query->orderBy($column, $direction);
-
         }
 
+        // Mantém ordenação padrão por id quando não há ordenação explícita
         return $query;
     }
 
     /**
-     * Aplica a ordenação à consulta.
+     * Formata os resultados para o DataTables.
      *
      * @param \Illuminate\Database\Query\Builder $query
      * @param \Illuminate\Http\Request $request

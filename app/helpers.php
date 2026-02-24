@@ -220,6 +220,8 @@ if (! function_exists('header_menu_items')) {
                     'suggestions.index',
                     'errors.index',
                     'logs.apis.index',
+                    'clients.integrations.index',
+                    'clients.integrations.process',
                     'users.index',
                     'users.create',
                     'users.edit',
@@ -249,6 +251,12 @@ if (! function_exists('header_menu_items')) {
                         'route' => 'logs.apis.index',
                         'active_routes' => ['logs.apis.index'],
                         'icon' => ['class' => 'ki-duotone ki-notepad-edit fs-3', 'paths' => 5],
+                    ],
+                    [
+                        'label' => 'Integrações Clientes',
+                        'route' => 'clients.integrations.index',
+                        'active_routes' => ['clients.integrations.index', 'clients.integrations.process'],
+                        'icon' => ['class' => 'ki-duotone ki-abstract-26 fs-3', 'paths' => 5],
                     ],
                     [
                         'label' => 'Usuários',
