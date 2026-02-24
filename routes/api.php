@@ -44,7 +44,7 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
             Route::get('/rascunho',          [ApisOrdersController::class, 'draft']);
             Route::get('/uso',               [ApisOrdersController::class, 'usageOptions']);
             Route::post('/atualizar',        [ApisOrdersController::class, 'update']);
-            Route::get('/cancelar',          [ApisController::class, 'orderCancel']);
+            Route::get('/cancelar',          [ApisOrdersController::class, 'cancel']);
         });
 
         /**

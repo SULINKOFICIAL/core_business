@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderItemConfiguration;
 use App\Services\OrderService;
+use App\Services\PagarMeService;
 use Illuminate\Http\Request;
 
 class ApisOrdersController extends Controller
@@ -348,5 +349,52 @@ class ApisOrdersController extends Controller
             'message' => 'Uso do módulo atualizado com sucesso.',
             'action' => 'updated',
         ];
+    }
+
+    public function cancel(Request $request) {
+
+        // Obtém os dados enviados no formulário
+        $data = $request->all();
+
+        // Verifica se veio o id do pedido
+        if(isset($data['client'])) {
+
+            // Encontra o pedido do cliente
+            $order = $data['client']->lastOrder();
+
+            // Se ele existir atualiza para cancelado
+            if($order) {
+
+                // Inicia o serviço da pagarme
+                $pagarme = new PagarMeService();
+
+                // Cancela a assinatura
+                $response = $pagarme->cancelSubscription($order->subscription->pagarme_subscription_id);
+
+                // Se a assinatura foi cancelada
+                if((isset($response['status']) && $response['status'] == 'canceled') || $response['message'] == 'This subscription is canceled.') {
+
+                    $order->update([
+                        'status' => 'canceled'
+                    ]);
+
+                    $order->subscription->update([
+                        'status' => 'canceled'
+                    ]);
+
+                    // Retorna o cliente atualizado
+                    return response()->json([
+                        'message' => 'Assinatura cancelada com sucesso'
+                    ], 200);
+                }
+            }
+
+        }
+
+        // Retorna o cliente atualizado
+        return response()->json([
+            'message' => 'Ocorreu um erro ao cancelar a assinatura. Tente novamente mais tarde.'
+        ], 500);
+
     }
 }

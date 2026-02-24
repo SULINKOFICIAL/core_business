@@ -3,8 +3,6 @@
 namespace App\Jobs;
 
 use App\Models\Client;
-use App\Models\ClientCard;
-use App\Models\ClientSubscription;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Models\LogsApi;
