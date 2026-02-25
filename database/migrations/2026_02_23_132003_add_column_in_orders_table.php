@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->string('pagarme_message')->nullable()->after('coupon_discount_amount');
+            $table->string('pagarme_message')->nullable()->after('pagarme_plan_id');
         });
     }
 
