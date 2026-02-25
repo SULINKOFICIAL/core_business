@@ -52,7 +52,7 @@ Itens do pedido (modulos, pacotes, creditos, etc).
   - `unit_price_snapshot` e `subtotal_amount`
   - `pricing_model_snapshot` (modelo de precificacao aplicado)
 
-### OrderItemConfiguration
+### ClientPackageItemConfiguration
 Configuracoes dinamicas por item (ex: uso mensal, volume).
 
 - Quando e criado:

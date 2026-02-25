@@ -26,14 +26,13 @@ class Order extends Model
 
     protected $fillable = [
         'client_id',
-        'pagarme_plan_id',
+        'package_id',
         'status',
         'current_step',
         'currency',
         'total_amount',
         'pagarme_message',
         'type',
-        
         'key_id',
         'previous_key_id',
         'method',
@@ -49,11 +48,6 @@ class Order extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class, 'client_id');
-    }
-
-    public function items(): HasMany
-    {
-        return $this->hasMany(OrderItem::class, 'order_id');
     }
 
     public function transactions(): HasManyThrough
@@ -80,12 +74,11 @@ class Order extends Model
 
     public function package(): BelongsTo
     {
-        return $this->belongsTo(Package::class, 'key_id');
+        return $this->belongsTo(ClientPackage::class, 'package_id', 'id');
     }
 
     public function previousPackage(): BelongsTo
     {
         return $this->belongsTo(Package::class, 'previous_key_id');
     }
-
 }

@@ -2,14 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Client;
-use App\Models\ClientModule;
-use App\Models\Order;
-use App\Models\OrderItem;
 use App\Models\Package;
 use App\Models\Module;
 use App\Models\PackageModule;
-use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -24,7 +19,6 @@ class PackageController extends Controller
 
         $this->request = $request;
         $this->repository = $content;
-
     }
 
     /**
@@ -43,20 +37,18 @@ class PackageController extends Controller
         return view('pages.packages.index')->with([
             'packages' => $packages,
         ]);
-
     }
 
     public function create()
     {
-        
+
         // Obtém módulos
-        $modules = Module::where('status', true)->get(); 
+        $modules = Module::where('status', true)->get();
 
         // Retorna a página
         return view('pages.packages.create')->with([
             'modules' => $modules,
         ]);
-
     }
 
     public function store(Request $request)
@@ -84,19 +76,18 @@ class PackageController extends Controller
 
         // Retorna a página
         return redirect()
-                ->route('packages.index')
-                ->with('message', 'Pacote <b>'. $created->name . '</b> adicionado com sucesso.');
-                
+            ->route('packages.index')
+            ->with('message', 'Pacote <b>' . $created->name . '</b> adicionado com sucesso.');
     }
 
     public function edit($id)
     {
         // Obtém dados
         $package = $this->repository->find($id);
-        $modules = Module::where('status', true)->get(); 
+        $modules = Module::where('status', true)->get();
 
         // Verifica se existe
-        if(!$package) return redirect()->back();
+        if (!$package) return redirect()->back();
 
         // Retorna a página
         return view('pages.packages.edit')->with([
@@ -108,7 +99,7 @@ class PackageController extends Controller
     public function update(Request $request, $id)
     {
         // Verifica se existe
-        if(!$package = $this->repository->find($id)) return redirect()->back();
+        if (!$package = $this->repository->find($id)) return redirect()->back();
 
         // Obtém dados
         $data = $request->all();
@@ -139,7 +130,7 @@ class PackageController extends Controller
         // Retorna a página
         return redirect()
             ->route('packages.edit', $id)
-            ->with('message', 'Pacote <b>'. $oldName . '</b> atualizado para <b>'. $package->name .'</b> com sucesso.');
+            ->with('message', 'Pacote <b>' . $oldName . '</b> atualizado para <b>' . $package->name . '</b> com sucesso.');
     }
 
     public function destroy($id)
@@ -149,7 +140,7 @@ class PackageController extends Controller
         $package = $this->repository->find($id);
 
         // Atualiza status
-        if($package->status == 1){
+        if ($package->status == 1) {
             $this->repository->where('id', $id)->update(['status' => false, 'filed_by' => Auth::id()]);
             $message = 'desabilitado';
         } else {
@@ -160,8 +151,6 @@ class PackageController extends Controller
         // Retorna a página
         return redirect()
             ->route('packages.index')
-            ->with('message', 'Pacote <b>'. $package->name . '</b> '. $message .' com sucesso.');
-
+            ->with('message', 'Pacote <b>' . $package->name . '</b> ' . $message . ' com sucesso.');
     }
-
 }

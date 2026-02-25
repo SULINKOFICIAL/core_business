@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ClientPackageItem;
 use App\Models\Module;
 use App\Models\ModulePricingTier;
 use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\OrderItemConfiguration;
+use App\Models\ClientPackageItemConfiguration;
 use App\Services\OrderService;
 use App\Services\PagarMeService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ApisOrdersController extends Controller
 {
@@ -25,30 +26,31 @@ class ApisOrdersController extends Controller
      * Retorna o pedido em rascunho mais recente do cliente (se existir).
      * Obs.: Geralmente é o pedido em andamento.
      */
-    public function draft(Request $request)
+    public function draft(Request $request, OrderService $orderService)
     {
-        // Extrai os dados
+        // Obtem dados
         $data = $request->all();
 
-        // Extrai o cliente
+        // Obtem cliente
         $client = $data['client'];
 
+        // Obtem o pacote do cliente
+        $package = $orderService->getPackageInProgress($client);
+
         // Busca o pedido em andamento
-        $order = $this->orderService->getOrderInProgress($client);
+        $order = $orderService->getOrderInProgress($client);
 
         // Monta os itens com os dados relevantes para o front
-        $items = $order->items->map(function ($item) {
+        $items = $package->modules->map(function ($module) {
             return [
-                'id' => $item->id,
-                'type' => $item->type,
-                'name' => $item->item_name,
-                'item_key' => $item->item_key,
-                'billing_type' => $item->item_billing_type,
+                'id' => $module->id,
+                'name' => $module->name,
+                'billing_type' => $module->pricing_type,
             ];
         });
 
         // Calcula subtotal e desconto aplicado
-        $subtotalAmount = (float) $order->items()->sum('amount');
+        $subtotalAmount = (float) $package->modules()->sum('value');
         $discountAmount = (float) ($order->coupon_discount_amount ?? 0);
 
         // Responde com o rascunho e os itens formatados
@@ -77,27 +79,20 @@ class ApisOrdersController extends Controller
         // Busca o rascunho do cliente com itens e configurações
         $order = Order::where('client_id', $client->id)
             ->where('status', 'draft')
-            ->with(['items.configurations'])
             ->first();
 
         // Inicia lista de módulos que exigem seleção de uso
         $usageModules = [];
 
         // Percorre itens do pedido e filtra apenas módulos com cobrança por uso
-        foreach ($order->items as $item) {
-            if ($item->type !== 'Módulo') {
-                continue;
-            }
+        foreach ($order->package->items as $module) {
 
-            // Busca o módulo com cobrança por uso
-            $module = Module::where('id', $item->item_key)->where('pricing_type', 'Preço Por Uso')->first();
-
-            if (!$module) {
+            if ($module->item->pricing_type != 'Preço Por Uso') {
                 continue;
             }
 
             // Carrega as faixas (tiers) do módulo ordenadas por limite
-            $tiers = ModulePricingTier::where('module_id', $module->id)
+            $tiers = ModulePricingTier::where('module_id', $module->item->id)
                 ->orderBy('usage_limit')
                 ->get()
                 ->map(function ($tier) {
@@ -110,16 +105,17 @@ class ApisOrdersController extends Controller
 
             // Obtém uso já escolhido para o item (configuração ou snapshot)
             $usageConfig = null;
-            $configItem = $item->configurations->firstWhere('key', 'usage');
+            $configItem = $module->configurations->where('key', 'usage')->first();
+
             if ($configItem) {
                 $usageConfig = $configItem->value;
-            } elseif (is_array($item->pricing_model_snapshot ?? null) && isset($item->pricing_model_snapshot['usage'])) {
-                $usageConfig = $item->pricing_model_snapshot['usage'];
+            } elseif (is_array($module->item->pricing_model_snapshot ?? null) && isset($module->item->pricing_model_snapshot['usage'])) {
+                $usageConfig = $module->item->pricing_model_snapshot['usage'];
             }
 
             $usageModules[] = [
-                'module_id' => $module->id,
-                'module_name' => $module->name,
+                'module_id' => $module->item->id,
+                'module_name' => $module->item->name,
                 'tiers' => $tiers,
                 'selected_usage' => $usageConfig,
             ];
@@ -204,6 +200,8 @@ class ApisOrdersController extends Controller
             default => null,
         };
 
+        return $action;
+
         // Retorna resposta
         return response()->json([
             'message' => $action['message'],
@@ -234,11 +232,10 @@ class ApisOrdersController extends Controller
         // Busca dados do módulo
         $module = Module::find($moduleId);
 
-        // Verifica se esse pedido já tem esse item
-        $existingItem = OrderItem::where('order_id', $order->id)
-            ->where('type', 'Módulo')
-            ->where('item_key', $moduleId)
-            ->first();
+        // Verifica se existe um pacote com esse item
+        $package = $order->package;
+
+        $existingItem = $package->items()->where('item_id', $moduleId)->first();
 
         // Se o módulo já existe, remove
         if ($existingItem) {
@@ -254,16 +251,9 @@ class ApisOrdersController extends Controller
         }
 
         // Cria item de módulo no pedido
-        OrderItem::create([
-            'order_id' => $order->id,
-            'type' => 'Módulo',
-            'item_name' => $module->name,
-            'item_key' => $module->id,
-            'item_billing_type' => $module->pricing_type,
-            'item_usage_quantity' => 1,
-            'item_value' => $module->value,
-            'amount' => $module->value,
-            'payload' => json_encode($module->toArray()),
+        ClientPackageItem::create([
+            'package_id' => $package->id,
+            'item_id'    => $module->id,
         ]);
 
         // Recalcula os totais
@@ -292,11 +282,7 @@ class ApisOrdersController extends Controller
             ];
         }
 
-        // Busca o item do pedido referente ao módulo selecionado.
-        $orderItem = OrderItem::where('order_id', $order->id)
-            ->where('type', 'Módulo')
-            ->where('item_key', $moduleId)
-            ->first();
+        $orderItem = $order->package->items()->where('item_id', $moduleId)->first();
 
         // Interrompe quando o módulo não existe no pedido atual.
         if (!$orderItem) {
@@ -320,9 +306,9 @@ class ApisOrdersController extends Controller
         }
 
         // Persiste a configuração de uso para auditoria e retomada do fluxo.
-        OrderItemConfiguration::updateOrCreate(
+        ClientPackageItemConfiguration::updateOrCreate(
             [
-                'order_item_id' => $orderItem->id,
+                'item_id' => $orderItem->id,
                 'key' => 'usage',
             ],
             [
@@ -335,10 +321,6 @@ class ApisOrdersController extends Controller
             ]
         );
 
-        // Atualiza quantidade de uso e valor do item com base na faixa escolhida.
-        $orderItem->item_usage_quantity = (int) $usageLimit;
-        $orderItem->item_value = (float) $pricingTier->price;
-        $orderItem->amount = (float) $pricingTier->price;
         $orderItem->save();
 
         // Recalcula os totais do pedido após alteração de uso.
@@ -351,19 +333,20 @@ class ApisOrdersController extends Controller
         ];
     }
 
-    public function cancel(Request $request) {
+    public function cancel(Request $request)
+    {
 
         // Obtém os dados enviados no formulário
         $data = $request->all();
 
         // Verifica se veio o id do pedido
-        if(isset($data['client'])) {
+        if (isset($data['client'])) {
 
             // Encontra o pedido do cliente
             $order = $data['client']->lastOrder();
 
             // Se ele existir atualiza para cancelado
-            if($order) {
+            if ($order) {
 
                 // Inicia o serviço da pagarme
                 $pagarme = new PagarMeService();
@@ -372,7 +355,7 @@ class ApisOrdersController extends Controller
                 $response = $pagarme->cancelSubscription($order->subscription->pagarme_subscription_id);
 
                 // Se a assinatura foi cancelada
-                if((isset($response['status']) && $response['status'] == 'canceled') || $response['message'] == 'This subscription is canceled.') {
+                if ((isset($response['status']) && $response['status'] == 'canceled') || $response['message'] == 'This subscription is canceled.') {
 
                     $order->update([
                         'status' => 'canceled'
@@ -388,13 +371,11 @@ class ApisOrdersController extends Controller
                     ], 200);
                 }
             }
-
         }
 
         // Retorna o cliente atualizado
         return response()->json([
             'message' => 'Ocorreu um erro ao cancelar a assinatura. Tente novamente mais tarde.'
         ], 500);
-
     }
 }

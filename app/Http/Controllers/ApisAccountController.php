@@ -7,16 +7,16 @@ use Illuminate\Http\Request;
 class ApisAccountController extends Controller
 {
     /**
-     * Retorna o plano atual do cliente e informações de renovação.
+     * Retorna o pedido atual do cliente e informações de renovação.
      * Também informa se já existe um pedido de renovação pendente.
      */
-    public function plan(Request $request)
+    public function order(Request $request)
     {
         // Obtém cliente já anexado pelo middleware.
         $client = $request->all()['client'];
 
         // Carrega o pacote atual do cliente.
-        $package = $client->package;
+        $package = $client->packages()->where('status', true)->first();
 
         // Resposta padrão quando não há pacote ativo.
         if (!$package) {
@@ -32,11 +32,12 @@ class ApisAccountController extends Controller
         // Verifica se já existe renovação pendente.
         $existsRenovation = $client->orders()
             ->where('type', 'Renovação')
-            ->where('status', 'pendente')
+            ->where('status', 'pending')
             ->exists();
 
         return response()->json([
             'package' => $package,
+            'order' => $client->package?->orders()->orderBy('created_at', 'DESC')->first(),
             'renovation' => $client->renovation(),
             'existsOrder' => $existsRenovation,
         ], 200);

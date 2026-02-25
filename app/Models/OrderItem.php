@@ -40,6 +40,6 @@ class OrderItem extends Model
 
     public function configurations(): HasMany
     {
-        return $this->hasMany(OrderItemConfiguration::class, 'order_item_id');
+        return $this->hasMany(ClientPackageItemConfiguration::class, 'order_item_id');
     }
 }

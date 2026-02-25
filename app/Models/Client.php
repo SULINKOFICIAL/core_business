@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Carbon\Carbon;
@@ -49,47 +50,53 @@ class Client extends Model
         'created_by',
         'updated_by',
     ];
-    
+
+    // Pacote atual do cliente
+    public function packages(): HasMany
+    {
+        return $this->hasMany(ClientPackage::class, 'client_id', 'id');
+    }
+
     // Pacote atual do cliente
     public function package(): HasOne
     {
-       return $this->hasOne(Package::class, 'id', 'package_id');
+        return $this->hasOne(ClientPackage::class, 'client_id', 'id')->where('status', true);
     }
-    
+
     // Domínios do cliente
     public function domains(): HasMany
     {
-       return $this->hasMany(ClientDomain::class, 'client_id', 'id');
+        return $this->hasMany(ClientDomain::class, 'client_id', 'id');
     }
-    
+
     // Módulos habilitados para o cliente
     public function modules(): BelongsToMany
     {
-       return $this->belongsToMany(Module::class, 'clients_modules', 'client_id', 'module_id');
+        return $this->belongsToMany(Module::class, 'clients_modules', 'client_id', 'module_id');
     }
-    
+
     // Compras realizadas pelo cliente
     public function orders(): HasMany
     {
-       return $this->hasMany(Order::class, 'client_id', 'id');
+        return $this->hasMany(Order::class, 'client_id', 'id');
     }
 
     // Compras realizadas pelo cliente
     public function cards(): HasMany
     {
-       return $this->hasMany(ClientCard::class, 'client_id', 'id');
+        return $this->hasMany(ClientCard::class, 'client_id', 'id');
     }
-    
+
     // Assinaturas realizadas pelo cliente
     public function subscriptions(): HasManyThrough
     {
         return $this->hasManyThrough(
             OrderSubscription::class,
-            Order::class,            
-            'client_id',             
-            'order_id',              
-            'id',                    
-            'id'                     
+            Order::class,
+            'client_id',
+            'order_id',
+            'id',
+            'id'
         );
     }
 
@@ -113,7 +120,6 @@ class Client extends Model
         // Obtém data de expiração
         $now = Carbon::now();
         return round($now->diffInDays($latestOrder->end_date));
-
     }
 
     // Retorna em quantos dias deve ser feita a próxima renovação
@@ -126,7 +132,7 @@ class Client extends Model
     {
 
         return 'OK';
-        
+
         // Verifica se possui Token
         if (!$this->token) {
             return 'Token Empty';
@@ -144,11 +150,9 @@ class Client extends Model
 
             // Não esta funcionando
             return 'Error';
-
         } catch (\Exception $e) {
             // Erro encontrado
             return 'Error';
         }
     }
-
 }

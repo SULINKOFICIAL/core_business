@@ -7,6 +7,7 @@ use App\Http\Controllers\ApisPaymentsController;
 use App\Http\Controllers\ApisDomainsController;
 use App\Http\Controllers\ApisNewsController;
 use App\Http\Controllers\ApisTokensController;
+use App\Http\Controllers\ClientsPackagesController;
 use App\Http\Controllers\MetaApiController;
 use App\Http\Controllers\MetaApiOnboardingController;
 use Illuminate\Support\Facades\Route;
@@ -32,13 +33,15 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
     Route::middleware('attach.client')->group(function () {
 
         /** API que envia informações para os miCores */
-        Route::get('/meu-plano',      [ApisAccountController::class, 'plan']);
+        Route::get('/meu-pedido',     [ApisAccountController::class, 'order']);
         Route::get('/minhas-compras', [ApisAccountController::class, 'orders']);
         Route::get('/cartoes',        [ApisAccountController::class, 'cards']);
-        
+
+        Route::get('/meu-pacote',     [ClientsPackagesController::class, 'package']);
+
         /**
          * API que gerencia os pedidos
-        */
+         */
         Route::prefix('pedidos')->group(function () {
             Route::get('/compra/{id}',       [ApisOrdersController::class, 'details']);
             Route::get('/rascunho',          [ApisOrdersController::class, 'draft']);
@@ -49,7 +52,7 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
 
         /**
          * API que gerencia os pagamentos
-        */
+         */
         Route::prefix('pagamento')->group(function () {
             Route::post('/pagar', [ApisPaymentsController::class, 'orderPayment']);
         });
@@ -87,7 +90,6 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
             Route::post('/marcar-lidas/{id}', [ApisNewsController::class, 'markRead']);
         });
     });
-
 });
 
 /**
