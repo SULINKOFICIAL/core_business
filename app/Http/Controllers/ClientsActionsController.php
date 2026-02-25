@@ -93,11 +93,6 @@ class ClientsActionsController extends Controller
             'db_last_version'  => false, 
             'git_last_version' => false
         ]);
-        
-        // Loop para percorrer todos os clientes
-        foreach ($clients as $client) {
-            $this->updateDatabase($client->id);
-        }
 
         // Obtém todos os clientes com instalações dedicadas
         $clientsDedicateds = $clients->filter(function($client) {
@@ -122,6 +117,11 @@ class ClientsActionsController extends Controller
             // Atualiza o git de todas as hospedagens compartilhadas
             $this->repository->where('type_installation', 'shared')->update(['git_last_version' => true]);
 
+        }
+        
+        // Loop para percorrer todos os clientes
+        foreach ($clients as $client) {
+            $this->updateDatabase($client->id);
         }
 
         // Redireciona com a mensagem final
