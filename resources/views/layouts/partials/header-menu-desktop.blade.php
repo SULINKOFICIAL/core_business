@@ -15,7 +15,7 @@
                         <i class="fa-solid fa-angle-down fs-8 ms-2 {{ $isActive ? 'text-warning' : 'text-white' }}"></i>
                     </span>
                 </a>
-                <div class="menu-sub menu-sub-dropdown w-175px py-2">
+                <div class="menu-sub menu-sub-dropdown w-200px py-2">
                     @foreach ($item['children'] ?? [] as $child)
                         <div class="menu-item">
                             <a href="{{ route($child['route']) }}" class="menu-link">
@@ -31,6 +31,9 @@
                                 <span class="menu-title">{{ $child['label'] }}</span>
                             </a>
                         </div>
+                        @if (! $loop->last)
+                            <div class="separator separator-dashed"></div>
+                        @endif
                     @endforeach
                 </div>
             </div>
