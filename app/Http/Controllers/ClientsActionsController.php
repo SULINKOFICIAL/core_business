@@ -227,21 +227,16 @@ class ClientsActionsController extends Controller
             'refresh_mercado_livre',
         ];
 
-        // Define se executa para um cliente específico ou para todos os ativos
-        if ($id !== null) {
-            $client = $this->repository->find($id);
-
-            if (!$client) {
-                return redirect()
-                    ->route('clients.index')
-                    ->with('message', 'Cliente não encontrado.');
-            }
-
-            $clients = collect([$client]);
-        } else {
+        // Busca os clientes
+        if($id !== null){
             $clients = $this->repository->where('status', true)->get();
+        } else {
+            $clients = $this->repository->where('id', $id)->get();
         }
 
+        /**
+         * Loop para percorrer todos os clientes
+         */
         foreach ($clients as $client) {
             foreach ($jobs as $jobName) {
                 $this->guzzleService->request('post', 'sistema/processar-tarefa', $client, [
@@ -249,12 +244,6 @@ class ClientsActionsController extends Controller
                     'data' => [],
                 ]);
             }
-        }
-
-        if ($id !== null) {
-            return redirect()
-                ->route('clients.index')
-                ->with('message', 'Tarefas executadas com sucesso para o cliente ' . $client->name . '.');
         }
 
         return redirect()
