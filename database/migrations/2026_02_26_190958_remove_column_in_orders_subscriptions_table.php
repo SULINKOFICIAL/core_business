@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        /* Schema::table('orders_subscriptions', function (Blueprint $table) {
+        Schema::table('orders_subscriptions', function (Blueprint $table) {
 
             // Remove a foreign key primeiro
             $table->dropForeign(['order_id']);
@@ -26,12 +26,12 @@ return new class extends Migration
         // Adiciona um foreignID em orders para subscriptions
         Schema::table('orders', function (Blueprint $table) {
             $table->foreignId('subscription_id')->nullable()->after('package_id')->constrained('subscriptions');
-        }); */
+        });
 
         Schema::table('orders_transactions', function (Blueprint $table) {
-            // $table->foreignId('order_id')->nullable()->after('id')->constrained('orders');
+            $table->foreignId('order_id')->nullable()->after('id')->constrained('orders');
 
-            // $table->dropForeign(['subscription_id']);
+            $table->dropForeign(['subscription_id']);
 
             $table->foreignId('subscription_id')->nullable()->change();
 
