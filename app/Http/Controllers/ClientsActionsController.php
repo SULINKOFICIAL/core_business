@@ -216,6 +216,52 @@ class ClientsActionsController extends Controller
 
     }
 
+    // Dispara manualmente jobs agendados
+    public function runScheduledNow($id = null)
+    {
+        $jobs = [
+            'finish_calls_24h',
+            'finish_order_access',
+            'update_s3_metrics',
+            'archive_finished_tasks',
+            'refresh_mercado_livre',
+        ];
+
+        // Define se executa para um cliente específico ou para todos os ativos
+        if ($id !== null) {
+            $client = $this->repository->find($id);
+
+            if (!$client) {
+                return redirect()
+                    ->route('clients.index')
+                    ->with('message', 'Cliente não encontrado.');
+            }
+
+            $clients = collect([$client]);
+        } else {
+            $clients = $this->repository->where('status', true)->get();
+        }
+
+        foreach ($clients as $client) {
+            foreach ($jobs as $jobName) {
+                $this->guzzleService->request('post', 'sistema/processar-tarefa', $client, [
+                    'job' => $jobName,
+                    'data' => [],
+                ]);
+            }
+        }
+
+        if ($id !== null) {
+            return redirect()
+                ->route('clients.index')
+                ->with('message', 'Tarefas executadas com sucesso para o cliente ' . $client->name . '.');
+        }
+
+        return redirect()
+            ->route('index')
+            ->with('message', 'Tarefas executadas com sucesso para ' . $clients->count() . ' cliente(s).');
+    }
+
 
     // Obtém permissões do usuário
     public function getResources(Request $request)

@@ -254,8 +254,8 @@ if (! function_exists('header_menu_items')) {
                     ],
                     [
                         'label' => 'Disparar Jobs',
-                        'route' => 'developer.run.scheduled.now',
-                        'active_routes' => ['developer.run.scheduled.now'],
+                        'route' => 'systems.run.scheduled.now',
+                        'active_routes' => ['systems.run.scheduled.now'],
                         'icon' => ['class' => 'ki-duotone ki-notepad-edit fs-3', 'paths' => 5],
                     ],
                     [
