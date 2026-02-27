@@ -6,6 +6,7 @@ use Closure;
 use App\Models\Client;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Log;
 
 class ValidateBearerToken
 {
@@ -19,6 +20,9 @@ class ValidateBearerToken
 
         // Obter o token de autorização do cabeçalho
         $token = $request->bearerToken();
+
+        Log::info('CHEGOU O TOKEN: ' . $token);
+        Log::info('TOKEN DO ENV: ' . env('CENTRAL_TOKEN'));
 
         // Verificar se o token existe e é válido
         if (!$token || $token !== env('CENTRAL_TOKEN')) {
