@@ -239,11 +239,10 @@ class ClientsActionsController extends Controller
          */
         foreach ($clients as $client) {
             foreach ($jobs as $jobName) {
-                $return = $this->guzzleService->request('post', 'sistema/processar-tarefa', $client, [
+                $this->guzzleService->request('post', 'sistema/processar-tarefa', $client, [
                     'job' => $jobName,
                     'data' => [],
                 ]);
-                dd($return);
             }
         }
 
