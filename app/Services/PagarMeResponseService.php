@@ -11,7 +11,9 @@ use App\DTOs\PagarMe\{
     PhoneDTO,
     CardDTO,
     AntifraudDTO,
-    AcquirerDTO
+    AcquirerDTO,
+    CycleDTO,
+    SubscriptionDTO
 };
 use Illuminate\Support\Facades\Cache;
 
@@ -28,17 +30,21 @@ class PagarMeResponseService
         // Pega os dados do evento
         $pagarMeDTO = match ($type) {
             'charge.created',
-            'charge.paid',
-            'charge.antifraud_approved',
-            'charge.payment_failed',
             'invoice.created',
+            'subscription.created',
+            'charge.paid',
             'invoice.paid',
-            'invoice.payment_failed' => new PagarMeDTO(
+            'charge.payment_failed',
+            'invoice.payment_failed',
+            'charge.antifraud_approved',
+            'subscription.updated' => new PagarMeDTO(
                 type: $type,
                 charge: $this->getCharge($type, $data),
                 invoice: $this->getInvoice($type, $data),
+                cycle: $this->getCycle($type, $data),
                 transaction: $this->getTransaction($type, $data),
                 customer: $this->getCustomer($type, $data),
+                subscription: $this->getSubscription($type, $data),
             ),
             default => null,
         };
@@ -68,7 +74,7 @@ class PagarMeResponseService
         return $data['type'];
     }
 
-    public function getInvoice(string $type, array $data): InvoiceDTO
+    public function getInvoice(string $type, array $data): ?InvoiceDTO
     {
         return match ($type) {
             'charge.created',
@@ -76,7 +82,6 @@ class PagarMeResponseService
             'charge.antifraud_approved',
             'charge.payment_failed' => new InvoiceDTO(
                 id: $data['data']['invoice']['id'],
-                subscriptionId: $data['data']['invoice']['subscriptionId'] ?? null,
                 status: $data['data']['invoice']['status'],
                 amount: $data['data']['invoice']['amount'],
                 dueAt: $data['data']['invoice']['due_at'],
@@ -87,17 +92,35 @@ class PagarMeResponseService
             'invoice.created',
             'invoice.payment_failed' => new InvoiceDTO(
                 id: $data['data']['id'],
-                subscriptionId: $data['data']['subscription']['id'] ?? null,
                 status: $data['data']['status'],
                 amount: $data['data']['amount'],
                 dueAt: $data['data']['due_at'],
                 createdAt: $data['data']['created_at'],
                 method: $data['data']['payment_method'],
             ),
+            default => null,
         };
     }
 
-    public function getTransaction(string $type, array $data): TransactionDTO
+    public function getCycle(string $type, array $data): ?CycleDTO
+    {
+        return match ($type) {
+            'invoice.paid',
+            'invoice.created',
+            'invoice.payment_failed' => new CycleDTO(
+                id: $data['data']['cycle']['id'],
+                status: $data['data']['cycle']['status'],
+                startDate: $data['data']['cycle']['start_at'],
+                endDate: $data['data']['cycle']['end_at'],
+                cycle: $data['data']['cycle']['cycle'],
+                billingAt: $data['data']['cycle']['billing_at'],
+                nextBillingAt: $data['data']['subscription']['next_billing_at'],
+            ),
+            default => null,
+        };
+    }
+
+    public function getTransaction(string $type, array $data): ?TransactionDTO
     {
         return match ($type) {
             'charge.paid',
@@ -180,10 +203,11 @@ class PagarMeResponseService
                     holder: $data['data']['charge']['last_transaction']['card']['holder_name'],
                 ),
             ),
+            default => null,
         };
     }
 
-    public function getCustomer(string $type, array $data): CustomerDTO
+    public function getCustomer(string $type, array $data): ?CustomerDTO
     {
         return match ($type) {
             'charge.created',
@@ -192,7 +216,9 @@ class PagarMeResponseService
             'charge.payment_failed',
             'invoice.created',
             'invoice.paid',
-            'invoice.payment_failed' => new CustomerDTO(
+            'invoice.payment_failed',
+            'subscription.created',
+            'subscription.updated' => new CustomerDTO(
                 id: $data['data']['customer']['id'],
                 name: $data['data']['customer']['name'],
                 email: $data['data']['customer']['email'],
@@ -207,7 +233,44 @@ class PagarMeResponseService
         };
     }
 
-    public function getCharge(string $type, array $data): ChargeDTO
+    public function getSubscription(string $type, array $data): ?SubscriptionDTO
+    {
+        return match ($type) {
+            'subscription.created',
+            'subscription.updated',
+            => new SubscriptionDTO(
+                id: $data['data']['id'],
+                interval: $data['data']['interval'],
+                intervalCount: $data['data']['interval_count'],
+                method: $data['data']['payment_method'],
+                status: $data['data']['status'],
+                installments: $data['data']['installments'],
+                currency: $data['data']['currency'],
+                cardId: $data['data']['card']['id'],
+                price: $data['data']['items'][0]['pricing_scheme']['price'],
+            ),
+            'invoice.created',
+            'invoice.paid',
+            'invoice.payment_failed' => new SubscriptionDTO(
+                id: $data['data']['subscription']['id'],
+                interval: $data['data']['subscription']['interval'],
+                intervalCount: $data['data']['subscription']['interval_count'],
+                method: $data['data']['subscription']['payment_method'],
+                status: $data['data']['subscription']['status'],
+                installments: $data['data']['subscription']['installments'],
+                currency: $data['data']['subscription']['currency'],
+                price: $data['data']['items'][0]['pricing_scheme']['price'],
+            ),
+            'charge.created',
+            'charge.payment_failed',
+            'charge.paid',
+            'charge.antifraud_approved' => new SubscriptionDTO(
+                id: $data['data']['invoice']['subscriptionId'],
+            ),
+        };
+    }
+
+    public function getCharge(string $type, array $data): ?ChargeDTO
     {
         return match ($type) {
             'charge.paid',
@@ -229,6 +292,7 @@ class PagarMeResponseService
                 status: $data['data']['status'],
             ),
             'invoice.created',
+            'invoice.paid',
             'invoice.payment_failed' => new ChargeDTO(
                 id: $data['data']['charge']['id'],
                 code: $data['data']['charge']['code'],
@@ -236,7 +300,7 @@ class PagarMeResponseService
                 currency: $data['data']['charge']['currency'],
                 status: $data['data']['charge']['status'],
             ),
+            default => null,
         };
     }
-
 }

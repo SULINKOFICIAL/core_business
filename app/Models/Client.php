@@ -91,7 +91,7 @@ class Client extends Model
     public function subscriptions(): HasManyThrough
     {
         return $this->hasManyThrough(
-            OrderSubscription::class,
+            Subscription::class,
             Order::class,
             'client_id',
             'order_id',

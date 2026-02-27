@@ -26,7 +26,7 @@ class ApisOrdersController extends Controller
      * Retorna o pedido em rascunho mais recente do cliente (se existir).
      * Obs.: Geralmente é o pedido em andamento.
      */
-    public function draft(Request $request, OrderService $orderService)
+    public function draft(Request $request)
     {
         // Obtem dados
         $data = $request->all();
@@ -35,10 +35,10 @@ class ApisOrdersController extends Controller
         $client = $data['client'];
 
         // Obtem o pacote do cliente
-        $package = $orderService->getPackageInProgress($client);
+        $package = $this->orderService->getPackageInProgress($client);
 
         // Busca o pedido em andamento
-        $order = $orderService->getOrderInProgress($client);
+        $order = $this->orderService->getOrderInProgress($client, $package);
 
         // Monta os itens com os dados relevantes para o front
         $items = $package->modules->map(function ($module) {
@@ -189,8 +189,11 @@ class ApisOrdersController extends Controller
         // Extrai cliente
         $client = $data['client'];
 
-        // Cria ou atualiza o rascunho com os módulos enviados
-        $order = $this->orderService->getOrderInProgress($client);
+        // Obtem o pacote do cliente
+        $package = $this->orderService->getPackageInProgress($client);
+
+        // Busca o pedido em andamento
+        $order = $this->orderService->getOrderInProgress($client, $package);
 
         // Realiza ação desejada
         $action = match ($data['action']) {
@@ -235,7 +238,7 @@ class ApisOrdersController extends Controller
         // Verifica se existe um pacote com esse item
         $package = $order->package;
 
-        $existingItem = $package->items()->where('item_id', $moduleId)->first();
+        $existingItem = $package?->items()->where('item_id', $moduleId)->first();
 
         // Se o módulo já existe, remove
         if ($existingItem) {

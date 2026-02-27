@@ -14,9 +14,20 @@ return new class extends Migration
         Schema::rename('orders_item_configurations', 'clients_packages_items_configurations');
 
         Schema::table('clients_packages_items_configurations', function (Blueprint $table) {
-            $table->dropForeign(['order_item_id']);
+
+            // Dropa pelo nome real da constraint
+            $table->dropForeign('order_item_configurations_order_item_id_foreign');
+
+            // Renomeia coluna
             $table->renameColumn('order_item_id', 'item_id');
-            $table->foreign('item_id')->references('id')->on('clients_packages_items')->cascadeOnDelete();
+        });
+
+        // Cria a nova FK depois
+        Schema::table('clients_packages_items_configurations', function (Blueprint $table) {
+            $table->foreign('item_id')
+                ->references('id')
+                ->on('clients_packages_items')
+                ->cascadeOnDelete();
         });
     }
 

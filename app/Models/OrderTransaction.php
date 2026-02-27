@@ -10,6 +10,7 @@ class OrderTransaction extends Model
     protected $table = 'orders_transactions';
 
     protected $casts = [
+        'response' => 'array',
         'raw_response_snapshot' => 'array',
         'authorized_at' => 'datetime',
         'paid_at' => 'datetime',
@@ -17,6 +18,7 @@ class OrderTransaction extends Model
     ];
 
     protected $fillable = [
+        'order_id',
         'subscription_id',
         'pagarme_transaction_id',
         'gateway_id',
@@ -36,9 +38,14 @@ class OrderTransaction extends Model
         'paid_at',
     ];
 
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class, 'order_id', 'id');
+    }
+
     public function subscription(): BelongsTo
     {
-        return $this->belongsTo(OrderSubscription::class, 'subscription_id');
+        return $this->belongsTo(Subscription::class, 'subscription_id');
     }
 
     public function gateway(): BelongsTo

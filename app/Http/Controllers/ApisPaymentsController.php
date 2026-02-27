@@ -19,8 +19,11 @@ class ApisPaymentsController extends Controller
         // Obtém dados enviados pelo front.
         $data = $request->all();
 
-        // Resolve pedido alvo para processamento do pagamento.
-        $order = $service->getOrderInProgress($data['client']);
+        // Obtem o pacote do cliente
+        $package = $service->getPackageInProgress($data['client']);
+
+        // Busca o pedido em andamento
+        $order = $service->getOrderInProgress($data['client'], $package);
 
         // Resolve cartão (existente ou novo) com validações de payload.
         $cardResult = $this->resolveCardFromRequest($data);
@@ -33,40 +36,9 @@ class ApisPaymentsController extends Controller
         // Extrai cartão validado para envio ao serviço de pagamento.
         $card = $cardResult['card'];
 
-        // Verifica se veio o ciclo
-        if(isset($data['billing_cycle'])) {
-
-            // De acordo com o ciclo define a data de expiração
-            $billing_cycle = $data['billing_cycle'];
-
-            // Se for mensal
-            if($billing_cycle == 'month') {
-                $order->update([
-                    'start_date' => now(),
-                    'end_date' => now()->addMonth(1)
-                ]);
-            }
-
-            // Se for anual
-            if($billing_cycle == 'year') {
-                $order->update([
-                    'start_date' => now(),
-                    'end_date' => now()->addYear(1)
-                ]);
-            }
-
-            // Se for diário
-            if($billing_cycle == 'day') {
-                $order->update([
-                    'start_date' => now(),
-                    'end_date' => now()->addDay(1)
-                ]);
-            }
-
-        }
-
         // Processa pagamento junto ao serviço de pedidos.
         $response = $service->createOrderPayment(
+            $package,
             $order,
             $data['client'],
             $data['client_info'],

@@ -7,8 +7,10 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Models\LogsApi;
 use App\Models\Order;
-use App\Models\OrderSubscription;
+use App\Models\Subscription;
 use App\Models\OrderTransaction;
+use App\Models\SubscriptionCycle;
+use App\Services\OrderService;
 use App\Services\PagarMeResponseService;
 use App\Services\PagarMeService;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -34,7 +36,7 @@ class PagarMeDispatchRequest implements ShouldQueue
     {
         return 60;
     }
-    
+
     public function __construct(array $requestData, $logApiId = null)
     {
         $this->requestData = $requestData;
@@ -56,139 +58,176 @@ class PagarMeDispatchRequest implements ShouldQueue
          * Se for Webhook com lógica de duplicidade
          * Retorna
          */
-        if(!$pagarMeDTO) {
+        if (!$pagarMeDTO) {
             return true;
         }
 
         return match ($pagarMeDTO->type) {
+            'subscription.created',
+            'subscription.updated',
+            => $this->subscriptionCreatedOrUpdated($pagarMeDTO),
+            'invoice.created',
             'charge.created',
-            'invoice.created'
-                => $this->chargeCreated($pagarMeDTO),
-            'charge.paid',
-            'charge.antifraud_approved', 
-            'charge.payment_failed',
             'invoice.paid',
-            'invoice.payment_failed'
-                => $this->chargeUpdated($pagarMeDTO),
+            'charge.antifraud_approved',
+            'charge.paid',
+            'invoice.payment_failed',
+            'charge.payment_failed',
+            => $this->paymentCreatedOrUpdated($pagarMeDTO),
             default => true
         };
-
     }
 
-    public function chargeCreated($data)
+    /**
+     * Função responsável por verificar
+     * Se existe uma assinatura criada
+     * Se não existir cria uma
+     */
+    public function subscriptionCreatedOrUpdated($data)
     {
-        // Verifica se existe uma transação com esse id
+        // Obtem a assinatura a partir do id
+        $subscription = Subscription::where('pagarme_subscription_id', $data->subscription->id)->first();
+
+        // Se existir uma assinatura
+        if (!$subscription) {
+
+            // Cria a assinatura
+            $subscription = Subscription::create([
+                'pagarme_subscription_id' => $data->subscription->id,
+                'pagarme_card_id'         => $data->subscription->cardId,
+                'interval'                => $data->subscription->interval,
+                'payment_method'          => $data->subscription->method,
+                'currency'                => $data->subscription->currency,
+                'installments'            => $data->subscription->installments,
+                'status'                  => $data->subscription->status,
+            ]);
+        } else {
+
+            // Atualiza a assinatura
+            $subscription->update([
+                'pagarme_subscription_id' => $data->subscription->id,
+                'pagarme_card_id'         => $data->subscription->cardId,
+                'interval'                => $data->subscription->interval,
+                'payment_method'          => $data->subscription->method,
+                'currency'                => $data->subscription->currency,
+                'installments'            => $data->subscription->installments,
+                'status'                  => $data->subscription->status,
+            ]);
+        }
+
+        return true;
+    }
+
+    public function paymentCreatedOrUpdated($data)
+    {
+        // Obtem a transação do cliente
         $transaction = OrderTransaction::where('pagarme_transaction_id', $data->charge->id)->first();
 
-        // Se existir uma transação
-        if(!$transaction) {
+        // Verifica se existe uma transação
+        if (!$transaction) {
 
             // Obtem o cliente
             $client = Client::where('pagarme_customer_id', $data->customer->id)->first();
 
-            // Obtem o ultimo pedido do cliente
-            $lastOrder = Order::where('client_id', $client->id)->orderBy('id', 'DESC')->first();
+            // Obtem a assinatura
+            $subscription = Subscription::where('pagarme_subscription_id', $data->subscription->id)->first();
 
-            // Se existir um pedido
-            if($lastOrder) {
+            // Cria um pedido
+            $order = Order::create([
+                'client_id'       => $client->id,
+                'subscription_id' => $subscription->id,
+                'status'          => $data->charge->status,
+                'currency'        => $data->charge->currency,
+                'pagarme_message' => isset($data->transaction->acquirer->message) ? $data->transaction->acquirer->message : null,
+                'method'          => $data->invoice->method,
+                'total_amount'    => isset($data->charge?->paidAmount) ? $data->charge->paidAmount / 100 : 0,
+                'paid_at'         => isset($data->charge?->paidAt) ? $data->charge->paidAt : null,
+            ]);
 
-                // Replica o pedido
-                $newOrder = $lastOrder->replicate();
+            // Cria a transação
+            $transaction = OrderTransaction::create([
+                'order_id'                => $order->id,
+                'subscription_id'         => $subscription->id,
+                'pagarme_transaction_id'  => $data->charge->id,
+                'gateway_code'            => isset($data->transaction->gatewayId) ? $data->transaction->gatewayId : null,
+                'status'                  => $data->charge->status,
+                'currency'                => $data->charge->currency,
+                'method'                  => $data->invoice->method,
+                'recurrency'              => $data->charge->recurrency,
+                'amount'                  => isset($data->charge?->paidAmount) ? $data->charge->paidAmount / 100 : 0,
+                'paid_at'                 => isset($data->charge?->paidAt) ? $data->charge->paidAt : null,
+                'response'                => $this->requestData,
+            ]);
 
-                // Atualiza com as novas informações da PagarMe
-                $newOrder->fill([
-                    'status'      => $data->charge->status,
-                    'currency'    => $data->charge->currency,
-                    'paid_at'     => null,
-                    'method'      => null,
+            // Verifica se existe um ciclo
+            if (isset($data->cycle)) {
+                // Cria o ciclo
+                SubscriptionCycle::create([
+                    'subscription_id'  => $subscription->id,
+                    'pagarme_cycle_id' => $data->cycle->id,
+                    'start_date'       => $data->cycle->startDate,
+                    'end_date'         => $data->cycle->endDate,
+                    'status'           => $data->cycle->status,
+                    'cycle'            => $data->cycle->cycle,
+                    'billing_at'       => $data->cycle->billingAt,
+                    'next_billing_at'  => $data->cycle->nextBillingAt,
                 ]);
-
-                // Salva
-                $newOrder->save();
-
-                // Faz looping em todos os itens do pedido
-                foreach ($lastOrder->items as $item) {
-
-                    // Replica
-                    $newItem = $item->replicate();
-                
-                    // Atualiza com o novo id
-                    $newItem->order_id = $newOrder->id;
-                
-                    // Salva
-                    $newItem->save();
-                }
-
-                // Obtem a assinatura
-                $subscription = (new PagarMeService())->findSubscription($data->invoice->subscriptionId);
-
-                // Se view alguma assinatura na requisição
-                if(isset($subscription) && isset($subscription['id'])) {
-
-                    // Cria uma nova assinatura
-                    $createSubscription = OrderSubscription::create([
-                        'order_id'                => $newOrder->id,
-                        'pagarme_subscription_id' => $subscription['id'],
-                        'pagarme_card_id'         => $subscription['card']['id'],
-                        'interval'                => $subscription['interval'],
-                        'payment_method'          => $subscription['payment_method'],
-                        'currency'                => $subscription['currency'],
-                        'installments'            => $subscription['installments'],
-                        'status'                  => $subscription['status'],
-                        'billing_at'              => $subscription['current_cycle']['billing_at'],
-                        'next_billing_at'         => $subscription['next_billing_at'],
-                    ]);
-
-                    // Cria a transação
-                    OrderTransaction::create([
-                        'subscription_id'        => $createSubscription->id,
-                        'pagarme_transaction_id' => $data->charge->id,
-                        'gateway_code'           => $data->transaction->gatewayId,
-                        'status'                 => $data->charge->status,
-                        'currency'               => $data->charge->currency,
-                        'recurrency'             => $data->charge->recurrency,
-                        'response'               => json_encode($data),
-                    ]);
-
-                }
-                
             }
+        } else {
 
-        }
-
-    }
-
-    public function chargeUpdated($data)
-    {
-        // Obtem o transação
-        $transaction = OrderTransaction::where('pagarme_transaction_id', $data->charge->id)->orderBy('id', 'DESC')->first();
-
-        // Verifica se existe o item
-        if($transaction) {
-
-            // Atualiza as informações da transação
+            // Atualiza a transação
             $transaction->update([
-                'recurrency'   => $data->charge->recurrency,
-                'status'       => $data->charge->status,
-                'paid_at'      => $data->charge->paidAt ?? null,
-                'amount'       => $data->charge->paidAmount / 100 ?? 0,
-                'currency'     => $data->charge->currency,
-                'method'       => $data->invoice->method,
+                'status'                  => $data->charge->status,
+                'currency'                => $data->charge->currency,
+                'method'                  => $data->invoice->method,
+                'recurrency'              => $data->charge->recurrency,
+                'amount'                  => isset($data->charge?->paidAmount) ? $data->charge->paidAmount / 100 : $transaction->amount,
+                'paid_at'                 => isset($data->charge?->paidAt) ? $data->charge->paidAt : $transaction->paid_at,
+                'gateway_code'            => isset($data->transaction->gatewayId) ? $data->transaction->gatewayId : $transaction->gateway_code,
+                'response'                => $this->requestData,
             ]);
 
-            $order = $transaction->subscription->order;
-
-            $order->update([
-                'status'      => $data->charge->status,
-                'currency'    => $data->charge->currency,
-                'paid_at'     => $data->charge->paidAt ?? null,
-                'method'      => $data->invoice->method,
-                'pagarme_message'   => $data->transaction->acquirer->message,
+            // Atualiza o pedido
+            $transaction->order->update([
+                'status'                  => $data->charge->status,
+                'paid_at'                 => isset($data->charge?->paidAt) ? $data->charge->paidAt : $transaction->order->paid_at,
+                'total_amount'            => isset($data->charge?->paidAmount) ? $data->charge->paidAmount / 100 : $transaction->order->total_amount,
+                'pagarme_message'         => isset($data->transaction->acquirer->message) ? $data->transaction->acquirer->message : $transaction->order->pagarme_message,
+                'method'                  => $data->invoice->method,
+                'currency'                => $data->charge->currency,
             ]);
 
+            // Verifica se veio o ciclo
+            if (isset($data->cycle)) {
+                // Verifica se existe um ciclo
+                $cycle = SubscriptionCycle::where('pagarme_cycle_id', $data->cycle->id)->first();
+
+                // Se existir um ciclo
+                if ($cycle) {
+
+                    // Atualiza o ciclo
+                    $cycle->update([
+                        'status'           => $data->cycle->status,
+                        'billing_at'       => $data->cycle->billingAt,
+                        'next_billing_at'  => $data->cycle->nextBillingAt,
+                    ]);
+                } else {
+
+                    // Cria o ciclo
+                    SubscriptionCycle::create([
+                        'subscription_id'  => $transaction->subscription_id,
+                        'pagarme_cycle_id' => $data->cycle->id,
+                        'start_date'       => $data->cycle->startDate,
+                        'end_date'         => $data->cycle->endDate,
+                        'status'           => $data->cycle->status,
+                        'cycle'            => $data->cycle->cycle,
+                        'billing_at'       => $data->cycle->billingAt,
+                        'next_billing_at'  => $data->cycle->nextBillingAt,
+                    ]);
+                }
+            }
         }
 
         return true;
-
     }
 }

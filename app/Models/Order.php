@@ -4,9 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Order extends Model
 {
@@ -27,6 +25,7 @@ class Order extends Model
     protected $fillable = [
         'client_id',
         'package_id',
+        'subscription_id',
         'status',
         'current_step',
         'currency',
@@ -54,7 +53,7 @@ class Order extends Model
     {
         return $this->hasManyThrough(
             OrderTransaction::class,
-            OrderSubscription::class,
+            Subscription::class,
             'order_id',
             'subscription_id',
             'id',
@@ -62,9 +61,9 @@ class Order extends Model
         );
     }
 
-    public function subscription(): HasOne
+    public function subscription(): BelongsTo
     {
-        return $this->hasOne(OrderSubscription::class, 'order_id');
+        return $this->belongsTo(Subscription::class, 'subscription_id', 'id');
     }
 
     public function coupon(): BelongsTo

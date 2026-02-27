@@ -10,8 +10,9 @@ use App\Models\ClientPackageItemConfiguration;
 use App\Models\ClientSubscription;
 use App\Models\Package;
 use App\Models\Module;
-use App\Models\OrderSubscription;
+use App\Models\Subscription;
 use App\Models\OrderTransaction;
+use App\Models\SubscriptionCycle;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
@@ -21,11 +22,12 @@ class OrderService
     /**
      * Cria um pedido em rascunho com base nos módulos e configurações.
      */
-    public function getOrderInProgress($client): Order
+    public function getOrderInProgress($client, $package): Order
     {
         return Order::firstOrCreate(
             [
                 'client_id' => $client->id,
+                'package_id' => $package->id,
                 'status' => 'draft',
             ],
         );
@@ -94,8 +96,9 @@ class OrderService
         });
     }
 
-    public function createOrderPayment($orderPayment, $client, $clientInfo, $card, $cvv = null, $intervalCicle, $address = null)
+    public function createOrderPayment($package, $orderPayment, $client, $clientInfo, $card, $cvv = null, $intervalCycle, $address = null)
     {
+        // Inicia o serviço da PagarMe
         $pagarMeService = new PagarMeService;
 
         /**
@@ -120,14 +123,13 @@ class OrderService
         /**
          * Retorna a assinatura na PagarMe 
          */
-        $subscription = $pagarMeService->createSubscription($customer['id'], $card['id'], $orderPayment, $intervalCicle);
+        $subscription = $pagarMeService->createSubscription($customer['id'], $card['id'], $package, $orderPayment, $intervalCycle);
 
-        Log::info("Assinatura: " . json_encode($subscription));
-
+        // Se retornar sucesso da requisição
         if (isset($subscription) && isset($subscription['id'])) {
 
-            $orderSubscription = OrderSubscription::updateOrCreate([
-                'order_id'                => $orderPayment->id,
+            // Atualiza ou cria a assinatura
+            $subscription = Subscription::updateOrCreate([
                 'pagarme_subscription_id' => $subscription['id'],
             ], [
                 'pagarme_card_id'         => $subscription['card']['id'],
@@ -136,25 +138,31 @@ class OrderService
                 'currency'                => $subscription['currency'],
                 'installments'            => $subscription['installments'],
                 'status'                  => $subscription['status'],
-                'billing_at'              => Carbon::parse($subscription['current_cycle']['billing_at']),
-                'next_billing_at'         => Carbon::parse($subscription['next_billing_at']),
             ]);
 
-            $transaction = $pagarMeService->getSubscriptionInvoices($orderSubscription->pagarme_subscription_id);
+            // Atualiza o pedido com o id da assinatura
+            $orderPayment->update([
+                'subscription_id' => $subscription->id,
+            ]);
 
-            Log::info("Transação da Assinatura: " . json_encode($transaction));
+            // Busca a transação
+            $transaction = $pagarMeService->getSubscriptionInvoices($subscription->pagarme_subscription_id);
 
+            // Se retornar sucesso da requisição
             if (isset($transaction) && isset($transaction['data']) && isset($transaction['data'][0]['charge'])) {
 
+                // Obtem o array de cobrança
                 $charge = $transaction['data'][0]['charge'] ?? null;
 
+                // Atualiza ou cria a transação
                 OrderTransaction::updateOrCreate([
-                    'subscription_id'         => $orderSubscription->id,
+                    'order_id'                => $orderPayment->id,
+                    'subscription_id'         => $subscription->id,
                     'pagarme_transaction_id'  => $charge['id'],
                 ], [
                     'status'                  => $charge['status'],
                     'gateway_code'            => $charge['gateway_id'] ?? null,
-                    'amount'                  => $charge['paid_amount'] / 100 ?? null,
+                    'amount'                  => $charge['paid_amount'] / 100 ?? 0,
                     'currency'                => $charge['currency'] ?? null,
                     'method'                  => $charge['payment_method'] ?? null,
                     'recurrency'              => $charge['recurrence_cycle'] ?? null,
@@ -163,54 +171,75 @@ class OrderService
 
                 ]);
 
+                // Atualiza o status do pedido
                 $orderPayment->update([
                     'status'  => $charge['status'],
                 ]);
 
-                switch ($charge['status']) {
-                    case 'paid':
-                        $orderSubscription->update([
-                            'status' => 'active',
-                        ]);
-                        $orderPayment->update([
-                            'paid_at' => $charge['paid_at'],
-                            'method'  => $charge['payment_method'],
-                        ]);
-                        return 'Assinatura aprovada com sucesso.';
-                        break;
-                    case 'pending':
-                        $orderSubscription->update([
-                            'status' => 'pending',
-                        ]);
-                        return 'Pagamento pendente.';
-                        break;
-                    case 'processing':
-                        $orderSubscription->update([
-                            'status' => 'pending',
-                        ]);
-                        return 'Pagamento em processamento.';
-                        break;
-                    case 'failed':
-                        $orderSubscription->update([
-                            'status' => 'failed',
-                        ]);
-                        return 'Pagamento recusado.';
-                        break;
-                    case 'canceled':
-                        $orderSubscription->update([
-                            'status' => 'canceled',
-                        ]);
-                        return 'Pagamento cancelado.';
-                        break;
-                    case 'refunded':
-                        $orderSubscription->update([
-                            'status' => 'refunded',
-                        ]);
-                        return 'Pagamento estornado.';
-                        break;
-                    default:
-                        return 'Status desconhecido.';
+                // Mapeia de acordo com o status
+                $statusMap = [
+                    'paid' => [
+                        'subscription_status' => 'active',
+                        'message' => 'Assinatura aprovada com sucesso.',
+                    ],
+                    'pending' => [
+                        'subscription_status' => 'pending',
+                        'message' => 'Pagamento pendente.',
+                    ],
+                    'processing' => [
+                        'subscription_status' => 'pending',
+                        'message' => 'Pagamento em processamento.',
+                    ],
+                    'failed' => [
+                        'subscription_status' => 'failed',
+                        'message' => 'Pagamento recusado.',
+                    ],
+                    'canceled' => [
+                        'subscription_status' => 'canceled',
+                        'message' => 'Pagamento cancelado.',
+                    ],
+                    'refunded' => [
+                        'subscription_status' => 'refunded',
+                        'message' => 'Pagamento estornado.',
+                    ],
+                ];
+
+                // Pega o status da transação
+                $status = $charge['status'];
+
+                // Verifica se o status existe no mapeamento
+                if (!isset($statusMap[$status])) {
+                    return 'Status desconhecido.';
                 }
+
+                // Atualiza assinatura
+                $subscription->update([
+                    'status' => $statusMap[$status]['subscription_status'],
+                ]);
+
+                // Se for pago, atualiza dados extras
+                if ($status === 'paid') {
+                    $orderPayment->update([
+                        'paid_at' => $charge['paid_at'],
+                        'status'  => $status,
+                        'method'  => $charge['payment_method'],
+                    ]);
+
+                    // Cria ciclo
+                    SubscriptionCycle::create([
+                        'subscription_id' => $subscription->id,
+                        'pagarme_cycle_id' => $transaction['cycle']['id'],
+                        'start_date' => $transaction['cycle']['start_date'],
+                        'end_date' => $transaction['cycle']['end_date'],
+                        'status' => $transaction['cycle']['status'],
+                        'cycle' => $transaction['cycle']['cycle'],
+                        'billing_at' => $transaction['cycle']['billing_at'],
+                        'next_billing_at' => $transaction['subscription']['next_billing_at'],
+                    ]);
+                }
+
+                // Retorna a mensagem
+                return $statusMap[$status]['message'];
             }
         }
     }

@@ -8,7 +8,7 @@ use App\Models\Order;
 use Illuminate\Support\Facades\Http;
 
 class PagarMeService
-{    
+{
     protected string $apiKey;
     protected string $baseUrl = 'https://api.pagar.me/core/v5';
 
@@ -30,8 +30,8 @@ class PagarMeService
         $client = Client::find($clientInfo['id']);
 
         // Verifica se o cliente ja possui um customer na PagarMe
-        if(isset($client) && $client->pagarme_customer_id) {
-            
+        if (isset($client) && $client->pagarme_customer_id) {
+
             // Cria o cliente na PagarMe
             $response = Http::withBasicAuth($this->apiKey, '')->get($this->baseUrl . '/customers/' . $client->pagarme_customer_id)->json();
 
@@ -50,20 +50,19 @@ class PagarMeService
                 'code'      => "client_{$clientInfo['id']}",
                 'type'      => $clientInfo['type'],
             ];
-        
+
             // Atualiza na PagarMe
             Http::withBasicAuth($this->apiKey, '')->put($this->baseUrl . '/customers/' . $response['id'], $payload);
-        
+
             // Adiciona o email ao response
             $response['email'] = $client->email;
 
             // Verifica se a resposta foi bem sucedida
-            if(isset($response) && isset($response['id'])) {
+            if (isset($response) && isset($response['id'])) {
                 return $response;
             }
-
         }
-        
+
         // Se não possui cria um
         else {
 
@@ -87,7 +86,7 @@ class PagarMeService
             $response = Http::withBasicAuth($this->apiKey, '')->post($this->baseUrl . '/customers', $payload)->json();
 
             // Verifica se a resposta foi bem sucedida
-            if(isset($response) && isset($response['id'])) {
+            if (isset($response) && isset($response['id'])) {
 
                 // Atualiza o cliente com o id do customer na PagarMe
                 $client->update([
@@ -97,12 +96,10 @@ class PagarMeService
                 // Retorna o id do customer
                 return $response;
             }
-
         }
 
         // Retorna nulo caso nao encontre
         return null;
-
     }
 
     /**
@@ -121,16 +118,15 @@ class PagarMeService
         $card = ClientCard::find($cardId);
 
         // Verifica se o cartão ja existe
-        if(isset($card) && $card->pagarme_card_id) {
+        if (isset($card) && $card->pagarme_card_id) {
 
             // Cria o cliente na PagarMe
             $response = Http::withBasicAuth($this->apiKey, '')->get($this->baseUrl . '/customers/' . $client->pagarme_customer_id . '/cards/' . $card->pagarme_card_id)->json();
 
             // Verifica se a resposta foi bem sucedida
-            if(isset($response) && isset($response['id'])) {
+            if (isset($response) && isset($response['id'])) {
                 return $response;
             }
-
         }
 
         // Se nao possui cria um
@@ -156,7 +152,7 @@ class PagarMeService
             $response = Http::withBasicAuth($this->apiKey, '')->post($this->baseUrl . '/customers/' . $client->pagarme_customer_id . '/cards', $payload)->json();
 
             // Verifica se a resposta foi bem sucedida
-            if(isset($response) && isset($response['id'])) {
+            if (isset($response) && isset($response['id'])) {
 
                 // Atualiza o cliente com o id do customer na PagarMe
                 $card->update([
@@ -166,7 +162,6 @@ class PagarMeService
                 // Retorna o id do customer
                 return $response;
             }
-
         }
     }
 
@@ -177,7 +172,7 @@ class PagarMeService
      * 
      *? Se nao existir, cria um
      */
-    public function createSubscription($customerId, $cardId, $order, $intervalCycle)
+    public function createSubscription($customerId, $cardId, $package, $order, $intervalCycle)
     {
 
         /**
@@ -188,24 +183,24 @@ class PagarMeService
             [
                 'description'   => 'Assinatura Mi.Core - Plano Personalizado',
                 'quantity'      => 1,
-                'pricing_scheme'=> [
+                'pricing_scheme' => [
                     'scheme_type' => 'unit',
                     'price'       => $order->total_amount * 100,
                 ],
             ]
         ];
-        
+
         // Cria uma descrição com o nome de todos os modulos
-        $description = "Modulos do plano: " . implode(', ', $order->items->pluck('item_name')->toArray());
+        $description = "Modulos do plano: " . implode(', ', $package->modules->pluck('name')->toArray());
 
         // Monta o payload para a criação do plano
         $payload = [
-            'name'           => "Assinatura Cliente - {$order->client->name} #{$order->client->id}",
+            'name'           => "Assinatura Cliente - {$package->client->name} #{$package->client->id}",
             'description'    => $description,
             'interval'       => $intervalCycle,
             'interval_count' => 1,
             'billing_type'   => 'prepaid',
-            'currency'       => $order->currency,
+            'currency'       => $order->currency ?? 'BRL',
             'installments'   => 1,
             'items'          => $items,
             'customer_id'    => $customerId,
@@ -217,10 +212,9 @@ class PagarMeService
         $response = Http::withBasicAuth($this->apiKey, '')->post($this->baseUrl . '/subscriptions', $payload)->json();
 
         // Verifica se a resposta foi bem sucedida
-        if(isset($response) && isset($response['id'])) {
+        if (isset($response) && isset($response['id'])) {
             return $response;
         }
-
     }
 
     public function getSubscriptionInvoices(string $subscriptionId)
@@ -237,5 +231,4 @@ class PagarMeService
     {
         return Http::withBasicAuth($this->apiKey, '')->delete("{$this->baseUrl}/subscriptions/{$subscriptionId}")->json();
     }
-
 }
