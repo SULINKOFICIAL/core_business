@@ -220,10 +220,10 @@ class ClientsActionsController extends Controller
     public function runScheduledNow($id = null)
     {
         $jobs = [
-            // 'finish_calls_24h',
-            // 'finish_order_access',
-            // 'update_s3_metrics',
-            // 'archive_finished_tasks',
+            'finish_calls_24h',
+            'finish_order_access',
+            'update_s3_metrics',
+            'archive_finished_tasks',
             'refresh_mercado_livre',
         ];
 
