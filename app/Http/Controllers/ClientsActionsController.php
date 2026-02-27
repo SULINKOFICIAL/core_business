@@ -126,7 +126,7 @@ class ClientsActionsController extends Controller
 
         // Redireciona com a mensagem final
         return redirect()
-            ->route('index')
+            ->back()
             ->with('message', 'Processo de atualização concluído para todos os clientes.');
     }
 
