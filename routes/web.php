@@ -278,6 +278,7 @@ Route::middleware(['auth'])->group(function () {
         Route::name('developer.')->group(function () {
             Route::get('/', [DeveloperController::class, 'index'])->name('index');
             Route::get('/testar', [DeveloperController::class, 'test'])->name('test');
+            Route::get('/disparar-jobs-agendados', [DeveloperController::class, 'runScheduledNow'])->name('run.scheduled.now');
         });
     });
 
