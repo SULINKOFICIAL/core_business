@@ -221,7 +221,6 @@ class OrderService
                 if ($status === 'paid') {
                     $orderPayment->update([
                         'paid_at' => $charge['paid_at'],
-                        'status'  => $status,
                         'method'  => $charge['payment_method'],
                     ]);
 
