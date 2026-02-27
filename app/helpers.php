@@ -253,6 +253,12 @@ if (! function_exists('header_menu_items')) {
                         'icon' => ['class' => 'ki-duotone ki-notepad-edit fs-3', 'paths' => 5],
                     ],
                     [
+                        'label' => 'Disparar Jobs',
+                        'route' => 'developer.run.scheduled.now',
+                        'active_routes' => ['developer.run.scheduled.now'],
+                        'icon' => ['class' => 'ki-duotone ki-notepad-edit fs-3', 'paths' => 5],
+                    ],
+                    [
                         'label' => 'Integrações Clientes',
                         'route' => 'clients.integrations.index',
                         'active_routes' => ['clients.integrations.index', 'clients.integrations.process'],
