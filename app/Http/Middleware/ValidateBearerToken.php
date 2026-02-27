@@ -21,9 +21,6 @@ class ValidateBearerToken
         // Obter o token de autorização do cabeçalho
         $token = $request->bearerToken();
 
-        Log::info('CHEGOU O TOKEN: ' . $token);
-        Log::info('TOKEN DO ENV: ' . env('CENTRAL_TOKEN'));
-
         // Verificar se o token existe e é válido
         if (!$token || $token !== env('CENTRAL_TOKEN')) {
             return response()->json(['error' => 'Token inválido.'], 401);

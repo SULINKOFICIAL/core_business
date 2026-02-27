@@ -220,10 +220,10 @@ class ClientsActionsController extends Controller
     public function runScheduledNow($id = null)
     {
         $jobs = [
-            'finish_calls_24h',
-            'finish_order_access',
-            'update_s3_metrics',
-            'archive_finished_tasks',
+            // 'finish_calls_24h',
+            // 'finish_order_access',
+            // 'update_s3_metrics',
+            // 'archive_finished_tasks',
             'refresh_mercado_livre',
         ];
 
@@ -239,16 +239,17 @@ class ClientsActionsController extends Controller
          */
         foreach ($clients as $client) {
             foreach ($jobs as $jobName) {
-                $this->guzzleService->request('post', 'sistema/processar-tarefa', $client, [
+                $return = $this->guzzleService->request('post', 'sistema/processar-tarefa', $client, [
                     'job' => $jobName,
                     'data' => [],
                 ]);
+                dd($return);
             }
         }
 
         return redirect()
-            ->route('index')
-            ->with('message', 'Tarefas executadas com sucesso para ' . $clients->count() . ' cliente(s).');
+                ->back()
+                ->with('message', 'Tarefas executadas com sucesso para ' . $clients->count() . ' cliente(s).');
     }
 
 
