@@ -250,6 +250,7 @@ class ClientProcessingController extends Controller
                 }
                 $html .= '<div class="menu-item px-3"><a href="' . route('systems.update.database', $row->id) . '" class="menu-link px-3"><i class="fa-solid fa-database me-2"></i>Atualiza banco de dados</a></div>';
                 $html .= '<div class="menu-item px-3"><a href="' . route('systems.update.git', $row->id) . '" class="menu-link px-3"><i class="fa-solid fa-code me-2"></i>Atualiza git</a></div>';
+                $html .= '<div class="menu-item px-3"><a href="' . route('systems.run.scheduled.now.client', $row->id) . '" class="menu-link px-3"><i class="fa-solid fa-list-check me-2"></i>Executar Tarefas</a></div>';
                 $html .= '<div class="menu-item px-3"><a href="' . route('clients.destroy', $row->id) . '" class="menu-link px-3"><i class="fa-solid fa-toggle-off me-2"></i>' . $toggleText . '</a></div>';
 
                 $html .= '</div></div>';

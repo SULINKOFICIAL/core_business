@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ClientDomain extends Model
 {
@@ -18,8 +18,8 @@ class ClientDomain extends Model
         'status',
     ];
 
-    public function client(): HasOne
+    public function client(): BelongsTo
     {
-        return $this->hasOne(Client::class, 'id', 'client_id');
+        return $this->belongsTo(Client::class, 'client_id', 'id');
     }
 }

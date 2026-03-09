@@ -126,7 +126,7 @@ class ClientsActionsController extends Controller
 
         // Redireciona com a mensagem final
         return redirect()
-            ->route('index')
+            ->back()
             ->with('message', 'Processo de atualização concluído para todos os clientes.');
     }
 
@@ -214,6 +214,41 @@ class ClientsActionsController extends Controller
                 ->route('clients.index')
                 ->with('message', 'GIT Pull executado com sucesso');
 
+    }
+
+    // Dispara manualmente jobs agendados
+    public function runScheduledNow($id = null)
+    {
+        $jobs = [
+            'finish_calls_24h',
+            'finish_order_access',
+            'update_s3_metrics',
+            'archive_finished_tasks',
+            'refresh_mercado_livre',
+        ];
+
+        // Busca os clientes
+        if($id !== null){
+            $clients = $this->repository->where('status', true)->get();
+        } else {
+            $clients = $this->repository->where('id', $id)->get();
+        }
+
+        /**
+         * Loop para percorrer todos os clientes
+         */
+        foreach ($clients as $client) {
+            foreach ($jobs as $jobName) {
+                $this->guzzleService->request('post', 'sistema/processar-tarefa', $client, [
+                    'job' => $jobName,
+                    'data' => [],
+                ]);
+            }
+        }
+
+        return redirect()
+                ->back()
+                ->with('message', 'Tarefas executadas com sucesso para ' . $clients->count() . ' cliente(s).');
     }
 
 

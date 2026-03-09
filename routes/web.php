@@ -268,6 +268,8 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/atualizar-em-massa',      [ClientsActionsController::class, 'updateAllDatabase'])->name('update.all.db');
             Route::get('/ajustar-armazenamento',   [ClientsActionsController::class, 'updateSizeStorage'])->name('update.size.storage');
             Route::get('/atualizar-sistemas',      [ClientsActionsController::class, 'updateAllSystems'])->name('update.all.systems');
+            Route::get('/disparar-jobs-agendados', [ClientsActionsController::class, 'runScheduledNow'])->name('run.scheduled.now');
+            Route::get('/disparar-jobs-agendados/{id}', [ClientsActionsController::class, 'runScheduledNow'])->name('run.scheduled.now.client');
         });
     });
 
@@ -278,7 +280,6 @@ Route::middleware(['auth'])->group(function () {
         Route::name('developer.')->group(function () {
             Route::get('/', [DeveloperController::class, 'index'])->name('index');
             Route::get('/testar', [DeveloperController::class, 'test'])->name('test');
-            Route::get('/disparar-jobs-agendados', [DeveloperController::class, 'runScheduledNow'])->name('run.scheduled.now');
         });
     });
 

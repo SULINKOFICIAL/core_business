@@ -11,6 +11,7 @@ use App\Models\Module;
 use App\Models\ModulePricingTier;
 use App\Models\Ticket;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class ApisController extends Controller
 {
@@ -134,7 +135,13 @@ class ApisController extends Controller
 
         // Verifica se o cliente foi encontrado
         if ($client) {
-            return response()->json(['domain' => $client->domains[0]->domain]);
+            $domain = $client->domains()->where('status', true)->first()?->domain;
+
+            if (!$domain) {
+                return response()->json(['message' => 'Cliente encontrado, mas sem domínio ativo vinculado.'], 404);
+            }
+
+            return response()->json(['domain' => $domain]);
         } else {
             return response()->json(['message' => 'Não foi possível encontrar um cliente relacionado.'], 404);
         }
@@ -164,6 +171,17 @@ class ApisController extends Controller
 
         // Busca o banco de dados correspondente ao subdomínio
         $client = $domain->client;
+
+        // Evita erro quando existir domínio órfão (sem cliente relacionado)
+        if (!$client) {
+            Log::warning('Domínio sem cliente vinculado na API getDatabase', [
+                'domain_id' => $domain->id,
+                'client_id' => $domain->client_id,
+                'domain' => $domain->domain,
+            ]);
+
+            return response()->json(['error' => 'Domínio sem cliente vinculado.'], 404);
+        }
 
         // Retorna os dados do banco de dados
         return response()->json([
