@@ -73,4 +73,21 @@ class OrderController extends Controller
             ->with('success', 'Nenhuma assinatura vencida encontrada');
 
     }
+
+    public function reprocessSubscription($id)
+    {
+
+        // Busca o pedido
+        $order = Order::find($id);
+
+        // Inicia serviço de reprocessamento
+        $this->orderService->processSubscriptionPayment($order, $order->subscription);
+
+        // Redireciona
+        return redirect()
+            ->back()
+            ->with('success', 'Assinatura reprocessada com sucesso');
+
+    }
+    
 }

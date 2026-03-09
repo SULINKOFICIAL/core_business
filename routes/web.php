@@ -168,9 +168,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::prefix('pedidos')->group(function () {
         Route::name('orders.')->group(function () {
-            Route::get('/', [OrderController::class, 'index'])->name('index');
-            Route::get('/processar', [OrderProcessingController::class, 'process'])->name('process');
-            Route::get('/visualizar/{id}', [OrderController::class, 'show'])->name('show');
+            Route::get('/',                 [OrderController::class, 'index'])->name('index');
+            Route::get('/processar',        [OrderProcessingController::class, 'process'])->name('process');
+            Route::get('/visualizar/{id}',  [OrderController::class, 'show'])->name('show');
+            Route::get('/reprocessar-assinatura-pagarme/{id}',  [OrderController::class, 'reprocessSubscription'])->name('reprocess.subscription');
         });
     });
 

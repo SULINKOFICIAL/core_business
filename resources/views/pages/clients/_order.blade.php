@@ -17,30 +17,36 @@
             </tr>
         </thead>
         <tbody class="text-start">
-            @foreach ($order->items as $item)
-            <tr class="text-muted bg-light">
-                <td class="text-gray-700 fw-semibold">
-                    @if ($item->action == 'Upgrade')
-                    <span class="badge badge-light-success">{{ $item->action }}</span>
-                    @elseif($item->action == 'Downgrade')
-                    <span class="badge badge-light-danger">{{ $item->action }}</span>
-                    @elseif($item->action == 'Adição')
-                    <span class="badge badge-light-primary">{{ $item->action }}</span>
-                    @elseif($item->action == 'Alteração')
-                    <span class="badge badge-light-warning">{{ $item->action }}</span>
-                    @else
-                    <span class="badge badge-light-info">{{ $item->action }}</span>
-                    @endif
-                    {{ $item->item_name_snapshot ?? $item->item_name }}
-                </td>
-                <td class="text-start py-1">
-                    @php($itemValue = $item->item_value ?? $item->subtotal_amount ?? 0)
-                    <span class="text-gray-700 lh-1">R$ {{ number_format($itemValue, 2, ',', '.') }}</span>
-                </td>
-                <td class="p-0"></td>
-                <td class="p-0"></td>
-            </tr>
-            @endforeach
+            {{-- @if($order->items->count())
+                @foreach ($order->items as $item)
+                <tr class="text-muted bg-light">
+                    <td class="text-gray-700 fw-semibold">
+                        @if ($item->action == 'Upgrade')
+                        <span class="badge badge-light-success">{{ $item->action }}</span>
+                        @elseif($item->action == 'Downgrade')
+                        <span class="badge badge-light-danger">{{ $item->action }}</span>
+                        @elseif($item->action == 'Adição')
+                        <span class="badge badge-light-primary">{{ $item->action }}</span>
+                        @elseif($item->action == 'Alteração')
+                        <span class="badge badge-light-warning">{{ $item->action }}</span>
+                        @else
+                        <span class="badge badge-light-info">{{ $item->action }}</span>
+                        @endif
+                        {{ $item->item_name_snapshot ?? $item->item_name }}
+                    </td>
+                    <td class="text-start py-1">
+                        @php($itemValue = $item->item_value ?? $item->subtotal_amount ?? 0)
+                        <span class="text-gray-700 lh-1">R$ {{ number_format($itemValue, 2, ',', '.') }}</span>
+                    </td>
+                    <td class="p-0"></td>
+                    <td class="p-0"></td>
+                </tr>
+                @endforeach
+            @else
+                <tr>
+                    <td colspan="4" class="text-center text-gray-500">Nenhum item encontrado</td>
+                </tr>
+            @endif --}}
         </tbody>
     </table>
     <table class="table table-striped table-row-bordered gy-2 gs-7 align-middle datatables mb-0">

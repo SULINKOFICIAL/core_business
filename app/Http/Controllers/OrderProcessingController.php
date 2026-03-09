@@ -41,7 +41,7 @@ class OrderProcessingController extends Controller
      */
     public function loadTables()
     {
-        return Order::with(['client', 'items']);
+        return Order::with(['client']);
     }
 
     /**
@@ -148,11 +148,8 @@ class OrderProcessingController extends Controller
                 }
                 return '<span class="badge badge-light-info">' . e($order->status ?? '—') . '</span>';
             })
-            ->addColumn('items_count', function ($order) {
-                return '<span class="text-gray-700">' . $order->items->count() . '</span>';
-            })
             ->addColumn('total_label', function ($order) {
-                return '<span class="text-gray-700 fw-bold">R$ ' . number_format($order->total(), 2, ',', '.') . '</span>';
+                return '<span class="text-gray-700 fw-bold">R$ ' . number_format($order->total_amount, 2, ',', '.') . '</span>';
             })
             ->editColumn('created_at', function ($order) {
                 return '<span class="text-gray-600">' . ($order->created_at?->format('d/m/Y H:i') ?? '—') . '</span>';

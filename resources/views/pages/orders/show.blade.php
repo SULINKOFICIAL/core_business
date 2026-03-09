@@ -10,6 +10,7 @@
             <span class="text-muted">Detalhes completos do pedido</span>
         </div>
         <div>
+            <a href="{{ route('orders.reprocess.subscription', $order->id) }}" class="btn btn-sm btn-light">Reprocessar assinatura pagarme</a>
             <a href="{{ route('orders.index') }}" class="btn btn-sm btn-light">Voltar</a>
         </div>
     </div>
@@ -40,33 +41,51 @@
             </div>
             <div class="col-md-3">
                 <div class="text-muted">Total</div>
-                <div class="fw-bold text-gray-800">R$ {{ number_format($order->total(), 2, ',', '.') }}</div>
+                <div class="fw-bold text-gray-800">R$ {{ number_format($order->total_amount, 2, ',', '.') }}</div>
             </div>
             <div class="col-md-3">
                 <div class="text-muted">Pago em</div>
                 <div class="text-gray-700">{{ $order->paid_at?->format('d/m/Y H:i') ?? '—' }}</div>
             </div>
+            <div class="bg-light rounded p-3 mb-2">
+                <div class="text-muted">Assinatura:</div>
+                <div class="fw-bold text-gray-800">
+                    {{ $order->subscription->pagarme_subscription_id }}<br>
+                    {{ $order->subscription->pagarme_card_id }}<br>
+                    {{ $order->subscription->interval }}<br>
+                    {{ $order->subscription->payment_method }}<br>
+                    {{ $order->subscription->currency }}<br>
+                    {{ $order->subscription->installments }}<br>
+                    {{ $order->subscription->status }}<br>
+                </div>
+            </div>
+            @foreach($order->subscription->cycles as $cycle)
+                <div class="bg-light rounded p-3 mb-2">
+                    {{ $cycle->start_date }}<br>
+                    {{ $cycle->end_date }}<br>
+                    {{ $cycle->status }}<br>
+                    {{ $cycle->cycle }}<br>
+                    {{ $cycle->billing_at }}<br>
+                    {{ $cycle->next_billing_at }}<br>
+                </div>
+            @endforeach
         </div>
 
         <h5 class="mb-3">Itens</h5>
         <table class="table table-striped table-row-bordered gy-2 gs-7 align-middle">
             <thead class="rounded">
                 <tr class="fw-bold fs-6 text-gray-700 px-7">
-                    <th>Tipo</th>
                     <th>Nome</th>
                     <th>Qtd</th>
-                    <th>Unitário</th>
                     <th>Subtotal</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach ($order->items as $item)
+                @foreach ($order->package->modules as $module)
                 <tr>
-                    <td>{{ $item->item_type ?? $item->type ?? '—' }}</td>
-                    <td>{{ $item->item_name_snapshot ?? $item->item_name ?? '—' }}</td>
-                    <td>{{ $item->quantity ?? 1 }}</td>
-                    <td>R$ {{ number_format($item->unit_price_snapshot ?? $item->item_value ?? 0, 2, ',', '.') }}</td>
-                    <td>R$ {{ number_format($item->subtotal_amount ?? $item->item_value ?? 0, 2, ',', '.') }}</td>
+                    <td>{{ $module->name }}</td>
+                    <td>1</td>
+                    <td>R$ {{ number_format($module->value, 2, ',', '.') }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -85,7 +104,7 @@
                 </tr>
             </thead>
             <tbody>
-                {{-- @forelse ($order->transactions as $transaction)
+                @forelse ($order->transactions as $transaction)
                 <tr>
                     <td>OT{{ $transaction->id }}</td>
                     <td>{{ $transaction->status }}</td>
@@ -98,7 +117,7 @@
                 <tr>
                     <td colspan="6" class="text-center text-muted">Nenhuma transação registrada</td>
                 </tr>
-                @endforelse --}}
+                @endforelse
             </tbody>
         </table>
     </div>

@@ -24,8 +24,6 @@ class Subscription extends Model
         'currency',
         'installments',
         'status',
-        'billing_at',
-        'next_billing_at',
     ];
 
     public function order(): BelongsTo
@@ -37,4 +35,10 @@ class Subscription extends Model
     {
         return $this->hasMany(OrderTransaction::class, 'subscription_id', 'id');
     }
+    
+    public function cycles(): HasMany
+    {
+        return $this->hasMany(SubscriptionCycle::class, 'subscription_id', 'id');
+    }
+
 }

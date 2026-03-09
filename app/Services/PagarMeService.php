@@ -140,11 +140,11 @@ class PagarMeService
                 'exp_year'        => $card->expiration_year,
                 'cvv'             => $cvv,
                 'billing_address' => [
-                    'line_1'   => $address['address'],
-                    'zip_code' => $address['cep'],
-                    'city'     => $address['city'],
-                    'state'    => $address['state'],
-                    'country'  => $address['country'],
+                    'line_1'   => $address['address'] ?? 'teste',
+                    'zip_code' => $address['cep'] ?? '12345678',
+                    'city'     => $address['city'] ?? 'teste',
+                    'state'    => $address['state'] ?? 'teste',
+                    'country'  => $address['country'] ?? 'BR',
                 ]
             ];
 

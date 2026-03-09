@@ -63,7 +63,6 @@
                     <th class="text-start">Cliente</th>
                     <th class="text-start">Tipo</th>
                     <th class="text-start">Status</th>
-                    <th class="text-start">Itens</th>
                     <th class="text-start">Total</th>
                     <th class="text-start">Criado</th>
                     <th class="text-start">Pago</th>
@@ -95,7 +94,6 @@
             { data: 'client_name', orderable: false, searchable: false },
             { data: 'type', name: 'type' },
             { data: 'status_label', name: 'status', orderable: false, searchable: false },
-            { data: 'items_count', orderable: false, searchable: false },
             { data: 'total_label', orderable: false, searchable: false },
             { data: 'created_at', name: 'created_at' },
             { data: 'paid_at', name: 'paid_at' },

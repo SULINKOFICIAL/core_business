@@ -22,7 +22,7 @@
                             </span>
                         </td>
                         <td class="text-start">
-                            <span class="text-gray-700 fw-bold">R$ {{ number_format($order->total(), 2, ',', '.') }}</span>
+                            <span class="text-gray-700 fw-bold">R$ {{ number_format($order->total_amount, 2, ',', '.') }}</span>
                         </td>
                         <td class="text-center">
                             @if ($order->method == 'credit_card')
