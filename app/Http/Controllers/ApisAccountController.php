@@ -110,6 +110,12 @@ class ApisAccountController extends Controller
         // Obtem o pedido selecionado
         $order = $client->orders()->where('id', $id)->first();
 
+        $subscription = $order->subscription;
+
+        $package = $order->package;
+
+        $transactions = $order->transactions;
+
         // Resposta padrão quando não há pacote ativo.
         if (!$order) {
             return response()->json([
@@ -118,7 +124,10 @@ class ApisAccountController extends Controller
         }
 
         return response()->json([
-            'order' => $order,
+            'order'        => $order,
+            'package'      => $package,
+            'subscription' => $subscription,
+            'transactions' => $transactions,
         ], 200);
     }
 
