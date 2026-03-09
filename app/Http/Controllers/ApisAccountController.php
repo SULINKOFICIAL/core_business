@@ -42,7 +42,7 @@ class ApisAccountController extends Controller
             'existsOrder' => $existsRenovation,
         ], 200);
     }
-
+    
     /**
      * Retorna o histórico de pedidos do cliente em formato simplificado.
      * Inclui dados de pagamento, status e quantidade de transações.
@@ -52,8 +52,26 @@ class ApisAccountController extends Controller
         // Obtém cliente já anexado pelo middleware.
         $client = $request->all()['client'];
 
+        // Obtém página e limite.
+        $page = (int) $request->get('page', 1);
+        $limit = (int) $request->get('limit', 10);
+
+        // Calcula o offset.
+        $offset = ($page - 1) * $limit;
+
         // Busca pedidos ordenados do mais recente para o mais antigo.
-        $orders = $client->orders()->orderBy('created_at', 'DESC')->get();
+        $orders = $client->orders()
+                    ->orderBy('created_at', 'DESC')
+                    ->orderBy('id', 'DESC')
+                    ->skip($offset)
+                    ->take($limit)
+                    ->get();
+
+        // verifica se existe mais registros depois
+        $hasMore = $client->orders()
+            ->skip($offset + $limit)
+            ->limit(1)
+            ->exists();
 
         // Inicia lista de resposta.
         $ordersJson = [];
@@ -63,23 +81,45 @@ class ApisAccountController extends Controller
             $orderData['id'] = $order->id;
             $orderData['date_created'] = $order->created_at;
             $orderData['date_paid'] = $order->paid_at;
+            $orderData['date_end'] = $order->end_date;
             $orderData['type'] = $order->type;
-            $orderData['amount'] = $order->total();
+            $orderData['amount'] = $order->total_amount;
+            $orderData['currency'] = $order->currency;
             $orderData['method'] = $order->method;
-            $orderData['description'] = $order->description;
             $orderData['status'] = $order->status;
             $orderData['packageName'] = $order->package->name;
             $orderData['transactions'] = $order->transactions->count();
 
-            // Inclui pacote anterior quando houver troca.
-            if ($orderData['type'] === 'Pacote Trocado') {
-                $orderData['previousPackageName'] = $order->previousPackage->name;
-            }
-
             $ordersJson[] = $orderData;
         }
 
-        return response()->json($ordersJson, 200);
+        return response()->json([
+            'data' => $ordersJson,
+            'hasMore' => $hasMore
+        ], 200);
+    }
+
+    /**
+     * Retorna o pedido selecionado do cliente
+     */
+    public function invoice(Request $request, $id)
+    {
+        // Obtém cliente já anexado pelo middleware.
+        $client = $request->all()['client'];
+
+        // Obtem o pedido selecionado
+        $order = $client->orders()->where('id', $id)->first();
+
+        // Resposta padrão quando não há pacote ativo.
+        if (!$order) {
+            return response()->json([
+                'order' => null,
+            ], 200);
+        }
+
+        return response()->json([
+            'order' => $order,
+        ], 200);
     }
 
     /**

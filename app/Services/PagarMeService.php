@@ -213,6 +213,10 @@ class PagarMeService
 
         // Verifica se a resposta foi bem sucedida
         if (isset($response) && isset($response['id'])) {
+            $package->update([
+                'name' => $items[0]['description'],
+            ]);
+
             return $response;
         }
     }

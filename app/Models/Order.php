@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Order extends Model
@@ -49,16 +50,9 @@ class Order extends Model
         return $this->belongsTo(Client::class, 'client_id');
     }
 
-    public function transactions(): HasManyThrough
+    public function transactions(): HasMany
     {
-        return $this->hasManyThrough(
-            OrderTransaction::class,
-            Subscription::class,
-            'order_id',
-            'subscription_id',
-            'id',
-            'id'
-        );
+        return $this->hasMany(OrderTransaction::class, 'order_id', 'id');
     }
 
     public function subscription(): BelongsTo

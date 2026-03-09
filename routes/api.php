@@ -33,11 +33,11 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
     Route::middleware('attach.client')->group(function () {
 
         /** API que envia informações para os miCores */
-        Route::get('/meu-pedido',     [ApisAccountController::class, 'order']);
-        Route::get('/minhas-compras', [ApisAccountController::class, 'orders']);
-        Route::get('/cartoes',        [ApisAccountController::class, 'cards']);
-
-        Route::get('/meu-pacote',     [ClientsPackagesController::class, 'package']);
+        Route::get('/meu-pedido',         [ApisAccountController::class, 'order']);
+        Route::get('/minhas-compras',     [ApisAccountController::class, 'orders']);
+        Route::get('/compra/{id}',        [ApisAccountController::class, 'invoice']);
+        Route::get('/cartoes',            [ApisAccountController::class, 'cards']);
+        Route::get('/meu-pacote',         [ClientsPackagesController::class, 'package']);
 
         /**
          * API que gerencia os pedidos
