@@ -231,7 +231,7 @@ if (! function_exists('header_menu_items')) {
                         'active_routes' => ['modules.index'],
                         'icon' => ['class' => 'fa-solid fa-cubes fs-5'],
                     ],
-                    [
+                    /* [
                         'label' => 'Categorias de módulos',
                         'route' => 'modules.categories.index',
                         'active_routes' => ['modules.categories.index'],
@@ -242,12 +242,18 @@ if (! function_exists('header_menu_items')) {
                         'route' => 'groups.index',
                         'active_routes' => ['groups.index'],
                         'icon' => ['class' => 'fa-solid fa-layer-group fs-5'],
-                    ],
+                    ], */
                     [
                         'label' => 'Recursos',
                         'route' => 'resources.index',
                         'active_routes' => ['resources.index'],
                         'icon' => ['class' => 'fa-solid fa-toolbox fs-5'],
+                    ],
+                    [
+                        'label' => 'Atualizar Módulos',
+                        'route' => 'systems.get.resources',
+                        'active_routes' => ['systems.get.resources'],
+                        'icon' => ['class' => 'fa-solid fa-code-compare fs-5'],
                     ],
                 ],
             ],

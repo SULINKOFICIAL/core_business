@@ -22,7 +22,7 @@ class Group extends Model
     }
     
     // Relacionamento com sectors
-    public function modules()
+    public function modules(): BelongsToMany
     {
         return $this->belongsToMany(Module::class, 'module_group');
     }

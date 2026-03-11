@@ -262,6 +262,7 @@ Route::middleware(['auth'])->group(function () {
      */
     Route::prefix('sistemas')->group(function () {
         Route::name('systems.')->group(function () {
+            Route::get('/modulo',                  [ClientsActionsController::class, 'module'])->name('module');
             Route::get('/recurso',                 [ClientsActionsController::class, 'feature'])->name('feature');
             Route::get('/acessar-recursos',        [ClientsActionsController::class, 'getResources'])->name('get.resources');
             Route::get('/atualizar-banco/{id}',    [ClientsActionsController::class, 'updateDatabaseManual'])->name('update.database');

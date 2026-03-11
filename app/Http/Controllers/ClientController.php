@@ -137,21 +137,33 @@ class ClientController extends Controller
         // Inicia Array para receber as permissões liberadas do cliente
         $allowFeatures = [];
 
+        // Inicia Array para receber os modulos liberados do cliente
+        $allowModules = [];
+
         // Realiza consulta para verificar se consegue se comunicar com o miCore
         $apiVerifyStatus = $this->guzzle('get', 'sistema/status', $client);
 
         // Realiza consulta para verificar se consegue se comunicar com o miCore
         $apiGetPermissions = $this->guzzle('get', 'sistema/permissoes', $client);
 
+        // Realiza consulta para verificar se consegue se comunicar com o miCore
+        $apiGetModules = $this->guzzle('get', 'sistema/modulos', $client);
+
         // Se conseguir conectar ao miCore do cliente
         if(!isset($apiVerifyStatus['error'])){
     
             // Transforma em uma coleção
             $apiGetPermissions = $apiGetPermissions['permissions'];
+            $apiGetModules     = $apiGetModules['modules'];
     
             // Separa variáveis
             foreach ($apiGetPermissions as $value) {
                 $allowFeatures[$value['name']] = $value['status'];
+            }
+    
+            // Separa variáveis
+            foreach ($apiGetModules as $value) {
+                $allowModules[$value['name']] = $value['status'];
             }
 
         } else {
@@ -167,6 +179,7 @@ class ClientController extends Controller
             'modules'       => $modules,
             'packages'      => $packages,
             'allowFeatures' => $allowFeatures,
+            'allowModules'  => $allowModules,
             'apiError'      => $apiError,
             'apiGetPermissions'   => $apiGetPermissions,
         ]);

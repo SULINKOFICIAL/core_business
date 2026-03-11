@@ -52,7 +52,6 @@
             <thead class="rounded">
                 <tr class="fw-bold fs-6 text-gray-700 px-7">
                     <th class="text-start" width="60%">Nome</th>
-                    <th class="text-center px-0">Slug</th>
                     <th class="text-center px-0">Criado Em</th>
                     <th class="text-center px-0">Status</th>
                     <th class="text-center">Ações</th>
@@ -80,7 +79,6 @@
         order: [[2, 'desc']],
         columns: [
             { data: 'name', name: 'name' },
-            { data: 'slug', name: 'slug', className: 'text-center' },
             { data: 'created_at', name: 'created_at', className: 'text-center' },
             { data: 'status_label', name: 'status', orderable: false, searchable: false, className: 'text-center' },
             { data: 'actions', orderable: false, searchable: false, className: 'text-center' },

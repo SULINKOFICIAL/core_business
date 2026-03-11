@@ -156,7 +156,7 @@
         });
         
         
-        $(document).on('change', '.input-features', function(){
+        $(document).on('change', '.input-modules', function(){
 
             // Obtém se esta checado ou não
             var checked = $(this).is(':checked');
@@ -166,7 +166,7 @@
             // Busca OS
             $.ajax({
                 type:'GET',
-                url: "{{ route('systems.feature') }}",
+                url: "{{ route('systems.module') }}",
                 data: {
                     status: checked,
                     client_id: "{{ $client->id }}",
@@ -177,6 +177,28 @@
                 },
             });
         });
+        
+        // $(document).on('change', '.input-features', function(){
+
+        //     // Obtém se esta checado ou não
+        //     var checked = $(this).is(':checked');
+
+        //     var name = $(this).val();
+
+        //     // Busca OS
+        //     $.ajax({
+        //         type:'GET',
+        //         url: "{{ route('systems.feature') }}",
+        //         data: {
+        //             status: checked,
+        //             client_id: "{{ $client->id }}",
+        //             name: name,
+        //         },
+        //         success: function(response) {
+        //             toastr.success('Sucesso');
+        //         },
+        //     });
+        // });
     });
 </script>
 @endsection

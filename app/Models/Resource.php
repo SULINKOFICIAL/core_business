@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Resource extends Model
 {
     protected $fillable = [
+        'module_id',
         'name',
         'status',
         'filed_by',
@@ -18,5 +20,10 @@ class Resource extends Model
     public function groups()
     {
         return $this->belongsToMany(Group::class, 'group_resource');
+    }
+
+    public function module(): BelongsTo
+    {
+        return $this->belongsTo(Module::class, 'module_id', 'id');
     }
 }

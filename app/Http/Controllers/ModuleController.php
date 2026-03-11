@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Group;
 use App\Models\Module;
 use App\Models\ModuleCategory;
+use App\Models\Resource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -31,7 +32,7 @@ class ModuleController extends Controller
     public function index()
     {
         // Carrega módulos com grupos e faixas de preço para exibição na listagem
-        $modules = Module::with(['groups', 'pricingTiers', 'category'])->get();
+        $modules = Module::with(['resources', 'pricingTiers', 'category'])->get();
 
         // Retorna a página
         return view('pages.modules.index')->with([
@@ -42,12 +43,12 @@ class ModuleController extends Controller
     public function create()
     {   
         // Obtém dados dos Grupos ativos
-        $groups = Group::where('status', true)->get(); 
+        $resources = Resource::where('status', true)->get(); 
         $categories = ModuleCategory::where('status', true)->get();
 
         // Retorna a página
         return view('pages.modules.create')->with([
-            'groups' => $groups,
+            'resources' => $resources,
             'categories' => $categories,
         ]);
 
@@ -75,8 +76,9 @@ class ModuleController extends Controller
         // Insere no banco de dados
         $created = $this->repository->create($data);
 
-        if (isset($data['groups'])) {
-            $created->groups()->sync($data['groups']);
+        if (isset($data['resources'])) {
+            Resource::where('module_id', $created->id)->update(['module_id' => null]);
+            Resource::whereIn('id', $data['resources'])->update(['module_id' => $created->id]);
         }
 
         // Persiste as faixas de preço quando o tipo é por uso
@@ -96,8 +98,8 @@ class ModuleController extends Controller
 
     public function edit($id)
     {
-        // Obtém dados dos Grupos ativos
-        $groups = Group::where('status', true)->get();        
+        // Obtém dados dos Recursos ativos
+        $resources = Resource::where('status', true)->get();        
         $categories = ModuleCategory::where('status', true)->get();
 
         // Obtém dados
@@ -109,7 +111,7 @@ class ModuleController extends Controller
         // Retorna a página
         return view('pages.modules.edit')->with([
             'modules' => $modules,
-            'groups' => $groups,
+            'resources' => $resources,
             'categories' => $categories,
         ]);
 
@@ -144,8 +146,9 @@ class ModuleController extends Controller
         // Atualiza dados
         $modules->update($data);
 
-        if (isset($data['groups'])) {
-            $modules->groups()->sync($data['groups']);
+        if (isset($data['resources'])) {
+            Resource::where('module_id', $modules->id)->update(['module_id' => null]);
+            Resource::whereIn('id', $data['resources'])->update(['module_id' => $modules->id]);
         }
 
         // Atualiza as faixas de preço quando o tipo é por uso

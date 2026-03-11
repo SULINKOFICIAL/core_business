@@ -67,11 +67,11 @@
                 @endif
             </div>
             <div class="col-12 mb-4">
-                <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Grupos de Recursos</label>
-                <select name="groups[]" class="form-select form-select-solid" data-control="select2" data-placeholder="Selecione" multiple>
+                <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Recursos</label>
+                <select name="resources[]" class="form-select form-select-solid" data-control="select2" data-placeholder="Selecione" multiple>
                     <option value=""></option>
-                    @foreach ($groups as $group)
-                    <option value="{{ $group->id }}" @if(isset($modules) && in_array($group->id, $modules->groups->pluck('id')->toArray())) selected @endif>{{ $group->name }}</option>
+                    @foreach ($resources as $resource)
+                    <option value="{{ $resource->id }}" @if(isset($modules) && in_array($resource->id, $modules->resources->pluck('id')->toArray())) selected @endif>{{ $resource->name }}</option>
                     @endforeach
                 </select>
             </div>

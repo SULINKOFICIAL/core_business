@@ -20,20 +20,20 @@
             <div class="card-header d-flex align-items-center justify-content-between min-h-60px px-6">
                 <div class="w-75">
                     <a href="{{ route('modules.edit', $module->id) }}" class="mb-0 fw-bolder @if ($module->status == 0) text-danger @else text-gray-700 @endif text-hover-primary m-0 fs-5 text-uppercase lh-1">{{ Str::limit($module->name, 25) }}</a>
-                    <p class="text-gray-500 mb-0 fw-semibold fs-7 lh-1">Grupo de Recursos <span class="text-success fs-8">{{ $pricingLabel }}</span></p>
+                    <p class="text-gray-500 mb-0 fw-semibold fs-7 lh-1">Recursos <span class="text-success fs-8">{{ $pricingLabel }}</span></p>
                 </div>
                 <a href="{{ route('modules.edit', $module->id) }}" class="btn btn-sm btn-icon btn-light-primary">
                     <i class="fa-solid fa-gear"></i>
                 </a>
             </div>
             <div class="card-body">
-                @if ($module->groups->count())
-                    @foreach ($module->groups as $key => $group)
-                    <p class="text-gray-700 m-0 fs-7"><span class="fw-bolder">{{ $key + 1 }}.</span> {{ $group->name }}</p>
+                @if ($module->resources->count())
+                    @foreach ($module->resources as $key => $resource)
+                    <p class="text-gray-700 m-0 fs-7"><span class="fw-bolder">{{ $key + 1 }}.</span> {{ $resource->name }}</p>
                     @endforeach
                 @else
                     <p class="text-gray-500 text-center fs-7 fw-bold mb-0">
-                        Sem Grupos
+                        Sem Recursos
                     </p>
                 @endif
             </div>

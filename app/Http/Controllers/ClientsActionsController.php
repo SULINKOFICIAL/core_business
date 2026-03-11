@@ -23,6 +23,26 @@ class ClientsActionsController extends Controller
         $this->guzzleService = $guzzleService;
     }
 
+    // Obtém o modulo do usuário
+    public function module(Request $request){
+
+        // Obtém dados do formulário
+        $data = $request->all();
+
+        // Encontra o cliente
+        $client = $this->repository->find($data['client_id']);
+
+        // Converte 'status' para booleano (true ou false)
+        $data['status']  = filter_var($data['status'], FILTER_VALIDATE_BOOLEAN);
+
+        // Realiza solicitação
+        $response = $this->guzzleService->request('put', 'sistema/configurar-modulo', $client, ['name' => $data['name'], 'status' => $data['status']]);
+
+        // Retorna resposta
+        return $response;
+
+    }
+
     // Obtém permissões do usuário
     public function feature(Request $request){
 
@@ -260,11 +280,12 @@ class ClientsActionsController extends Controller
         $data = $request->all();
 
         // Encontra o Cliente modelo 1
-        $client = $this->repository->find(2);
+        $client = $this->repository->find(1);
 
         // Realiza solicitação
         $modules = $this->guzzleService->request('post', 'sistema/permissoes-recursos', $client, $data);
 
+        // Decodifica a resposta
         $modules = json_decode($modules['data'], true);
 
         /**
@@ -285,7 +306,7 @@ class ClientsActionsController extends Controller
             /**
              * Cria os módulos
              */
-            Module::updateOrCreate([
+            $modelModule = Module::updateOrCreate([
                 'slug' => $key
             ], [
                 'name' => $module['name'],
@@ -304,7 +325,8 @@ class ClientsActionsController extends Controller
                  */
                 Resource::updateOrCreate(
                     [
-                        'name' => $resource
+                        'name' => $resource,
+                        'module_id' => $modelModule->id,
                     ],
                     [
                         'status' => true,

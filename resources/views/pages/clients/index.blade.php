@@ -184,5 +184,6 @@
     $('#clients-filters').on('reset', function() {
         setTimeout(() => dataTable.ajax.reload(), 0);
     });
+
 </script>
 @endsection
