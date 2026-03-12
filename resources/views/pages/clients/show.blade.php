@@ -80,7 +80,7 @@
                     @foreach ($modules as $module)
                     <div class="mb-1 d-flex align-items-center justify-content-between">
                         <p class="text-gray-700 mb-0">{{ Str::limit($module->name, 25) }}</p>
-                        @if (in_array($module->id, $client->modules->pluck('id')->toArray()))
+                        @if (($allowModules[$module->name] ?? 0) == 1)
                             <i class="fa-solid fa-circle-check text-success"></i>
                         @else
                             <i class="fa-solid fa-circle-check text-danger"></i>
@@ -163,6 +163,8 @@
 
             var name = $(this).val();
 
+            var category = $(this).data('category');
+
             // Busca OS
             $.ajax({
                 type:'GET',
@@ -171,6 +173,7 @@
                     status: checked,
                     client_id: "{{ $client->id }}",
                     name: name,
+                    category: category
                 },
                 success: function(response) {
                     toastr.success('Sucesso');

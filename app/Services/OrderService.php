@@ -15,6 +15,7 @@ use App\Models\OrderTransaction;
 use App\Models\SubscriptionCycle;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use App\Services\ModuleService;
 
 class OrderService
 {
@@ -150,12 +151,12 @@ class OrderService
             /**
              * Busca o pedido de assinatura, cria transação e ciclo. 
              */
-            return $this->processSubscriptionPayment($orderPayment, $subscription, $subscription->pagarme_subscription_id);
+            return $this->processSubscriptionPayment($orderPayment, $subscription, $package);
 
         }
     }
 
-    public function processSubscriptionPayment($orderPayment, $subscription)
+    public function processSubscriptionPayment($orderPayment, $subscription, $package)
     {
 
         // Inicia o serviço da PagarMe
@@ -255,12 +256,57 @@ class OrderService
                     'billing_at'        => $transaction['cycle']['billing_at'],
                     'next_billing_at'   => $transaction['subscription']['next_billing_at'],
                 ]);
+
+                /**
+                 * Cria o tempo da assinatura no miCore
+                 */
+                $this->createSubscriptionCore($orderPayment->client, $transaction['cycle']['start_at'], $transaction['cycle']['end_at']);
+
+                // Inicia o serviço de módulos
+                $moduleService = app(ModuleService::class);
+
+                // Obtem os módulos do pacote
+                $modules = $package->modules()->with('category', 'resources')->get();
+
+                // Itera sobre os módulos
+                foreach ($modules as $module) {
+
+                    /**
+                     * Envia os modulos com os itens para o Micore
+                     */
+                    $moduleService->configureModule($package->client, [
+                        'name'     => $module->name,
+                        'category' => $module->category->name,
+                        'status'   => true,
+                    ]);
+                    
+                }
+
             }
 
             // Retorna a mensagem
             return $statusMap[$status]['message'];
         }
         
+    }
+
+    /**
+     * Função responsável por registrar no MiCore o tempo da assinatura
+     */
+    public function createSubscriptionCore($client, $startDate, $endDate) 
+    {
+        // Inicia o serviço do Guzzle
+        $guzzleService = new GuzzleService;
+
+        // Realiza a solicitação
+        $guzzleService->request('post', 'sistema/atualizar-assinatura', $client, [
+            'start_date' => $startDate,
+            'end_date'   => $endDate,
+            'status'     => true,
+        ]);
+
+        return true;
+
     }
 
     public function confirmPaymentOrder($order)

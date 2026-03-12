@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\Module;
+use App\Models\ModuleCategory;
 use App\Models\Resource;
 use App\Services\GuzzleService;
+use App\Services\ModuleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -35,8 +37,15 @@ class ClientsActionsController extends Controller
         // Converte 'status' para booleano (true ou false)
         $data['status']  = filter_var($data['status'], FILTER_VALIDATE_BOOLEAN);
 
+        // Inicia serviço de módulos
+        $moduleService = app(ModuleService::class);
+
         // Realiza solicitação
-        $response = $this->guzzleService->request('put', 'sistema/configurar-modulo', $client, ['name' => $data['name'], 'status' => $data['status']]);
+        $response = $moduleService->configureModule($client, [
+            'name' => $data['name'],
+            'category' => $data['category'],
+            'status' => $data['status']
+        ]);
 
         // Retorna resposta
         return $response;
@@ -55,8 +64,11 @@ class ClientsActionsController extends Controller
         // Converte 'status' para booleano (true ou false)
         $data['status']  = filter_var($data['status'], FILTER_VALIDATE_BOOLEAN);
 
+        // Inicia serviço de módulos
+        $moduleService = app(ModuleService::class);
+
         // Realiza solicitação
-        $response = $this->guzzleService->request('put', 'sistema/configurar-permissao', $client, ['name' => $data['name'], 'status' => $data['status']]);
+        $response = $moduleService->configureFeatureForClient($client, $data['name'], $data['module'], $data['status']);
 
         // Retorna resposta
         return $response;
@@ -283,10 +295,10 @@ class ClientsActionsController extends Controller
         $client = $this->repository->find(1);
 
         // Realiza solicitação
-        $modules = $this->guzzleService->request('post', 'sistema/permissoes-recursos', $client, $data);
+        $categories = $this->guzzleService->request('post', 'sistema/permissoes-recursos', $client, $data);
 
         // Decodifica a resposta
-        $modules = json_decode($modules['data'], true);
+        $categories = json_decode($categories['data'], true);
 
         /**
          * Define o status de todos os registros como 0 antes da verificação.
@@ -301,38 +313,69 @@ class ClientsActionsController extends Controller
             'status' => 0,
         ]);
 
-        foreach ($modules as $key => $module) {
+        /**
+         * Faz looping pelas categorias
+         */
+        foreach ($categories as $category) {
 
             /**
-             * Cria os módulos
+             * Verifica se veio com pacote ou sem
              */
-            $modelModule = Module::updateOrCreate([
-                'slug' => $key
-            ], [
-                'name' => $module['name'],
-                'description' => $module['description'],
-                'created_by' => Auth::id()
-            ]);
-
-            foreach ($module['resources'] as $resource) {
+            if($category['name'] != 'Sem Pacote') {
 
                 /**
-                 * Busca um registro onde o campo 'name' seja igual a $permission.
-                 * 
-                 * Se o registro existir, atualiza o campo 'status' para true.
-                 * Se o registro não existir, cria um novo com 'name' = $permission 
-                 * e 'status' = true.
+                 * Cria a categoria no sistema
                  */
-                Resource::updateOrCreate(
-                    [
-                        'name' => $resource,
-                        'module_id' => $modelModule->id,
-                    ],
-                    [
-                        'status' => true,
-                        'created_by' => Auth::id()
-                    ]
-                );
+                $moduleCategory = ModuleCategory::updateOrCreate([
+                    'name' => $category['name'],
+                ], [
+                    'status' => true,
+                    'created_by' => Auth::id()
+                ]);
+
+                $categoryId = $moduleCategory->id;
+
+            } else {
+                $categoryId = null;
+            }
+            
+            // Faz looping entre modulos
+            foreach ($category['modules'] as $key => $module) {
+
+                /**
+                 * Cria os módulos
+                 */
+                $modelModule = Module::updateOrCreate([
+                    'slug' => $key,
+                    'module_category_id' => $categoryId,
+                ], [
+                    'name' => $module['name'],
+                    'description' => $module['description'],
+                    'created_by' => Auth::id()
+                ]);
+
+                // Faz looping entre os recursos
+                foreach ($module['resources'] as $resource) {
+
+                    /**
+                     * Busca um registro onde o campo 'name' seja igual a $permission.
+                     * 
+                     * Se o registro existir, atualiza o campo 'status' para true.
+                     * Se o registro não existir, cria um novo com 'name' = $permission 
+                     * e 'status' = true.
+                     */
+                    Resource::updateOrCreate(
+                        [
+                            'name' => $resource,
+                            'module_id' => $modelModule->id,
+                        ],
+                        [
+                            'status' => true,
+                            'created_by' => Auth::id()
+                        ]
+                    );
+                }
+
             }
         }
         

@@ -126,7 +126,13 @@ class ClientController extends Controller
     public function show($id)
     {
         // Obtém dados dos Modulos ativos
-        $modules = Module::where('status', true)->get();
+        $modules = Module::with(['category', 'resources'])
+            ->where('status', true)
+            ->get();
+
+        $modulesByCategory = $modules->groupBy(function ($module) {
+            return optional($module->category)->name ?: 'Sem Categoria';
+        });
 
         // Obtém dados do Cliente
         $client = $this->repository->find($id);
@@ -177,6 +183,7 @@ class ClientController extends Controller
         return view('pages.clients.show')->with([
             'client'        => $client,
             'modules'       => $modules,
+            'modulesByCategory' => $modulesByCategory,
             'packages'      => $packages,
             'allowFeatures' => $allowFeatures,
             'allowModules'  => $allowModules,
@@ -331,3 +338,6 @@ class ClientController extends Controller
     }
 
 }
+
+
+
