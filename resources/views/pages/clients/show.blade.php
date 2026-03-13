@@ -139,6 +139,7 @@
     @include('pages.clients._change_package')
     @endif
     @include('pages.clients._upgrade')
+    @include('pages.clients._add_free')
 @endsection
 
 @section('custom-footer')
@@ -161,9 +162,7 @@
             // Obtém se esta checado ou não
             var checked = $(this).is(':checked');
 
-            var name = $(this).val();
-
-            var category = $(this).data('category');
+            var moduleId = $(this).val();
 
             // Busca OS
             $.ajax({
@@ -172,8 +171,7 @@
                 data: {
                     status: checked,
                     client_id: "{{ $client->id }}",
-                    name: name,
-                    category: category
+                    module_id: moduleId,
                 },
                 success: function(response) {
                     toastr.success('Sucesso');

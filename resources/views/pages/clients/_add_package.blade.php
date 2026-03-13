@@ -1,4 +1,4 @@
-<button id="drawer_package" class="btn btn-success btn-active-success position-fixed" style="right: 200px; bottom: 50px">Atribuir Pacote</button>
+<button id="drawer_package" class="btn btn-success btn-active-success position-fixed" style="right: 350px; bottom: 50px">Atribuir Pacote</button>
 <form action="{{ route('packages.assign', $client->id) }}" method="POST" enctype="multipart/form-data">
     @csrf
     <div

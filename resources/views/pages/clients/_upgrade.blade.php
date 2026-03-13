@@ -1,4 +1,4 @@
-<button id="drawer_upgrade" class="btn btn-primary btn-active-success position-fixed" style="right: 50px; bottom: 50px">Modificar Plano</button>
+<button id="drawer_upgrade" class="btn btn-primary btn-active-success position-fixed" style="right: 200px; bottom: 50px">Modificar Plano</button>
 <form action="{{ route('packages.upgrade', $client->id) }}" method="POST" enctype="multipart/form-data">
     @csrf
     <div
@@ -16,11 +16,8 @@
                     </div>
                 </div>
                 <div class="card-toolbar">
-                    <div class="btn btn-sm btn-icon btn-active-light-primary" id="kt_drawer_example_basic_close">
-                        <i class="ki-duotone ki-cross fs-2">
-                            <span class="path1"></span>
-                            <span class="path2"></span>
-                        </i>
+                    <div class="btn btn-sm btn-icon btn-circle btn-active-light-primary" id="kt_drawer_example_basic_close">
+                        <i class="fa-solid fa-xmark"></i>
                     </div>
                 </div>
             </div>
