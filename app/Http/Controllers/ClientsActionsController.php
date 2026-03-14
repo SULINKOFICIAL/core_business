@@ -26,30 +26,29 @@ class ClientsActionsController extends Controller
     }
 
     // Obtém o modulo do usuário
-    public function module(Request $request){
-
+    public function module(Request $request)
+    {
         // Obtém dados do formulário
         $data = $request->all();
 
         // Encontra o cliente
         $client = $this->repository->find($data['client_id']);
 
-        // Converte 'status' para booleano (true ou false)
-        $data['status']  = filter_var($data['status'], FILTER_VALIDATE_BOOLEAN);
+        // Converte 'status' para booleano
+        $status = filter_var($data['status'], FILTER_VALIDATE_BOOLEAN);
 
         // Inicia serviço de módulos
         $moduleService = app(ModuleService::class);
 
         // Realiza solicitação
-        $response = $moduleService->configureModule($client, [
-            'name' => $data['name'],
-            'category' => $data['category'],
-            'status' => $data['status']
-        ]);
+        $response = $moduleService->configureModules(
+            $client,
+            [$data['module_id']],
+            $status
+        );
 
         // Retorna resposta
         return $response;
-
     }
 
     // Obtém permissões do usuário
@@ -68,7 +67,13 @@ class ClientsActionsController extends Controller
         $moduleService = app(ModuleService::class);
 
         // Realiza solicitação
-        $response = $moduleService->configureFeatureForClient($client, $data['name'], $data['module'], $data['status']);
+        $response = $moduleService->configureFeatureForClient($client, [
+            [
+                'name'   => $data['name'],
+                'module' => $data['module'],
+                'status' => $data['status']
+            ]
+        ]);
 
         // Retorna resposta
         return $response;
@@ -383,6 +388,39 @@ class ClientsActionsController extends Controller
         return redirect()
         ->route('index')
         ->with('message', 'Permissões atualizadas com sucesso! Os recursos foram sincronizados com o sistema.');
+
+    }
+
+    /**
+     * Função responsável por liberar gratis por 30 dias um sistema para um cliente
+     */
+    public function addFree(Request $request, $id)
+    {   
+        // Obtem dados
+        $data = $request->all();
+
+        // Encontra o cliente
+        $client = $this->repository->find($id);
+        
+        // Inicia serviço de módulos
+        $moduleService = app(ModuleService::class);
+
+        // Realiza solicitação
+        $moduleService->configureModules(
+            $client,
+            $data['modules'],
+            true
+        );
+
+        // Cria o tempo da assinatura no MiCore
+        $moduleService->createSubscriptionCore(
+            $client,
+            now()->toDateString(),
+            now()->addDays(30)->toDateString()
+        );
+
+        // Retorna a página
+        return redirect()->route('clients.show', $client->id)->with('message', 'Módulos liberados com sucesso!');
 
     }
 

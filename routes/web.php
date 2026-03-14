@@ -265,16 +265,17 @@ Route::middleware(['auth'])->group(function () {
      */
     Route::prefix('sistemas')->group(function () {
         Route::name('systems.')->group(function () {
-            Route::get('/modulo',                  [ClientsActionsController::class, 'module'])->name('module');
-            Route::get('/recurso',                 [ClientsActionsController::class, 'feature'])->name('feature');
-            Route::get('/acessar-recursos',        [ClientsActionsController::class, 'getResources'])->name('get.resources');
-            Route::get('/atualizar-banco/{id}',    [ClientsActionsController::class, 'updateDatabaseManual'])->name('update.database');
-            Route::get('/atualizar-git/{id}',      [ClientsActionsController::class, 'updateGitManual'])->name('update.git');
-            Route::get('/atualizar-em-massa',      [ClientsActionsController::class, 'updateAllDatabase'])->name('update.all.db');
-            Route::get('/ajustar-armazenamento',   [ClientsActionsController::class, 'updateSizeStorage'])->name('update.size.storage');
-            Route::get('/atualizar-sistemas',      [ClientsActionsController::class, 'updateAllSystems'])->name('update.all.systems');
-            Route::get('/disparar-jobs-agendados', [ClientsActionsController::class, 'runScheduledNow'])->name('run.scheduled.now');
+            Route::get('/modulo',                       [ClientsActionsController::class, 'module'])->name('module');
+            Route::get('/recurso',                      [ClientsActionsController::class, 'feature'])->name('feature');
+            Route::get('/acessar-recursos',             [ClientsActionsController::class, 'getResources'])->name('get.resources');
+            Route::get('/atualizar-banco/{id}',         [ClientsActionsController::class, 'updateDatabaseManual'])->name('update.database');
+            Route::get('/atualizar-git/{id}',           [ClientsActionsController::class, 'updateGitManual'])->name('update.git');
+            Route::get('/atualizar-em-massa',           [ClientsActionsController::class, 'updateAllDatabase'])->name('update.all.db');
+            Route::get('/ajustar-armazenamento',        [ClientsActionsController::class, 'updateSizeStorage'])->name('update.size.storage');
+            Route::get('/atualizar-sistemas',           [ClientsActionsController::class, 'updateAllSystems'])->name('update.all.systems');
+            Route::get('/disparar-jobs-agendados',      [ClientsActionsController::class, 'runScheduledNow'])->name('run.scheduled.now');
             Route::get('/disparar-jobs-agendados/{id}', [ClientsActionsController::class, 'runScheduledNow'])->name('run.scheduled.now.client');
+            Route::post('/liberar-sistema/{id}',        [ClientsActionsController::class, 'addFree'])->name('add.free');
         });
     });
 

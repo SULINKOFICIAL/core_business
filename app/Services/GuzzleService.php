@@ -6,7 +6,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\RequestException;
-use Illuminate\Support\Facades\Log;
+use GuzzleHttp\Pool;
 
 /**
  * Classe responsável por interagir com a API da eRede para realizar operações
@@ -80,5 +80,46 @@ class GuzzleService
                 'message' => "Erro HTTP {$status}",
             ];
         }
+    }
+
+    public function pool($method, $url, $client, $payloads)
+    {
+        $protocol = env('APP_ENV') === 'local' ? 'http' : 'https';
+
+        if ($client->domains->count() == 0) {
+            return [
+                'success' => false,
+                'message' => 'Nenhum domínio encontrado para o cliente.',
+            ];
+        }
+
+        $baseUrl = "$protocol://{$client->domains[0]->domain}/api/";
+
+        $guzzle = new Guzzle([
+            'base_uri' => $baseUrl,
+            'headers' => [
+                'Authorization' => 'Bearer ' . env('CENTRAL_TOKEN'),
+                'Accept' => 'application/json'
+            ],
+            'timeout' => 5
+        ]);
+
+        $requests = function ($payloads) use ($guzzle, $method, $url) {
+            foreach ($payloads as $data) {
+                yield function () use ($guzzle, $method, $url, $data) {
+                    return $guzzle->requestAsync($method, $url, [
+                        'json' => $data
+                    ]);
+                };
+            }
+        };
+
+        $pool = new Pool($guzzle, $requests($payloads), [
+            'concurrency' => 10
+        ]);
+
+        $pool->promise()->wait();
+
+        return ['success' => true];
     }
 }

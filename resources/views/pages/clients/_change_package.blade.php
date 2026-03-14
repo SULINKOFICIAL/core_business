@@ -1,4 +1,4 @@
-<button id="drawer_package" class="btn btn-danger btn-active-success position-fixed z-index-3" style="right: 200px; bottom: 50px">Trocar Pacote</button>
+<button id="drawer_package" class="btn btn-danger btn-active-success position-fixed z-index-3" style="right: 350px; bottom: 50px">Trocar Pacote</button>
 <form action="{{ route('packages.new', $client->id) }}" method="POST" enctype="multipart/form-data">
     @csrf
     <div

@@ -13,56 +13,82 @@ class ModuleService
         $this->guzzleService = $guzzleService;
     }
 
-    /**
-     * Libera os Módulos para o cliente no Micore
-     * 
-     * Pode ser enviado Manualmente
-     * Ou Automaticamente quando o cliente gera a assinatura
-     */
-    public function configureModule($client, array $data)
+    public function configureModules($client, array $moduleIds, $status = true)
     {
+        // Obtem os Módulos
+        $modules = Module::with(['resources', 'category'])
+            ->whereIn('id', $moduleIds)
+            ->get();
+            
+        // Verifica se encontrou módulos
+        if ($modules->isEmpty()) {
+            return [
+                'success' => false,
+                'message' => 'Nenhum módulo encontrado'
+            ];
+        }
+
         /**
-         * Envia para o Micore o Modulo com a Categoria
+         * Payload dos módulos
          */
-        $response = $this->guzzleService->request(
+        $modulePayloads = [];
+
+        /**
+         * Payload de todos os resources
+         */
+        $resourcePayloads = [];
+
+        // Faz looping em todos os módulos
+        foreach ($modules as $module) {
+
+            // Adiciona o módulo no payload
+            $modulePayloads[] = [
+                'name'     => $module->name,
+                'category' => $module->category->name,
+                'status'   => $status
+            ];
+
+            // Verifica se existe recursos
+            if ($module->resources->isEmpty()) {
+                continue;
+            }
+
+            // Faz looping em todos os recursos
+            foreach ($module->resources as $resource) {
+
+                // Adiciona o recurso no payload
+                $resourcePayloads[] = [
+                    'name'   => $resource->name,
+                    'module' => $module->name,
+                    'status' => $status
+                ];
+
+            }
+        }
+
+        /**
+         * Envia módulos em paralelo
+         */
+        $this->guzzleService->pool(
             'put',
             'sistema/configurar-modulo',
             $client,
-            [
-                'name'     => $data['name'],
-                'category' => $data['category'],
-                'status'   => $data['status']
-            ]
+            $modulePayloads
         );
 
-        // Verifica se veio sucesso da requisição
-        if (!($response['success'] ?? false)) {
-            return $response;
-        }
-
         /**
-         * Busca módulo com recursos
+         * Envia todos os recursos em paralelo
          */
-        $module = Module::where('name', $data['name'])
-            ->whereHas('category', function ($query) use ($data) {
-                $query->where('name', $data['category']);
-            })
-            ->with(['resources', 'category'])
-            ->first();
-
-        /**
-         * Envia recursos
-         */
-        foreach ($module->resources as $resource) {
-            $this->configureFeatureForClient(
+        if (!empty($resourcePayloads)) {
+            $this->guzzleService->pool(
+                'put',
+                'sistema/configurar-permissao',
                 $client,
-                $resource->name,
-                $module->name,
-                $data['status']
+                $resourcePayloads
             );
         }
 
-        return $response;
+        return ['success' => true];
     }
 
     /**
@@ -71,19 +97,29 @@ class ModuleService
      * Pode ser enviado Manualmente
      * Ou Automaticamente quando o cliente gera a assinatura
      */
-    public function configureFeatureForClient($client, $resourceName, $moduleName, $status)
+    public function configureFeatureForClient($client, array $payloads)
     {
-        /**
-         * Envia para o Micore o Recurso com o Modulo
-         */
-        return $this->guzzleService->request(
+        return $this->guzzleService->pool(
             'put',
             'sistema/configurar-permissao',
             $client,
+            $payloads
+        );
+    }
+
+    /**
+     * Cria o tempo da assinatura no MiCore
+     */
+    public function createSubscriptionCore($client, $startDate, $endDate)
+    {
+        return $this->guzzleService->request(
+            'post',
+            'sistema/atualizar-assinatura',
+            $client,
             [
-                'name'   => $resourceName,
-                'module' => $moduleName,
-                'status' => $status
+                'start_date' => $startDate,
+                'end_date'   => $endDate,
+                'status'     => true,
             ]
         );
     }
