@@ -4,6 +4,7 @@ use App\Http\Controllers\ApisAccountController;
 use App\Http\Controllers\ApisController;
 use App\Http\Controllers\ApisOrdersController;
 use App\Http\Controllers\ApisPaymentsController;
+use App\Http\Controllers\ApisTicketsController;
 use App\Http\Controllers\ApisDomainsController;
 use App\Http\Controllers\ApisNewsController;
 use App\Http\Controllers\ApisTokensController;
@@ -58,7 +59,11 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
         });
 
         /** API que recebe dados dos miCores */
-        Route::post('/tickets',   [ApisController::class, 'tickets']);
+        Route::get('/tickets',                 [ApisTicketsController::class, 'index']);
+        Route::get('/tickets/{id}',            [ApisTicketsController::class, 'show']);
+        Route::post('/tickets',                [ApisTicketsController::class, 'store']);
+        Route::post('/tickets/{id}/anexos',    [ApisTicketsController::class, 'attach']);
+        Route::post('/tickets/{id}/respostas', [ApisTicketsController::class, 'reply']);
         Route::post('/sugestoes', [ApisController::class, 'suggestions']);
         Route::post('/cartao',    [ApisController::class, 'newCard']);
         Route::post('/error',     [ApisController::class, 'notifyErrors']);

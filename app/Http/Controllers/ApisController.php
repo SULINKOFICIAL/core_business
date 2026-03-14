@@ -9,8 +9,6 @@ use App\Models\ErrorMiCore;
 use App\Models\IntegrationSuggestion;
 use App\Models\Module;
 use App\Models\ModulePricingTier;
-use App\Models\Ticket;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 
 class ApisController extends Controller
@@ -206,19 +204,6 @@ class ApisController extends Controller
 
     }
 
-    public function tickets(Request $request) {
-
-        // Recebe dados
-        $data = $request->all();
-
-        // Registra o ticket no banco de dados
-        Ticket::create($data);
-
-        // Retorna resposta
-        return response()->json('Ticket criado com sucesso!', 201);
-
-    }
-
     public function suggestions(Request $request) {
 
         // Recebe dados
@@ -287,5 +272,4 @@ class ApisController extends Controller
         return response()->json($moduleJson, 200);
 
     }
-
 }

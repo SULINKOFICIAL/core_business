@@ -41,7 +41,7 @@ class TicketProcessingController extends Controller
      */
     public function loadTables()
     {
-        return Ticket::query();
+        return Ticket::query()->with('client');
     }
 
     /**
@@ -123,7 +123,7 @@ class TicketProcessingController extends Controller
         return DataTables::eloquent($query)
             ->addColumn('progress_badge', function ($ticket) {
                 return match ($ticket->progress) {
-                    'aberto' => '<span class="badge badge-light-warning">Aberto</span>',
+                    'pendente' => '<span class="badge badge-light-secondary">Pendente</span>',
                     'em andamento' => '<span class="badge badge-light-info">Em Andamento</span>',
                     default => '<span class="badge badge-light-danger">Fechado</span>',
                 };
@@ -135,20 +135,10 @@ class TicketProcessingController extends Controller
                 return '<span class="badge badge-light-success">Habilitado</span>';
             })
             ->addColumn('actions', function ($ticket) {
-                $options = [
-                    'aberto' => 'Aberto',
-                    'em andamento' => 'Em Andamento',
-                    'fechado' => 'Finalizado',
-                ];
-
-                $html = '<select name="progress" class="form-select form-select-solid js-ticket-progress" data-id="' . $ticket->id . '">';
-                foreach ($options as $value => $label) {
-                    $selected = $ticket->progress === $value ? ' selected' : '';
-                    $html .= '<option value="' . $value . '"' . $selected . '>' . $label . '</option>';
-                }
-                $html .= '</select>';
-
-                return $html;
+                return '<button type="button" class="btn btn-sm btn-light-primary ticket-view-trigger" data-id="' . $ticket->id . '">Abrir</button>';
+            })
+            ->editColumn('client_id', function ($ticket) {
+                return $ticket->client?->name ?? $ticket->client_id;
             })
             ->editColumn('created_at', function ($ticket) {
                 return $ticket->created_at?->format('d/m/Y');

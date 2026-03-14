@@ -26,7 +26,7 @@
                                 <label class="form-label fs-5 fw-semibold mb-3">Progresso:</label>
                                 <div class="d-flex flex-column flex-wrap fw-semibold">
                                     <label class="form-check form-check-sm form-check-custom form-check-solid mb-3 me-5"><input class="form-check-input" type="radio" name="progress_filter" value="all" checked="checked"><span class="form-check-label text-gray-600">Todos</span></label>
-                                    <label class="form-check form-check-sm form-check-custom form-check-solid mb-3 me-5"><input class="form-check-input" type="radio" name="progress_filter" value="aberto"><span class="form-check-label text-gray-600">Aberto</span></label>
+                                    <label class="form-check form-check-sm form-check-custom form-check-solid mb-3 me-5"><input class="form-check-input" type="radio" name="progress_filter" value="pendente"><span class="form-check-label text-gray-600">Pendente</span></label>
                                     <label class="form-check form-check-sm form-check-custom form-check-solid mb-3 me-5"><input class="form-check-input" type="radio" name="progress_filter" value="em andamento"><span class="form-check-label text-gray-600">Em Andamento</span></label>
                                     <label class="form-check form-check-sm form-check-custom form-check-solid mb-3"><input class="form-check-input" type="radio" name="progress_filter" value="fechado"><span class="form-check-label text-gray-600">Finalizado</span></label>
                                 </div>
@@ -57,13 +57,18 @@
                     <th class="text-center px-0">Criado Em</th>
                     <th class="text-center px-0">Progresso</th>
                     <th class="text-center px-0">Status</th>
-                    <th class="text-center px-0">Ações</th>
+                    <th class="text-center px-0">Abrir</th>
                 </tr>
             </thead>
             <tbody></tbody>
         </table>
     </div>
 </div>
+@endsection
+
+@section('modals')
+    @parent
+    <div id="modal-ticket-zone"></div>
 @endsection
 
 @section('custom-footer')
@@ -108,27 +113,52 @@
             setTimeout(() => dataTable.ajax.reload(), 0);
         });
 
-        $(document).on('change', '.js-ticket-progress', function() {
-            var progress = $(this).val();
+        $(document).on('click', '.ticket-view-trigger', function() {
             var id = $(this).data('id');
-            var url = "{{ route('tickets.update', '') }}/" + id;
+            var url = "{{ route('tickets.show', '') }}/" + id;
 
             $.ajax({
                 url: url,
-                method: 'PUT',
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    id: id,
-                    progress: progress
-                },
+                method: 'GET',
                 success: function(response) {
-                    var progressBadge = '';
-                    if (progress == 'aberto') progressBadge = '<span class="badge badge-light-warning">Aberto</span>';
-                    else if (progress == 'em andamento') progressBadge = '<span class="badge badge-light-info">Em Andamento</span>';
-                    else if (progress == 'fechado') progressBadge = '<span class="badge badge-light-danger">Fechado</span>';
+                    $('#modal-ticket-zone').html(response);
+                    $('#modal_ticket_show').modal('show');
+                },
+            });
+        });
 
-                    $('tr').find('select[data-id="' + id + '"]').closest('tr').find('.ticket-progress').html(progressBadge);
+        $(document).on('submit', '#form-ticket-reply', function(e) {
+            e.preventDefault();
+
+            var form = $(this);
+            var url = form.attr('action');
+
+            $.ajax({
+                url: url,
+                method: 'POST',
+                data: form.serialize(),
+                success: function(response) {
                     toastr.success(response.message);
+                    $('#modal_ticket_show').modal('hide');
+                    dataTable.ajax.reload(null, false);
+                },
+            });
+        });
+
+        $(document).on('click', '.ticket-finish-submit', function(e) {
+            e.preventDefault();
+
+            var form = $('#form-ticket-finish');
+            var url = form.attr('action');
+
+            $.ajax({
+                url: url,
+                method: 'POST',
+                data: form.serialize(),
+                success: function(response) {
+                    toastr.success(response.message);
+                    $('#modal_ticket_show').modal('hide');
+                    dataTable.ajax.reload(null, false);
                 },
             });
         });

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('client_id')->constrained('clients');
             $table->string('title');
             $table->text('description');
-            $table->enum('progress', ['em andamento', 'aberto', 'fechado'])->default('aberto');
+            $table->enum('progress', ['pendente', 'em andamento', 'fechado'])->default('pendente');
             $table->boolean('status')->default(true);
             $table->foreignId('filed_by')->nullable()->constrained('users');
             $table->foreignId('finished_by')->nullable()->constrained('users');

@@ -191,6 +191,9 @@ Route::middleware(['auth'])->group(function () {
         Route::name('tickets.')->group(function () {
             Route::get('/',                 [TicketController::class, 'index'])->name('index');
             Route::get('/processar',        [TicketProcessingController::class, 'process'])->name('process');
+            Route::get('/visualizar/{id}',  [TicketController::class, 'show'])->name('show');
+            Route::post('/responder/{id}',  [TicketController::class, 'reply'])->name('reply');
+            Route::post('/finalizar/{id}',  [TicketController::class, 'finish'])->name('finish');
             Route::put('/editar/{id}',      [TicketController::class, 'update'])->name('update');
         });
     });
