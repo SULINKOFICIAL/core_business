@@ -276,6 +276,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/disparar-jobs-agendados',      [ClientsActionsController::class, 'runScheduledNow'])->name('run.scheduled.now');
             Route::get('/disparar-jobs-agendados/{id}', [ClientsActionsController::class, 'runScheduledNow'])->name('run.scheduled.now.client');
             Route::post('/liberar-sistema/{id}',        [ClientsActionsController::class, 'addFree'])->name('add.free');
+            Route::get('/liberar-data/{id}',            [ClientsActionsController::class, 'addDate'])->name('add.date');
         });
     });
 

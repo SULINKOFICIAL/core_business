@@ -424,4 +424,27 @@ class ClientsActionsController extends Controller
 
     }
 
+    /**
+     * Função responsável por liberar apenas o periodo de 30 o sistema para um cliente
+     */
+    public function addDate($id)
+    {   
+        // Encontra o cliente
+        $client = $this->repository->find($id);
+        
+        // Inicia serviço de módulos
+        $moduleService = app(ModuleService::class);
+
+        // Cria o tempo da assinatura no MiCore
+        $moduleService->createSubscriptionCore(
+            $client,
+            now()->toDateString(),
+            now()->addYears(1)->toDateString()
+        );
+
+        // Retorna a página
+        return redirect()->route('clients.show', $client->id)->with('message', 'Data enviada com sucesso!');
+
+    }
+
 }

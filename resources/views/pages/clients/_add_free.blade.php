@@ -1,3 +1,4 @@
+<a href="{{ route('systems.add.date', $client->id) }}" class="btn btn-success btn-active-danger position-fixed" style="right: 50px; bottom: 100px">Liberar Periodo 1 Ano</a>
 <button id="drawer_add_free" class="btn btn-success btn-active-danger position-fixed" style="right: 50px; bottom: 50px">Liberar 30 Dias</button>
 <form action="{{ route('systems.add.free', $client->id) }}" method="POST" enctype="multipart/form-data">
     @csrf
@@ -86,8 +87,6 @@
         </div>
     </div>
 </form>
-
-
 @section('custom-footer')
     @parent
     <script>
