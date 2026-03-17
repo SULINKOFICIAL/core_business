@@ -143,6 +143,22 @@ class OrderService
                 'status'                  => $subscription['status'],
             ]);
 
+            // Obtem o ultimo pedido pago
+            $lastOrder = Order::where('client_id', $client->id)
+                ->where('status', 'paid')
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if(isset($lastOrder) && isset($lastOrder->subscription) && $lastOrder->subscription->pagarme_subscription_id) {
+                
+                // Obtem a assinatura do ultimo pedido pago
+                $lastSubscription = $lastOrder->subscription;
+
+                // Cancela a assinatura do ultimo pedido pago
+                $pagarMeService->cancelSubscription($lastSubscription->pagarme_subscription_id);
+
+            }
+
             // Atualiza o pedido com o id da assinatura
             $orderPayment->update([
                 'subscription_id' => $subscription->id,
@@ -191,6 +207,10 @@ class OrderService
             // Atualiza o status do pedido
             $orderPayment->update([
                 'status'  => $charge['status'],
+            ]);
+
+            $package->update([
+                'progress' => $charge['status'] == 'paid' ? 'completed' : 'draft',
             ]);
 
             // Mapeia de acordo com o status

@@ -185,7 +185,7 @@ return new class extends Migration
                 'created_at' => now(),
             ]);
 
-            $subscriptionCycle = SubscriptionCycle::create([
+            SubscriptionCycle::create([
                 'subscription_id' => $subscription->id,
                 'pagarme_cycle_id' => '1',
                 'start_date' => now(),
@@ -197,7 +197,7 @@ return new class extends Migration
                 'created_at' => now(),
             ]);
 
-            $orderTransaction = OrderTransaction::create([
+            OrderTransaction::create([
                 'order_id' => $order->id,
                 'subscription_id' => $subscription->id,
                 'pagarme_transaction_id' => '1',
@@ -207,23 +207,6 @@ return new class extends Migration
                 'currency' => 'BRL',
                 'created_at' => now(),
             ]);
-
-            // Inicia serviço de módulos
-            $moduleService = app(ModuleService::class);
-
-            // Realiza solicitação
-            $moduleService->configureModules(
-                $client,
-                $moduleIds,
-                true
-            );
-
-            // Cria o tempo da assinatura no MiCore
-            $moduleService->createSubscriptionCore(
-                $client,
-                now()->toDateString(),
-                now()->addYear()->toDateString()
-            );
 
         }
         

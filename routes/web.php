@@ -286,7 +286,6 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('desenvolvedores')->group(function () {
         Route::name('developer.')->group(function () {
             Route::get('/', [DeveloperController::class, 'index'])->name('index');
-            Route::get('/testar', [DeveloperController::class, 'test'])->name('test');
         });
     });
 
@@ -297,7 +296,7 @@ Route::middleware(['auth'])->group(function () {
  */
 Route::prefix('integracoes/meta')->name('meta.embedded.')->group(function () {
     Route::get('/onboarding', [MetaApiOnboardingController::class, 'embeddedOnboarding'])->name('onboarding');
-});
+}); 
 
 // Callback: para receber autorização OAuth
 Route::name('callbacks.')->prefix('callbacks')->group(function () {

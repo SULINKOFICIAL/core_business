@@ -31,8 +31,6 @@ return new class extends Migration
         Schema::table('orders_transactions', function (Blueprint $table) {
             $table->foreignId('order_id')->nullable()->after('id')->constrained('orders');
 
-            $table->dropForeign(['subscription_id']);
-
             $table->foreignId('subscription_id')->nullable()->change();
 
             $table->foreign('subscription_id')->references('id')->on('subscriptions');

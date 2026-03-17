@@ -38,6 +38,7 @@ class ApisAccountController extends Controller
         return response()->json([
             'package' => $package,
             'order' => $client->package?->orders()->orderBy('created_at', 'DESC')->first(),
+            'cycle'   => $client->package?->orders()->orderBy('created_at', 'DESC')->first()->subscription->cycles()->orderBy('created_at', 'DESC')->first(),
             'renovation' => $client->renovation(),
             'existsOrder' => $existsRenovation,
         ], 200);
@@ -61,6 +62,7 @@ class ApisAccountController extends Controller
 
         // Busca pedidos ordenados do mais recente para o mais antigo.
         $orders = $client->orders()
+                    ->where('status', '!=', 'draft')
                     ->orderBy('created_at', 'DESC')
                     ->orderBy('id', 'DESC')
                     ->skip($offset)
