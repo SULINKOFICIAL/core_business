@@ -132,6 +132,8 @@ return new class extends Migration
         OrderTransaction::truncate();
         SubscriptionCycle::truncate();
         Subscription::truncate();
+        ClientPackage::truncate();
+        ClientPackageItem::truncate();
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
@@ -161,17 +163,6 @@ return new class extends Migration
             // Inserção em massa
             ClientPackageItem::insert($packageItems);
 
-            // Cria um pedido
-            $order = Order::create([
-                'client_id' => $client->id,
-                'package_id' => $package->id,
-                'total_amount' => 0,
-                'status' => 'Liberado',
-                'type' => 'MIGRAÇÃO',
-                'current_step' => 'Pagamento',
-                'created_at' => now(),
-            ]);
-
             $subscription = Subscription::create([
                 'pagarme_subscription_id' => '1',
                 'pagarme_card_id' => '1',
@@ -180,6 +171,18 @@ return new class extends Migration
                 'currency' => 'BRL',
                 'installments' => 1,
                 'status' => 'paid',
+                'created_at' => now(),
+            ]);
+
+            // Cria um pedido
+            $order = Order::create([
+                'client_id' => $client->id,
+                'package_id' => $package->id,
+                'subscription_id' => $subscription->id,
+                'total_amount' => 0,
+                'status' => 'Liberado',
+                'type' => 'MIGRAÇÃO',
+                'current_step' => 'Pagamento',
                 'created_at' => now(),
             ]);
 
