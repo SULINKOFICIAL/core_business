@@ -3,17 +3,15 @@
 use App\Models\Client;
 use App\Models\ClientPackage;
 use App\Models\ClientPackageItem;
+use App\Models\Module;
+use App\Models\ModuleCategory;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderTransaction;
-use App\Models\SubscriptionCycle;
-use App\Models\Subscription;
-use App\Models\Module;
-use App\Models\ModuleCategory;
-use App\Models\Package;
 use App\Models\Resource;
+use App\Models\Subscription;
+use App\Models\SubscriptionCycle;
 use App\Services\GuzzleService;
-use App\Services\ModuleService;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +25,7 @@ return new class extends Migration
     public function up(): void
     {
         // Obtem todos os clientes
-        $client = Client::find(13);
+        $client = Client::find(1);
 
         $guzzleService = new GuzzleService();
 
@@ -127,18 +125,18 @@ return new class extends Migration
         // Obtem todos os clientes
         $clients = Client::all();
 
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
+        Order::truncate();
+        OrderItem::truncate();
+        OrderTransaction::truncate();
+        SubscriptionCycle::truncate();
+        Subscription::truncate();
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
         // Faz looping em cada cliente
         foreach ($clients as $client) {
-
-            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-
-            Order::truncate();
-            OrderItem::truncate();
-            OrderTransaction::truncate();
-            SubscriptionCycle::truncate();
-            Subscription::truncate();
-
-            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
             $package = ClientPackage::create([
                 'client_id' => $client->id,
