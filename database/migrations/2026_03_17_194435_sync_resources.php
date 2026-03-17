@@ -25,7 +25,7 @@ return new class extends Migration
     public function up(): void
     {
         // Obtem todos os clientes
-        $client = Client::find(1);
+        $client = Client::find(3);
 
         $guzzleService = new GuzzleService();
 
