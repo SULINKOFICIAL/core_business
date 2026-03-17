@@ -38,7 +38,7 @@ class ApisAccountController extends Controller
         return response()->json([
             'package' => $package,
             'order' => $client->package?->orders()->orderBy('created_at', 'DESC')->first(),
-            'cycle'   => $client->package?->orders()->orderBy('created_at', 'DESC')->first()->subscription->cycles()->orderBy('created_at', 'DESC')->first(),
+            'cycle'   => $client->package?->orders()?->orderBy('created_at', 'DESC')->first()?->subscription?->cycles()?->orderBy('created_at', 'DESC')->first() ?? null,
             'renovation' => $client->renovation(),
             'existsOrder' => $existsRenovation,
         ], 200);
