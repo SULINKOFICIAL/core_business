@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Client;
+use App\Models\ClientPackage;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Models\LogsApi;
@@ -10,6 +11,7 @@ use App\Models\Order;
 use App\Models\Subscription;
 use App\Models\OrderTransaction;
 use App\Models\SubscriptionCycle;
+use App\Services\ModuleService;
 use App\Services\OrderService;
 use App\Services\PagarMeResponseService;
 use App\Services\PagarMeService;
@@ -132,10 +134,14 @@ class PagarMeDispatchRequest implements ShouldQueue
             // Obtem a assinatura
             $subscription = Subscription::where('pagarme_subscription_id', $data->subscription->id)->first();
 
+            // Obtem o ultimo pacote do cliente
+            $lastPackage = ClientPackage::where('client_id', $client->id)->orderBy('id', 'desc')->first();
+
             // Cria um pedido
             $order = Order::create([
                 'client_id'       => $client->id,
                 'subscription_id' => $subscription->id,
+                'package_id'      => $lastPackage->id ?? null,
                 'status'          => $data->charge->status,
                 'currency'        => $data->charge->currency,
                 'pagarme_message' => isset($data->transaction->acquirer->message) ? $data->transaction->acquirer->message : null,
@@ -161,6 +167,7 @@ class PagarMeDispatchRequest implements ShouldQueue
 
             // Verifica se existe um ciclo
             if (isset($data->cycle)) {
+                
                 // Cria o ciclo
                 SubscriptionCycle::create([
                     'subscription_id'  => $subscription->id,
@@ -172,7 +179,14 @@ class PagarMeDispatchRequest implements ShouldQueue
                     'billing_at'       => $data->cycle->billingAt,
                     'next_billing_at'  => $data->cycle->nextBillingAt,
                 ]);
+                
+                /**
+                 * Parte responsável por liberar o MiCore
+                 */
+                $this->releaseModule($client, $lastPackage, $data->cycle);
+
             }
+
         } else {
 
             // Atualiza a transação
@@ -199,6 +213,7 @@ class PagarMeDispatchRequest implements ShouldQueue
 
             // Verifica se veio o ciclo
             if (isset($data->cycle)) {
+
                 // Verifica se existe um ciclo
                 $cycle = SubscriptionCycle::where('pagarme_cycle_id', $data->cycle->id)->first();
 
@@ -211,6 +226,7 @@ class PagarMeDispatchRequest implements ShouldQueue
                         'billing_at'       => $data->cycle->billingAt,
                         'next_billing_at'  => $data->cycle->nextBillingAt,
                     ]);
+
                 } else {
 
                     // Cria o ciclo
@@ -224,10 +240,40 @@ class PagarMeDispatchRequest implements ShouldQueue
                         'billing_at'       => $data->cycle->billingAt,
                         'next_billing_at'  => $data->cycle->nextBillingAt,
                     ]);
+
+                    /**
+                     * Parte responsável por liberar o MiCore
+                     */
+                    $this->releaseModule($transaction->order->client, $transaction->order->package, $data->cycle);
                 }
+
             }
+
         }
 
         return true;
+    }
+
+    /**
+     * Libera os módulos para o cliente
+     */
+    private function releaseModule($client, $package, $cycle)
+    {
+        // Inicia o serviço de módulos
+        $moduleService = app(ModuleService::class);
+
+        // Realiza solicitação
+        $moduleService->configureModules(
+            $client,
+            $package->modules->pluck('id')->toArray(),
+            true
+        );
+
+        // Cria o tempo da assinatura no MiCore
+        $moduleService->createSubscriptionCore(
+            $client,
+            $cycle->billingAt,
+            $cycle->nextBillingAt
+        );
     }
 }
