@@ -71,9 +71,9 @@ class ApisAccountController extends Controller
 
         // verifica se existe mais registros depois
         $hasMore = $client->orders()
-            ->skip($offset + $limit)
-            ->limit(1)
-            ->exists();
+                            ->skip($offset + $limit)
+                            ->limit(10)
+                            ->exists();
 
         // Inicia lista de resposta.
         $ordersJson = [];
