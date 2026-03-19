@@ -25,6 +25,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PagarMeController;
 use App\Http\Controllers\SubscriptionsController;
 use App\Http\Controllers\TicketController;
+use App\Http\Controllers\TaskDispatchHistoryController;
+use App\Http\Controllers\TaskDispatchHistoryProcessingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WhatsAppApiController;
 use App\Http\Controllers\LogsApiController;
@@ -226,6 +228,14 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/relatorio',        [LogsApiController::class, 'relatoryGraphic'])->name('relatory.graphic');
             Route::get('/processar',        [LogsApiProcessingController::class, 'process'])->name('process');
             Route::get('/visualizar/{id}',  [LogsApiController::class, 'show'])->name('show');
+        });
+    });
+
+    Route::prefix('historico-tarefas')->group(function () {
+        Route::name('task.history.')->group(function () {
+            Route::get('/', [TaskDispatchHistoryController::class, 'index'])->name('index');
+            Route::get('/processar', [TaskDispatchHistoryProcessingController::class, 'process'])->name('process');
+            Route::get('/visualizar/{id}', [TaskDispatchHistoryController::class, 'show'])->name('show');
         });
     });
 

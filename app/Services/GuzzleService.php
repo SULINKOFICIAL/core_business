@@ -60,6 +60,7 @@ class GuzzleService
 
             return [
                 'success' => true,
+                'status_code' => $response->getStatusCode(),
                 'data' => $body,
             ];
 
@@ -77,7 +78,9 @@ class GuzzleService
 
             return [
                 'success' => false,
+                'status_code' => $status,
                 'message' => "Erro HTTP {$status}",
+                'data' => $body,
             ];
         }
     }

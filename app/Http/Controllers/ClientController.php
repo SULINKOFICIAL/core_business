@@ -319,15 +319,24 @@ class ClientController extends Controller
     {
 
         // Obtém dados
-        $content = $this->repository->find($id);
+        $content = $this->repository->findOrFail($id);
 
         // Atualiza status
         if($content->status == 1){
             $this->repository->where('id', $id)->update(['status' => false, 'filed_by' => Auth::id()]);
             $message = 'desabilitado';
+            $status = false;
         } else {
             $this->repository->where('id', $id)->update(['status' => true]);
             $message = 'habilitado';
+            $status = true;
+        }
+
+        if ($this->request->ajax()) {
+            return response()->json([
+                'message' => 'Cliente <b>'. $content->name . '</b> '. $message .' com sucesso.',
+                'status' => $status
+            ]);
         }
 
         // Retorna a página
@@ -338,6 +347,5 @@ class ClientController extends Controller
     }
 
 }
-
 
 

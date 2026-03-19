@@ -185,5 +185,52 @@
         setTimeout(() => dataTable.ajax.reload(), 0);
     });
 
+    // Confirma ações do menu do cliente (exceto "Acessar como sistema")
+    $(document).on('click', '.js-client-action-confirm', function (e) {
+        const trigger = $(this);
+        const clientName = trigger.data('client-name') || 'cliente';
+        const actionLabel = trigger.data('action-label') || 'executar esta ação';
+        const shouldProceed = window.confirm(`Deseja mesmo ${actionLabel} no cliente ${clientName}?`);
+
+        if (!shouldProceed) {
+            e.preventDefault();
+        }
+    });
+
+    // Ativa/desativa cliente via AJAX na listagem
+    $(document).on('click', '.js-client-toggle-status', function (e) {
+        e.preventDefault();
+
+        const trigger = $(this);
+        const clientName = trigger.data('client-name') || 'cliente';
+        const actionLabel = trigger.data('action-label') || 'alterar status';
+        const shouldProceed = window.confirm(`Deseja mesmo ${actionLabel} no cliente ${clientName}?`);
+
+        if (!shouldProceed) {
+            return;
+        }
+
+        const url = trigger.attr('href');
+
+        $.ajax({
+            url: url,
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            success: function (response) {
+                const message = response && response.message ? response.message : 'Status do cliente atualizado com sucesso.';
+                toastr.success(message);
+                dataTable.ajax.reload(null, false);
+            },
+            error: function (xhr) {
+                const message = xhr.responseJSON && xhr.responseJSON.message
+                    ? xhr.responseJSON.message
+                    : 'Não foi possível atualizar o status do cliente.';
+                toastr.error(message);
+            }
+        });
+    });
+
 </script>
 @endsection

@@ -248,10 +248,10 @@ class ClientProcessingController extends Controller
                     $html .= '<i class="fa-solid fa-globe me-2"></i>Acessar como sistema</a>';
                     $html .= '</div>';
                 }
-                $html .= '<div class="menu-item px-3"><a href="' . route('systems.update.database', $row->id) . '" class="menu-link px-3"><i class="fa-solid fa-database me-2"></i>Atualiza banco de dados</a></div>';
-                $html .= '<div class="menu-item px-3"><a href="' . route('systems.update.git', $row->id) . '" class="menu-link px-3"><i class="fa-solid fa-code me-2"></i>Atualiza git</a></div>';
-                $html .= '<div class="menu-item px-3"><a href="' . route('systems.run.scheduled.now.client', $row->id) . '" class="menu-link px-3"><i class="fa-solid fa-list-check me-2"></i>Executar Tarefas</a></div>';
-                $html .= '<div class="menu-item px-3"><a href="' . route('clients.destroy', $row->id) . '" class="menu-link px-3"><i class="fa-solid fa-toggle-off me-2"></i>' . $toggleText . '</a></div>';
+                $html .= '<div class="menu-item px-3"><a href="' . route('systems.update.database', $row->id) . '" class="menu-link px-3 js-client-action-confirm" data-action-label="atualizar banco de dados" data-client-name="' . e($row->name) . '"><i class="fa-solid fa-database me-2"></i>Atualiza banco de dados</a></div>';
+                $html .= '<div class="menu-item px-3"><a href="' . route('systems.update.git', $row->id) . '" class="menu-link px-3 js-client-action-confirm" data-action-label="atualizar git" data-client-name="' . e($row->name) . '"><i class="fa-solid fa-code me-2"></i>Atualiza git</a></div>';
+                $html .= '<div class="menu-item px-3"><a href="' . route('systems.run.scheduled.now.client', $row->id) . '" class="menu-link px-3 js-client-action-confirm" data-action-label="executar tarefas" data-client-name="' . e($row->name) . '"><i class="fa-solid fa-list-check me-2"></i>Executar Tarefas</a></div>';
+                $html .= '<div class="menu-item px-3"><a href="' . route('clients.destroy', $row->id) . '" class="menu-link px-3 js-client-toggle-status" data-action-label="' . e(mb_strtolower($toggleText)) . '" data-client-id="' . e($row->id) . '" data-client-name="' . e($row->name) . '"><i class="fa-solid fa-toggle-off me-2"></i>' . $toggleText . '</a></div>';
 
                 $html .= '</div></div>';
 

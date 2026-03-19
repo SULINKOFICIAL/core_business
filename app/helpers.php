@@ -129,6 +129,21 @@ if (! function_exists('onlyNumbers')) {
     }
 }
 
+if (! function_exists('formatTaskJobLabel')) {
+    function formatTaskJobLabel($jobName)
+    {
+        if (empty($jobName)) {
+            return '-';
+        }
+
+        if ($jobName === 'manual_batch') {
+            return 'Lote manual de tarefas';
+        }
+
+        return ucwords(str_replace('_', ' ', (string) $jobName));
+    }
+}
+
 if (! function_exists('header_menu_items')) {
     function header_menu_items(): array
     {
@@ -259,14 +274,13 @@ if (! function_exists('header_menu_items')) {
             ],
             [
                 'type' => 'submenu',
-                'label' => 'Configuração',
+                'label' => 'Logs',
                 'active_routes' => [
                     'errors.index',
                     'logs.apis.index',
-                    'users.index',
-                    'users.create',
-                    'users.edit',
-                    'systems.update.all.systems',
+                    'task.history.index',
+                    'task.history.process',
+                    'task.history.show',
                 ],
                 'children' => [
                     [
@@ -282,10 +296,30 @@ if (! function_exists('header_menu_items')) {
                         'icon' => ['class' => 'fa-solid fa-file-lines fs-5'],
                     ],
                     [
+                        'label' => 'Histórico de Tarefas',
+                        'route' => 'task.history.index',
+                        'active_routes' => ['task.history.index', 'task.history.process', 'task.history.show'],
+                        'icon' => ['class' => 'fa-solid fa-clock-rotate-left fs-5'],
+                    ],
+                ],
+            ],
+            [
+                'type' => 'submenu',
+                'label' => 'Configuração',
+                'active_routes' => [
+                    'users.index',
+                    'users.create',
+                    'users.edit',
+                    'systems.run.scheduled.now',
+                    'systems.run.scheduled.now.client',
+                    'systems.update.all.systems',
+                ],
+                'children' => [
+                    [
                         'label' => 'Disparar Jobs',
                         'route' => 'systems.run.scheduled.now',
-                        'active_routes' => ['systems.run.scheduled.now'],
-                        'icon' => ['class' => 'fa-solid fa-list-check fs-5'],
+                        'active_routes' => ['systems.run.scheduled.now', 'systems.run.scheduled.now.client'],
+                        'icon' => ['class' => 'fa-solid fa-clock-rotate-left fs-5'],
                     ],
                     [
                         'label' => 'Usuários',

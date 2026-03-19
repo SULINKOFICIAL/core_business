@@ -6,6 +6,8 @@ use App\Models\Client;
 use App\Models\Module;
 use App\Models\ModuleCategory;
 use App\Models\Resource;
+use App\Models\ScheduledTaskDispatch;
+use App\Models\ScheduledTaskDispatchItem;
 use App\Services\GuzzleService;
 use App\Services\ModuleService;
 use Illuminate\Http\Request;
@@ -253,9 +255,13 @@ class ClientsActionsController extends Controller
 
     }
 
-    // Dispara manualmente jobs agendados
+    /**
+     * Dispara manualmente o conjunto de jobs agendados para um ou mais clientes.
+     * Também registra o lote e os resultados por cliente no histórico de tarefas.
+     */
     public function runScheduledNow($id = null)
     {
+        // Define os jobs que compõem o lote manual.
         $jobs = [
             'finish_calls_24h',
             'finish_order_access',
@@ -264,28 +270,104 @@ class ClientsActionsController extends Controller
             'refresh_mercado_livre',
         ];
 
-        // Busca os clientes
+        // Busca um cliente específico ou todos os clientes ativos.
         if($id !== null){
-            $clients = $this->repository->where('status', true)->get();
+            $clients = $this->repository->where('id', $id)->where('status', true)->get();
         } else {
-            $clients = $this->repository->where('id', $id)->get();
+            $clients = $this->repository->where('status', true)->get();
+        }
+
+        // Cria o registro pai para agrupar todas as execuções do clique manual.
+        $dispatch = ScheduledTaskDispatch::create([
+            'job_name' => 'manual_batch',
+            'job_data' => [
+                'jobs' => $jobs,
+                'target_client_id' => $id,
+            ],
+            'source' => 'manual',
+            'dispatched_by' => Auth::id(),
+            'total_clients' => $clients->count(),
+            'success_count' => 0,
+            'failure_count' => 0,
+            'started_at' => now(),
+        ]);
+
+        // Mantém os totais consolidados do lote para a listagem principal.
+        $successCount = 0;
+        $failureCount = 0;
+
+        // Finaliza o lote vazio quando não existir cliente elegível.
+        if ($clients->isEmpty()) {
+            $dispatch->update([
+                'finished_at' => now(),
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('type', 'warning')
+                ->with('message', 'Nenhum cliente ativo encontrado para executar as tarefas.');
         }
 
         /**
-         * Loop para percorrer todos os clientes
+         * Percorre os clientes e executa todos os jobs definidos no lote.
+         * Cada combinação cliente + job gera um item filho no histórico.
          */
         foreach ($clients as $client) {
             foreach ($jobs as $jobName) {
-                $this->guzzleService->request('post', 'sistema/processar-tarefa', $client, [
+                // Marca o início do disparo individual para auditoria.
+                $startedAt = now();
+
+                // Envia o job para o sistema do cliente.
+                $response = $this->guzzleService->request('post', 'sistema/processar-tarefa', $client, [
                     'job' => $jobName,
                     'data' => [],
                 ]);
+
+                // Converte a resposta para um resumo simples da execução.
+                $success = (bool) ($response['success'] ?? false);
+                $message = $response['message'] ?? ($success ? 'Tarefa processada com sucesso.' : 'Erro desconhecido');
+
+                // Tenta reaproveitar a mensagem vinda do próprio cliente quando existir.
+                if (!empty($response['data'])) {
+                    $decodedResponse = json_decode($response['data'], true);
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($decodedResponse) && !empty($decodedResponse['message'])) {
+                        $message = $decodedResponse['message'];
+                    }
+                }
+
+                // Registra o item filho para rastrear esse cliente e job.
+                ScheduledTaskDispatchItem::create([
+                    'dispatch_id' => $dispatch->id,
+                    'client_id' => $client->id,
+                    'job_name' => $jobName,
+                    'success' => $success,
+                    'response_status_code' => $response['status_code'] ?? null,
+                    'response_message' => $message,
+                    'response_body' => $response['data'] ?? null,
+                    'requested_at' => $startedAt,
+                    'finished_at' => now(),
+                ]);
+
+                // Atualiza os totais consolidados do lote conforme o resultado.
+                if ($success) {
+                    $successCount++;
+                } else {
+                    $failureCount++;
+                }
             }
         }
 
+        // Fecha o lote com os totais finais após processar todos os clientes.
+        $dispatch->update([
+            'success_count' => $successCount,
+            'failure_count' => $failureCount,
+            'finished_at' => now(),
+        ]);
+
+        // Retorna para a tela anterior informando o identificador do lote criado.
         return redirect()
                 ->back()
-                ->with('message', 'Tarefas executadas com sucesso para ' . $clients->count() . ' cliente(s).');
+                ->with('message', 'Lote #' . $dispatch->id . ' executado para ' . $clients->count() . ' cliente(s).');
     }
 
 
