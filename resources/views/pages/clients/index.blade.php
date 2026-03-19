@@ -95,6 +95,45 @@
 </div>
 @endsection
 
+@section('modals')
+<div class="modal fade" tabindex="-1" id="modal_client_run_task">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="form-client-run-task" method="GET" action="">
+                <div class="modal-header">
+                    <h3 class="modal-title">Executar Tarefa</h3>
+                    <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fa-solid fa-xmark"></i>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <div class="text-gray-700 mb-5">
+                        Escolha qual tarefa deseja executar para o cliente
+                        <span class="fw-bold" id="selected-client-name">-</span>.
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="scheduled-job-select" class="form-label fw-semibold">Tarefa</label>
+                        <select name="job" id="scheduled-job-select" class="form-select form-select-solid">
+                            <option value="all">Todas</option>
+                            <option value="finish_calls_24h">Finish Calls 24h</option>
+                            <option value="finish_order_access">Finish Order Access</option>
+                            <option value="update_s3_metrics">Update S3 Metrics</option>
+                            <option value="archive_finished_tasks">Archive Finished Tasks</option>
+                            <option value="refresh_mercado_livre">Refresh Mercado Livre</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Executar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endsection
+
 @section('custom-footer')
 <script>
     // Seleciona a tabela
@@ -183,6 +222,22 @@
     // Reseta filtros do menu
     $('#clients-filters').on('reset', function() {
         setTimeout(() => dataTable.ajax.reload(), 0);
+    });
+
+    // Abre o modal para escolher qual tarefa executar no cliente.
+    $(document).on('click', '.js-client-run-task-modal', function (e) {
+        e.preventDefault();
+
+        const trigger = $(this);
+        const clientName = trigger.data('client-name') || 'cliente';
+        const actionUrl = trigger.attr('href');
+
+        // Atualiza o formulário do modal com o cliente selecionado.
+        $('#selected-client-name').text(clientName);
+        $('#form-client-run-task').attr('action', actionUrl);
+        $('#scheduled-job-select').val('all');
+
+        $('#modal_client_run_task').modal('show');
     });
 
     // Confirma ações do menu do cliente (exceto "Acessar como sistema")

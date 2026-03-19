@@ -17,7 +17,13 @@
                 <div class="menu-sub menu-sub-accordion">
                     @foreach ($item['children'] ?? [] as $child)
                         <div class="menu-item">
-                            <a href="{{ route($child['route']) }}" class="menu-link">
+                            <a
+                                href="{{ route($child['route']) }}"
+                                class="menu-link {{ !empty($child['confirm_message']) ? 'js-menu-confirm' : '' }}"
+                                @if (!empty($child['confirm_message']))
+                                    data-confirm-message="{{ $child['confirm_message'] }}"
+                                @endif
+                            >
                                 <span class="menu-title">{{ $child['label'] }}</span>
                             </a>
                         </div>

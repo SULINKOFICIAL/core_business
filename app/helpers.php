@@ -246,18 +246,6 @@ if (! function_exists('header_menu_items')) {
                         'active_routes' => ['modules.index'],
                         'icon' => ['class' => 'fa-solid fa-cubes fs-5'],
                     ],
-                    /* [
-                        'label' => 'Categorias de módulos',
-                        'route' => 'modules.categories.index',
-                        'active_routes' => ['modules.categories.index'],
-                        'icon' => ['class' => 'fa-solid fa-sitemap fs-5'],
-                    ],
-                    [
-                        'label' => 'Grupo de Recursos',
-                        'route' => 'groups.index',
-                        'active_routes' => ['groups.index'],
-                        'icon' => ['class' => 'fa-solid fa-layer-group fs-5'],
-                    ], */
                     [
                         'label' => 'Recursos',
                         'route' => 'resources.index',
@@ -316,21 +304,23 @@ if (! function_exists('header_menu_items')) {
                 ],
                 'children' => [
                     [
-                        'label' => 'Disparar Jobs',
-                        'route' => 'systems.run.scheduled.now',
-                        'active_routes' => ['systems.run.scheduled.now', 'systems.run.scheduled.now.client'],
-                        'icon' => ['class' => 'fa-solid fa-clock-rotate-left fs-5'],
-                    ],
-                    [
                         'label' => 'Usuários',
                         'route' => 'users.index',
                         'active_routes' => ['users.index', 'users.create', 'users.edit'],
                         'icon' => ['class' => 'fa-solid fa-users fs-5'],
                     ],
                     [
+                        'label' => 'Disparar Tarefas',
+                        'route' => 'systems.run.scheduled.now',
+                        'active_routes' => ['systems.run.scheduled.now', 'systems.run.scheduled.now.client'],
+                        'confirm_message' => 'Deseja mesmo disparar as tarefas para os clientes ativos?',
+                        'icon' => ['class' => 'fa-solid fa-clock-rotate-left fs-5'],
+                    ],
+                    [
                         'label' => 'Atualizar Sistemas',
                         'route' => 'systems.update.all.systems',
                         'active_routes' => ['systems.update.all.systems'],
+                        'confirm_message' => 'Deseja mesmo atualizar os sistemas dos clientes ativos?',
                         'icon' => ['class' => 'fa-solid fa-rotate fs-5'],
                     ],
                 ],

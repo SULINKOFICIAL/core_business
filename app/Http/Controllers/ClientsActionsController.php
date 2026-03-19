@@ -259,16 +259,25 @@ class ClientsActionsController extends Controller
      * Dispara manualmente o conjunto de jobs agendados para um ou mais clientes.
      * Também registra o lote e os resultados por cliente no histórico de tarefas.
      */
-    public function runScheduledNow($id = null)
+    public function runScheduledNow(Request $request, $id = null)
     {
         // Define os jobs que compõem o lote manual.
-        $jobs = [
-            'finish_calls_24h',
-            'finish_order_access',
-            'update_s3_metrics',
-            'archive_finished_tasks',
-            'refresh_mercado_livre',
-        ];
+        $jobs = $this->scheduledJobs();
+
+        // Permite executar um job específico quando informado pela tela.
+        $selectedJob = $request->get('job');
+
+        // Restringe a execução ao job solicitado quando ele for válido.
+        if (!empty($selectedJob) && $selectedJob !== 'all') {
+            if (!in_array($selectedJob, $jobs, true)) {
+                return redirect()
+                    ->back()
+                    ->with('type', 'error')
+                    ->with('message', 'A tarefa selecionada é inválida.');
+            }
+
+            $jobs = [$selectedJob];
+        }
 
         // Busca um cliente específico ou todos os clientes ativos.
         if($id !== null){
@@ -368,6 +377,22 @@ class ClientsActionsController extends Controller
         return redirect()
                 ->back()
                 ->with('message', 'Lote #' . $dispatch->id . ' executado para ' . $clients->count() . ' cliente(s).');
+    }
+
+    /**
+     * Retorna a lista de jobs disponíveis para execução manual.
+     * Centraliza os identificadores usados na tela e no disparo manual.
+     */
+    private function scheduledJobs()
+    {
+        // Mantém a mesma lista configurada para o scheduler da central.
+        return [
+            'finish_calls_24h',
+            'finish_order_access',
+            'update_s3_metrics',
+            'archive_finished_tasks',
+            'refresh_mercado_livre',
+        ];
     }
 
 
