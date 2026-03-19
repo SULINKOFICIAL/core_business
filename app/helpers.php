@@ -265,6 +265,7 @@ if (! function_exists('header_menu_items')) {
                 'label' => 'Logs',
                 'active_routes' => [
                     'errors.index',
+                    'errors.application',
                     'logs.apis.index',
                     'task.history.index',
                     'task.history.process',
@@ -272,10 +273,16 @@ if (! function_exists('header_menu_items')) {
                 ],
                 'children' => [
                     [
-                        'label' => 'Errors',
+                        'label' => 'Erros de Clientes',
                         'route' => 'errors.index',
                         'active_routes' => ['errors.index'],
                         'icon' => ['class' => 'fa-solid fa-circle-exclamation fs-5'],
+                    ],
+                    [
+                        'label' => 'Erros da Aplicação',
+                        'route' => 'errors.application',
+                        'active_routes' => ['errors.application'],
+                        'icon' => ['class' => 'fa-solid fa-file-circle-exclamation fs-5'],
                     ],
                     [
                         'label' => 'Logs APIs',

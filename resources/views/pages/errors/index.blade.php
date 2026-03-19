@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Erros')
+@section('title', 'Erros de Clientes')
 
 @section('content')
 <p class="text-center fw-bold text-gray-700 fs-2 mb-4 text-uppercase">
-    Erros do Sistema
+    Erros de Clientes
 </p>
 <div class="card">
     <div class="card-body" id="errors-table">
@@ -25,7 +25,7 @@
 <script>
 
     $(document).ready(function (){
-        url = "{{ route('errors.show') }}"
+        const url = "{{ route('errors.show') }}";
 
         $.ajax({
             type: 'GET',
@@ -35,7 +35,7 @@
                 loadTables();
             }
         });
-    })
+    });
 
     $(document).on('click', '[data-bs-target="#modal-code"]', function () {
         var stackTrace = $(this).data('stacktrace');

@@ -218,7 +218,9 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('errors')->group(function () {
         Route::name('errors.')->group(function () {
             Route::get('/',                 [ErrorMiCoreController::class, 'index'])->name('index');
+            Route::get('/aplicacao',        [ErrorMiCoreController::class, 'application'])->name('application');
             Route::get('/visualizar',       [ErrorMiCoreController::class, 'show'])->name('show');
+            Route::get('/arquivar-log',     [ErrorMiCoreController::class, 'archiveLaravelLog'])->name('archive.log');
         });
     });
 
