@@ -121,6 +121,7 @@
                             <option value="update_s3_metrics">Update S3 Metrics</option>
                             <option value="archive_finished_tasks">Archive Finished Tasks</option>
                             <option value="refresh_mercado_livre">Refresh Mercado Livre</option>
+                            <option value="test_log">Test Log</option>
                         </select>
                     </div>
                 </div>

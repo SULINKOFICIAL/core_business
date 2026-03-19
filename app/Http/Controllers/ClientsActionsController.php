@@ -392,6 +392,7 @@ class ClientsActionsController extends Controller
             'update_s3_metrics',
             'archive_finished_tasks',
             'refresh_mercado_livre',
+            'test_log',
         ];
     }
 
