@@ -74,7 +74,7 @@ class ScheduleDispatcher implements ShouldQueue
             );
 
             $success = (bool) ($response['success'] ?? false);
-            $message = $response['message'] ?? ($success ? 'Tarefa processada com sucesso.' : 'Erro desconhecido');
+            $message = $response['message'] ?? ($success ? 'Tarefa aceita para processamento.' : 'Erro desconhecido');
 
             // Tenta capturar "message" da resposta JSON do cliente
             if (!empty($response['data'])) {

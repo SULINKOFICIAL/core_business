@@ -334,7 +334,7 @@ class ClientsActionsController extends Controller
 
                 // Converte a resposta para um resumo simples da execução.
                 $success = (bool) ($response['success'] ?? false);
-                $message = $response['message'] ?? ($success ? 'Tarefa processada com sucesso.' : 'Erro desconhecido');
+                $message = $response['message'] ?? ($success ? 'Tarefa aceita para processamento.' : 'Erro desconhecido');
 
                 // Tenta reaproveitar a mensagem vinda do próprio cliente quando existir.
                 if (!empty($response['data'])) {
