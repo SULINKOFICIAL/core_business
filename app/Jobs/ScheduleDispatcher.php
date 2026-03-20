@@ -161,6 +161,7 @@ class ScheduleDispatcher implements ShouldQueue
     private function shouldWaitForResponse(string $jobName): bool
     {
         return in_array($jobName, [
+            'archive_finished_tasks',
             'refresh_mercado_livre',
         ], true);
     }
