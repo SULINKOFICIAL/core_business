@@ -41,15 +41,12 @@ class WhatsAppSettingsService
     }
 
     /**
-     * Prepara os dados da interface sem esconder o token, conforme o fluxo atual.
-     * Também informa se já existe um token salvo para futuras decisões de UX.
+     * Prepara os dados da interface com a configuração salva do WhatsApp.
+     * Isso mantém a tela desacoplada da forma como os dados são persistidos.
      */
     public function getFormData(): array
     {
-        $settings = $this->getSettings();
-        $settings['hasAccessToken'] = $this->hasStoredAccessToken();
-
-        return $settings;
+        return $this->getSettings();
     }
 
     /**
@@ -135,17 +132,5 @@ class WhatsAppSettingsService
         } catch (Throwable) {
             return $default;
         }
-    }
-
-    /**
-     * Indica se já existe um token da Meta salvo.
-     * Isso é usado pela interface para sinalização simples de estado.
-     */
-    private function hasStoredAccessToken(): bool
-    {
-        return SystemSetting::query()
-            ->where('key', $this->prefix('access_token'))
-            ->whereNotNull('value')
-            ->exists();
     }
 }
