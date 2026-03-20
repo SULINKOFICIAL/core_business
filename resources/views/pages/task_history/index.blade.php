@@ -77,8 +77,8 @@
                     <th>Origem</th>
                     <th>Data</th>
                     <th class="text-center">Clientes</th>
-                    <th class="text-center">Sucesso</th>
-                    <th class="text-center">Falha</th>
+                    <th class="text-center">Aceitos</th>
+                    <th class="text-center">Falhas</th>
                     <th class="text-end">Ações</th>
                 </tr>
             </thead>

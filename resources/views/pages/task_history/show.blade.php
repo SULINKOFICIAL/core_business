@@ -72,7 +72,7 @@
                             </td>
                             <td class="text-center">
                                 @if ($item->success)
-                                    <span class="badge badge-light-success">Sucesso</span>
+                                    <span class="badge badge-light-success">Aceito</span>
                                 @else
                                     <span class="badge badge-light-danger">Falha</span>
                                 @endif

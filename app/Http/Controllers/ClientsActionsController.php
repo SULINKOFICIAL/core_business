@@ -306,8 +306,7 @@ class ClientsActionsController extends Controller
         // Mantém os totais consolidados do lote para a listagem principal.
         $successCount = 0;
         $failureCount = 0;
-        $syncFailures = [];
-
+        
         // Finaliza o lote vazio quando não existir cliente elegível.
         if ($clients->isEmpty()) {
             $dispatch->update([
@@ -329,21 +328,17 @@ class ClientsActionsController extends Controller
                 // Marca o início do disparo individual para auditoria.
                 $startedAt = now();
 
-                // Define se esse job deve esperar o tenant processar antes de responder.
-                $waitForResponse = $this->shouldWaitForResponse($jobName);
-
-                // Ajusta o timeout apenas para jobs síncronos, que retornam sucesso ou erro imediato.
+                // O tenant sempre responde apenas com o aceite do disparo.
                 $response = $this->guzzleService->request('post', 'sistema/processar-tarefa', $client, [
                     'job' => $jobName,
                     'data' => [],
-                    'wait_for_response' => $waitForResponse,
                 ], [
-                    'timeout' => $waitForResponse ? 20 : 5,
+                    'timeout' => 5,
                 ]);
 
                 // Converte a resposta para um resumo simples da execução.
                 $success = (bool) ($response['success'] ?? false);
-                $message = $response['message'] ?? ($success ? 'Tarefa aceita para processamento.' : 'Erro desconhecido');
+                $message = $response['message'] ?? ($success ? 'Tarefa aceita para processamento.' : 'Falha ao aceitar tarefa para processamento.');
 
                 // Tenta reaproveitar a mensagem vinda do próprio cliente quando existir.
                 if (!empty($response['data'])) {
@@ -371,17 +366,6 @@ class ClientsActionsController extends Controller
                     $successCount++;
                 } else {
                     $failureCount++;
-
-                    // Guarda somente falhas síncronas para consolidar um log no fim do lote.
-                    if ($waitForResponse) {
-                        $syncFailures[] = [
-                            'client_id' => $client->id,
-                            'client_name' => $client->name,
-                            'job_name' => $jobName,
-                            'status_code' => $response['status_code'] ?? null,
-                            'message' => $message,
-                        ];
-                    }
                 }
             }
         }
@@ -393,12 +377,10 @@ class ClientsActionsController extends Controller
             'finished_at' => now(),
         ]);
 
-        $this->logSyncFailures('manual', $dispatch->id, $syncFailures);
-
         // Retorna para a tela anterior informando o identificador do lote criado.
         return redirect()
                 ->back()
-                ->with('message', 'Lote #' . $dispatch->id . ' executado para ' . $clients->count() . ' cliente(s).');
+                ->with('message', 'Lote #' . $dispatch->id . ' aceito para processamento em ' . $clients->count() . ' cliente(s).');
     }
 
     /**
@@ -418,40 +400,6 @@ class ClientsActionsController extends Controller
             'test_log',
         ];
     }
-
-    /**
-     * Define quais jobs precisam aguardar a execução no tenant antes de responder.
-     * Esses casos são reservados para tarefas rápidas cujo erro precisa voltar na hora.
-     * Hoje o refresh do Mercado Livre entra nessa regra.
-     */
-    private function shouldWaitForResponse(string $jobName): bool
-    {
-        return in_array($jobName, [
-            'refresh_mercado_livre',
-        ], true);
-    }
-
-    /**
-     * Registra em log as falhas dos jobs síncronos detectadas no lote manual.
-     * Isso cria um ponto único para leitura operacional e futura evolução para alertas.
-     * O log só acontece quando realmente houver falhas acumuladas.
-     */
-    private function logSyncFailures(string $source, ?int $dispatchId, array $syncFailures): void
-    {
-        // Evita poluir o log quando o lote finalizar sem falhas síncronas.
-        if (empty($syncFailures)) {
-            return;
-        }
-
-        // Mantém os detalhes do lote em um único evento para facilitar a busca depois.
-        Log::warning('Falhas detectadas em jobs síncronos da central', [
-            'source' => $source,
-            'dispatch_id' => $dispatchId,
-            'failures_count' => count($syncFailures),
-            'failures' => $syncFailures,
-        ]);
-    }
-
 
     // Obtém permissões do usuário
     public function getResources(Request $request)
