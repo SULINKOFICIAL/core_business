@@ -12,7 +12,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Services\GuzzleService;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 
 class ScheduleDispatcher implements ShouldQueue
 {
@@ -39,28 +38,21 @@ class ScheduleDispatcher implements ShouldQueue
         // Busca todos os tenants ativos
         $clients = Client::where('status', true)->get();
 
-        // Verifica se as tabelas do histórico estão prontas
-        $canTrack = Schema::hasTable('scheduled_task_dispatches') && Schema::hasTable('scheduled_task_dispatch_items');
-        $hasItemJobName = $canTrack ? Schema::hasColumn('scheduled_task_dispatch_items', 'job_name') : false;
-
         // Cria lote de execução agendada
-        $dispatch = null;
         $successCount = 0;
         $failureCount = 0;
         $syncFailures = [];
 
-        if ($canTrack) {
-            $dispatch = ScheduledTaskDispatch::create([
-                'job_name' => $this->jobName,
-                'job_data' => $this->jobData,
-                'source' => 'scheduler',
-                'dispatched_by' => null,
-                'total_clients' => $clients->count(),
-                'success_count' => 0,
-                'failure_count' => 0,
-                'started_at' => now(),
-            ]);
-        }
+        $dispatch = ScheduledTaskDispatch::create([
+            'job_name' => $this->jobName,
+            'job_data' => $this->jobData,
+            'source' => 'scheduler',
+            'dispatched_by' => null,
+            'total_clients' => $clients->count(),
+            'success_count' => 0,
+            'failure_count' => 0,
+            'started_at' => now(),
+        ]);
 
         /**
          * Envia o comando para cada cliente.
@@ -98,24 +90,17 @@ class ScheduleDispatcher implements ShouldQueue
             }
 
             // Registra item do lote por cliente
-            if ($canTrack && $dispatch) {
-                $itemData = [
-                    'dispatch_id' => $dispatch->id,
-                    'client_id' => $client->id,
-                    'success' => $success,
-                    'response_status_code' => $response['status_code'] ?? null,
-                    'response_message' => $message,
-                    'response_body' => $response['data'] ?? null,
-                    'requested_at' => $requestedAt,
-                    'finished_at' => now(),
-                ];
-
-                if ($hasItemJobName) {
-                    $itemData['job_name'] = $this->jobName;
-                }
-
-                ScheduledTaskDispatchItem::create($itemData);
-            }
+            ScheduledTaskDispatchItem::create([
+                'dispatch_id' => $dispatch->id,
+                'client_id' => $client->id,
+                'job_name' => $this->jobName,
+                'success' => $success,
+                'response_status_code' => $response['status_code'] ?? null,
+                'response_message' => $message,
+                'response_body' => $response['data'] ?? null,
+                'requested_at' => $requestedAt,
+                'finished_at' => now(),
+            ]);
 
             if ($success) {
                 $successCount++;
@@ -143,15 +128,13 @@ class ScheduleDispatcher implements ShouldQueue
         }
 
         // Atualiza lote com os totais finais
-        if ($canTrack && $dispatch) {
-            $dispatch->update([
-                'success_count' => $successCount,
-                'failure_count' => $failureCount,
-                'finished_at' => now(),
-            ]);
-        }
+        $dispatch->update([
+            'success_count' => $successCount,
+            'failure_count' => $failureCount,
+            'finished_at' => now(),
+        ]);
 
-        $this->logSyncFailures($dispatch?->id, $syncFailures);
+        $this->logSyncFailures($dispatch->id, $syncFailures);
     }
 
     /**
