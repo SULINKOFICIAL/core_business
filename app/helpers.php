@@ -237,7 +237,7 @@ if (! function_exists('header_menu_items')) {
             // ],
             [
                 'type' => 'submenu',
-                'label' => 'Módulos',
+                'label' => 'Produto',
                 'active_routes' => ['modules.index', 'modules.categories.index', 'groups.index', 'resources.index'],
                 'children' => [
                     [
