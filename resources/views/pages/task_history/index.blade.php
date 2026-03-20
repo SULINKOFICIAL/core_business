@@ -75,8 +75,7 @@
                     <th>ID</th>
                     <th>Job</th>
                     <th>Origem</th>
-                    <th>Início</th>
-                    <th>Fim</th>
+                    <th>Data</th>
                     <th class="text-center">Clientes</th>
                     <th class="text-center">Sucesso</th>
                     <th class="text-center">Falha</th>
@@ -114,12 +113,11 @@
             { targets: 0, data: "id" },
             { targets: 1, data: "job_label" },
             { targets: 2, data: "source_badge" },
-            { targets: 3, data: "started_at" },
-            { targets: 4, data: "finished_at" },
-            { targets: 5, data: "total_clients" },
-            { targets: 6, data: "success_count" },
-            { targets: 7, data: "failure_count" },
-            { targets: 8, data: "actions", orderable: false },
+            { targets: 3, data: "dispatch_date" },
+            { targets: 4, data: "total_clients" },
+            { targets: 5, data: "success_count" },
+            { targets: 6, data: "failure_count" },
+            { targets: 7, data: "actions", orderable: false },
         ],
         language: {
             "search": "Pesquisar:",
@@ -137,11 +135,11 @@
         },
         columnDefs: [
             {
-                targets: [0, 5, 6, 7],
+                targets: [0, 4, 5, 6],
                 className: 'text-center',
             },
             {
-                targets: 8,
+                targets: 7,
                 className: 'text-end',
             },
         ],

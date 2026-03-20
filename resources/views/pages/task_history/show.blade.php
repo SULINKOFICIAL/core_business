@@ -25,8 +25,7 @@
                 @endif
             </span>
             | Origem: {{ $dispatch->source === 'manual' ? 'Manual' : 'Agendado' }}
-            | Início: {{ optional($dispatch->started_at)->format('d/m/Y H:i:s') ?? '-' }}
-            | Fim: {{ optional($dispatch->finished_at)->format('d/m/Y H:i:s') ?? '-' }}
+            | Data: {{ optional($dispatch->started_at ?? $dispatch->created_at)->format('d/m/Y H:i:s') ?? '-' }}
         </div>
     </div>
 
@@ -96,8 +95,7 @@
                                 @endif
                             </td>
                             <td>
-                                <div class="text-gray-700">{{ optional($item->requested_at)->format('d/m/Y H:i:s') ?? '-' }}</div>
-                                <div class="text-gray-500 fs-8">fim: {{ optional($item->finished_at)->format('d/m/Y H:i:s') ?? '-' }}</div>
+                                <div class="text-gray-700">{{ optional($item->requested_at ?? $item->finished_at ?? $item->created_at)->format('d/m/Y H:i:s') ?? '-' }}</div>
                             </td>
                         </tr>
                     @empty

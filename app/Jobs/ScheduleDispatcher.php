@@ -29,6 +29,11 @@ class ScheduleDispatcher implements ShouldQueue
         $this->guzzleService = new GuzzleService();
     }
 
+    /**
+     * Dispara jobs agendados da central para todos os tenants ativos.
+     * Também controla quando a central deve aguardar resposta imediata do tenant.
+     * Isso mantém jobs lentos assíncronos e jobs rápidos com retorno imediato.
+     */
     public function handle()
     {
         // Busca todos os tenants ativos
@@ -42,6 +47,7 @@ class ScheduleDispatcher implements ShouldQueue
         $dispatch = null;
         $successCount = 0;
         $failureCount = 0;
+        $syncFailures = [];
 
         if ($canTrack) {
             $dispatch = ScheduledTaskDispatch::create([
@@ -62,7 +68,10 @@ class ScheduleDispatcher implements ShouldQueue
         foreach ($clients as $client) {
             $requestedAt = now();
 
-            // Realiza solicitação
+            // Define se o job agendado precisa executar e responder no mesmo request.
+            $waitForResponse = $this->shouldWaitForResponse($this->jobName);
+
+            // Aumenta o timeout apenas para jobs síncronos, sem penalizar o restante dos disparos.
             $response = $this->guzzleService->request(
                 'post', 
                 'sistema/processar-tarefa', 
@@ -70,6 +79,10 @@ class ScheduleDispatcher implements ShouldQueue
                 [
                     'job' => $this->jobName,
                     'data' => $this->jobData,
+                    'wait_for_response' => $waitForResponse,
+                ],
+                [
+                    'timeout' => $waitForResponse ? 20 : 5,
                 ]
             );
 
@@ -108,6 +121,17 @@ class ScheduleDispatcher implements ShouldQueue
                 $successCount++;
             } else {
                 $failureCount++;
+
+                // Junta falhas síncronas para publicar um resumo único ao final do lote.
+                if ($waitForResponse) {
+                    $syncFailures[] = [
+                        'client_id' => $client->id,
+                        'client_name' => $client->name,
+                        'job_name' => $this->jobName,
+                        'status_code' => $response['status_code'] ?? null,
+                        'message' => $message,
+                    ];
+                }
             }
 
             Log::info('Disparo de job realizado para cliente', [
@@ -126,6 +150,41 @@ class ScheduleDispatcher implements ShouldQueue
                 'finished_at' => now(),
             ]);
         }
+
+        $this->logSyncFailures($dispatch?->id, $syncFailures);
+    }
+
+    /**
+     * Define quais jobs agendados precisam aguardar resposta do tenant.
+     * Isso é usado para tarefas rápidas em que a central precisa saber o resultado na hora.
+     * Hoje o refresh de token do Mercado Livre é tratado dessa forma.
+     */
+    private function shouldWaitForResponse(string $jobName): bool
+    {
+        return in_array($jobName, [
+            'refresh_mercado_livre',
+        ], true);
+    }
+
+    /**
+     * Consolida em um único log as falhas síncronas do disparo agendado.
+     * Isso reduz ruído e cria um ponto simples para futura geração de alertas.
+     * O método não registra nada quando todas as execuções tiverem sucesso.
+     */
+    private function logSyncFailures(?int $dispatchId, array $syncFailures): void
+    {
+        // Sai cedo quando não houver falhas para resumir.
+        if (empty($syncFailures)) {
+            return;
+        }
+
+        // Publica o resumo do lote com os clientes que retornaram erro imediato.
+        Log::warning('Falhas detectadas em jobs síncronos agendados', [
+            'dispatch_id' => $dispatchId,
+            'job_name' => $this->jobName,
+            'failures_count' => count($syncFailures),
+            'failures' => $syncFailures,
+        ]);
     }
 
 }

@@ -115,10 +115,9 @@ class TaskDispatchHistoryProcessingController extends Controller
             // Mapeia o alias da coluna da tela para a coluna real do banco.
             $column = match ($orderThis) {
                 'id' => 'scheduled_task_dispatches.id',
-                'job_name' => 'scheduled_task_dispatches.job_name',
-                'source' => 'scheduled_task_dispatches.source',
-                'started_at' => 'scheduled_task_dispatches.started_at',
-                'finished_at' => 'scheduled_task_dispatches.finished_at',
+                'job_label', 'job_name' => 'scheduled_task_dispatches.job_name',
+                'source_badge', 'source' => 'scheduled_task_dispatches.source',
+                'dispatch_date' => DB::raw('COALESCE(scheduled_task_dispatches.started_at, scheduled_task_dispatches.created_at)'),
                 'total_clients' => 'scheduled_task_dispatches.total_clients',
                 'success_count' => 'scheduled_task_dispatches.success_count',
                 'failure_count' => 'scheduled_task_dispatches.failure_count',
@@ -143,7 +142,7 @@ class TaskDispatchHistoryProcessingController extends Controller
             'scheduled_task_dispatches.job_name',
             'scheduled_task_dispatches.source',
             'scheduled_task_dispatches.started_at',
-            'scheduled_task_dispatches.finished_at',
+            'scheduled_task_dispatches.created_at',
             'scheduled_task_dispatches.total_clients',
             'scheduled_task_dispatches.success_count',
             'scheduled_task_dispatches.failure_count',
@@ -168,13 +167,11 @@ class TaskDispatchHistoryProcessingController extends Controller
 
                 return '<span class="badge badge-light-success">Agendado</span>';
             })
-            ->editColumn('started_at', function ($row) {
-                // Formata a data de início no padrão usado no painel.
-                return $row->started_at ? date('d/m/Y H:i:s', strtotime($row->started_at)) : '-';
-            })
-            ->editColumn('finished_at', function ($row) {
-                // Formata a data final para leitura rápida.
-                return $row->finished_at ? date('d/m/Y H:i:s', strtotime($row->finished_at)) : '-';
+            ->addColumn('dispatch_date', function ($row) {
+                // Consolida a referência temporal em uma única coluna.
+                $dispatchDate = $row->started_at ?: $row->created_at;
+
+                return $dispatchDate ? date('d/m/Y H:i:s', strtotime($dispatchDate)) : '-';
             })
             ->addColumn('actions', function ($row) {
                 // Direciona para a tela de detalhes do lote selecionado.

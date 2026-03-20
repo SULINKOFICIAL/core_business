@@ -16,18 +16,15 @@ use GuzzleHttp\Pool;
 class GuzzleService
 {
     /**
-     * Realiza uma solicitação Guzzle com autenticação Bearer
-     *
-     * @param string $method Método HTTP (get, post, etc)
-     * @param string $url URL para a solicitação
-     * @param object $client Objeto cliente contendo informações do cliente
-     * @param array|null $data Dados opcionais para incluir na requisição
-     * @return array Resposta da API
+     * Realiza chamadas da central para os tenants com autenticação padrão.
+     * Também permite sobrescrever timeout e outras opções sem afetar as chamadas antigas.
+     * Isso foi adicionado para jobs rápidos poderem aguardar retorno imediato.
      */
-    public function request($method, $url, $client, $data = null)
+    public function request($method, $url, $client, $data = null, array $requestOptions = [])
     {
         $guzzle = new Guzzle();
 
+        // Define a configuração base usada em qualquer chamada para tenant.
         $options = [
             'headers' => [
                 'Authorization' => 'Bearer ' . env('CENTRAL_TOKEN'),
@@ -35,6 +32,12 @@ class GuzzleService
             'timeout' => 5,
         ];
 
+        // Permite ajustar timeout e demais opções só quando a chamada precisar disso.
+        if (!empty($requestOptions)) {
+            $options = array_replace_recursive($options, $requestOptions);
+        }
+
+        // Envia o payload em JSON quando a operação precisar de dados extras.
         if ($data !== null) {
             $options['json'] = $data;
         }

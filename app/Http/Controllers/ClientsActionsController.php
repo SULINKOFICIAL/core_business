@@ -12,6 +12,7 @@ use App\Services\GuzzleService;
 use App\Services\ModuleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ClientsActionsController extends Controller
 {
@@ -256,8 +257,9 @@ class ClientsActionsController extends Controller
     }
 
     /**
-     * Dispara manualmente o conjunto de jobs agendados para um ou mais clientes.
-     * Também registra o lote e os resultados por cliente no histórico de tarefas.
+     * Dispara manualmente um ou mais jobs para clientes selecionados na central.
+     * Também grava o histórico do lote e separa quais jobs devem aguardar resposta.
+     * Isso permite tratar jobs rápidos sem travar o envio dos jobs mais demorados.
      */
     public function runScheduledNow(Request $request, $id = null)
     {
@@ -304,6 +306,7 @@ class ClientsActionsController extends Controller
         // Mantém os totais consolidados do lote para a listagem principal.
         $successCount = 0;
         $failureCount = 0;
+        $syncFailures = [];
 
         // Finaliza o lote vazio quando não existir cliente elegível.
         if ($clients->isEmpty()) {
@@ -326,10 +329,16 @@ class ClientsActionsController extends Controller
                 // Marca o início do disparo individual para auditoria.
                 $startedAt = now();
 
-                // Envia o job para o sistema do cliente.
+                // Define se esse job deve esperar o tenant processar antes de responder.
+                $waitForResponse = $this->shouldWaitForResponse($jobName);
+
+                // Ajusta o timeout apenas para jobs síncronos, que retornam sucesso ou erro imediato.
                 $response = $this->guzzleService->request('post', 'sistema/processar-tarefa', $client, [
                     'job' => $jobName,
                     'data' => [],
+                    'wait_for_response' => $waitForResponse,
+                ], [
+                    'timeout' => $waitForResponse ? 20 : 5,
                 ]);
 
                 // Converte a resposta para um resumo simples da execução.
@@ -362,6 +371,17 @@ class ClientsActionsController extends Controller
                     $successCount++;
                 } else {
                     $failureCount++;
+
+                    // Guarda somente falhas síncronas para consolidar um log no fim do lote.
+                    if ($waitForResponse) {
+                        $syncFailures[] = [
+                            'client_id' => $client->id,
+                            'client_name' => $client->name,
+                            'job_name' => $jobName,
+                            'status_code' => $response['status_code'] ?? null,
+                            'message' => $message,
+                        ];
+                    }
                 }
             }
         }
@@ -373,6 +393,8 @@ class ClientsActionsController extends Controller
             'finished_at' => now(),
         ]);
 
+        $this->logSyncFailures('manual', $dispatch->id, $syncFailures);
+
         // Retorna para a tela anterior informando o identificador do lote criado.
         return redirect()
                 ->back()
@@ -380,8 +402,9 @@ class ClientsActionsController extends Controller
     }
 
     /**
-     * Retorna a lista de jobs disponíveis para execução manual.
-     * Centraliza os identificadores usados na tela e no disparo manual.
+     * Retorna os jobs liberados para disparo manual na tela de clientes.
+     * A lista fica centralizada aqui para a validação do controller usar a mesma base.
+     * Isso evita aceitar na URL um job que não foi previsto pela central.
      */
     private function scheduledJobs()
     {
@@ -394,6 +417,39 @@ class ClientsActionsController extends Controller
             'refresh_mercado_livre',
             'test_log',
         ];
+    }
+
+    /**
+     * Define quais jobs precisam aguardar a execução no tenant antes de responder.
+     * Esses casos são reservados para tarefas rápidas cujo erro precisa voltar na hora.
+     * Hoje o refresh do Mercado Livre entra nessa regra.
+     */
+    private function shouldWaitForResponse(string $jobName): bool
+    {
+        return in_array($jobName, [
+            'refresh_mercado_livre',
+        ], true);
+    }
+
+    /**
+     * Registra em log as falhas dos jobs síncronos detectadas no lote manual.
+     * Isso cria um ponto único para leitura operacional e futura evolução para alertas.
+     * O log só acontece quando realmente houver falhas acumuladas.
+     */
+    private function logSyncFailures(string $source, ?int $dispatchId, array $syncFailures): void
+    {
+        // Evita poluir o log quando o lote finalizar sem falhas síncronas.
+        if (empty($syncFailures)) {
+            return;
+        }
+
+        // Mantém os detalhes do lote em um único evento para facilitar a busca depois.
+        Log::warning('Falhas detectadas em jobs síncronos da central', [
+            'source' => $source,
+            'dispatch_id' => $dispatchId,
+            'failures_count' => count($syncFailures),
+            'failures' => $syncFailures,
+        ]);
     }
 
 
