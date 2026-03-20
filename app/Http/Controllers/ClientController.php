@@ -99,7 +99,7 @@ class ClientController extends Controller
         $request = new Request(['package_id' => 1]);
 
         // Adiciona pacote básico ao cliente
-        app(PackageController::class)->assign($request, $created->id);
+        // app(PackageController::class)->assign($request, $created->id);
 
         // Registra o domínio do cliente
         ClientDomain::create([
