@@ -305,6 +305,7 @@ if (! function_exists('header_menu_items')) {
                     'users.index',
                     'users.create',
                     'users.edit',
+                    'system.settings.edit',
                     'systems.run.scheduled.now',
                     'systems.run.scheduled.now.client',
                     'systems.update.all.systems',
@@ -315,6 +316,13 @@ if (! function_exists('header_menu_items')) {
                         'route' => 'users.index',
                         'active_routes' => ['users.index', 'users.create', 'users.edit'],
                         'icon' => ['class' => 'fa-solid fa-users fs-5'],
+                    ],
+                    [
+                        // Abre a tela administrativa com persistencia e teste do SMTP.
+                        'label' => 'Sistema',
+                        'route' => 'system.settings.edit',
+                        'active_routes' => ['system.settings.edit'],
+                        'icon' => ['class' => 'fa-solid fa-gear fs-5'],
                     ],
                     [
                         'label' => 'Disparar Tarefas',

@@ -24,6 +24,7 @@ use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PagarMeController;
 use App\Http\Controllers\SubscriptionsController;
+use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\TaskDispatchHistoryController;
 use App\Http\Controllers\TaskDispatchHistoryProcessingController;
@@ -51,6 +52,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard/sistemas-por-dia', [DashboardController::class, 'dailySystemsByMonth'])->name('dashboard.daily.systems');
     Route::get('/conta/configuracoes', [AccountSettingsController::class, 'edit'])->name('account.settings.edit');
     Route::put('/conta/configuracoes', [AccountSettingsController::class, 'update'])->name('account.settings.update');
+    // Centraliza a configuracao SMTP e o disparo de email de teste no painel.
+    Route::get('/configuracoes/sistema', [SystemSettingsController::class, 'edit'])->name('system.settings.edit');
+    Route::put('/configuracoes/sistema', [SystemSettingsController::class, 'update'])->name('system.settings.update');
+    Route::post('/configuracoes/sistema/testar-email', [SystemSettingsController::class, 'sendTest'])->name('system.settings.test');
+    Route::get('/configuracoes/sistema/preview-email', [SystemSettingsController::class, 'preview'])->name('system.settings.preview');
 
     Route::prefix('clientes')->group(function () {
         Route::name('clients.')->group(function () {
