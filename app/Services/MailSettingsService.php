@@ -21,6 +21,7 @@ class MailSettingsService
         'encryption',
         'from_address',
         'from_name',
+        'notification_emails',
     ];
 
     /**
@@ -44,6 +45,7 @@ class MailSettingsService
             'encryption' => $this->resolveValue($storedSettings, 'encryption', config('mail.mailers.smtp.encryption')),
             'from_address' => $this->resolveValue($storedSettings, 'from_address', config('mail.from.address')),
             'from_name' => $this->resolveValue($storedSettings, 'from_name', config('mail.from.name')),
+            'notification_emails' => $this->resolveValue($storedSettings, 'notification_emails', ''),
         ];
     }
 
@@ -126,6 +128,20 @@ class MailSettingsService
     }
 
     /**
+     * Devolve os e-mails de notificação em formato de lista simples.
+     * Isso facilita reaproveitar o campo salvo em outros fluxos do sistema.
+     */
+    public function getNotificationEmails(): array
+    {
+        $notificationEmails = $this->getSettings()['notification_emails'] ?? '';
+
+        // Aceita lista por vírgula, ponto e vírgula ou quebra de linha.
+        $items = preg_split('/[\s,;]+/', (string) $notificationEmails, -1, PREG_SPLIT_NO_EMPTY);
+
+        return array_values(array_unique($items));
+    }
+
+    /**
      * Gera as chaves completas salvas no banco para cada opção SMTP.
      * Isso centraliza o prefixo e evita duplicação de strings.
      */
@@ -178,4 +194,5 @@ class MailSettingsService
             ->whereNotNull('value')
             ->exists();
     }
+
 }

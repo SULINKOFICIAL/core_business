@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use App\Mail\SimpleEmailMailable;
 use App\Services\EmailService;
 use App\Services\MailSettingsService;
-use Illuminate\Http\RedirectResponse;
+use App\Services\MetaWhatsAppTemplateService;
+use App\Services\WhatsAppSettingsService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\View\View;
@@ -18,18 +19,31 @@ class SystemSettingsController extends Controller
      */
     public function __construct(
         private readonly MailSettingsService $mailSettingsService,
+        private readonly WhatsAppSettingsService $whatsAppSettingsService,
         private readonly EmailService $emailService,
+        private readonly MetaWhatsAppTemplateService $metaWhatsAppTemplateService,
     ) {
     }
 
     /**
-     * Exibe a tela administrativa de SMTP do sistema.
-     * A view recebe apenas os dados necessários para edição e teste.
+     * Exibe a página de configuração de SMTP do sistema.
+     * A view recebe apenas os dados de e-mail e teste relacionados a esse domínio.
      */
-    public function edit(): View
+    public function editMail(): View
     {
-        return view('pages.system.settings', [
-            'smtp' => $this->mailSettingsService->getFormData(),
+        return view('pages.system.settings-mail', [
+            'mailSettings' => $this->mailSettingsService->getFormData(),
+        ]);
+    }
+
+    /**
+     * Exibe a página de configuração de WhatsApp do sistema.
+     * A view recebe apenas os dados da integração Meta e do teste de template.
+     */
+    public function editWhatsApp(): View
+    {
+        return view('pages.system.settings-whatsapp', [
+            'whatsAppSettings' => $this->whatsAppSettingsService->getFormData(),
         ]);
     }
 
@@ -37,10 +51,10 @@ class SystemSettingsController extends Controller
      * Valida e persiste as configurações SMTP informadas pelo usuário.
      * Após salvar, reaplica a configuração para uso imediato na mesma sessão.
      */
-    public function update(Request $request): RedirectResponse
+    public function updateMail(Request $request): \Illuminate\Http\RedirectResponse
     {
-        // Mantém a validação concentrada no ponto de entrada da tela administrativa.
-        $data = $request->validate([
+        // Mantém a validação concentrada no ponto de entrada da página SMTP.
+        $mailData = $request->validate([
             'mailer' => ['required', 'string', 'max:20'],
             'host' => ['required', 'string', 'max:255'],
             'port' => ['required', 'integer', 'min:1', 'max:65535'],
@@ -49,22 +63,52 @@ class SystemSettingsController extends Controller
             'encryption' => ['nullable', 'string', 'max:20'],
             'from_address' => ['required', 'email', 'max:255'],
             'from_name' => ['required', 'string', 'max:255'],
+            'notification_emails' => ['nullable', 'string'],
         ]);
 
         // Salva e reaplica para evitar depender de novo request ou cache clear manual.
-        $this->mailSettingsService->save($data);
+        $this->mailSettingsService->save($mailData);
         $this->mailSettingsService->apply();
 
         return redirect()
-            ->route('system.settings.edit')
+            ->route('system.settings.mail.edit')
             ->with('message', 'Configurações SMTP salvas com sucesso.');
+    }
+
+    /**
+     * Valida e persiste as configurações do WhatsApp informadas pelo usuário.
+     * Isso mantém a edição da Meta desacoplada da configuração de e-mail.
+     */
+    public function updateWhatsApp(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        // Mantém a validação concentrada na página de WhatsApp.
+        $whatsAppData = $request->validate([
+            'notification_phones' => ['nullable', 'string'],
+            'whatsapp_template_name' => ['required', 'string', 'max:255'],
+            'whatsapp_template_language' => ['required', 'string', 'max:20'],
+            'whatsapp_owner_account_id' => ['nullable', 'string', 'max:255'],
+            'whatsapp_access_token' => ['nullable', 'string'],
+        ]);
+
+        // Persiste apenas as chaves do domínio WhatsApp para evitar acoplamento com SMTP.
+        $this->whatsAppSettingsService->save([
+            'notification_phones' => $whatsAppData['notification_phones'] ?? null,
+            'template_name' => $whatsAppData['whatsapp_template_name'],
+            'template_language' => $whatsAppData['whatsapp_template_language'],
+            'owner_account_id' => $whatsAppData['whatsapp_owner_account_id'] ?? null,
+            'access_token' => $whatsAppData['whatsapp_access_token'] ?? null,
+        ]);
+
+        return redirect()
+            ->route('system.settings.whatsapp.edit')
+            ->with('message', 'Configurações de WhatsApp salvas com sucesso.');
     }
 
     /**
      * Dispara um e-mail simples usando a configuração SMTP salva.
      * O retorno da operação é exibido na própria tela de configuração.
      */
-    public function sendTest(Request $request): RedirectResponse
+    public function sendTest(Request $request): \Illuminate\Http\RedirectResponse
     {
         // Valida apenas os campos necessários para um teste manual de envio.
         $data = $request->validate([
@@ -90,7 +134,7 @@ class SystemSettingsController extends Controller
 
         // Centraliza a mensagem de retorno na mesma rota da tela de edição.
         return redirect()
-            ->route('system.settings.edit')
+            ->route('system.settings.mail.edit')
             ->withInput($request->only(['test_email', 'test_name']))
             ->with($result['success'] ? 'message' : 'error', $result['success']
                 ? 'E-mail de teste enviado com sucesso.'
@@ -115,5 +159,63 @@ class SystemSettingsController extends Controller
         ))->render();
 
         return response($html);
+    }
+
+    /**
+     * Dispara manualmente o template de alerta do WhatsApp para validar a integração.
+     * O método usa a configuração salva do template e os campos variáveis informados na tela.
+     */
+    public function sendWhatsAppTest(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        // Valida a zona de testes sem misturar com o formulário principal de configuração.
+        $data = $request->validate([
+            'whatsapp_test_phone' => ['required', 'string', 'max:30'],
+            'whatsapp_test_system_name' => ['required', 'string', 'max:60'],
+            'whatsapp_test_description' => ['required', 'string', 'max:500'],
+            'whatsapp_test_event_date' => ['required', 'string', 'max:50'],
+        ]);
+
+        $settings = $this->whatsAppSettingsService->getSettings();
+
+        // Resolve o phone_number_id da conta dona configurada para usar no disparo.
+        $phoneNumberId = $this->metaWhatsAppTemplateService->getPhoneNumberIdFromOwnerAccount(
+            $settings['owner_account_id'],
+            $settings['access_token'],
+        );
+
+        if (! $phoneNumberId) {
+            return redirect()
+                ->route('system.settings.whatsapp.edit')
+                ->withInput($request->only([
+                    'whatsapp_test_phone',
+                    'whatsapp_test_system_name',
+                    'whatsapp_test_description',
+                    'whatsapp_test_event_date',
+                ]))
+                ->with('error', 'Não foi possível localizar um phone_number_id válido para a conta configurada.');
+        }
+
+        $result = $this->metaWhatsAppTemplateService->sendSystemProblemAlert(
+            $phoneNumberId,
+            $settings['access_token'],
+            $data['whatsapp_test_phone'],
+            $settings['template_name'],
+            $settings['template_language'],
+            $data['whatsapp_test_system_name'],
+            $data['whatsapp_test_description'],
+            $data['whatsapp_test_event_date'],
+        );
+
+        return redirect()
+            ->route('system.settings.whatsapp.edit')
+            ->withInput($request->only([
+                'whatsapp_test_phone',
+                'whatsapp_test_system_name',
+                'whatsapp_test_description',
+                'whatsapp_test_event_date',
+            ]))
+            ->with(($result['status'] ?? 500) < 400 ? 'message' : 'error', ($result['status'] ?? 500) < 400
+                ? 'Template de WhatsApp enviado com sucesso.'
+                : 'Falha ao enviar template de WhatsApp: ' . ($result['data']['error']['error_data']['details'] ?? $result['data']['error']['message'] ?? $result['error'] ?? 'erro desconhecido'));
     }
 }

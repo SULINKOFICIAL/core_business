@@ -305,7 +305,8 @@ if (! function_exists('header_menu_items')) {
                     'users.index',
                     'users.create',
                     'users.edit',
-                    'system.settings.edit',
+                    'system.settings.mail.edit',
+                    'system.settings.whatsapp.edit',
                     'systems.run.scheduled.now',
                     'systems.run.scheduled.now.client',
                     'systems.update.all.systems',
@@ -318,10 +319,17 @@ if (! function_exists('header_menu_items')) {
                         'icon' => ['class' => 'fa-solid fa-users fs-5'],
                     ],
                     [
-                        // Abre a tela administrativa com persistencia e teste do SMTP.
-                        'label' => 'Sistema',
-                        'route' => 'system.settings.edit',
-                        'active_routes' => ['system.settings.edit'],
+                        // Direciona para a nova página de configurações SMTP do sistema.
+                        'label' => 'SMTP',
+                        'route' => 'system.settings.mail.edit',
+                        'active_routes' => ['system.settings.mail.edit'],
+                        'icon' => ['class' => 'fa-solid fa-envelope fs-5'],
+                    ],
+                    [
+                        // Mantém a configuração do WhatsApp em uma página própria.
+                        'label' => 'WhatsApp',
+                        'route' => 'system.settings.whatsapp.edit',
+                        'active_routes' => ['system.settings.whatsapp.edit'],
                         'icon' => ['class' => 'fa-solid fa-gear fs-5'],
                     ],
                     [
