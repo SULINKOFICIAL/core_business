@@ -131,7 +131,8 @@ class ClientsActionsController extends Controller
         // Sinaliza todos como desatualizados
         $this->repository->update([
             'db_last_version'  => false, 
-            'git_last_version' => false
+            'git_last_version' => false,
+            'sp_last_version'  => false,
         ]);
 
         // Obtém todos os clientes com instalações dedicadas
@@ -142,6 +143,7 @@ class ClientsActionsController extends Controller
         // Atualiza o Git de Todos os exclusívos
         foreach ($clientsDedicateds as $client) {
             $this->updateGit($client->id);
+            $this->restartSupervisor($client->id);
         }
 
         // Busca um cliente compartilhado e atualiza todos
@@ -155,7 +157,21 @@ class ClientsActionsController extends Controller
             $this->updateGit($sharedClient->id);
 
             // Atualiza o git de todas as hospedagens compartilhadas
-            $this->repository->where('type_installation', 'shared')->update(['git_last_version' => true]);
+            $sharedClient->refresh();
+            $this->repository->where('type_installation', 'shared')->update([
+                'git_last_version' => $sharedClient->git_last_version,
+                'git_error' => $sharedClient->git_error,
+            ]);
+
+            // Verifica se o restart de filas no cliente compartilhado foi concluído.
+            $this->restartSupervisor($sharedClient->id);
+
+            // Atualiza o status do supervisor em todas as hospedagens compartilhadas.
+            $sharedClient->refresh();
+            $this->repository->where('type_installation', 'shared')->update([
+                'sp_last_version' => $sharedClient->sp_last_version,
+                'sp_error' => $sharedClient->sp_error,
+            ]);
 
         }
         
@@ -224,6 +240,39 @@ class ClientsActionsController extends Controller
 
     }
 
+    // Reinicia as filas do cliente via API
+    public function restartSupervisor($id){
+
+        // Encontra o cliente
+        $client = $this->repository->find($id);
+
+        // Realiza solicitação
+        $response = $this->guzzleService->request('POST', 'sistema/supervisor-restart', $client);
+
+        if (!$response['success']) {
+            $client->sp_last_version = false;
+            $client->sp_error = $response['message'] ?? 'Erro desconhecido';
+        } else {
+            $responseData = json_decode($response['data'] ?? null, true);
+            $apiSuccess = is_array($responseData) ? (bool) ($responseData['success'] ?? true) : true;
+
+            if (!$apiSuccess) {
+                $client->sp_last_version = false;
+                $client->sp_error = $responseData['error'] ?? $responseData['message'] ?? 'Erro desconhecido';
+            } else {
+                $client->sp_last_version = true;
+                $client->sp_error = null;
+            }
+        }
+
+        // Atualiza no banco de dados
+        $client->save();
+
+        // Retorna a página
+        return $client->sp_last_version;
+
+    }
+
     // Atualiza o banco de dados do cliente via API
     public function updateDatabaseManual($id){
 
@@ -253,6 +302,31 @@ class ClientsActionsController extends Controller
         return redirect()
                 ->route('clients.index')
                 ->with('message', 'GIT Pull executado com sucesso');
+
+    }
+
+    // Reinicia as filas do cliente via API
+    public function updateSupervisorManual($id){
+
+        // Encontra o cliente
+        $client = $this->repository->find($id);
+
+        // Realiza solicitação
+        $response = $this->restartSupervisor($client->id);
+
+        // Mantém o status sincronizado para todos os clientes compartilhados.
+        if ($client->type_installation === 'shared') {
+            $client->refresh();
+            $this->repository->where('type_installation', 'shared')->update([
+                'sp_last_version' => $client->sp_last_version,
+                'sp_error' => $client->sp_error,
+            ]);
+        }
+
+        // Retorna a página
+        return redirect()
+                ->route('clients.index')
+                ->with('message', $response ? 'Filas reiniciadas com sucesso' : 'Falha ao reiniciar as filas');
 
     }
 

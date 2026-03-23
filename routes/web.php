@@ -377,6 +377,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/acessar-recursos',             [ClientsActionsController::class, 'getResources'])->name('get.resources');
             Route::get('/atualizar-banco/{id}',         [ClientsActionsController::class, 'updateDatabaseManual'])->name('update.database');
             Route::get('/atualizar-git/{id}',           [ClientsActionsController::class, 'updateGitManual'])->name('update.git');
+            Route::get('/reiniciar-filas/{id}',         [ClientsActionsController::class, 'updateSupervisorManual'])->name('update.supervisor');
             Route::get('/atualizar-em-massa',           [ClientsActionsController::class, 'updateAllDatabase'])->name('update.all.db');
             Route::get('/ajustar-armazenamento',        [ClientsActionsController::class, 'updateSizeStorage'])->name('update.size.storage');
             Route::get('/atualizar-sistemas',           [ClientsActionsController::class, 'updateAllSystems'])->name('update.all.systems');

@@ -85,6 +85,7 @@
                     <th class="">Expira em</th>
                     <th class="text-center px-0">DB</th>
                     <th class="text-center px-0">GIT</th>
+                    <th class="text-center px-0">SP</th>
                     <th class="text-center px-0">Status</th>
                     <th class="text-end pe-12 w-100px">Ações</th>
                 </tr>
@@ -164,8 +165,9 @@
             { targets: 2, data: "expires_at" },
             { targets: 3, data: "bank" },
             { targets: 4, data: "git" },
-            { targets: 5, data: "status" },
-            { targets: 6, data: "actions", orderable: false },
+            { targets: 5, data: "sp" },
+            { targets: 6, data: "status" },
+            { targets: 7, data: "actions", orderable: false },
         ],
         language: {
             "search": "Pesquisar:",
@@ -196,6 +198,10 @@
             },
             {   
                 targets: 6,
+                className: 'text-center',
+            },
+            {   
+                targets: 7,
                 className: 'text-end',
             },
         ],
