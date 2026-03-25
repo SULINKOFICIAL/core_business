@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\SimpleEmailMailable;
 use App\Services\EmailService;
 use App\Services\MailSettingsService;
-use App\Services\MetaWhatsAppTemplateService;
+use App\Services\SystemProblemNotificationService;
 use App\Services\WhatsAppSettingsService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -21,7 +21,7 @@ class SystemSettingsController extends Controller
         private readonly MailSettingsService $mailSettingsService,
         private readonly WhatsAppSettingsService $whatsAppSettingsService,
         private readonly EmailService $emailService,
-        private readonly MetaWhatsAppTemplateService $metaWhatsAppTemplateService,
+        private readonly SystemProblemNotificationService $systemProblemNotificationService,
     ) {
     }
 
@@ -175,32 +175,8 @@ class SystemSettingsController extends Controller
             'whatsapp_test_event_date' => ['required', 'string', 'max:50'],
         ]);
 
-        $settings = $this->whatsAppSettingsService->getSettings();
-
-        // Resolve o phone_number_id da conta dona configurada para usar no disparo.
-        $phoneNumberId = $this->metaWhatsAppTemplateService->getPhoneNumberIdFromOwnerAccount(
-            $settings['owner_account_id'],
-            $settings['access_token'],
-        );
-
-        if (! $phoneNumberId) {
-            return redirect()
-                ->route('system.settings.whatsapp.edit')
-                ->withInput($request->only([
-                    'whatsapp_test_phone',
-                    'whatsapp_test_system_name',
-                    'whatsapp_test_description',
-                    'whatsapp_test_event_date',
-                ]))
-                ->with('error', 'Não foi possível localizar um phone_number_id válido para a conta configurada.');
-        }
-
-        $result = $this->metaWhatsAppTemplateService->sendSystemProblemAlert(
-            $phoneNumberId,
-            $settings['access_token'],
+        $result = $this->systemProblemNotificationService->sendWhatsAppTest(
             $data['whatsapp_test_phone'],
-            $settings['template_name'],
-            $settings['template_language'],
             $data['whatsapp_test_system_name'],
             $data['whatsapp_test_description'],
             $data['whatsapp_test_event_date'],
@@ -214,8 +190,8 @@ class SystemSettingsController extends Controller
                 'whatsapp_test_description',
                 'whatsapp_test_event_date',
             ]))
-            ->with(($result['status'] ?? 500) < 400 ? 'message' : 'error', ($result['status'] ?? 500) < 400
+            ->with(($result['success'] ?? false) ? 'message' : 'error', ($result['success'] ?? false)
                 ? 'Template de WhatsApp enviado com sucesso.'
-                : 'Falha ao enviar template de WhatsApp: ' . ($result['data']['error']['error_data']['details'] ?? $result['data']['error']['message'] ?? $result['error'] ?? 'erro desconhecido'));
+                : 'Falha ao enviar template de WhatsApp: ' . ($result['error'] ?? $result['reason'] ?? 'erro desconhecido'));
     }
 }

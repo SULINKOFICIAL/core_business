@@ -9,6 +9,7 @@ use App\Models\ErrorMiCore;
 use App\Models\IntegrationSuggestion;
 use App\Models\Module;
 use App\Models\ModulePricingTier;
+use App\Services\SystemProblemNotificationService;
 use Illuminate\Support\Facades\Log;
 
 class ApisController extends Controller
@@ -191,17 +192,40 @@ class ApisController extends Controller
 
     }
 
-    public function notifyErrors(Request $request){
-        
-        // Recebe dados
-        $data = $request->all();
+    public function notifyErrors(Request $request, SystemProblemNotificationService $systemProblemNotificationService)
+    {
+        // Valida os campos esperados para persistência e notificação.
+        $data = $request->validate([
+            'url' => ['nullable', 'string', 'max:1000'],
+            'ip_address' => ['nullable', 'string', 'max:45'],
+            'message' => ['required', 'string', 'max:5000'],
+            'stack_trace' => ['nullable', 'string'],
+            'status_code' => ['nullable', 'integer'],
+            'system_name' => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:5000'],
+            'event_date' => ['nullable', 'string', 'max:50'],
+            'source' => ['nullable', 'string', 'max:255'],
+            'context' => ['nullable', 'array'],
+        ]);
 
-        // Registra erro que veio através do MiCore
-        ErrorMiCore::create($data);
+        // Prioriza o cliente resolvido pelo middleware para evitar spoofing.
+        $client = $request->input('client');
+        $data['client_id'] = $client->id ?? ($data['client_id'] ?? null);
 
-        // Retornar resposta
-        return response()->json('Registrou o erro', 201);
+        // Registra erro que veio através do MiCore.
+        $error = ErrorMiCore::create($data);
 
+        // Dispara notificação consolidada por e-mail e template de WhatsApp.
+        $notification = $systemProblemNotificationService->notify(array_merge($data, [
+            'error_id' => $error->id,
+            'event_date' => $data['event_date'] ?? now()->format('d/m/Y H:i:s'),
+        ]));
+
+        return response()->json([
+            'message' => 'Registrou o erro',
+            'id' => $error->id,
+            'notification' => $notification,
+        ], 201);
     }
 
     public function suggestions(Request $request) {

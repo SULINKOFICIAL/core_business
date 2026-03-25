@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Mail\SimpleEmailMailable;
 use App\Models\EmailDispatchLog;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
 
@@ -73,6 +74,40 @@ class EmailService
             'success_count' => $successCount,
             'error_count' => $errorCount,
             'results' => $results,
+        ];
+    }
+
+    /**
+     * Envia alerta de problema do sistema para os e-mails de notificação configurados.
+     * O próprio serviço resolve os destinatários e o corpo padrão do incidente.
+     */
+    public function sendSystemProblemAlert(array $incident): array
+    {
+        $emails = $this->mailSettingsService->getNotificationEmails();
+
+        if (empty($emails)) {
+            return [
+                'success' => false,
+                'skipped' => true,
+                'reason' => 'Nenhum e-mail de notificação configurado.',
+            ];
+        }
+
+        $normalizedIncident = $this->normalizeProblemIncident($incident);
+        $result = $this->sendMany(
+            $emails,
+            '[ALERTA] Problema no sistema ' . $normalizedIncident['system_name'],
+            [
+                'message_body' => $this->buildSystemProblemEmailBody($normalizedIncident),
+                'cta_label' => 'Acessar Central',
+                'cta_url' => config('app.url'),
+            ]
+        );
+
+        return [
+            'success' => (bool) ($result['success'] ?? false),
+            'skipped' => false,
+            'result' => $result,
         ];
     }
 
@@ -147,5 +182,46 @@ class EmailService
             'email' => $recipient['email'],
             'name' => $recipient['name'] ?? null,
         ];
+    }
+
+    /**
+     * Padroniza os dados mínimos do incidente para o alerta por e-mail.
+     */
+    private function normalizeProblemIncident(array $incident): array
+    {
+        return array_merge($incident, [
+            'system_name' => (string) ($incident['system_name'] ?? config('app.name', 'MiCore')),
+            'description' => (string) ($incident['description'] ?? $incident['message'] ?? 'Problema não especificado.'),
+            'event_date' => (string) ($incident['event_date'] ?? now()->format('d/m/Y H:i:s')),
+            'status_code' => (int) ($incident['status_code'] ?? 500),
+            'url' => (string) ($incident['url'] ?? ''),
+            'ip_address' => (string) ($incident['ip_address'] ?? ''),
+            'stack_trace' => (string) ($incident['stack_trace'] ?? ''),
+        ]);
+    }
+
+    /**
+     * Gera o corpo textual padrão para alertas de problema do sistema.
+     */
+    private function buildSystemProblemEmailBody(array $incident): string
+    {
+        $lines = [
+            'Foi detectado um problema em um sistema integrado.',
+            '',
+            'Sistema: ' . $incident['system_name'],
+            'Descrição: ' . $incident['description'],
+            'Data/Hora: ' . $incident['event_date'],
+            'Status HTTP: ' . $incident['status_code'],
+            'URL: ' . ($incident['url'] ?: '-'),
+            'IP: ' . ($incident['ip_address'] ?: '-'),
+        ];
+
+        if (! empty($incident['stack_trace'])) {
+            $lines[] = '';
+            $lines[] = 'Stack trace (resumo):';
+            $lines[] = Str::limit($incident['stack_trace'], 1500);
+        }
+
+        return implode("\n", $lines);
     }
 }

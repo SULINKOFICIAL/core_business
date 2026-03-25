@@ -64,9 +64,9 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
         Route::post('/tickets',                [ApisTicketsController::class, 'store']);
         Route::post('/tickets/{id}/anexos',    [ApisTicketsController::class, 'attach']);
         Route::post('/tickets/{id}/respostas', [ApisTicketsController::class, 'reply']);
-        Route::post('/sugestoes', [ApisController::class, 'suggestions']);
-        Route::post('/cartao',    [ApisController::class, 'newCard']);
-        Route::post('/error',     [ApisController::class, 'notifyErrors']);
+        Route::post('/sugestoes',              [ApisController::class, 'suggestions']);
+        Route::post('/cartao',                 [ApisController::class, 'newCard']);
+        Route::post('/error',                  [ApisController::class, 'notifyErrors']);
 
         /** API gerencia os domínios */
         Route::prefix('dominios')->group(function () {

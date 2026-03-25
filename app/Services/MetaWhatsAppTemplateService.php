@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Str;
+
 class MetaWhatsAppTemplateService
 {
     /**
@@ -10,6 +12,7 @@ class MetaWhatsAppTemplateService
      */
     public function __construct(
         private readonly RequestService $requestService,
+        private readonly WhatsAppSettingsService $whatsAppSettingsService,
     ) {
     }
 
@@ -60,60 +63,6 @@ class MetaWhatsAppTemplateService
     }
 
     /**
-     * Dispara o template padrao de alerta de problema no sistema.
-     * O payload segue a estrutura do modelo criado na Meta com header e corpo variáveis.
-     */
-    public function sendSystemProblemAlert(
-        string $phoneNumberId,
-        string $accessToken,
-        string $phoneNumber,
-        string $templateName,
-        string $languageCode,
-        string $systemName,
-        string $description,
-        string $eventDate,
-    ): array {
-        // Monta os componentes exatamente na ordem esperada pelo template da Meta.
-        $components = [
-            [
-                'type' => 'header',
-                'parameters' => [
-                    [
-                        'type' => 'text',
-                        'text' => $systemName,
-                    ],
-                ],
-            ],
-            [
-                'type' => 'body',
-                'parameters' => [
-                    [
-                        'type' => 'text',
-                        'text' => $systemName,
-                    ],
-                    [
-                        'type' => 'text',
-                        'text' => $description,
-                    ],
-                    [
-                        'type' => 'text',
-                        'text' => $eventDate,
-                    ],
-                ],
-            ],
-        ];
-
-        return $this->sendTemplate(
-            $phoneNumberId,
-            $accessToken,
-            $phoneNumber,
-            $templateName,
-            $languageCode,
-            $components,
-        );
-    }
-
-    /**
      * Busca os números vinculados à conta dona e devolve o primeiro phone number id disponível.
      * Isso permite testar o envio apenas com WABA ID e token manual informados na configuração.
      */
@@ -126,6 +75,27 @@ class MetaWhatsAppTemplateService
         }
 
         return $response['data']['data'][0]['id'] ?? null;
+    }
+
+    /**
+     * Envia o template de problema para os telefones de notificação configurados.
+     * A resolução de configuração fica isolada no serviço de WhatsApp.
+     */
+    public function sendSystemProblemAlertToConfiguredPhones(array $incident): array
+    {
+        return $this->sendSystemProblemAlert($incident, null);
+    }
+
+    /**
+     * Envia o template de problema para um telefone específico de teste.
+     */
+    public function sendSystemProblemAlertTest(string $phoneNumber, string $systemName, string $description, string $eventDate): array
+    {
+        return $this->sendSystemProblemAlert([
+            'system_name' => $systemName,
+            'description' => $description,
+            'event_date' => $eventDate,
+        ], [$phoneNumber]);
     }
 
     /**
@@ -143,5 +113,124 @@ class MetaWhatsAppTemplateService
                 ],
             ]
         );
+    }
+
+    /**
+     * Executa o envio do alerta de problema usando configuração atual da integração Meta.
+     */
+    private function sendSystemProblemAlert(array $incident, ?array $targetPhones = null): array
+    {
+        $settings = $this->whatsAppSettingsService->getSettings();
+        $notificationPhones = $targetPhones ?? $this->whatsAppSettingsService->getNotificationPhones();
+
+        if (empty($notificationPhones)) {
+            return [
+                'success' => false,
+                'skipped' => true,
+                'reason' => 'Nenhum telefone de notificação configurado.',
+            ];
+        }
+
+        if (empty($settings['owner_account_id']) || empty($settings['access_token']) || empty($settings['template_name'])) {
+            return [
+                'success' => false,
+                'skipped' => true,
+                'reason' => 'Configuração de WhatsApp incompleta.',
+            ];
+        }
+
+        $phoneNumberId = $this->getPhoneNumberIdFromOwnerAccount(
+            $settings['owner_account_id'],
+            $settings['access_token'],
+        );
+
+        if (! $phoneNumberId) {
+            return [
+                'success' => false,
+                'skipped' => false,
+                'error' => 'Não foi possível localizar um phone_number_id válido para a conta configurada.',
+            ];
+        }
+
+        $normalizedIncident = $this->normalizeProblemIncident($incident);
+        $components = $this->buildSystemProblemTemplateComponents($normalizedIncident);
+        $results = [];
+        $successCount = 0;
+
+        foreach ($notificationPhones as $notificationPhone) {
+            $result = $this->sendTemplate(
+                $phoneNumberId,
+                $settings['access_token'],
+                $notificationPhone,
+                $settings['template_name'],
+                $settings['template_language'] ?: 'pt_BR',
+                $components,
+            );
+
+            $results[] = [
+                'phone' => $notificationPhone,
+                'result' => $result,
+            ];
+
+            if (($result['status'] ?? 500) < 400) {
+                $successCount++;
+            }
+        }
+
+        return [
+            'success' => $successCount > 0,
+            'skipped' => false,
+            'total' => count($notificationPhones),
+            'success_count' => $successCount,
+            'error_count' => count($notificationPhones) - $successCount,
+            'results' => $results,
+        ];
+    }
+
+    /**
+     * Padroniza os dados mínimos usados no template de problema.
+     */
+    private function normalizeProblemIncident(array $incident): array
+    {
+        return array_merge($incident, [
+            'system_name' => (string) ($incident['system_name'] ?? config('app.name', 'MiCore')),
+            'description' => (string) ($incident['description'] ?? $incident['message'] ?? 'Problema não especificado.'),
+            'event_date' => (string) ($incident['event_date'] ?? now()->format('d/m/Y H:i:s')),
+        ]);
+    }
+
+    /**
+     * Monta os parâmetros do template de alerta no padrão esperado pela Meta.
+     */
+    private function buildSystemProblemTemplateComponents(array $incident): array
+    {
+        return [
+            [
+                'type' => 'header',
+                'parameters' => [
+                    [
+                        'type' => 'text',
+                        'text' => Str::limit($incident['system_name'], 60, ''),
+                    ],
+                ],
+            ],
+            [
+                'type' => 'body',
+                'parameters' => [
+                    [
+                        'type' => 'text',
+                        'text' => Str::limit($incident['system_name'], 60, ''),
+                    ],
+                    [
+                        'type' => 'text',
+                        'text' => Str::limit($incident['description'], 500, ''),
+                    ],
+                    [
+                        'type' => 'text',
+                        'text' => Str::limit($incident['event_date'], 50, ''),
+                    ],
+                ],
+            ],
+        ];
     }
 }
