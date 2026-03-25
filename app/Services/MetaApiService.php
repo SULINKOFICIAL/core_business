@@ -136,8 +136,9 @@ class MetaApiService
             'POST',
             "https://graph.facebook.com/v20.0/{$wabaId}/subscribed_apps",
             [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $accessToken,
+                'query' => [
+                    'access_token' => $accessToken,
+                    'subscribed_fields' => 'messages,messaging_postbacks'
                 ]
             ]
         );
