@@ -8,6 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Models\LogsApi;
 use App\Services\RequestService;
+use Illuminate\Support\Facades\Log;
 
 class MetaDispatchRequest implements ShouldQueue
 {
@@ -110,6 +111,8 @@ class MetaDispatchRequest implements ShouldQueue
         $response = $requestService->request('POST', $url, [
                         'json' => $this->data
                     ]);
+
+        Log::info($response);
 
         // Se a requisição foi processada atualiza o logs para concluido
         if($response['success'] && isset($response['data']['status']) && $response['data']['status'] == 'Accepted'){
