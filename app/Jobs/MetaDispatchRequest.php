@@ -75,6 +75,8 @@ class MetaDispatchRequest implements ShouldQueue
                 return;
             }
 
+            $clients = $clientMeta->client;
+
             $url = "{$clientDomains[0]->domain}/webhooks/meta";
 
         } elseif ($platform == 'whatsapp_web') {
