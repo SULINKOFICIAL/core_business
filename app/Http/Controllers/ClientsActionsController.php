@@ -223,6 +223,8 @@ class ClientsActionsController extends Controller
         // Realiza solicitação
         $response = $this->guzzleService->request('POST', 'sistema/atualizar-git', $client);
 
+        Log::info($response);
+
         // Verifica a resposta antes de tentar acessar as chaves
         if (!$response['success']) {
             $client->git_last_version = false;
