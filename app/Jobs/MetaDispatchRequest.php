@@ -75,7 +75,7 @@ class MetaDispatchRequest implements ShouldQueue
                 return;
             }
 
-            $clients = $clientMeta->client;
+            $client = $clientMeta->client;
 
             $url = "{$clientDomains[0]->domain}/webhooks/meta";
 
