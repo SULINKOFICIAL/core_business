@@ -23,5 +23,5 @@ Schedule::job(new ScheduleDispatcher('archive_finished_tasks'))
         ->onOneServer();
         
 Schedule::job(new ScheduleDispatcher('refresh_mercado_livre'))
-        ->dailyAt('14:05')
+        ->cron('0 3,9,15,21 * * *')
         ->onOneServer();

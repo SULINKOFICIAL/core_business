@@ -24,7 +24,10 @@ use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PagarMeController;
 use App\Http\Controllers\SubscriptionsController;
+use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\TicketController;
+use App\Http\Controllers\TaskDispatchHistoryController;
+use App\Http\Controllers\TaskDispatchHistoryProcessingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WhatsAppApiController;
 use App\Http\Controllers\LogsApiController;
@@ -47,9 +50,48 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('index');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/sistemas-por-dia', [DashboardController::class, 'dailySystemsByMonth'])->name('dashboard.daily.systems');
-    Route::get('/conta/configuracoes', [AccountSettingsController::class, 'edit'])->name('account.settings.edit');
-    Route::put('/conta/configuracoes', [AccountSettingsController::class, 'update'])->name('account.settings.update');
 
+    /**
+     * Rotas para configurações da conta do usuário autenticado.
+     */
+    Route::prefix('conta')->name('account.')->group(function () {
+        /**
+         * Rotas para edição dos dados de configuração da conta.
+         */
+        Route::prefix('configuracoes')->name('settings.')->group(function () {
+            Route::get('/', [AccountSettingsController::class, 'edit'])->name('edit');
+            Route::put('/', [AccountSettingsController::class, 'update'])->name('update');
+        });
+    });
+
+    /**
+     * Rotas para configurações sistêmicas da central.
+     */
+    Route::prefix('configuracoes')->name('system.settings.')->group(function () {
+        
+        /**
+         * Rotas para configuração e teste de SMTP.
+         */
+        Route::prefix('sistema/smtp')->name('mail.')->group(function () {
+            Route::get('/', [SystemSettingsController::class, 'editMail'])->name('edit');
+            Route::put('/', [SystemSettingsController::class, 'updateMail'])->name('update');
+            Route::post('/testar-email', [SystemSettingsController::class, 'sendTest'])->name('test');
+            Route::get('/preview-email', [SystemSettingsController::class, 'preview'])->name('preview');
+        });
+
+        /**
+         * Rotas para configuração e teste de WhatsApp.
+         */
+        Route::prefix('sistema/whatsapp')->name('whatsapp.')->group(function () {
+            Route::get('/', [SystemSettingsController::class, 'editWhatsApp'])->name('edit');
+            Route::put('/', [SystemSettingsController::class, 'updateWhatsApp'])->name('update');
+            Route::post('/testar', [SystemSettingsController::class, 'sendWhatsAppTest'])->name('test');
+        });
+    });
+
+    /**
+     * Rotas para gerenciamento dos clientes.
+     */
     Route::prefix('clientes')->group(function () {
         Route::name('clients.')->group(function () {
             Route::get('/',                 [ClientController::class, 'index'])->name('index');
@@ -63,11 +105,18 @@ Route::middleware(['auth'])->group(function () {
             
 
             /**
-             * Rotas para integração a API do cPanel.
+             * Rotas para instalação de clientes.
              */
             Route::name('install.')->group(function () {
+                /**
+                 * Rotas para etapas da instalação dos clientes.
+                 */
                 Route::prefix('instalacao')->group(function () {
                     Route::get('/{id}', [ClientInstallController::class, 'index'])->name('index');
+
+                    /**
+                     * Rotas para automações da API do cPanel.
+                     */
                     Route::prefix('cpanel')->group(function () {
                         Route::get('/gerar/{id}',           [CpanelController::class, 'make'])->name('make');
                         Route::get('/subdominio/{id}',      [CpanelController::class, 'clientMakeDomain'])->name('subdomain');
@@ -80,6 +129,9 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
+    /**
+     * Rotas para gerenciamento das notícias.
+     */
     Route::prefix('noticias')->group(function () {
         Route::name('news.')->group(function () {
             Route::get('/',                 [NewsController::class, 'index'])->name('index');
@@ -91,6 +143,9 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/editar/{id}',      [NewsController::class, 'update'])->name('update');
             Route::get('/desabilitar/{id}', [NewsController::class, 'destroy'])->name('destroy');
 
+            /**
+             * Rotas para gerenciamento das categorias de notícias.
+             */
             Route::prefix('categorias')->group(function () {
                 Route::name('categories.')->group(function () {
                     Route::get('/',                 [NewsCategoryController::class, 'index'])->name('index');
@@ -106,6 +161,9 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
+    /**
+     * Rotas para gerenciamento dos pacotes.
+     */
     Route::prefix('pacotes')->group(function () {
         Route::name('packages.')->group(function () {
             Route::get('/',                 [PackageController::class, 'index'])->name('index');
@@ -120,6 +178,9 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
+    /**
+     * Rotas para gerenciamento dos módulos.
+     */
     Route::prefix('modulos')->group(function () {
         Route::name('modules.')->group(function () {
             Route::get('/',                 [ModuleController::class, 'index'])->name('index');
@@ -129,6 +190,9 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/editar/{id}',      [ModuleController::class, 'update'])->name('update');
             Route::get('/desabilitar/{id}', [ModuleController::class, 'destroy'])->name('destroy');
 
+            /**
+             * Rotas para gerenciamento das categorias de módulos.
+             */
             Route::prefix('categorias')->group(function () {
                 Route::name('categories.')->group(function () {
                     Route::get('/',                 [ModuleCategoryController::class, 'index'])->name('index');
@@ -143,6 +207,9 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
+    /**
+     * Rotas para gerenciamento dos grupos.
+     */
     Route::prefix('grupos')->group(function () {
         Route::name('groups.')->group(function () {
             Route::get('/',                 [GroupController::class, 'index'])->name('index');
@@ -154,6 +221,9 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
+    /**
+     * Rotas para gerenciamento dos recursos.
+     */
     Route::prefix('recursos')->group(function () {
         Route::name('resources.')->group(function () {
             Route::get('/',                 [ResourceController::class, 'index'])->name('index');
@@ -166,6 +236,9 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
+    /**
+     * Rotas para gerenciamento dos pedidos.
+     */
     Route::prefix('pedidos')->group(function () {
         Route::name('orders.')->group(function () {
             Route::get('/',                 [OrderController::class, 'index'])->name('index');
@@ -175,6 +248,9 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
+    /**
+     * Rotas para gerenciamento dos cupons.
+     */
     Route::prefix('cupons')->group(function () {
         Route::name('coupons.')->group(function () {
             Route::get('/', [CouponController::class, 'index'])->name('index');
@@ -187,6 +263,9 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
+    /**
+     * Rotas para gerenciamento dos tickets.
+     */
     Route::prefix('tickets')->group(function () {
         Route::name('tickets.')->group(function () {
             Route::get('/',                 [TicketController::class, 'index'])->name('index');
@@ -198,6 +277,9 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
+    /**
+     * Rotas para gerenciamento das sugestões.
+     */
     Route::prefix('sugestoes')->group(function () {
         Route::name('suggestions.')->group(function () {
             Route::get('/',                 [IntegrationSuggestionController::class, 'index'])->name('index');
@@ -206,6 +288,9 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
+    /**
+     * Rotas para gerenciamento das integrações dos clientes.
+     */
     Route::prefix('integracoes-clientes')->group(function () {
         Route::name('clients.integrations.')->group(function () {
             Route::get('/',                 [ClientIntegrationController::class, 'index'])->name('index');
@@ -213,13 +298,21 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
+    /**
+     * Rotas para visualização dos erros do sistema.
+     */
     Route::prefix('errors')->group(function () {
         Route::name('errors.')->group(function () {
             Route::get('/',                 [ErrorMiCoreController::class, 'index'])->name('index');
+            Route::get('/aplicacao',        [ErrorMiCoreController::class, 'application'])->name('application');
             Route::get('/visualizar',       [ErrorMiCoreController::class, 'show'])->name('show');
+            Route::get('/arquivar-log',     [ErrorMiCoreController::class, 'archiveLaravelLog'])->name('archive.log');
         });
     });
 
+    /**
+     * Rotas para visualização dos logs de APIs.
+     */
     Route::prefix('logs/apis')->group(function () {
         Route::name('logs.apis.')->group(function () {
             Route::get('/',                 [LogsApiController::class, 'index'])->name('index');
@@ -229,6 +322,20 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
+    /**
+     * Rotas para histórico de tarefas disparadas.
+     */
+    Route::prefix('historico-tarefas')->group(function () {
+        Route::name('task.history.')->group(function () {
+            Route::get('/', [TaskDispatchHistoryController::class, 'index'])->name('index');
+            Route::get('/processar', [TaskDispatchHistoryProcessingController::class, 'process'])->name('process');
+            Route::get('/visualizar/{id}', [TaskDispatchHistoryController::class, 'show'])->name('show');
+        });
+    });
+
+    /**
+     * Rotas para gerenciamento dos usuários.
+     */
     Route::prefix('usuarios')->group(function () {
         Route::name('users.')->group(function () {
             Route::get('/',                 [UserController::class, 'index'])->name('index');
@@ -270,6 +377,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/acessar-recursos',             [ClientsActionsController::class, 'getResources'])->name('get.resources');
             Route::get('/atualizar-banco/{id}',         [ClientsActionsController::class, 'updateDatabaseManual'])->name('update.database');
             Route::get('/atualizar-git/{id}',           [ClientsActionsController::class, 'updateGitManual'])->name('update.git');
+            Route::get('/reiniciar-filas/{id}',         [ClientsActionsController::class, 'updateSupervisorManual'])->name('update.supervisor');
             Route::get('/atualizar-em-massa',           [ClientsActionsController::class, 'updateAllDatabase'])->name('update.all.db');
             Route::get('/ajustar-armazenamento',        [ClientsActionsController::class, 'updateSizeStorage'])->name('update.size.storage');
             Route::get('/atualizar-sistemas',           [ClientsActionsController::class, 'updateAllSystems'])->name('update.all.systems');
@@ -298,9 +406,17 @@ Route::prefix('integracoes/meta')->name('meta.embedded.')->group(function () {
     Route::get('/onboarding', [MetaApiOnboardingController::class, 'embeddedOnboarding'])->name('onboarding');
 }); 
 
-// Callback: para receber autorização OAuth
+/**
+ * Rotas de callback para autorizações OAuth externas.
+ */
 Route::name('callbacks.')->prefix('callbacks')->group(function () {
+    /**
+     * Rotas de callback específicas da Meta.
+     */
     Route::prefix('meta')->group(function () {
+        /**
+         * Rotas nomeadas para callbacks dos produtos da Meta.
+         */
         Route::name('meta.')->group(function () {
 
             /**
@@ -320,7 +436,9 @@ Route::name('callbacks.')->prefix('callbacks')->group(function () {
     });
 });
 
-// Webhook: para receber notificações
+/**
+ * Rotas de webhooks para recebimento de notificações externas.
+ */
 Route::prefix('webhooks')->withoutMiddleware(['web'])->group(function () {
 
     Route::get('/meta',  [MetaApiController::class, 'authWebhooks']);

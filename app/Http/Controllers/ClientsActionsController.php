@@ -6,10 +6,13 @@ use App\Models\Client;
 use App\Models\Module;
 use App\Models\ModuleCategory;
 use App\Models\Resource;
+use App\Models\ScheduledTaskDispatch;
+use App\Models\ScheduledTaskDispatchItem;
 use App\Services\GuzzleService;
 use App\Services\ModuleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ClientsActionsController extends Controller
 {
@@ -128,7 +131,8 @@ class ClientsActionsController extends Controller
         // Sinaliza todos como desatualizados
         $this->repository->update([
             'db_last_version'  => false, 
-            'git_last_version' => false
+            'git_last_version' => false,
+            'sp_last_version'  => false,
         ]);
 
         // Obtém todos os clientes com instalações dedicadas
@@ -139,6 +143,7 @@ class ClientsActionsController extends Controller
         // Atualiza o Git de Todos os exclusívos
         foreach ($clientsDedicateds as $client) {
             $this->updateGit($client->id);
+            $this->restartSupervisor($client->id);
         }
 
         // Busca um cliente compartilhado e atualiza todos
@@ -152,7 +157,21 @@ class ClientsActionsController extends Controller
             $this->updateGit($sharedClient->id);
 
             // Atualiza o git de todas as hospedagens compartilhadas
-            $this->repository->where('type_installation', 'shared')->update(['git_last_version' => true]);
+            $sharedClient->refresh();
+            $this->repository->where('type_installation', 'shared')->update([
+                'git_last_version' => $sharedClient->git_last_version,
+                'git_error' => $sharedClient->git_error,
+            ]);
+
+            // Verifica se o restart de filas no cliente compartilhado foi concluído.
+            $this->restartSupervisor($sharedClient->id);
+
+            // Atualiza o status do supervisor em todas as hospedagens compartilhadas.
+            $sharedClient->refresh();
+            $this->repository->where('type_installation', 'shared')->update([
+                'sp_last_version' => $sharedClient->sp_last_version,
+                'sp_error' => $sharedClient->sp_error,
+            ]);
 
         }
         
@@ -163,7 +182,7 @@ class ClientsActionsController extends Controller
 
         // Redireciona com a mensagem final
         return redirect()
-            ->back()
+            ->route('clients.index')
             ->with('message', 'Processo de atualização concluído para todos os clientes.');
     }
 
@@ -204,6 +223,8 @@ class ClientsActionsController extends Controller
         // Realiza solicitação
         $response = $this->guzzleService->request('POST', 'sistema/atualizar-git', $client);
 
+        Log::info($response);
+
         // Verifica a resposta antes de tentar acessar as chaves
         if (!$response['success']) {
             $client->git_last_version = false;
@@ -218,6 +239,39 @@ class ClientsActionsController extends Controller
 
         // Retorna a página
         return $client->git_last_version;
+
+    }
+
+    // Reinicia as filas do cliente via API
+    public function restartSupervisor($id){
+
+        // Encontra o cliente
+        $client = $this->repository->find($id);
+
+        // Realiza solicitação
+        $response = $this->guzzleService->request('POST', 'sistema/supervisor-restart', $client);
+
+        if (!$response['success']) {
+            $client->sp_last_version = false;
+            $client->sp_error = $response['message'] ?? 'Erro desconhecido';
+        } else {
+            $responseData = json_decode($response['data'] ?? null, true);
+            $apiSuccess = is_array($responseData) ? (bool) ($responseData['success'] ?? true) : true;
+
+            if (!$apiSuccess) {
+                $client->sp_last_version = false;
+                $client->sp_error = $responseData['error'] ?? $responseData['message'] ?? 'Erro desconhecido';
+            } else {
+                $client->sp_last_version = true;
+                $client->sp_error = null;
+            }
+        }
+
+        // Atualiza no banco de dados
+        $client->save();
+
+        // Retorna a página
+        return $client->sp_last_version;
 
     }
 
@@ -253,41 +307,175 @@ class ClientsActionsController extends Controller
 
     }
 
-    // Dispara manualmente jobs agendados
-    public function runScheduledNow($id = null)
+    // Reinicia as filas do cliente via API
+    public function updateSupervisorManual($id){
+
+        // Encontra o cliente
+        $client = $this->repository->find($id);
+
+        // Realiza solicitação
+        $response = $this->restartSupervisor($client->id);
+
+        // Mantém o status sincronizado para todos os clientes compartilhados.
+        if ($client->type_installation === 'shared') {
+            $client->refresh();
+            $this->repository->where('type_installation', 'shared')->update([
+                'sp_last_version' => $client->sp_last_version,
+                'sp_error' => $client->sp_error,
+            ]);
+        }
+
+        // Retorna a página
+        return redirect()
+                ->route('clients.index')
+                ->with('message', $response ? 'Filas reiniciadas com sucesso' : 'Falha ao reiniciar as filas');
+
+    }
+
+    /**
+     * Dispara manualmente um ou mais jobs para clientes selecionados na central.
+     * Também grava o histórico do lote e separa quais jobs devem aguardar resposta.
+     * Isso permite tratar jobs rápidos sem travar o envio dos jobs mais demorados.
+     */
+    public function runScheduledNow(Request $request, $id = null)
     {
-        $jobs = [
+        // Define os jobs que compõem o lote manual.
+        $jobs = $this->scheduledJobs();
+
+        // Permite executar um job específico quando informado pela tela.
+        $selectedJob = $request->get('job');
+
+        // Restringe a execução ao job solicitado quando ele for válido.
+        if (!empty($selectedJob) && $selectedJob !== 'all') {
+            if (!in_array($selectedJob, $jobs, true)) {
+                return redirect()
+                    ->back()
+                    ->with('type', 'error')
+                    ->with('message', 'A tarefa selecionada é inválida.');
+            }
+
+            $jobs = [$selectedJob];
+        }
+
+        // Busca um cliente específico ou todos os clientes ativos.
+        if($id !== null){
+            $clients = $this->repository->where('id', $id)->where('status', true)->get();
+        } else {
+            $clients = $this->repository->where('status', true)->get();
+        }
+
+        // Cria o registro pai para agrupar todas as execuções do clique manual.
+        $dispatch = ScheduledTaskDispatch::create([
+            'job_name' => 'manual_batch',
+            'job_data' => [
+                'jobs' => $jobs,
+                'target_client_id' => $id,
+            ],
+            'source' => 'manual',
+            'dispatched_by' => Auth::id(),
+            'total_clients' => $clients->count(),
+            'success_count' => 0,
+            'failure_count' => 0,
+            'started_at' => now(),
+        ]);
+
+        // Mantém os totais consolidados do lote para a listagem principal.
+        $successCount = 0;
+        $failureCount = 0;
+        
+        // Finaliza o lote vazio quando não existir cliente elegível.
+        if ($clients->isEmpty()) {
+            $dispatch->update([
+                'finished_at' => now(),
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('type', 'warning')
+                ->with('message', 'Nenhum cliente ativo encontrado para executar as tarefas.');
+        }
+
+        /**
+         * Percorre os clientes e executa todos os jobs definidos no lote.
+         * Cada combinação cliente + job gera um item filho no histórico.
+         */
+        foreach ($clients as $client) {
+            foreach ($jobs as $jobName) {
+                // Marca o início do disparo individual para auditoria.
+                $startedAt = now();
+
+                // O tenant sempre responde apenas com o aceite do disparo.
+                $response = $this->guzzleService->request('post', 'sistema/processar-tarefa', $client, [
+                    'job' => $jobName,
+                    'data' => [],
+                ], [
+                    'timeout' => 5,
+                ]);
+
+                // Converte a resposta para um resumo simples da execução.
+                $success = (bool) ($response['success'] ?? false);
+                $message = $response['message'] ?? ($success ? 'Tarefa aceita para processamento.' : 'Falha ao aceitar tarefa para processamento.');
+
+                // Tenta reaproveitar a mensagem vinda do próprio cliente quando existir.
+                if (!empty($response['data'])) {
+                    $decodedResponse = json_decode($response['data'], true);
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($decodedResponse) && !empty($decodedResponse['message'])) {
+                        $message = $decodedResponse['message'];
+                    }
+                }
+
+                // Registra o item filho para rastrear esse cliente e job.
+                ScheduledTaskDispatchItem::create([
+                    'dispatch_id' => $dispatch->id,
+                    'client_id' => $client->id,
+                    'job_name' => $jobName,
+                    'success' => $success,
+                    'response_status_code' => $response['status_code'] ?? null,
+                    'response_message' => $message,
+                    'response_body' => $response['data'] ?? null,
+                    'requested_at' => $startedAt,
+                    'finished_at' => now(),
+                ]);
+
+                // Atualiza os totais consolidados do lote conforme o resultado.
+                if ($success) {
+                    $successCount++;
+                } else {
+                    $failureCount++;
+                }
+            }
+        }
+
+        // Fecha o lote com os totais finais após processar todos os clientes.
+        $dispatch->update([
+            'success_count' => $successCount,
+            'failure_count' => $failureCount,
+            'finished_at' => now(),
+        ]);
+
+        // Retorna para a tela anterior informando o identificador do lote criado.
+        return redirect()
+                ->back()
+                ->with('message', 'Lote #' . $dispatch->id . ' aceito para processamento em ' . $clients->count() . ' cliente(s).');
+    }
+
+    /**
+     * Retorna os jobs liberados para disparo manual na tela de clientes.
+     * A lista fica centralizada aqui para a validação do controller usar a mesma base.
+     * Isso evita aceitar na URL um job que não foi previsto pela central.
+     */
+    private function scheduledJobs()
+    {
+        // Mantém a mesma lista configurada para o scheduler da central.
+        return [
             'finish_calls_24h',
             'finish_order_access',
             'update_s3_metrics',
             'archive_finished_tasks',
             'refresh_mercado_livre',
+            'test_log',
         ];
-
-        // Busca os clientes
-        if($id !== null){
-            $clients = $this->repository->where('status', true)->get();
-        } else {
-            $clients = $this->repository->where('id', $id)->get();
-        }
-
-        /**
-         * Loop para percorrer todos os clientes
-         */
-        foreach ($clients as $client) {
-            foreach ($jobs as $jobName) {
-                $this->guzzleService->request('post', 'sistema/processar-tarefa', $client, [
-                    'job' => $jobName,
-                    'data' => [],
-                ]);
-            }
-        }
-
-        return redirect()
-                ->back()
-                ->with('message', 'Tarefas executadas com sucesso para ' . $clients->count() . ' cliente(s).');
     }
-
 
     // Obtém permissões do usuário
     public function getResources(Request $request)

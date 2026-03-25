@@ -156,6 +156,8 @@ class ClientProcessingController extends Controller
             'clients.db_error          as db_error',
             'clients.git_last_version  as git_last_version',
             'clients.git_error         as git_error',
+            'clients.sp_last_version   as sp_last_version',
+            'clients.sp_error          as sp_error',
             'clients.status            as status',
             'clients.token             as token'
         );
@@ -225,6 +227,14 @@ class ClientProcessingController extends Controller
                 return '<i class="fa-solid fa-circle-check text-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Git atualizado"></i>';
             })
 
+            ->addColumn('sp', function ($row) {
+                if ((int) $row->sp_last_version === 0) {
+                    return '<i class="fa-solid fa-circle-xmark text-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="' . e($row->sp_error ?? 'Supervisor desatualizado') . '"></i>';
+                }
+
+                return '<i class="fa-solid fa-circle-check text-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Supervisor atualizado"></i>';
+            })
+
             ->addColumn('status', function ($row) {
                 if ((int) $row->status === 0) {
                     return '<span class="badge badge-light-danger">Desabilitado</span>';
@@ -248,17 +258,18 @@ class ClientProcessingController extends Controller
                     $html .= '<i class="fa-solid fa-globe me-2"></i>Acessar como sistema</a>';
                     $html .= '</div>';
                 }
-                $html .= '<div class="menu-item px-3"><a href="' . route('systems.update.database', $row->id) . '" class="menu-link px-3"><i class="fa-solid fa-database me-2"></i>Atualiza banco de dados</a></div>';
-                $html .= '<div class="menu-item px-3"><a href="' . route('systems.update.git', $row->id) . '" class="menu-link px-3"><i class="fa-solid fa-code me-2"></i>Atualiza git</a></div>';
-                $html .= '<div class="menu-item px-3"><a href="' . route('systems.run.scheduled.now.client', $row->id) . '" class="menu-link px-3"><i class="fa-solid fa-list-check me-2"></i>Executar Tarefas</a></div>';
-                $html .= '<div class="menu-item px-3"><a href="' . route('clients.destroy', $row->id) . '" class="menu-link px-3"><i class="fa-solid fa-toggle-off me-2"></i>' . $toggleText . '</a></div>';
+                $html .= '<div class="menu-item px-3"><a href="' . route('systems.update.database', $row->id) . '" class="menu-link px-3 js-client-action-confirm" data-action-label="atualizar banco de dados" data-client-name="' . e($row->name) . '"><i class="fa-solid fa-database me-2"></i>Atualiza banco de dados</a></div>';
+                $html .= '<div class="menu-item px-3"><a href="' . route('systems.update.git', $row->id) . '" class="menu-link px-3 js-client-action-confirm" data-action-label="atualizar git" data-client-name="' . e($row->name) . '"><i class="fa-solid fa-code me-2"></i>Atualiza git</a></div>';
+                $html .= '<div class="menu-item px-3"><a href="' . route('systems.update.supervisor', $row->id) . '" class="menu-link px-3 js-client-action-confirm" data-action-label="reiniciar filas" data-client-name="' . e($row->name) . '"><i class="fa-solid fa-arrows-rotate me-2"></i>Reiniciar Filas</a></div>';
+                $html .= '<div class="menu-item px-3"><a href="' . route('systems.run.scheduled.now.client', $row->id) . '" class="menu-link px-3 js-client-run-task-modal" data-client-name="' . e($row->name) . '" data-client-id="' . e($row->id) . '"><i class="fa-solid fa-list-check me-2"></i>Executar Tarefas</a></div>';
+                $html .= '<div class="menu-item px-3"><a href="' . route('clients.destroy', $row->id) . '" class="menu-link px-3 js-client-toggle-status" data-action-label="' . e(mb_strtolower($toggleText)) . '" data-client-id="' . e($row->id) . '" data-client-name="' . e($row->name) . '"><i class="fa-solid fa-toggle-off me-2"></i>' . $toggleText . '</a></div>';
 
                 $html .= '</div></div>';
 
                 return $html;
             })
 
-            ->rawColumns(['name', 'type', 'expires_at', 'bank', 'git', 'status', 'actions'])
+            ->rawColumns(['name', 'type', 'expires_at', 'bank', 'git', 'sp', 'status', 'actions'])
             ->make(true);
     }
 }

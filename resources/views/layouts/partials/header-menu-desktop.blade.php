@@ -18,7 +18,13 @@
                 <div class="menu-sub menu-sub-dropdown w-200px py-2">
                     @foreach ($item['children'] ?? [] as $child)
                         <div class="menu-item">
-                            <a href="{{ route($child['route']) }}" class="menu-link">
+                            <a
+                                href="{{ route($child['route']) }}"
+                                class="menu-link {{ !empty($child['confirm_message']) ? 'js-menu-confirm' : '' }}"
+                                @if (!empty($child['confirm_message']))
+                                    data-confirm-message="{{ $child['confirm_message'] }}"
+                                @endif
+                            >
                                 @if (!empty($child['icon']))
                                     <span class="menu-icon">
                                         <i class="{{ $child['icon']['class'] }}">

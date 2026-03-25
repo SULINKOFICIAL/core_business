@@ -45,6 +45,8 @@ class Client extends Model
         'db_error',
         'git_last_version',
         'git_error',
+        'sp_last_version',
+        'sp_error',
         'status',
         'filed_by',
         'created_by',

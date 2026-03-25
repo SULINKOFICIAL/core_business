@@ -68,6 +68,16 @@
                         break;
                 }
             }
+
+            // Confirma ações sensíveis do menu superior antes de navegar.
+            $(document).on('click', '.js-menu-confirm', function (event) {
+                var confirmMessage = $(this).data('confirm-message') || 'Deseja mesmo continuar?';
+                var shouldProceed = window.confirm(confirmMessage);
+
+                if (!shouldProceed) {
+                    event.preventDefault();
+                }
+            });
         </script>
         @yield('custom-footer')
 	</body>

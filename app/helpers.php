@@ -129,6 +129,21 @@ if (! function_exists('onlyNumbers')) {
     }
 }
 
+if (! function_exists('formatTaskJobLabel')) {
+    function formatTaskJobLabel($jobName)
+    {
+        if (empty($jobName)) {
+            return '-';
+        }
+
+        if ($jobName === 'manual_batch') {
+            return 'Lote manual de tarefas';
+        }
+
+        return ucwords(str_replace('_', ' ', (string) $jobName));
+    }
+}
+
 if (! function_exists('header_menu_items')) {
     function header_menu_items(): array
     {
@@ -222,7 +237,7 @@ if (! function_exists('header_menu_items')) {
             // ],
             [
                 'type' => 'submenu',
-                'label' => 'Módulos',
+                'label' => 'Produto',
                 'active_routes' => ['modules.index', 'modules.categories.index', 'groups.index', 'resources.index'],
                 'children' => [
                     [
@@ -231,18 +246,6 @@ if (! function_exists('header_menu_items')) {
                         'active_routes' => ['modules.index'],
                         'icon' => ['class' => 'fa-solid fa-cubes fs-5'],
                     ],
-                    /* [
-                        'label' => 'Categorias de módulos',
-                        'route' => 'modules.categories.index',
-                        'active_routes' => ['modules.categories.index'],
-                        'icon' => ['class' => 'fa-solid fa-sitemap fs-5'],
-                    ],
-                    [
-                        'label' => 'Grupo de Recursos',
-                        'route' => 'groups.index',
-                        'active_routes' => ['groups.index'],
-                        'icon' => ['class' => 'fa-solid fa-layer-group fs-5'],
-                    ], */
                     [
                         'label' => 'Recursos',
                         'route' => 'resources.index',
@@ -259,21 +262,27 @@ if (! function_exists('header_menu_items')) {
             ],
             [
                 'type' => 'submenu',
-                'label' => 'Configuração',
+                'label' => 'Logs',
                 'active_routes' => [
                     'errors.index',
+                    'errors.application',
                     'logs.apis.index',
-                    'users.index',
-                    'users.create',
-                    'users.edit',
-                    'systems.update.all.systems',
+                    'task.history.index',
+                    'task.history.process',
+                    'task.history.show',
                 ],
                 'children' => [
                     [
-                        'label' => 'Errors',
+                        'label' => 'Erros de Clientes',
                         'route' => 'errors.index',
                         'active_routes' => ['errors.index'],
                         'icon' => ['class' => 'fa-solid fa-circle-exclamation fs-5'],
+                    ],
+                    [
+                        'label' => 'Erros da Aplicação',
+                        'route' => 'errors.application',
+                        'active_routes' => ['errors.application'],
+                        'icon' => ['class' => 'fa-solid fa-file-circle-exclamation fs-5'],
                     ],
                     [
                         'label' => 'Logs APIs',
@@ -282,11 +291,27 @@ if (! function_exists('header_menu_items')) {
                         'icon' => ['class' => 'fa-solid fa-file-lines fs-5'],
                     ],
                     [
-                        'label' => 'Disparar Jobs',
-                        'route' => 'systems.run.scheduled.now',
-                        'active_routes' => ['systems.run.scheduled.now'],
-                        'icon' => ['class' => 'fa-solid fa-list-check fs-5'],
+                        'label' => 'Histórico de Tarefas',
+                        'route' => 'task.history.index',
+                        'active_routes' => ['task.history.index', 'task.history.process', 'task.history.show'],
+                        'icon' => ['class' => 'fa-solid fa-clock-rotate-left fs-5'],
                     ],
+                ],
+            ],
+            [
+                'type' => 'submenu',
+                'label' => 'Configuração',
+                'active_routes' => [
+                    'users.index',
+                    'users.create',
+                    'users.edit',
+                    'system.settings.mail.edit',
+                    'system.settings.whatsapp.edit',
+                    'systems.run.scheduled.now',
+                    'systems.run.scheduled.now.client',
+                    'systems.update.all.systems',
+                ],
+                'children' => [
                     [
                         'label' => 'Usuários',
                         'route' => 'users.index',
@@ -294,9 +319,31 @@ if (! function_exists('header_menu_items')) {
                         'icon' => ['class' => 'fa-solid fa-users fs-5'],
                     ],
                     [
+                        // Direciona para a nova página de configurações SMTP do sistema.
+                        'label' => 'SMTP',
+                        'route' => 'system.settings.mail.edit',
+                        'active_routes' => ['system.settings.mail.edit'],
+                        'icon' => ['class' => 'fa-solid fa-envelope fs-5'],
+                    ],
+                    [
+                        // Mantém a configuração do WhatsApp em uma página própria.
+                        'label' => 'WhatsApp',
+                        'route' => 'system.settings.whatsapp.edit',
+                        'active_routes' => ['system.settings.whatsapp.edit'],
+                        'icon' => ['class' => 'fa-solid fa-gear fs-5'],
+                    ],
+                    [
+                        'label' => 'Disparar Tarefas',
+                        'route' => 'systems.run.scheduled.now',
+                        'active_routes' => ['systems.run.scheduled.now', 'systems.run.scheduled.now.client'],
+                        'confirm_message' => 'Deseja mesmo disparar as tarefas para os clientes ativos?',
+                        'icon' => ['class' => 'fa-solid fa-clock-rotate-left fs-5'],
+                    ],
+                    [
                         'label' => 'Atualizar Sistemas',
                         'route' => 'systems.update.all.systems',
                         'active_routes' => ['systems.update.all.systems'],
+                        'confirm_message' => 'Deseja mesmo atualizar os sistemas dos clientes ativos?',
                         'icon' => ['class' => 'fa-solid fa-rotate fs-5'],
                     ],
                 ],

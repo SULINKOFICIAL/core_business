@@ -85,12 +85,53 @@
                     <th class="">Expira em</th>
                     <th class="text-center px-0">DB</th>
                     <th class="text-center px-0">GIT</th>
+                    <th class="text-center px-0">SP</th>
                     <th class="text-center px-0">Status</th>
                     <th class="text-end pe-12 w-100px">Ações</th>
                 </tr>
             </thead>
             <tbody></tbody>
         </table>
+    </div>
+</div>
+@endsection
+
+@section('modals')
+<div class="modal fade" tabindex="-1" id="modal_client_run_task">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="form-client-run-task" method="GET" action="">
+                <div class="modal-header">
+                    <h3 class="modal-title">Executar Tarefa</h3>
+                    <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fa-solid fa-xmark"></i>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <div class="text-gray-700 mb-5">
+                        Escolha qual tarefa deseja executar para o cliente
+                        <span class="fw-bold" id="selected-client-name">-</span>.
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="scheduled-job-select" class="form-label fw-semibold">Tarefa</label>
+                        <select name="job" id="scheduled-job-select" class="form-select form-select-solid">
+                            <option value="all">Todas</option>
+                            <option value="finish_calls_24h">Finish Calls 24h</option>
+                            <option value="finish_order_access">Finish Order Access</option>
+                            <option value="update_s3_metrics">Update S3 Metrics</option>
+                            <option value="archive_finished_tasks">Archive Finished Tasks</option>
+                            <option value="refresh_mercado_livre">Refresh Mercado Livre</option>
+                            <option value="test_log">Test Log</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Executar</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 @endsection
@@ -124,8 +165,9 @@
             { targets: 2, data: "expires_at" },
             { targets: 3, data: "bank" },
             { targets: 4, data: "git" },
-            { targets: 5, data: "status" },
-            { targets: 6, data: "actions", orderable: false },
+            { targets: 5, data: "sp" },
+            { targets: 6, data: "status" },
+            { targets: 7, data: "actions", orderable: false },
         ],
         language: {
             "search": "Pesquisar:",
@@ -156,6 +198,10 @@
             },
             {   
                 targets: 6,
+                className: 'text-center',
+            },
+            {   
+                targets: 7,
                 className: 'text-end',
             },
         ],
@@ -183,6 +229,69 @@
     // Reseta filtros do menu
     $('#clients-filters').on('reset', function() {
         setTimeout(() => dataTable.ajax.reload(), 0);
+    });
+
+    // Abre o modal para escolher qual tarefa executar no cliente.
+    $(document).on('click', '.js-client-run-task-modal', function (e) {
+        e.preventDefault();
+
+        const trigger = $(this);
+        const clientName = trigger.data('client-name') || 'cliente';
+        const actionUrl = trigger.attr('href');
+
+        // Atualiza o formulário do modal com o cliente selecionado.
+        $('#selected-client-name').text(clientName);
+        $('#form-client-run-task').attr('action', actionUrl);
+        $('#scheduled-job-select').val('all');
+
+        $('#modal_client_run_task').modal('show');
+    });
+
+    // Confirma ações do menu do cliente (exceto "Acessar como sistema")
+    $(document).on('click', '.js-client-action-confirm', function (e) {
+        const trigger = $(this);
+        const clientName = trigger.data('client-name') || 'cliente';
+        const actionLabel = trigger.data('action-label') || 'executar esta ação';
+        const shouldProceed = window.confirm(`Deseja mesmo ${actionLabel} no cliente ${clientName}?`);
+
+        if (!shouldProceed) {
+            e.preventDefault();
+        }
+    });
+
+    // Ativa/desativa cliente via AJAX na listagem
+    $(document).on('click', '.js-client-toggle-status', function (e) {
+        e.preventDefault();
+
+        const trigger = $(this);
+        const clientName = trigger.data('client-name') || 'cliente';
+        const actionLabel = trigger.data('action-label') || 'alterar status';
+        const shouldProceed = window.confirm(`Deseja mesmo ${actionLabel} no cliente ${clientName}?`);
+
+        if (!shouldProceed) {
+            return;
+        }
+
+        const url = trigger.attr('href');
+
+        $.ajax({
+            url: url,
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            success: function (response) {
+                const message = response && response.message ? response.message : 'Status do cliente atualizado com sucesso.';
+                toastr.success(message);
+                dataTable.ajax.reload(null, false);
+            },
+            error: function (xhr) {
+                const message = xhr.responseJSON && xhr.responseJSON.message
+                    ? xhr.responseJSON.message
+                    : 'Não foi possível atualizar o status do cliente.';
+                toastr.error(message);
+            }
+        });
     });
 
 </script>
