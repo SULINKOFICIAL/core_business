@@ -20,7 +20,7 @@ class GuzzleService
      * Também permite sobrescrever timeout e outras opções sem afetar as chamadas antigas.
      * Isso foi adicionado para jobs rápidos poderem aguardar retorno imediato.
      */
-    public function request($method, $url, $client, $data = null, array $requestOptions = [])
+    public function request($method, $url, $client, $data = null, array $requestOptions = [], $type = 'api')
     {
         $guzzle = new Guzzle();
 
@@ -49,7 +49,7 @@ class GuzzleService
 
             // Monta URL
             if($client->domains->count() > 0){
-                $url = "$protocol://{$client->domains[0]->domain}/api/$url";
+                $url = "$protocol://{$client->domains[0]->domain}/$type/$url";
             } else {
                 return [
                     'success' => false,

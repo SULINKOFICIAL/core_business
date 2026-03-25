@@ -7,7 +7,7 @@ use App\Models\ClientMeta;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Models\LogsApi;
-use App\Services\RequestService;
+use App\Services\GuzzleService;
 
 class MetaDispatchRequest implements ShouldQueue
 {
@@ -23,7 +23,7 @@ class MetaDispatchRequest implements ShouldQueue
         $this->logApiId = $logApiId;
     }
 
-    public function handle(RequestService $requestService): void
+    public function handle(GuzzleService $guzzleService): void
     {
 
         // Busca o logApi
@@ -75,8 +75,10 @@ class MetaDispatchRequest implements ShouldQueue
                 return;
             }
 
-            $url = "{$clientDomains[0]->domain}/webhooks/meta";
-            
+            $client = $clientMeta->client;
+
+            $url = "meta";
+
         } elseif ($platform == 'whatsapp_web') {
 
             // Obtem o cliente
@@ -102,14 +104,17 @@ class MetaDispatchRequest implements ShouldQueue
                 return;
             }
 
-            $url = "{$clientDomains[0]->domain}/webhooks/whatsapp/{$this->data['route']}";
+            $url = "whatsapp/{$this->data['route']}";
 
         }
 
-        // Realiza a requisição
-        $response = $requestService->request('POST', $url, [
-                        'json' => $this->data
-                    ]);
+        // O tenant sempre responde apenas com o aceite do disparo.
+        $response = $guzzleService->request('POST', $url, $client, $this->data, [], 'webhooks');
+
+        // // Realiza a requisição
+        // $response = $requestService->request('POST', $url, [
+        //                 'json' => $this->data
+        //             ]);
 
         // Se a requisição foi processada atualiza o logs para concluido
         if($response['success'] && isset($response['data']['status']) && $response['data']['status'] == 'Accepted'){
