@@ -149,16 +149,19 @@ return new class extends Migration
             ]);
 
             // Pega todos os IDs de módulo
-            $moduleIds = Module::pluck('id')->toArray();
+            $modules = Module::get();
 
-            // Monta os dados para insert em massa
-            $packageItems = array_map(function($moduleId) use ($package) {
+            $packageItems = $modules->map(function($module) use ($package) {
                 return [
                     'package_id' => $package->id,
-                    'item_id' => $moduleId,
+                    'item_id' => $module->id,
+                    'module_name' => $module->name,
+                    'module_value' => $module->value,
+                    'billing_type' => $module->pricing_type,
+                    'payload' => json_encode($module),
                     'created_at' => now(),
                 ];
-            }, $moduleIds);
+            })->toArray();
 
             // Inserção em massa
             ClientPackageItem::insert($packageItems);

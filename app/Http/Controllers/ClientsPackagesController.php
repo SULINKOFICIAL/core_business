@@ -67,6 +67,10 @@ class ClientsPackagesController extends Controller
         ClientPackageItem::create([
             'package_id' => $package->id,
             'item_id' => $module->id,
+            'module_name' => $module->name,
+            'module_value' => $module->value,
+            'billing_type' => $module->pricing_type,
+            'payload' => json_encode($module),
         ]);
 
         // Recalcula os totais

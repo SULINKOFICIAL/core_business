@@ -13,6 +13,10 @@ class ClientPackageItem extends Model
     protected $fillable = [
         'package_id',
         'item_id',
+        'module_name',
+        'module_value',
+        'billing_type',
+        'payload',
         'created_at',
         'updated_at',
     ];

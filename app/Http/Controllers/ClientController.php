@@ -112,17 +112,22 @@ class ClientController extends Controller
             'created_at' => now(),
         ]);
 
-        // Obtem todos os modules 
-        $modulesIds = Module::where('module_category_id', 1)->where('status', true)->pluck('id')->toArray();
+        $modules = Module::where('module_category_id', 1)
+            ->where('status', true)
+            ->get();
 
-        // Monta os dados para insert em massa
-        $packageItems = array_map(function($moduleId) use ($package) {
+        $packageItems = $modules->map(function($module) use ($package) {
             return [
                 'package_id' => $package->id,
-                'item_id' => $moduleId,
+                'item_id' => $module->id,
+                'module_name' => $module->name,
+                'module_value' => $module->value,
+                'billing_type' => $module->pricing_type,
+                'payload' => $module->toJson(),
                 'created_at' => now(),
+                'updated_at' => now(),
             ];
-        }, $modulesIds);
+        })->toArray();
 
         // Cria os itens do pacote
         ClientPackageItem::insert($packageItems);
