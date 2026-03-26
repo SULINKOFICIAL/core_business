@@ -88,17 +88,33 @@
                                     <span class="path2"></span>
                                 </i>
                                 <p class="fs-6 text-gray-700 fw-bolder mb-0">
-                                    Finalização
+                                    Configuração de módulos
                                 </p>
                             </div>
                             @if ($client->install < 5)
-                                <span class="badge badge-light-warning" id="step-5">Pendente</span>
+                                <span class="badge badge-light-warning" id="step-4">Pendente</span>
+                            @else
+                                <span class="badge badge-light-success">Concluído</span>
+                            @endif
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="d-flex align-items-center gap-3">
+                                <i class="ki-duotone ki-check-square fs-2x">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                </i>
+                                <p class="fs-6 text-gray-700 fw-bolder mb-0">
+                                    Finalização
+                                </p>
+                            </div>
+                            @if ($client->install < 6)
+                                <span class="badge badge-light-warning" id="step-6">Pendente</span>
                             @else
                                 <span class="badge badge-light-success">Concluído</span>
                             @endif
                         </div>
                     </div>
-                    @if ($client->install < 5)
+                    @if ($client->install < 6)
                         <button class="btn btn-success btn-sm fw-bolder w-100 mt-4 text-uppercase" id="run-install">Rodar instalação</button>
                     @else
                         <a href="{{ route('clients.show', $client->id) }}" class="btn btn-success btn-sm fw-bolder w-100 mt-4 text-uppercase">Ver Cliente</a>
@@ -148,7 +164,7 @@
                 badge.closest('.d-flex').find('.ki-duotone').addClass('text-success');
 
                 // Se a etapa for a última
-                if(response.step == 5){
+                if(response.step == 6){
                     // Redireciona para a página de instalação
                     window.location.href = "{{ route('clients.show', '') }}/" + {{ $client->id }};
                 } else {

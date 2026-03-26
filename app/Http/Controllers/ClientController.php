@@ -176,23 +176,6 @@ class ClientController extends Controller
             'created_at' => now(),
         ]);
 
-        // Inicia serviço de módulos
-        $moduleService = app(ModuleService::class);
-
-        // Realiza solicitação
-        $moduleService->configureModules(
-            $created,
-            $modulesIds,
-            true
-        );
-
-        // Cria o tempo da assinatura no MiCore
-        $moduleService->createSubscriptionCore(
-            $created,
-            now()->toDateString(),
-            now()->addDays(30)->toDateString()
-        );
-
         // Registra o domínio do cliente
         ClientDomain::create([
             'client_id'     => $created->id,

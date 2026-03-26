@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\Package;
+use App\Services\ModuleService;
 use Exception;
 use Illuminate\Support\Str;
 use GuzzleHttp\Client as Guzzle;
@@ -105,6 +106,28 @@ class CpanelController extends Controller
             ]);
         }
 
+        // Se o cliente estiver na etapa de configurar os módulos
+        if($client->install == 4){
+
+            // Registra tempo
+            Log::info("Configurando módulos do cliente : " . $client->table);
+
+            // Configura os módulos
+            $this->configureModules($client);
+                
+            // Atualiza status
+            $client->install = 5;
+            $client->save();
+
+            // Registra tempo
+            Log::info("Finalizou a configuração dos módulos do cliente : " . $client->table);
+
+            return response()->json([
+                'message' => 'Módulos configurados com sucesso',
+                'step' => 5
+            ]);
+        }
+
         // Atualiza status
         $client->install = 5;
         $client->save();
@@ -117,8 +140,6 @@ class CpanelController extends Controller
         ]);
 
     }
-    
-
 
     /**
      * Cria um subdomínio via API do cPanel.
@@ -180,14 +201,14 @@ class CpanelController extends Controller
          * Por padrão cria o usuário de sistema para atribuir a ele
          * configurações e históricos gerados pelo sistema.
          */
-        /* DB::connection('mysql_cliente')->table('users')->insert([
-            'name'       => 'Sistema',
-            'password'   => Hash::make(rand(100000, 999999)),
-            'full_name'  => 'Sistema',
-            'email'      => 'sistema@micore.com.br',
-            'role_id'    => 1,
-            'created_by' => 1,
-        ]); */
+        // DB::connection('mysql_cliente')->table('users')->insert([
+        //     'name'       => 'Sistema',
+        //     'password'   => Hash::make(rand(100000, 999999)),
+        //     'full_name'  => 'Sistema',
+        //     'email'      => 'sistema@micore.com.br',
+        //     'role_id'    => 1,
+        //     'created_by' => 1,
+        // ]);
 
         /**
          * Inserir o primeiro usuário que utilizará o sistema.
@@ -258,6 +279,34 @@ class CpanelController extends Controller
             'option_name'  => 's3StorageAllow',
             'option_value' => $sizeStorage,
         ]);
+
+        return true;
+    }
+
+    /**
+     * Configura os módulos do cliente.
+     */
+    private function configureModules($client)
+    {
+        // Obtem o pacote do cliente
+        $package = $client->package;
+
+        // Inicia serviço de módulos
+        $moduleService = app(ModuleService::class);
+
+        // Realiza solicitação
+        $moduleService->configureModules(
+            $client,
+            $package ? $package->modules()->pluck('id')->toArray() : [],
+            true
+        );
+
+        // Cria o tempo da assinatura no MiCore
+        $moduleService->createSubscriptionCore(
+            $client,
+            now()->toDateString(),
+            now()->addDays(30)->toDateString()
+        );
 
         return true;
     }
