@@ -291,7 +291,7 @@ class CpanelController extends Controller
         // Obtem o pacote do cliente
         $package = $client->package;
 
-        dd($package->items()->pluck('item_id')->toArray());
+        dd($package->items()->pluck('item_id'));
 
         // Inicia serviço de módulos
         $moduleService = app(ModuleService::class);
