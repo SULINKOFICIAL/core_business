@@ -374,6 +374,7 @@ Route::middleware(['auth'])->group(function () {
         Route::name('systems.')->group(function () {
             Route::get('/modulo',                       [ClientsActionsController::class, 'module'])->name('module');
             Route::get('/recurso',                      [ClientsActionsController::class, 'feature'])->name('feature');
+            Route::get('/assinatura',                   [ClientsActionsController::class, 'subscription'])->name('subscription');
             Route::get('/acessar-recursos',             [ClientsActionsController::class, 'getResources'])->name('get.resources');
             Route::get('/atualizar-banco/{id}',         [ClientsActionsController::class, 'updateDatabaseManual'])->name('update.database');
             Route::get('/atualizar-git/{id}',           [ClientsActionsController::class, 'updateGitManual'])->name('update.git');

@@ -75,6 +75,30 @@
     <div class="row">
         <div class="col-12 col-xl-2">
             <div class="card mb-4">
+                <div class="card-body p-6 pb-4">
+                    <p class="fw-bolder text-gray-700 fs-3 text-uppercase">Assinatura</p>
+                    <div class="d-flex flex-column align-items-start mb-1">
+                        <p class="text-gray-700 fw-bolder mb-1 fs-5">Início</p>
+                        <p class="text-gray-600 mb-0 fw-bold fs-7 start-date" data-start-date="{{ isset($allowSubscription['start_date']) ? date('d/m/Y', strtotime($allowSubscription['start_date'])) : '' }}">
+                            {{ isset($allowSubscription['start_date']) ? date('d/m/Y', strtotime($allowSubscription['start_date'])) : 'Sem data' }}
+                        </p>
+                    </div>
+                    <div class="d-flex flex-column align-items-start">
+                        <p class="text-gray-700 fw-bolder mb-1 fs-5">Fim</p>
+                        <div class="d-flex align-items-center gap-1">
+                            <p class="text-gray-600 mb-0 fw-bold fs-7 mb-0 text-hover-primary end-date cursor-pointer">
+                                {{ isset($allowSubscription['end_date']) ? date('d/m/Y', strtotime($allowSubscription['end_date'])) : 'Sem data' }}
+                                <i class="fa-solid fa-pen text-gray-500"></i>
+                            </p>
+                            <input type="text" class="form-control form-control-sm end-date-input" style="width:150px; display:none;" value="{{ isset($allowSubscription['end_date']) ? date('d/m/Y', strtotime($allowSubscription['end_date'])) : '' }}">
+                        </div>
+                    </div>
+                    <button class="btn btn-sm w-100 h-25px btn-success d-flex align-items-center justify-content-center mt-1" id="update-subscription">
+                        Atualizar
+                    </button>
+                </div>
+            </div>
+            <div class="card mb-4">
                 <div class="card-body p-6">
                     <p class="fw-bolder text-gray-700 fs-3 text-uppercase">Configuração</p>
                     @foreach ($modules as $module)
@@ -178,28 +202,66 @@
                 },
             });
         });
-        
-        // $(document).on('change', '.input-features', function(){
 
-        //     // Obtém se esta checado ou não
-        //     var checked = $(this).is(':checked');
+        // Obtem o input
+        const inputDate = $('.end-date-input');
 
-        //     var name = $(this).val();
+        // Inicializa o flatpickr
+        flatpickr(inputDate[0], {
+            dateFormat: "d/m/Y",
+            defaultDate: inputDate.val(),
+            onClose: function(selectedDates, dateStr) {
+                $('.end-date').html(dateStr + ' <i class="fa-solid fa-pen text-gray-500"></i>');
+                inputDate.hide();
+                $('.end-date').show();
+            }
+        });
 
-        //     // Busca OS
-        //     $.ajax({
-        //         type:'GET',
-        //         url: "{{ route('systems.feature') }}",
-        //         data: {
-        //             status: checked,
-        //             client_id: "{{ $client->id }}",
-        //             name: name,
-        //         },
-        //         success: function(response) {
-        //             toastr.success('Sucesso');
-        //         },
-        //     });
-        // });
+        /**
+         * Função responsável por alterar a data final da assinatura
+         */
+        $(document).on('click', '.end-date', function() {
+
+            // Esconde o botão
+            $(this).hide();
+
+            // Mostra o input e da foco
+            inputDate.show().focus();
+
+            // Abre o flatpickr
+            inputDate[0]._flatpickr.open();
+            
+        });
+
+        /**
+         * Função responsável por atualizar a data final para o cliente no micore
+         */
+        $(document).on('click', '#update-subscription', function() {
+            
+            // Pega a data final
+            let endDate = $('.end-date-input').val();
+
+            // Pega a data inicial
+            let startDate = $('.start-date').data('start-date');
+
+            // Faz a requisição
+            $.ajax({
+                type:'GET',
+                url: "{{ route('systems.subscription') }}",
+                data: {
+                    client_id: "{{ $client->id }}",
+                    start_date: startDate ? startDate : "",
+                    end_date: endDate ? endDate : "",
+                },
+                success: function(response) {
+                    if(response.success){
+                        toastr.success(response.message);
+                    }else{
+                        toastr.error(response.message);
+                    }
+                },
+            });
+        });
     });
 </script>
 @endsection

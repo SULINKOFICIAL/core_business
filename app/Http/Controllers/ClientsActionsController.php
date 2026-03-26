@@ -13,6 +13,7 @@ use App\Services\ModuleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class ClientsActionsController extends Controller
 {
@@ -80,6 +81,49 @@ class ClientsActionsController extends Controller
 
         // Retorna resposta
         return $response;
+
+    }
+
+    // Atualiza a assinatura do cliente
+    public function subscription(Request $request){
+
+        // Obtém dados do formulário
+        $data = $request->all();
+
+        // Encontra o cliente
+        $client = $this->repository->find($data['client_id']);
+
+        // Inicia serviço de módulos
+        $moduleService = app(ModuleService::class);
+
+        // Verifica se veio as datas
+        if(empty($data['end_date'])){
+            return response()->json([
+                'success' => false,
+                'message' => 'Data final inválida.'
+            ]);
+        }
+
+        // Obtem a data de início
+        $startDate = isset($data['start_date']) && !empty($data['start_date'])
+            ? Carbon::createFromFormat('d/m/Y', $data['start_date'])->format('Y-m-d')
+            : now()->format('Y-m-d');
+
+        // Obtem a data de fim
+        $endDate   = Carbon::createFromFormat('d/m/Y', $data['end_date'])->format('Y-m-d');
+
+        // Cria o tempo da assinatura no MiCore
+        $response = $moduleService->createSubscriptionCore(
+            $client,
+            $startDate,
+            $endDate
+        );
+
+        // Retorna resposta
+        return response()->json([
+            'success' => $response['success'],
+            'message' => $response['success'] == true ? json_decode($response['data'], true)['message'] : 'Erro ao atualizar assinatura'
+        ]);
 
     }
 

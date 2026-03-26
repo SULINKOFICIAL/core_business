@@ -4,12 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\ClientDomain;
+use App\Models\ClientPackage;
+use App\Models\ClientPackageItem;
 use App\Models\Module;
+use App\Models\Order;
+use App\Models\OrderTransaction;
 use App\Models\Package;
+use App\Models\Subscription;
+use App\Models\SubscriptionCycle;
+use App\Services\ModuleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use GuzzleHttp\Client as Guzzle;
 use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\Calculation\Category;
 
 class ClientController extends Controller
 {
@@ -95,11 +103,95 @@ class ClientController extends Controller
         // Insere no banco de dados
         $created = $this->repository->create($data);
 
-        // Simula solicitação de troca de pacote
-        $request = new Request(['package_id' => 1]);
+        // Cria o pacote do cliente
+        $package = ClientPackage::create([
+            'client_id' => $created->id,
+            'name' => 'DEMO 30 DIAS',
+            'price' => 0,
+            'status' => 1,
+            'created_at' => now(),
+        ]);
 
-        // Adiciona pacote básico ao cliente
-        // app(PackageController::class)->assign($request, $created->id);
+        // Obtem todos os modules 
+        $modulesIds = Module::where('module_category_id', 1)->where('status', true)->pluck('id')->toArray();
+
+        // Monta os dados para insert em massa
+        $packageItems = array_map(function($moduleId) use ($package) {
+            return [
+                'package_id' => $package->id,
+                'item_id' => $moduleId,
+                'created_at' => now(),
+            ];
+        }, $modulesIds);
+
+        // Cria os itens do pacote
+        ClientPackageItem::insert($packageItems);
+
+        // Cria uma assinatura fictícia
+        $subscription = Subscription::create([
+            'pagarme_subscription_id' => '1',
+            'pagarme_card_id' => '1',
+            'interval' => 'year',
+            'payment_method' => 'liberado',
+            'currency' => 'BRL',
+            'installments' => 1,
+            'status' => 'paid',
+            'created_at' => now(),
+        ]);
+
+        // Cria um pedido fictício
+        $order = Order::create([
+            'client_id' => $created->id,
+            'package_id' => $package->id,
+            'subscription_id' => $subscription->id,
+            'total_amount' => 0,
+            'status' => 'Liberado',
+            'type' => 'MIGRAÇÃO',
+            'current_step' => 'Pagamento',
+            'created_at' => now(),
+        ]);
+
+        // Cria um ciclo de assinatura fictício
+        SubscriptionCycle::create([
+            'subscription_id' => $subscription->id,
+            'pagarme_cycle_id' => '1',
+            'start_date' => now(),
+            'end_date' => now()->addDays(30),
+            'status' => 'billed',
+            'cycle' => 1,
+            'billing_at' => now(),
+            'next_billing_at' => now()->addDays(30),
+            'created_at' => now(),
+        ]);
+
+        // Cria uma transação fictícia
+        OrderTransaction::create([
+            'order_id' => $order->id,
+            'subscription_id' => $subscription->id,
+            'pagarme_transaction_id' => '1',
+            'amount' => 0,
+            'status' => 'paid',
+            'method' => 'liberado',
+            'currency' => 'BRL',
+            'created_at' => now(),
+        ]);
+
+        // Inicia serviço de módulos
+        $moduleService = app(ModuleService::class);
+
+        // Realiza solicitação
+        $moduleService->configureModules(
+            $created,
+            $modulesIds,
+            true
+        );
+
+        // Cria o tempo da assinatura no MiCore
+        $moduleService->createSubscriptionCore(
+            $created,
+            now()->toDateString(),
+            now()->addDays(30)->toDateString()
+        );
 
         // Registra o domínio do cliente
         ClientDomain::create([
@@ -155,6 +247,9 @@ class ClientController extends Controller
         // Realiza consulta para verificar se consegue se comunicar com o miCore
         $apiGetModules = $this->guzzle('get', 'sistema/modulos', $client);
 
+        // Realiza consulta para verificar se consegue se comunicar com o miCore
+        $apiGetSubscription = $this->guzzle('get', 'sistema/assinatura', $client);
+
         // Se conseguir conectar ao miCore do cliente
         if(!isset($apiVerifyStatus['error'])){
     
@@ -172,6 +267,8 @@ class ClientController extends Controller
                 $allowModules[$value['name']] = $value['status'];
             }
 
+            $allowSubscription = $apiGetSubscription['subscription'];
+
         } else {
             $apiError = true;
         }
@@ -181,14 +278,15 @@ class ClientController extends Controller
 
         // Retorna a página
         return view('pages.clients.show')->with([
-            'client'        => $client,
-            'modules'       => $modules,
+            'client'            => $client,
+            'modules'           => $modules,
             'modulesByCategory' => $modulesByCategory,
-            'packages'      => $packages,
-            'allowFeatures' => $allowFeatures,
-            'allowModules'  => $allowModules,
-            'apiError'      => $apiError,
-            'apiGetPermissions'   => $apiGetPermissions,
+            'packages'          => $packages,
+            'allowFeatures'     => $allowFeatures,
+            'allowModules'      => $allowModules,
+            'allowSubscription' => $allowSubscription,
+            'apiError'          => $apiError,
+            'apiGetPermissions' => $apiGetPermissions,
         ]);
 
     }
