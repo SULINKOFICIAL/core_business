@@ -180,14 +180,14 @@ class CpanelController extends Controller
          * Por padrão cria o usuário de sistema para atribuir a ele
          * configurações e históricos gerados pelo sistema.
          */
-        DB::connection('mysql_cliente')->table('users')->insert([
+        /* DB::connection('mysql_cliente')->table('users')->insert([
             'name'       => 'Sistema',
             'password'   => Hash::make(rand(100000, 999999)),
             'full_name'  => 'Sistema',
             'email'      => 'sistema@micore.com.br',
             'role_id'    => 1,
             'created_by' => 1,
-        ]);
+        ]); */
 
         /**
          * Inserir o primeiro usuário que utilizará o sistema.
