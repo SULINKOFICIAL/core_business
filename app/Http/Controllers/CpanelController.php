@@ -129,14 +129,14 @@ class CpanelController extends Controller
         }
 
         // Atualiza status
-        $client->install = 5;
+        $client->install = 6;
         $client->save();
 
         // Retorna a página
         return response()->json([
             'url' => $client->domains[0]->domain,
             'message' => 'Conta criada com sucesso',
-            'step' => 5
+            'step' => 6
         ]);
 
     }

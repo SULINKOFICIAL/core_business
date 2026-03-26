@@ -92,7 +92,7 @@
                                 </p>
                             </div>
                             @if ($client->install < 5)
-                                <span class="badge badge-light-warning" id="step-4">Pendente</span>
+                                <span class="badge badge-light-warning" id="step-5">Pendente</span>
                             @else
                                 <span class="badge badge-light-success">Concluído</span>
                             @endif
