@@ -47,45 +47,173 @@
                 <div class="text-muted">Pago em</div>
                 <div class="text-gray-700">{{ $order->paid_at?->format('d/m/Y H:i') ?? '—' }}</div>
             </div>
-            <div class="bg-light rounded p-3 mb-2">
+            <div class="col-md-12">
                 <div class="text-muted">Assinatura:</div>
-                <div class="fw-bold text-gray-800">
-                    {{ $order->subscription->pagarme_subscription_id }}<br>
-                    {{ $order->subscription->pagarme_card_id }}<br>
-                    {{ $order->subscription->interval }}<br>
-                    {{ $order->subscription->payment_method }}<br>
-                    {{ $order->subscription->currency }}<br>
-                    {{ $order->subscription->installments }}<br>
-                    {{ $order->subscription->status }}<br>
+                <div class="row bg-light rounded p-3">
+                    <div class="col-md-3">
+                        <div class="text-muted">Id Externo</div>
+                        <div class="fw-bold text-gray-800">
+                            # {{ $order->subscription->pagarme_subscription_id }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted">Id Externo Cartão</div>
+                        <div class="fw-bold text-gray-800">
+                            # {{ $order->subscription->pagarme_card_id }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted">Intervalo</div>
+                        <div class="fw-bold text-gray-800">
+                            @if ($order->subscription->interval == 'month')
+                                Mensal
+                            @elseif ($order->subscription->interval == 'quarter')
+                                Trimestral
+                            @elseif ($order->subscription->interval == 'semester')
+                                Semestral
+                            @elseif ($order->subscription->interval == 'year')
+                                Anual
+                            @endif
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted">Método de Pagamento</div>
+                        <div class="fw-bold text-gray-800">
+                            @if($order->subscription->payment_method == 'credit_card')
+                                Cartão de Crédito
+                            @elseif($order->subscription->payment_method == 'debit_card')
+                                Cartão de Débito
+                            @elseif($order->subscription->payment_method == 'pix')
+                                Pix
+                            @elseif($order->subscription->payment_method == 'boleto')
+                                Boleto
+                            @elseif($order->subscription->payment_method == 'liberado')
+                                Liberado à Parte
+                            @endif
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted">Moeda</div>
+                        <div class="fw-bold text-gray-800">
+                            {{ $order->subscription->currency }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted">Parcelas</div>
+                        <div class="fw-bold text-gray-800">
+                            @if($order->subscription->payment_method == 'liberado' && $order->subscription->installments == 1)
+                                Liberado à Parte
+                            @elseif($order->subscription->installments == 1 && $order->subscription->payment_method != 'liberado')
+                                À vista
+                            @else
+                                {{ $order->subscription->installments }}x
+                            @endif
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted">Status</div>
+                        <div class="fw-bold text-gray-800">
+                            @if($order->subscription->status == 'paid')
+                                Pago
+                            @elseif($order->subscription->status == 'active')
+                                Ativo
+                            @elseif($order->subscription->status == 'canceled')
+                                Cancelado
+                            @elseif($order->subscription->status == 'pending')
+                                Pendente
+                            @elseif ($order->subscription->status == 'failed')
+                                Falhou
+                            @elseif ($order->subscription->status == 'refunded')
+                                Estornado
+                            @else
+                                -
+                            @endif
+                        </div>
+                    </div>
                 </div>
             </div>
-            @foreach($order->subscription->cycles as $cycle)
-                <div class="bg-light rounded p-3 mb-2">
-                    {{ $cycle->start_date }}<br>
-                    {{ $cycle->end_date }}<br>
-                    {{ $cycle->status }}<br>
-                    {{ $cycle->cycle }}<br>
-                    {{ $cycle->billing_at }}<br>
-                    {{ $cycle->next_billing_at }}<br>
+            <div class="col-md-12">
+                <div class="text-muted">Ciclos:</div>
+                <div class="row bg-light rounded p-3">
+                    @foreach($order->subscription->cycles as $cycle)
+                        <div class="col-md-3">
+                            <div class="text-muted">Id Externo</div>
+                            <div class="fw-bold text-gray-800">
+                                # {{ $cycle->pagarme_cycle_id }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-muted">Data de Pagamento</div>
+                            <div class="fw-bold text-gray-800">
+                                {{ $cycle->billing_at->format('d/m/Y') }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-muted">Data de Vencimento</div>
+                            <div class="fw-bold text-gray-800">
+                                {{ $cycle->next_billing_at->format('d/m/Y') }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-muted">Status</div>
+                            <div class="fw-bold text-gray-800">
+                                @if($cycle->status == 'billed')
+                                    Pago
+                                @elseif($cycle->status == 'pending')
+                                    Pendente
+                                @elseif($cycle->status == 'failed')
+                                    Falhou
+                                @elseif($cycle->status == 'refunded')
+                                    Estornado
+                                @else
+                                    -
+                                @endif
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-muted">Ciclo</div>
+                            <div class="fw-bold text-gray-800">
+                                {{ $cycle->cycle }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-muted">Data Inicial</div>
+                            <div class="fw-bold text-gray-800">
+                                {{ $cycle->start_date->format('d/m/Y') }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-muted">Data Final</div>
+                            <div class="fw-bold text-gray-800">
+                                {{ $cycle->end_date->format('d/m/Y') }}
+                            </div>
+                        </div>
+                        @if(!$loop->last)
+                            <div class="col-12">
+                                <hr>
+                            </div>
+                        @endif
+                    @endforeach
                 </div>
-            @endforeach
+            </div>
         </div>
-
         <h5 class="mb-3">Itens</h5>
         <table class="table table-striped table-row-bordered gy-2 gs-7 align-middle">
             <thead class="rounded">
                 <tr class="fw-bold fs-6 text-gray-700 px-7">
                     <th>Nome</th>
-                    <th>Qtd</th>
+                    <th>Quantidade</th>
+                    <th>Tipo</th>
                     <th>Subtotal</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach ($order->package->modules as $module)
+                @foreach ($order->package->items as $item)
                 <tr>
-                    <td>{{ $module->name }}</td>
+                    <td>{{ $item->module_name }}</td>
                     <td>1</td>
-                    <td>R$ {{ number_format($module->value, 2, ',', '.') }}</td>
+                    <td>{{ $item->billing_type }}</td>
+                    <td>R$ {{ number_format($item->module_value, 2, ',', '.') }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -100,23 +228,73 @@
                     <th>Método</th>
                     <th>Gateway</th>
                     <th>Valor</th>
+                    <th>Pago as</th>
+                    <th>Recorrência</th>
                     <th>Data</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($order->transactions as $transaction)
-                <tr>
-                    <td>OT{{ $transaction->id }}</td>
-                    <td>{{ $transaction->status }}</td>
-                    <td>{{ $transaction->method ?? '—' }}</td>
-                    <td>{{ $transaction->gateway?->name ?? '—' }}</td>
-                    <td>R$ {{ number_format($transaction->amount ?? 0, 2, ',', '.') }}</td>
-                    <td>{{ $transaction->created_at?->format('d/m/Y H:i') }}</td>
-                </tr>
+                    <tr>
+                        <td>#{{ $transaction->id }}</td>
+                        <td>
+                            @if($transaction->status == 'paid')
+                                <span class="badge badge-success">Pago</span>
+                            @elseif($transaction->status == 'pending')
+                                <span class="badge badge-warning">Pendente</span>
+                            @elseif($transaction->status == 'failed')
+                                <span class="badge badge-danger">Falhou</span>
+                            @elseif($transaction->status == 'refunded')
+                                Estornado
+                            @else
+                                —
+                            @endif
+                        </td>
+                        <td>
+                            @if($transaction->method == 'credit_card')
+                                Cartão de Crédito
+                            @elseif($transaction->method == 'debit_card')
+                                Cartão de Débito
+                            @elseif($transaction->method == 'pix')
+                                PIX
+                            @elseif($transaction->method == 'boleto')
+                                Boleto
+                            @elseif($transaction->method == 'liberado')
+                                Liberado à Parte
+                            @else
+                                —
+                            @endif
+                        </td>
+                        <td>
+                            @if($transaction->gateway?->name == 'pagarme')
+                                Pagar.me
+                            @elseif($transaction->gateway?->name == 'stripe')
+                                Stripe
+                            @else
+                                —
+                            @endif
+                        </td>
+                        <td>R$ {{ number_format($transaction->amount ?? 0, 2, ',', '.') }}</td>
+                        <td>
+                            @if($transaction->paid_at)
+                                {{ $transaction->paid_at->format('d/m/Y H:i') }}
+                            @else
+                                —
+                            @endif
+                        </td>
+                        <td>
+                            @if($transaction->recurrency == 'first')
+                                Primeira
+                            @else
+                                Recorrente
+                            @endif
+                        </td>
+                        <td>{{ $transaction->created_at?->format('d/m/Y H:i') }}</td>
+                    </tr>
                 @empty
-                <tr>
-                    <td colspan="6" class="text-center text-muted">Nenhuma transação registrada</td>
-                </tr>
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">Nenhuma transação registrada</td>
+                    </tr>
                 @endforelse
             </tbody>
         </table>
