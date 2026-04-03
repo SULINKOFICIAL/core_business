@@ -115,14 +115,21 @@
 
                     <div class="mb-4">
                         <label for="scheduled-job-select" class="form-label fw-semibold">Tarefa</label>
-                        <select name="job" id="scheduled-job-select" class="form-select form-select-solid">
-                            <option value="all">Todas</option>
-                            <option value="finish_calls_24h">Finish Calls 24h</option>
-                            <option value="finish_order_access">Finish Order Access</option>
-                            <option value="update_s3_metrics">Update S3 Metrics</option>
-                            <option value="archive_finished_tasks">Archive Finished Tasks</option>
-                            <option value="refresh_mercado_livre">Refresh Mercado Livre</option>
-                            <option value="test_log">Test Log</option>
+                        <select
+                            name="job"
+                            id="scheduled-job-select"
+                            class="form-select form-select-solid"
+                            data-control="select2"
+                            data-dropdown-parent="#modal_client_run_task"
+                            data-placeholder="Selecione uma tarefa"
+                        >
+                            <option value="all">Todas as tarefas</option>
+                            <option value="finish_calls_24h">Finalizar chamadas com 24h</option>
+                            <option value="finish_order_access">Finalizar acessos de pedidos</option>
+                            <option value="update_s3_metrics">Atualizar métricas do S3</option>
+                            <option value="archive_finished_tasks">Arquivar tarefas concluídas</option>
+                            <option value="refresh_mercado_livre">Atualizar token Mercado Livre</option>
+                            <option value="test_log">Registrar log de teste</option>
                         </select>
                     </div>
                 </div>
@@ -215,6 +222,12 @@
     // Renderiza tabela
     const dataTable = table.DataTable(dataTableOptions);
 
+    // Inicializa select2 do modal de tarefas.
+    $('#scheduled-job-select').select2({
+        dropdownParent: $('#modal_client_run_task'),
+        width: '100%',
+    });
+
     // Busca pelo campo no topo
     $('[data-kt-docs-table-filter="search"]').on('keyup', function () {
         dataTable.search($(this).val()).draw();
@@ -242,7 +255,7 @@
         // Atualiza o formulário do modal com o cliente selecionado.
         $('#selected-client-name').text(clientName);
         $('#form-client-run-task').attr('action', actionUrl);
-        $('#scheduled-job-select').val('all');
+        $('#scheduled-job-select').val('all').trigger('change');
 
         $('#modal_client_run_task').modal('show');
     });
