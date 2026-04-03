@@ -17,12 +17,16 @@
                 </a>
                 <div class="menu-sub menu-sub-dropdown w-200px py-2">
                     @foreach ($item['children'] ?? [] as $child)
+                        @php($isUpdateSystemsModal = ($child['open_modal'] ?? null) === 'update-systems')
                         <div class="menu-item">
                             <a
                                 href="{{ route($child['route']) }}"
-                                class="menu-link {{ !empty($child['confirm_message']) ? 'js-menu-confirm' : '' }}"
+                                class="menu-link {{ !empty($child['confirm_message']) ? 'js-menu-confirm' : '' }} {{ $isUpdateSystemsModal ? 'js-open-update-systems-modal' : '' }}"
                                 @if (!empty($child['confirm_message']))
                                     data-confirm-message="{{ $child['confirm_message'] }}"
+                                @endif
+                                @if ($isUpdateSystemsModal)
+                                    data-update-url="{{ route($child['route']) }}"
                                 @endif
                             >
                                 @if (!empty($child['icon']))

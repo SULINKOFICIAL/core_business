@@ -168,66 +168,129 @@ class ClientsActionsController extends Controller
      */
     public function updateAllSystems()
     {
+        $allowedActions = ['git', 'database', 'supervisor', 'npm_build'];
+        $selectedActions = collect((array) $this->request->get('actions', []))
+            ->filter(function ($action) use ($allowedActions) {
+                return in_array($action, $allowedActions, true);
+            })
+            ->values()
+            ->all();
+
+        if (empty($selectedActions)) {
+            return redirect()
+                ->route('clients.index')
+                ->with('type', 'warning')
+                ->with('message', 'Selecione ao menos uma ação para atualizar os sistemas.');
+        }
+
+        $shouldUpdateGit = in_array('git', $selectedActions, true);
+        $shouldUpdateDatabase = in_array('database', $selectedActions, true);
+        $shouldRestartSupervisor = in_array('supervisor', $selectedActions, true);
+        $shouldBuildJavascript = in_array('npm_build', $selectedActions, true);
 
         // Obtém todos os clientes
         $clients = $this->repository->all();
         
-        // Sinaliza todos como desatualizados
-        $this->repository->update([
-            'db_last_version'  => false, 
-            'git_last_version' => false,
-            'sp_last_version'  => false,
-        ]);
+        // Sinaliza como desatualizado apenas o que foi solicitado nesta execução.
+        if ($shouldUpdateDatabase || $shouldUpdateGit || $shouldRestartSupervisor) {
+            $updateColumns = [];
+
+            if ($shouldUpdateDatabase) {
+                $updateColumns['db_last_version'] = false;
+            }
+
+            if ($shouldUpdateGit) {
+                $updateColumns['git_last_version'] = false;
+            }
+
+            if ($shouldRestartSupervisor) {
+                $updateColumns['sp_last_version'] = false;
+            }
+
+            $this->repository->update($updateColumns);
+        }
 
         // Obtém todos os clientes com instalações dedicadas
         $clientsDedicateds = $clients->filter(function($client) {
             return $client->type_installation == 'dedicated';
         });
 
-        // Atualiza o Git de Todos os exclusívos
+        // Atualiza sistemas das instalações dedicadas.
         foreach ($clientsDedicateds as $client) {
-            $this->updateGit($client->id);
-            $this->restartSupervisor($client->id);
+            if ($shouldUpdateGit) {
+                $this->updateGit($client->id);
+            }
+
+            if ($shouldRestartSupervisor) {
+                $this->restartSupervisor($client->id);
+            }
+
+            if ($shouldBuildJavascript) {
+                $this->runNpmBuild($client->id);
+            }
         }
 
-        // Busca um cliente compartilhado e atualiza todos
+        // Busca um cliente compartilhado para aplicar operações compartilhadas.
         $sharedClient = $clients->first(function($client) {
             return $client->type_installation == 'shared';
         });
 
         if ($sharedClient) {
             
-            // Verifica se o cliente compartilhado foi atualizado com sucesso.
-            $this->updateGit($sharedClient->id);
+            if ($shouldUpdateGit) {
+                // Verifica se o cliente compartilhado foi atualizado com sucesso.
+                $this->updateGit($sharedClient->id);
 
-            // Atualiza o git de todas as hospedagens compartilhadas
-            $sharedClient->refresh();
-            $this->repository->where('type_installation', 'shared')->update([
-                'git_last_version' => $sharedClient->git_last_version,
-                'git_error' => $sharedClient->git_error,
-            ]);
+                // Atualiza o git de todas as hospedagens compartilhadas.
+                $sharedClient->refresh();
+                $this->repository->where('type_installation', 'shared')->update([
+                    'git_last_version' => $sharedClient->git_last_version,
+                    'git_error' => $sharedClient->git_error,
+                ]);
+            }
 
-            // Verifica se o restart de filas no cliente compartilhado foi concluído.
-            $this->restartSupervisor($sharedClient->id);
+            if ($shouldRestartSupervisor) {
+                // Verifica se o restart de filas no cliente compartilhado foi concluído.
+                $this->restartSupervisor($sharedClient->id);
 
-            // Atualiza o status do supervisor em todas as hospedagens compartilhadas.
-            $sharedClient->refresh();
-            $this->repository->where('type_installation', 'shared')->update([
-                'sp_last_version' => $sharedClient->sp_last_version,
-                'sp_error' => $sharedClient->sp_error,
-            ]);
+                // Atualiza o status do supervisor em todas as hospedagens compartilhadas.
+                $sharedClient->refresh();
+                $this->repository->where('type_installation', 'shared')->update([
+                    'sp_last_version' => $sharedClient->sp_last_version,
+                    'sp_error' => $sharedClient->sp_error,
+                ]);
+            }
+
+            if ($shouldBuildJavascript) {
+                $this->runNpmBuild($sharedClient->id);
+            }
 
         }
         
-        // Loop para percorrer todos os clientes
-        foreach ($clients as $client) {
-            $this->updateDatabase($client->id);
+        if ($shouldUpdateDatabase) {
+            // Loop para percorrer todos os clientes quando banco foi selecionado.
+            foreach ($clients as $client) {
+                $this->updateDatabase($client->id);
+            }
         }
+
+        $actionLabels = [
+            'git' => 'Git pull',
+            'database' => 'banco de dados',
+            'supervisor' => 'reinício de filas',
+            'npm_build' => 'build de Javascript',
+        ];
+
+        $selectedActionLabels = collect($selectedActions)
+            ->map(function ($action) use ($actionLabels) {
+                return $actionLabels[$action] ?? $action;
+            })
+            ->implode(', ');
 
         // Redireciona com a mensagem final
         return redirect()
             ->route('clients.index')
-            ->with('message', 'Processo de atualização concluído para todos os clientes.');
+            ->with('message', 'Processo concluído para: ' . $selectedActionLabels . '.');
     }
 
     // Atualiza o banco de dados do cliente via API
@@ -374,6 +437,44 @@ class ClientsActionsController extends Controller
                 ->route('clients.index')
                 ->with('message', $response ? 'Filas reiniciadas com sucesso' : 'Falha ao reiniciar as filas');
 
+    }
+
+    // Executa npm build do cliente via API
+    public function runNpmBuild($id)
+    {
+        // Encontra o cliente
+        $client = $this->repository->find($id);
+
+        // Realiza solicitação com timeout maior pois build pode demorar.
+        $response = $this->guzzleService->request('POST', 'sistema/npm-build', $client, null, [
+            'connect_timeout' => 10,
+            'timeout' => 1200,
+        ]);
+
+        if (!$response['success']) {
+            Log::warning('Falha ao executar npm build no cliente.', [
+                'client_id' => $client->id,
+                'client_name' => $client->name,
+                'message' => $response['message'] ?? 'Erro desconhecido',
+            ]);
+
+            return false;
+        }
+
+        $responseData = json_decode($response['data'] ?? null, true);
+        $apiSuccess = is_array($responseData) ? (bool) ($responseData['success'] ?? true) : true;
+
+        if (!$apiSuccess) {
+            Log::warning('API do tenant retornou erro no npm build.', [
+                'client_id' => $client->id,
+                'client_name' => $client->name,
+                'error' => $responseData['error'] ?? $responseData['message'] ?? 'Erro desconhecido',
+            ]);
+
+            return false;
+        }
+
+        return true;
     }
 
     /**

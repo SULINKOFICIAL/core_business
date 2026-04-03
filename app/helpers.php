@@ -343,7 +343,7 @@ if (! function_exists('header_menu_items')) {
                         'label' => 'Atualizar Sistemas',
                         'route' => 'systems.update.all.systems',
                         'active_routes' => ['systems.update.all.systems'],
-                        'confirm_message' => 'Deseja mesmo atualizar os sistemas dos clientes ativos?',
+                        'open_modal' => 'update-systems',
                         'icon' => ['class' => 'fa-solid fa-rotate fs-5'],
                     ],
                 ],
