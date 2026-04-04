@@ -129,6 +129,7 @@
                             <option value="update_s3_metrics">Atualizar métricas do S3</option>
                             <option value="archive_finished_tasks">Arquivar tarefas concluídas</option>
                             <option value="refresh_mercado_livre">Atualizar token Mercado Livre</option>
+                            <option value="notify_commitments_10m">Notificar compromissos (10 min antes)</option>
                             <option value="test_log">Registrar log de teste</option>
                         </select>
                     </div>
