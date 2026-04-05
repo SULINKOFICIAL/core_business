@@ -14,10 +14,6 @@ class Client extends Model
 {
     protected $table = 'clients';
 
-    protected $casts = [
-        'first_user' => 'array',
-    ];
-
     /**
      * The attributes that are mass assignable.
      *
@@ -25,7 +21,6 @@ class Client extends Model
      */
     protected $fillable = [
         'type_installation',
-        'install',
         'name',
         'email',
         'pagarme_customer_id',
@@ -36,22 +31,24 @@ class Client extends Model
         'package_id',
         'users_limit',
         'logo',
-        'table',
-        'table_user',
-        'table_password',
-        'first_user',
         'token',
-        'db_last_version',
-        'db_error',
-        'git_last_version',
-        'git_error',
-        'sp_last_version',
-        'sp_error',
         'status',
         'filed_by',
         'created_by',
         'updated_by',
     ];
+
+    // Dados de provisionamento técnico do cliente
+    public function provisioning(): HasOne
+    {
+        return $this->hasOne(ClientProvisioning::class, 'client_id', 'id');
+    }
+
+    // Status técnico de atualização do cliente
+    public function runtimeStatus(): HasOne
+    {
+        return $this->hasOne(ClientRuntimeStatus::class, 'client_id', 'id');
+    }
 
     // Pacote atual do cliente
     public function packages(): HasMany

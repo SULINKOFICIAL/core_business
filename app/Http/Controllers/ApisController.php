@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Client;
 use App\Models\ClientDomain;
+use App\Models\ClientProvisioning;
 use App\Models\ErrorMiCore;
 use App\Models\IntegrationSuggestion;
 use App\Models\Module;
 use App\Models\ModulePricingTier;
+use App\Services\CpanelProvisioningService;
 use App\Services\SystemProblemNotificationService;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 
 class ApisController extends Controller
@@ -23,17 +26,16 @@ class ApisController extends Controller
      * no cPanel que esta em um EC2 em nossa aplicação na Amazon.
      * 
      */
-    protected $request;
     private $repository;
-    private $cpanelMiCore;
+    private $cpanelProvisioningService;
 
-    public function __construct(Request $request, Client $content)
+    public function __construct(
+        Client $content,
+        CpanelProvisioningService $cpanelProvisioningService
+    )
     {
-
-        $this->request = $request;
         $this->repository = $content;
-        $this->cpanelMiCore = new CpanelController();
-
+        $this->cpanelProvisioningService = $cpanelProvisioningService;
     }
 
     /**
@@ -103,8 +105,20 @@ class ApisController extends Controller
             'short_name' => generateShortName($data['name']),
         ];
 
+        $provisioningData = [
+            'table' => $data['table'],
+            'table_user' => $data['table_usr'],
+            'table_password' => $data['table_password'],
+            'first_user' => $data['first_user'],
+            'install' => ClientProvisioning::STEP_SUBDOMAIN,
+        ];
+
+        unset($data['table'], $data['table_usr'], $data['table_password'], $data['first_user'], $data['password']);
+
         // Insere no banco de dados
         $client = $this->repository->create($data);
+        $client->provisioning()->create($provisioningData);
+        $client->runtimeStatus()->create();
 
         // Simula solicitação de troca de pacote
         $request = new Request(['package_id' => 1]);
@@ -113,7 +127,7 @@ class ApisController extends Controller
         app(PackageController::class)->assign($request, $client->id);
 
         // Gera subdomínio, banco de dados e usuário no Cpanel miCore.com.br
-        return $this->cpanelMiCore->make($client);        
+        return response()->json($this->cpanelProvisioningService->runProvisioning($client));
 
     }
 
@@ -185,9 +199,9 @@ class ApisController extends Controller
         // Retorna os dados do banco de dados
         return response()->json([
             'tenant'        => $client->id,
-            'db_name'       => $client->table,
-            'db_user'       => $client->table_user,
-            'db_password'   => $client->table_password,
+            'db_name'       => $client->provisioning?->table,
+            'db_user'       => $client->provisioning?->table_user,
+            'db_password'   => $client->provisioning?->table_password,
         ]);
 
     }

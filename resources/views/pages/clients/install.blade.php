@@ -42,8 +42,8 @@
                                 </p>
                             </div>
                             <div>
-                                @if ($client->install < 2)
-                                    <span class="badge badge-light-warning" id="step-2">Pendente</span>
+                                @if (!$provisioning->installAtLeast('database'))
+                                    <span class="badge badge-light-warning" id="step-database">Pendente</span>
                                 @else
                                     <span class="badge badge-light-success">Concluído</span>
                                 @endif
@@ -59,8 +59,8 @@
                                     Banco de dados modelo clonado
                                 </p>
                             </div>
-                            @if ($client->install < 3)
-                                <span class="badge badge-light-warning" id="step-3">Pendente</span>
+                            @if (!$provisioning->installAtLeast('user_token'))
+                                <span class="badge badge-light-warning" id="step-user_token">Pendente</span>
                             @else
                                 <span class="badge badge-light-success">Concluído</span>
                             @endif
@@ -75,8 +75,8 @@
                                     Inserção de usuário e token no banco
                                 </p>
                             </div>
-                            @if ($client->install < 4)
-                                <span class="badge badge-light-warning" id="step-4">Pendente</span>
+                            @if (!$provisioning->installAtLeast('modules'))
+                                <span class="badge badge-light-warning" id="step-modules">Pendente</span>
                             @else
                                 <span class="badge badge-light-success">Concluído</span>
                             @endif
@@ -91,8 +91,8 @@
                                     Configuração de módulos
                                 </p>
                             </div>
-                            @if ($client->install < 5)
-                                <span class="badge badge-light-warning" id="step-5">Pendente</span>
+                            @if (!$provisioning->installAtLeast('finalizing'))
+                                <span class="badge badge-light-warning" id="step-finalizing">Pendente</span>
                             @else
                                 <span class="badge badge-light-success">Concluído</span>
                             @endif
@@ -107,14 +107,14 @@
                                     Finalização
                                 </p>
                             </div>
-                            @if ($client->install < 6)
-                                <span class="badge badge-light-warning" id="step-6">Pendente</span>
+                            @if (!$provisioning->installAtLeast('completed'))
+                                <span class="badge badge-light-warning" id="step-completed">Pendente</span>
                             @else
                                 <span class="badge badge-light-success">Concluído</span>
                             @endif
                         </div>
                     </div>
-                    @if ($client->install < 6)
+                    @if (!$provisioning->installAtLeast('completed'))
                         <button class="btn btn-success btn-sm fw-bolder w-100 mt-4 text-uppercase" id="run-install">Rodar instalação</button>
                     @else
                         <a href="{{ route('clients.show', $client->id) }}" class="btn btn-success btn-sm fw-bolder w-100 mt-4 text-uppercase">Ver Cliente</a>
@@ -164,7 +164,7 @@
                 badge.closest('.d-flex').find('.ki-duotone').addClass('text-success');
 
                 // Se a etapa for a última
-                if(response.step == 6){
+                if(response.step === 'completed'){
                     // Redireciona para a página de instalação
                     window.location.href = "{{ route('clients.show', '') }}/" + {{ $client->id }};
                 } else {

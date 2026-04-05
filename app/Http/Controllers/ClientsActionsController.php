@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\ClientRuntimeStatus;
 use App\Models\Module;
 use App\Models\ModuleCategory;
 use App\Models\Resource;
@@ -14,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use RuntimeException;
 
 class ClientsActionsController extends Controller
 {
@@ -27,6 +29,17 @@ class ClientsActionsController extends Controller
         $this->request = $request;
         $this->repository = $content;
         $this->guzzleService = $guzzleService;
+    }
+
+    private function runtimeStatusFor(Client $client): ClientRuntimeStatus
+    {
+        $runtimeStatus = $client->runtimeStatus()->first();
+
+        if (!$runtimeStatus) {
+            throw new RuntimeException("Runtime status não encontrado para o cliente {$client->id}.");
+        }
+
+        return $runtimeStatus;
     }
 
     // Obtém o modulo do usuário
@@ -135,7 +148,7 @@ class ClientsActionsController extends Controller
         $clientsId = $this->repository->all();
         
         // Sinaliza todos como desatualizados
-        $this->repository->update(['db_last_version' => false]);
+        ClientRuntimeStatus::query()->update(['db_last_version' => false]);
         
         // Contador de erros
         $errors = 0;
@@ -207,7 +220,9 @@ class ClientsActionsController extends Controller
                 $updateColumns['sp_last_version'] = false;
             }
 
-            $this->repository->update($updateColumns);
+            if (!empty($updateColumns)) {
+                ClientRuntimeStatus::query()->update($updateColumns);
+            }
         }
 
         // Obtém todos os clientes com instalações dedicadas
@@ -242,11 +257,13 @@ class ClientsActionsController extends Controller
                 $this->updateGit($sharedClient->id);
 
                 // Atualiza o git de todas as hospedagens compartilhadas.
-                $sharedClient->refresh();
-                $this->repository->where('type_installation', 'shared')->update([
-                    'git_last_version' => $sharedClient->git_last_version,
-                    'git_error' => $sharedClient->git_error,
-                ]);
+                $sharedRuntimeStatus = $this->runtimeStatusFor($sharedClient)->refresh();
+                foreach ($clients->where('type_installation', 'shared') as $client) {
+                    $this->runtimeStatusFor($client)->update([
+                        'git_last_version' => $sharedRuntimeStatus->git_last_version,
+                        'git_error' => $sharedRuntimeStatus->git_error,
+                    ]);
+                }
             }
 
             if ($shouldRestartSupervisor) {
@@ -254,11 +271,13 @@ class ClientsActionsController extends Controller
                 $this->restartSupervisor($sharedClient->id);
 
                 // Atualiza o status do supervisor em todas as hospedagens compartilhadas.
-                $sharedClient->refresh();
-                $this->repository->where('type_installation', 'shared')->update([
-                    'sp_last_version' => $sharedClient->sp_last_version,
-                    'sp_error' => $sharedClient->sp_error,
-                ]);
+                $sharedRuntimeStatus = $this->runtimeStatusFor($sharedClient)->refresh();
+                foreach ($clients->where('type_installation', 'shared') as $client) {
+                    $this->runtimeStatusFor($client)->update([
+                        'sp_last_version' => $sharedRuntimeStatus->sp_last_version,
+                        'sp_error' => $sharedRuntimeStatus->sp_error,
+                    ]);
+                }
             }
 
             if ($shouldBuildJavascript) {
@@ -298,6 +317,7 @@ class ClientsActionsController extends Controller
 
         // Encontra o cliente
         $client = $this->repository->find($id);
+        $runtimeStatus = $this->runtimeStatusFor($client);
 
         // Realiza solicitação
         $response = $this->guzzleService->request('POST', 'sistema/atualizar-banco', $client);
@@ -305,19 +325,19 @@ class ClientsActionsController extends Controller
         // Verifica a resposta antes de tentar acessar as chaves
         if (!$response['success']) {
             // Registra a mensagem de erro
-            $client->db_last_version = false;
-            $client->db_error = $response['message'] ?? 'Erro desconhecido';
+            $runtimeStatus->db_last_version = false;
+            $runtimeStatus->db_error = $response['message'] ?? 'Erro desconhecido';
         } else {
             // Atualiza db_last_version
-            $client->db_last_version = true;
-            $client->db_error = null;
+            $runtimeStatus->db_last_version = true;
+            $runtimeStatus->db_error = null;
         }
 
         // Atualiza no banco de dados
-        $client->save();
+        $runtimeStatus->save();
 
         // Retorna a página
-        return $client->db_last_version;
+        return $runtimeStatus->db_last_version;
 
     }
     
@@ -326,6 +346,7 @@ class ClientsActionsController extends Controller
 
         // Encontra o cliente
         $client = $this->repository->find($id);
+        $runtimeStatus = $this->runtimeStatusFor($client);
 
         // Realiza solicitação
         $response = $this->guzzleService->request('POST', 'sistema/atualizar-git', $client);
@@ -334,18 +355,18 @@ class ClientsActionsController extends Controller
 
         // Verifica a resposta antes de tentar acessar as chaves
         if (!$response['success']) {
-            $client->git_last_version = false;
-            $client->git_error = $response['message'] ?? 'Erro desconhecido';
+            $runtimeStatus->git_last_version = false;
+            $runtimeStatus->git_error = $response['message'] ?? 'Erro desconhecido';
         } else {
-            $client->git_last_version = true;
-            $client->git_error = null;
+            $runtimeStatus->git_last_version = true;
+            $runtimeStatus->git_error = null;
         }
 
         // Atualiza no banco de dados
-        $client->save();
+        $runtimeStatus->save();
 
         // Retorna a página
-        return $client->git_last_version;
+        return $runtimeStatus->git_last_version;
 
     }
 
@@ -354,31 +375,32 @@ class ClientsActionsController extends Controller
 
         // Encontra o cliente
         $client = $this->repository->find($id);
+        $runtimeStatus = $this->runtimeStatusFor($client);
 
         // Realiza solicitação
         $response = $this->guzzleService->request('POST', 'sistema/supervisor-restart', $client);
 
         if (!$response['success']) {
-            $client->sp_last_version = false;
-            $client->sp_error = $response['message'] ?? 'Erro desconhecido';
+            $runtimeStatus->sp_last_version = false;
+            $runtimeStatus->sp_error = $response['message'] ?? 'Erro desconhecido';
         } else {
             $responseData = json_decode($response['data'] ?? null, true);
             $apiSuccess = is_array($responseData) ? (bool) ($responseData['success'] ?? true) : true;
 
             if (!$apiSuccess) {
-                $client->sp_last_version = false;
-                $client->sp_error = $responseData['error'] ?? $responseData['message'] ?? 'Erro desconhecido';
+                $runtimeStatus->sp_last_version = false;
+                $runtimeStatus->sp_error = $responseData['error'] ?? $responseData['message'] ?? 'Erro desconhecido';
             } else {
-                $client->sp_last_version = true;
-                $client->sp_error = null;
+                $runtimeStatus->sp_last_version = true;
+                $runtimeStatus->sp_error = null;
             }
         }
 
         // Atualiza no banco de dados
-        $client->save();
+        $runtimeStatus->save();
 
         // Retorna a página
-        return $client->sp_last_version;
+        return $runtimeStatus->sp_last_version;
 
     }
 
@@ -425,11 +447,15 @@ class ClientsActionsController extends Controller
 
         // Mantém o status sincronizado para todos os clientes compartilhados.
         if ($client->type_installation === 'shared') {
-            $client->refresh();
-            $this->repository->where('type_installation', 'shared')->update([
-                'sp_last_version' => $client->sp_last_version,
-                'sp_error' => $client->sp_error,
-            ]);
+            $sharedRuntimeStatus = $this->runtimeStatusFor($client)->refresh();
+            $sharedClients = $this->repository->where('type_installation', 'shared')->get();
+
+            foreach ($sharedClients as $sharedClient) {
+                $this->runtimeStatusFor($sharedClient)->update([
+                    'sp_last_version' => $sharedRuntimeStatus->sp_last_version,
+                    'sp_error' => $sharedRuntimeStatus->sp_error,
+                ]);
+            }
         }
 
         // Retorna a página

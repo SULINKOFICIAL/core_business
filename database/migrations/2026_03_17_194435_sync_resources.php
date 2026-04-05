@@ -24,101 +24,111 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Obtem todos os clientes
-        $client = Client::find(3);
-
         $guzzleService = new GuzzleService();
+        $categories = null;
 
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        // Usa um cliente que realmente tenha domínio ativo para evitar null durante migrate.
+        $client = Client::query()
+            ->whereHas('domains')
+            ->first();
 
-        Module::truncate();
-        ModuleCategory::truncate();
-        Resource::truncate();
+        if ($client) {
+            // Realiza solicitação
+            $response = $guzzleService->request('post', 'sistema/permissoes-recursos', $client, []);
+            $decoded = json_decode($response['data'] ?? '[]', true);
 
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            if (is_array($decoded) && !empty($decoded)) {
+                $categories = $decoded;
+            }
+        }
 
-        // Realiza solicitação
-        $categories = $guzzleService->request('post', 'sistema/permissoes-recursos', $client, []);
+        // Só sincroniza recursos/módulos quando houver payload válido da API.
+        if (is_array($categories)) {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
-        // Decodifica a resposta
-        $categories = json_decode($categories['data'], true);
+            Module::truncate();
+            ModuleCategory::truncate();
+            Resource::truncate();
 
-        /**
-         * Define o status de todos os registros como 0 antes da verificação.
-         * Em seguida, verifica se a permissão recebida das rotas do Core 
-         * corresponde a algum registro existente na tabela de Recursos.
-         * 
-         * Se houver correspondência, o status será atualizado para 1.
-         * Se o status permanecer 0, significa que o nome da permissão recebida 
-         * não corresponde a nenhum registro existente em Recursos.
-         */
-        Resource::where('status', true)->update([
-            'status' => 0,
-        ]);
-
-        /**
-         * Faz looping pelas categorias
-         */
-        foreach ($categories as $category) {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
             /**
-             * Verifica se veio com pacote ou sem
+             * Define o status de todos os registros como 0 antes da verificação.
+             * Em seguida, verifica se a permissão recebida das rotas do Core 
+             * corresponde a algum registro existente na tabela de Recursos.
+             * 
+             * Se houver correspondência, o status será atualizado para 1.
+             * Se o status permanecer 0, significa que o nome da permissão recebida 
+             * não corresponde a nenhum registro existente em Recursos.
              */
-            if($category['name'] != 'Sem Pacote') {
+            Resource::where('status', true)->update([
+                'status' => 0,
+            ]);
+
+            /**
+             * Faz looping pelas categorias
+             */
+            foreach ($categories as $category) {
 
                 /**
-                 * Cria a categoria no sistema
+                 * Verifica se veio com pacote ou sem
                  */
-                $moduleCategory = ModuleCategory::updateOrCreate([
-                    'name' => $category['name'],
-                ], [
-                    'status' => true,
-                    'created_by' => 1
-                ]);
-
-                $categoryId = $moduleCategory->id;
-
-            } else {
-                $categoryId = null;
-            }
-            
-            // Faz looping entre modulos
-            foreach ($category['modules'] as $key => $module) {
-
-                /**
-                 * Cria os módulos
-                 */
-                $modelModule = Module::updateOrCreate([
-                    'slug' => $key,
-                    'module_category_id' => $categoryId,
-                ], [
-                    'name' => $module['name'],
-                    'description' => $module['description'],
-                    'created_by' => 1
-                ]);
-
-                // Faz looping entre os recursos
-                foreach ($module['resources'] as $resource) {
+                if($category['name'] != 'Sem Pacote') {
 
                     /**
-                     * Busca um registro onde o campo 'name' seja igual a $permission.
-                     * 
-                     * Se o registro existir, atualiza o campo 'status' para true.
-                     * Se o registro não existir, cria um novo com 'name' = $permission 
-                     * e 'status' = true.
+                     * Cria a categoria no sistema
                      */
-                    Resource::updateOrCreate(
-                        [
-                            'name' => $resource,
-                            'module_id' => $modelModule->id,
-                        ],
-                        [
-                            'status' => true,
-                            'created_by' => 1
-                        ]
-                    );
-                }
+                    $moduleCategory = ModuleCategory::updateOrCreate([
+                        'name' => $category['name'],
+                    ], [
+                        'status' => true,
+                        'created_by' => 1
+                    ]);
 
+                    $categoryId = $moduleCategory->id;
+
+                } else {
+                    $categoryId = null;
+                }
+                
+                // Faz looping entre modulos
+                foreach ($category['modules'] as $key => $module) {
+
+                    /**
+                     * Cria os módulos
+                     */
+                    $modelModule = Module::updateOrCreate([
+                        'slug' => $key,
+                        'module_category_id' => $categoryId,
+                    ], [
+                        'name' => $module['name'],
+                        'description' => $module['description'],
+                        'created_by' => 1
+                    ]);
+
+                    // Faz looping entre os recursos
+                    foreach ($module['resources'] as $resource) {
+
+                        /**
+                         * Busca um registro onde o campo 'name' seja igual a $permission.
+                         * 
+                         * Se o registro existir, atualiza o campo 'status' para true.
+                         * Se o registro não existir, cria um novo com 'name' = $permission 
+                         * e 'status' = true.
+                         */
+                        Resource::updateOrCreate(
+                            [
+                                'name' => $resource,
+                                'module_id' => $modelModule->id,
+                            ],
+                            [
+                                'status' => true,
+                                'created_by' => 1
+                            ]
+                        );
+                    }
+
+                }
             }
         }
 

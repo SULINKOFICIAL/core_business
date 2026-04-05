@@ -6,32 +6,25 @@ use App\Models\Client;
 use App\Models\ClientDomain;
 use App\Models\ClientPackage;
 use App\Models\ClientPackageItem;
+use App\Models\ClientProvisioning;
 use App\Models\Module;
 use App\Models\Order;
 use App\Models\OrderTransaction;
 use App\Models\Package;
 use App\Models\Subscription;
 use App\Models\SubscriptionCycle;
-use App\Services\ModuleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use GuzzleHttp\Client as Guzzle;
 use Illuminate\Support\Str;
-use PhpOffice\PhpSpreadsheet\Calculation\Category;
 
 class ClientController extends Controller
 {
-    protected $request;
     private $repository;
-    private $cpanelMiCore;
 
-    public function __construct(Request $request, Client $content)
+    public function __construct(Client $content)
     {
-
-        $this->request = $request;
         $this->repository = $content;
-        $this->cpanelMiCore = new CpanelController();
-
     }
 
     /**
@@ -100,8 +93,20 @@ class ClientController extends Controller
             'short_name' => generateShortName($data['user']['name']),
         ];
 
+        $provisioningData = [
+            'table' => $data['table'],
+            'table_user' => $data['table_user'],
+            'table_password' => $data['table_password'],
+            'first_user' => $data['first_user'],
+            'install' => ClientProvisioning::STEP_SUBDOMAIN,
+        ];
+
+        unset($data['table'], $data['table_user'], $data['table_password'], $data['first_user'], $data['user']);
+
         // Insere no banco de dados
         $created = $this->repository->create($data);
+        $created->provisioning()->create($provisioningData);
+        $created->runtimeStatus()->create();
 
         // Cria o pacote do cliente
         $package = ClientPackage::create([
@@ -433,5 +438,3 @@ class ClientController extends Controller
     }
 
 }
-
-

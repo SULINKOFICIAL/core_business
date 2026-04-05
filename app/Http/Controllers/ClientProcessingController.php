@@ -42,7 +42,8 @@ class ClientProcessingController extends Controller
     public function loadTables()
     {
         // Tabela principal
-        return DB::table('clients');
+        return DB::table('clients')
+            ->leftJoin('client_runtime_statuses as runtime', 'runtime.client_id', '=', 'clients.id');
     }
 
     /**
@@ -152,12 +153,12 @@ class ClientProcessingController extends Controller
             'clients.name              as name',
             'clients.type_installation as type_installation',
             'clients.created_at        as created_at',
-            'clients.db_last_version   as db_last_version',
-            'clients.db_error          as db_error',
-            'clients.git_last_version  as git_last_version',
-            'clients.git_error         as git_error',
-            'clients.sp_last_version   as sp_last_version',
-            'clients.sp_error          as sp_error',
+            DB::raw('COALESCE(runtime.db_last_version, 1) as db_last_version'),
+            'runtime.db_error          as db_error',
+            DB::raw('COALESCE(runtime.git_last_version, 0) as git_last_version'),
+            'runtime.git_error         as git_error',
+            DB::raw('COALESCE(runtime.sp_last_version, 0) as sp_last_version'),
+            'runtime.sp_error          as sp_error',
             'clients.status            as status',
             'clients.token             as token'
         );
