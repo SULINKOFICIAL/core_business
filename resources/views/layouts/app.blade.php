@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
     <head>
-        <title>@yield('title') - Core Business</title>
+        <title>@yield('title') - All.Core</title>
 	    @include('layouts.head')
     </head>
 	<body id="kt_app_body" data-kt-app-layout="dark-sidebar" data-kt-app-header-fixed="true" class="app-default">
