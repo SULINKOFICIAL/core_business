@@ -36,7 +36,7 @@ class TicketController extends Controller
     public function show($id)
     {
         // Precarrega tudo que o modal da central precisa renderizar.
-        $ticket = $this->repository->with(['client', 'replies.user', 'replies.client', 'attachments', 'filedByUser', 'finishedByUser'])->findOrFail($id);
+        $ticket = $this->repository->with(['tenant', 'replies.user', 'replies.tenant', 'attachments', 'filedByUser', 'finishedByUser'])->findOrFail($id);
 
         // Ao abrir o ticket, ele deixa de ser pendente e passa para em andamento.
         if ($ticket->progress !== 'fechado')
@@ -49,7 +49,7 @@ class TicketController extends Controller
 
             // Recarrega o modelo para refletir os metadados de abertura no modal.
             $ticket->refresh();
-            $ticket->load(['client', 'replies.user', 'replies.client', 'attachments', 'filedByUser', 'finishedByUser']);
+            $ticket->load(['tenant', 'replies.user', 'replies.tenant', 'attachments', 'filedByUser', 'finishedByUser']);
         }
 
         return view('pages.tickets._modal')->with([

@@ -118,7 +118,7 @@ class LogsApiProcessingController extends Controller
                     $column = 'logs_apis.api';
                     break;
 
-                case 'client':
+                case 'tenant':
                     $column = 'tenants.name';
                     break;
 
@@ -160,7 +160,7 @@ class LogsApiProcessingController extends Controller
             'logs_apis.id as id',
             'logs_apis.api as api',
             'logs_apis.tenant_id as tenant_id',
-            'tenants.name as client_name',
+            'tenants.name as tenant_name',
             'logs_apis.json as json',
             'logs_apis.reprocessed as reprocessed',
             'logs_apis.new_log_id as new_log_id',
@@ -184,9 +184,9 @@ class LogsApiProcessingController extends Controller
                 $short = mb_strlen($content) > 80 ? mb_substr($content, 0, 60) . '...' : $content;
                 return '<span class="text-gray-600 text-hover-primary cursor-pointer open-json" data-json="' . $row->id . '" title="' . e($content) . '">' . e($short) . '</span>';
             })
-            ->addColumn('client', function ($row) {
-                if (!empty($row->client_name)) {
-                    return '<a href="' . route('tenants.show', $row->tenant_id) . '" class="text-gray-700 text-hover-primary fw-bolder">' . e($row->client_name) . ' <span class="text-gray-500 fw-normal fs-8">#' . e($row->tenant_id) . '</span></a>';
+            ->addColumn('tenant', function ($row) {
+                if (!empty($row->tenant_name)) {
+                    return '<a href="' . route('tenants.show', $row->tenant_id) . '" class="text-gray-700 text-hover-primary fw-bolder">' . e($row->tenant_name) . ' <span class="text-gray-500 fw-normal fs-8">#' . e($row->tenant_id) . '</span></a>';
                 }
                 return '<span class="text-gray-500">-</span>';
             })
@@ -210,7 +210,7 @@ class LogsApiProcessingController extends Controller
 
                 return '<span class="text-gray-600">' . date('d/m/Y H:i', strtotime($row->dispatched_at)) . '</span>';
             })
-            ->rawColumns(['id', 'api', 'json', 'client', 'reprocessed', 'new_log_id', 'status', 'dispatched_at'])
+            ->rawColumns(['id', 'api', 'json', 'tenant', 'reprocessed', 'new_log_id', 'status', 'dispatched_at'])
             ->make(true);
     }
 }

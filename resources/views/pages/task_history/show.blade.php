@@ -61,11 +61,11 @@
                                 </span>
                             </td>
                             <td>
-                                @if ($item->client)
-                                    <a href="{{ route('tenants.show', $item->client->id) }}" class="text-gray-800 text-hover-primary fw-bold">
-                                        {{ $item->client->name }}
+                                @if ($item->tenant)
+                                    <a href="{{ route('tenants.show', $item->tenant->id) }}" class="text-gray-800 text-hover-primary fw-bold">
+                                        {{ $item->tenant->name }}
                                     </a>
-                                    <div class="text-gray-500 fs-8">#{{ $item->client->id }}</div>
+                                    <div class="text-gray-500 fs-8">#{{ $item->tenant->id }}</div>
                                 @else
                                     <span class="text-gray-600">Cliente removido</span>
                                 @endif

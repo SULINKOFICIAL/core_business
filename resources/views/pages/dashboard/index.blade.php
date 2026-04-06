@@ -105,7 +105,7 @@
                       href="{{ route('orders.show', $sale->id) }}"
                       class="text-gray-800 fw-bold text-hover-primary mb-1 fs-6"
                     >
-                      {{ optional($sale->client)->name ?? 'Cliente não identificado' }}
+                      {{ optional($sale->tenant)->name ?? 'Cliente não identificado' }}
                     </a>
                   </td>
                   <td>

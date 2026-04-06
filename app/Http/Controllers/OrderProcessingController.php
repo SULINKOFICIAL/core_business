@@ -73,7 +73,7 @@ class OrderProcessingController extends Controller
             $query->where(function ($sub) use ($searchBy) {
                 $sub->where('id', 'like', "%{$searchBy}%")
                     ->orWhere('status', 'like', "%{$searchBy}%")
-                    ->orWhereHas('client', function ($clientQuery) use ($searchBy) {
+                    ->orWhereHas('tenant', function ($clientQuery) use ($searchBy) {
                         $clientQuery->where('name', 'like', "%{$searchBy}%");
                     });
             });
@@ -123,7 +123,7 @@ class OrderProcessingController extends Controller
             ->addColumn('order_label', function ($order) {
                 return '<span class="fw-bolder text-gray-700">#' . str_pad($order->id, 4, '0', STR_PAD_LEFT) . '</span>';
             })
-            ->addColumn('client_name', function ($order) {
+            ->addColumn('tenant_name', function ($order) {
                 if (!$order->tenant) {
                     return '<span class="text-muted">N/A</span>';
                 }
@@ -160,7 +160,7 @@ class OrderProcessingController extends Controller
             ->addColumn('actions', function ($order) {
                 return '<a href="' . route('orders.show', $order->id) . '" class="btn btn-sm btn-primary btn-active-success">Detalhes</a>';
             })
-            ->rawColumns(['order_label', 'client_name', 'type', 'status_label', 'items_count', 'total_label', 'created_at', 'paid_at', 'actions'])
+            ->rawColumns(['order_label', 'tenant_name', 'type', 'status_label', 'items_count', 'total_label', 'created_at', 'paid_at', 'actions'])
             ->make(true);
     }
 }

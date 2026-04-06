@@ -308,7 +308,7 @@ if (! function_exists('header_menu_items')) {
                     'system.settings.mail.edit',
                     'system.settings.whatsapp.edit',
                     'systems.run.scheduled.now',
-                    'systems.run.scheduled.now.client',
+                    'systems.run.scheduled.now.tenant',
                     'systems.update.all.systems',
                 ],
                 'children' => [
@@ -335,7 +335,7 @@ if (! function_exists('header_menu_items')) {
                     [
                         'label' => 'Disparar Tarefas',
                         'route' => 'systems.run.scheduled.now',
-                        'active_routes' => ['systems.run.scheduled.now', 'systems.run.scheduled.now.client'],
+                        'active_routes' => ['systems.run.scheduled.now', 'systems.run.scheduled.now.tenant'],
                         'confirm_message' => 'Deseja mesmo disparar as tarefas para os clientes ativos?',
                         'icon' => ['class' => 'fa-solid fa-clock-rotate-left fs-5'],
                     ],

@@ -29,7 +29,7 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
     Route::get('/modulos',        [ApisController::class, 'modules']);
 
     /** APIS que necessitam de um cliente */
-    Route::middleware('attach.client')->group(function () {
+    Route::middleware('attach.tenant')->group(function () {
 
         /** API que envia informações para os miCores */
         Route::get('/meu-pedido',         [ApisAccountController::class, 'order']);

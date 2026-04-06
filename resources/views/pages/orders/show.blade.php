@@ -19,7 +19,7 @@
             <div class="col-md-3">
                 <div class="text-muted">Cliente</div>
                 <div class="fw-bold text-gray-800">
-                    {{ $order->client?->name ?? 'N/A' }}
+                    {{ $order->tenant?->name ?? 'N/A' }}
                 </div>
             </div>
             <div class="col-md-3">

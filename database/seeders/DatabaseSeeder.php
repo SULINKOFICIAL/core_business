@@ -47,10 +47,10 @@ class DatabaseSeeder extends Seeder
         $this->call(PackageSeeder::class);
 
         // Seeder para clientes
-        $this->call(ClientSeeder::class);
+        $this->call(TenantSeeder::class);
 
         // Seeder para cartões de clientes
-        $this->call(ClientCardSeeder::class);
+        $this->call(TenantCardSeeder::class);
 
         // Seeder para fluxo completo de pedidos/assinaturas
         $this->call(OrderFlowSeeder::class);

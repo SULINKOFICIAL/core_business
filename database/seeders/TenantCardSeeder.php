@@ -6,7 +6,7 @@ use App\Models\TenantCard;
 use App\Models\Tenant;
 use Illuminate\Database\Seeder;
 
-class ClientCardSeeder extends Seeder
+class TenantCardSeeder extends Seeder
 {
     /**
      * Run the database seeds.

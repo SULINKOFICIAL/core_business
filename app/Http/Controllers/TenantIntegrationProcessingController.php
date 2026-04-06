@@ -71,7 +71,7 @@ class TenantIntegrationProcessingController extends Controller
 
             $column = match ($orderThis) {
                 'id' => 'tenants_integrations.id',
-                'client' => 'tenants.name',
+                'tenant' => 'tenants.name',
                 'provider' => 'tenants_integrations.provider',
                 'type' => 'tenants_integrations.type',
                 'external_account_id' => 'tenants_integrations.external_account_id',
@@ -92,7 +92,7 @@ class TenantIntegrationProcessingController extends Controller
         $query->select(
             'tenants_integrations.id',
             'tenants_integrations.tenant_id',
-            'tenants.name as client_name',
+            'tenants.name as tenant_name',
             'tenants_integrations.provider',
             'tenants_integrations.type',
             'tenants_integrations.external_account_id',
@@ -102,9 +102,9 @@ class TenantIntegrationProcessingController extends Controller
         );
 
         return DataTables::query($query)
-            ->addColumn('client', function ($row) {
-                if (!empty($row->client_name)) {
-                    return '<a href="' . route('tenants.show', $row->tenant_id) . '" class="text-gray-700 text-hover-primary fw-bolder">' . e($row->client_name) . ' <span class="text-gray-500 fw-normal fs-8">#' . e($row->tenant_id) . '</span></a>';
+            ->addColumn('tenant', function ($row) {
+                if (!empty($row->tenant_name)) {
+                    return '<a href="' . route('tenants.show', $row->tenant_id) . '" class="text-gray-700 text-hover-primary fw-bolder">' . e($row->tenant_name) . ' <span class="text-gray-500 fw-normal fs-8">#' . e($row->tenant_id) . '</span></a>';
                 }
 
                 return '<span class="text-gray-500">Tenante #' . e($row->tenant_id) . '</span>';
@@ -161,7 +161,7 @@ class TenantIntegrationProcessingController extends Controller
                     ? date('d/m/Y H:i', strtotime($row->created_at))
                     : '-';
             })
-            ->rawColumns(['client', 'status_badge', 'token_expires_at'])
+            ->rawColumns(['tenant', 'status_badge', 'token_expires_at'])
             ->make(true);
     }
 }

@@ -66,7 +66,7 @@ class ApisTicketsController extends Controller
         $tenant = $request->input('tenant');
 
         // Carrega as relacoes usadas no modal do coresulink.
-        $ticket = Ticket::with(['replies.user', 'replies.client'])
+        $ticket = Ticket::with(['replies.user', 'replies.tenant'])
             ->where('tenant_id', $tenant->id)
             ->findOrFail($id);
 
@@ -137,7 +137,7 @@ class ApisTicketsController extends Controller
     private function formatTicket(Ticket $ticket): array
     {
         // Garante carga tardia das relacoes caso o ticket venha sem preload.
-        $ticket->loadMissing(['replies.user', 'replies.client']);
+        $ticket->loadMissing(['replies.user', 'replies.tenant']);
         $ticket->loadMissing('attachments');
 
         return [
@@ -153,7 +153,7 @@ class ApisTicketsController extends Controller
                     'id' => $reply->id,
                     'message' => $reply->message,
                     'created_at' => optional($reply->created_at)->toISOString(),
-                    'author_type' => $reply->user_id ? 'user' : 'client',
+                    'author_type' => $reply->user_id ? 'user' : 'tenant',
                     'author_name' => $reply->user?->name ?? $reply->tenant?->name ?? 'Tenante',
                 ];
             })->values()->all(),

@@ -41,7 +41,7 @@ class TicketProcessingController extends Controller
      */
     public function loadTables()
     {
-        return Ticket::query()->with('client');
+        return Ticket::query()->with('tenant');
     }
 
     /**

@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Integrações de Clientes')
+@section('title', 'Integrações de Tenants')
 
 @section('content')
 <p class="text-center fw-bold text-gray-700 fs-2 mb-4 text-uppercase">
-    Integrações de Clientes
+    Integrações de Tenants
 </p>
 <div class="card">
     <div class="card-body">
@@ -18,7 +18,7 @@
                     <i class="ki-duotone ki-filter fs-2"><span class="path1"></span><span class="path2"></span></i> Filtrar
                 </button>
                 <div class="menu menu-sub menu-sub-dropdown w-300px w-md-325px" data-kt-menu="true">
-                    <form action="" id="clients-integrations-filters">
+                    <form action="" id="tenants-integrations-filters">
                         <div class="px-7 py-5"><div class="fs-4 text-gray-900 fw-bold">Filtros</div></div>
                         <div class="separator border-gray-200"></div>
                         <div class="px-7 py-5">
@@ -59,11 +59,11 @@
             </div>
         </div>
 
-        <table id="datatables-clients-integrations" data-dt-manual="true" class="table table-striped table-row-bordered gy-2 gs-7 align-middle">
+        <table id="datatables-tenants-integrations" data-dt-manual="true" class="table table-striped table-row-bordered gy-2 gs-7 align-middle">
             <thead class="rounded">
                 <tr class="fw-bold fs-6 text-gray-700 px-7">
                     <th class="text-start">ID</th>
-                    <th class="text-start">Cliente</th>
+                    <th class="text-start">Tenant</th>
                     <th class="text-start">Provider</th>
                     <th class="text-start">Tipo</th>
                     <th class="text-start">Conta Externa</th>
@@ -82,7 +82,7 @@
 @parent
 <script>
     $(document).ready(function() {
-        const dataTable = $('#datatables-clients-integrations').DataTable({
+        const dataTable = $('#datatables-tenants-integrations').DataTable({
             serverSide: true,
             processing: true,
             ajax: {
@@ -98,7 +98,7 @@
             order: [[7, 'desc']],
             columns: [
                 { data: 'id', name: 'id' },
-                { data: 'client', name: 'client' },
+                { data: 'tenant', name: 'tenant' },
                 { data: 'provider', name: 'provider' },
                 { data: 'type', name: 'type' },
                 { data: 'external_account_id', name: 'external_account_id' },
@@ -113,12 +113,12 @@
             dataTable.search($(this).val()).draw();
         });
 
-        $('#clients-integrations-filters').on('submit', function(e) {
+        $('#tenants-integrations-filters').on('submit', function(e) {
             e.preventDefault();
             dataTable.ajax.reload();
         });
 
-        $('#clients-integrations-filters').on('reset', function() {
+        $('#tenants-integrations-filters').on('reset', function() {
             setTimeout(() => dataTable.ajax.reload(), 0);
         });
     });

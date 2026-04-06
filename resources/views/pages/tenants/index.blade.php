@@ -8,14 +8,14 @@
         <div class="d-flex flex-stack flex-wrap mb-5">
             <div class="d-flex align-items-center position-relative my-1 mb-2 mb-md-0">
                 <i class="ki-duotone ki-magnifier fs-1 position-absolute ms-6"><span class="path1"></span><span class="path2"></span></i>
-                <input type="text" data-kt-docs-table-filter="search" class="form-control form-control-solid w-250px ps-15" placeholder="Procurar clientes">
+                <input type="text" data-kt-docs-table-filter="search" class="form-control form-control-solid w-250px ps-15" placeholder="Procurar tenants">
             </div>
             <div class="d-flex justify-content-end" data-kt-docs-table-toolbar="base">
                 <button type="button" class="btn btn-light-primary me-3" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
                     <i class="ki-duotone ki-filter fs-2"><span class="path1"></span><span class="path2"></span></i>        Filtrar
                 </button>
                 <div class="menu menu-sub menu-sub-dropdown w-300px w-md-325px" data-kt-menu="true">
-                    <form action="" id="clients-filters">
+                    <form action="" id="tenants-filters">
                         <div class="px-7 py-5">
                             <div class="fs-4 text-gray-900 fw-bold">Filtros</div>
                         </div>
@@ -77,7 +77,7 @@
                 </a>
             </div>
         </div>
-        <table id="datatables-clients" class="table table-striped table-row-bordered gy-2 gs-7 align-middle">
+        <table id="datatables-tenants" class="table table-striped table-row-bordered gy-2 gs-7 align-middle">
             <thead class="rounded">
                 <tr class="fw-bold fs-6 text-gray-700 px-7">
                     <th class="">Nome do Cliente</th>
@@ -97,10 +97,10 @@
 @endsection
 
 @section('modals')
-<div class="modal fade" tabindex="-1" id="modal_client_run_task">
+<div class="modal fade" tabindex="-1" id="modal_tenant_run_task">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <form id="form-client-run-task" method="GET" action="">
+            <form id="form-tenant-run-task" method="GET" action="">
                 <div class="modal-header">
                     <h3 class="modal-title">Executar Tarefa</h3>
                     <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close">
@@ -109,8 +109,8 @@
                 </div>
                 <div class="modal-body">
                     <div class="text-gray-700 mb-5">
-                        Escolha qual tarefa deseja executar para o cliente
-                        <span class="fw-bold" id="selected-client-name">-</span>.
+                        Escolha qual tarefa deseja executar para o tenant
+                        <span class="fw-bold" id="selected-tenant-name">-</span>.
                     </div>
 
                     <div class="mb-4">
@@ -120,7 +120,7 @@
                             id="scheduled-job-select"
                             class="form-select form-select-solid"
                             data-control="select2"
-                            data-dropdown-parent="#modal_client_run_task"
+                            data-dropdown-parent="#modal_tenant_run_task"
                             data-placeholder="Selecione uma tarefa"
                         >
                             <option value="all">Todas as tarefas</option>
@@ -147,7 +147,7 @@
 @section('custom-footer')
 <script>
     // Seleciona a tabela
-    const table = $('#datatables-clients');
+    const table = $('#datatables-tenants');
 
     // Configurações da tabela
     const dataTableOptions = {
@@ -225,7 +225,7 @@
 
     // Inicializa select2 do modal de tarefas.
     $('#scheduled-job-select').select2({
-        dropdownParent: $('#modal_client_run_task'),
+        dropdownParent: $('#modal_tenant_run_task'),
         width: '100%',
     });
 
@@ -235,52 +235,52 @@
     });
 
     // Filtra a tabela
-    $('#clients-filters').on('submit', function(e) {
+    $('#tenants-filters').on('submit', function(e) {
         e.preventDefault();
         dataTable.ajax.reload();
     });
 
     // Reseta filtros do menu
-    $('#clients-filters').on('reset', function() {
+    $('#tenants-filters').on('reset', function() {
         setTimeout(() => dataTable.ajax.reload(), 0);
     });
 
-    // Abre o modal para escolher qual tarefa executar no cliente.
-    $(document).on('click', '.js-client-run-task-modal', function (e) {
+    // Abre o modal para escolher qual tarefa executar no tenant.
+    $(document).on('click', '.js-tenant-run-task-modal', function (e) {
         e.preventDefault();
 
         const trigger = $(this);
-        const clientName = trigger.data('client-name') || 'cliente';
+        const tenantName = trigger.data('tenant-name') || 'tenant';
         const actionUrl = trigger.attr('href');
 
-        // Atualiza o formulário do modal com o cliente selecionado.
-        $('#selected-client-name').text(clientName);
-        $('#form-client-run-task').attr('action', actionUrl);
+        // Atualiza o formulário do modal com o tenant selecionado.
+        $('#selected-tenant-name').text(tenantName);
+        $('#form-tenant-run-task').attr('action', actionUrl);
         $('#scheduled-job-select').val('all').trigger('change');
 
-        $('#modal_client_run_task').modal('show');
+        $('#modal_tenant_run_task').modal('show');
     });
 
-    // Confirma ações do menu do cliente (exceto "Acessar como sistema")
-    $(document).on('click', '.js-client-action-confirm', function (e) {
+    // Confirma ações do menu do tenant (exceto "Acessar como sistema")
+    $(document).on('click', '.js-tenant-action-confirm', function (e) {
         const trigger = $(this);
-        const clientName = trigger.data('client-name') || 'cliente';
+        const tenantName = trigger.data('tenant-name') || 'tenant';
         const actionLabel = trigger.data('action-label') || 'executar esta ação';
-        const shouldProceed = window.confirm(`Deseja mesmo ${actionLabel} no cliente ${clientName}?`);
+        const shouldProceed = window.confirm(`Deseja mesmo ${actionLabel} no tenant ${tenantName}?`);
 
         if (!shouldProceed) {
             e.preventDefault();
         }
     });
 
-    // Ativa/desativa cliente via AJAX na listagem
-    $(document).on('click', '.js-client-toggle-status', function (e) {
+    // Ativa/desativa tenant via AJAX na listagem
+    $(document).on('click', '.js-tenant-toggle-status', function (e) {
         e.preventDefault();
 
         const trigger = $(this);
-        const clientName = trigger.data('client-name') || 'cliente';
+        const tenantName = trigger.data('tenant-name') || 'tenant';
         const actionLabel = trigger.data('action-label') || 'alterar status';
-        const shouldProceed = window.confirm(`Deseja mesmo ${actionLabel} no cliente ${clientName}?`);
+        const shouldProceed = window.confirm(`Deseja mesmo ${actionLabel} no tenant ${tenantName}?`);
 
         if (!shouldProceed) {
             return;
@@ -295,14 +295,14 @@
                 'X-Requested-With': 'XMLHttpRequest',
             },
             success: function (response) {
-                const message = response && response.message ? response.message : 'Status do cliente atualizado com sucesso.';
+                const message = response && response.message ? response.message : 'Status do tenant atualizado com sucesso.';
                 toastr.success(message);
                 dataTable.ajax.reload(null, false);
             },
             error: function (xhr) {
                 const message = xhr.responseJSON && xhr.responseJSON.message
                     ? xhr.responseJSON.message
-                    : 'Não foi possível atualizar o status do cliente.';
+                    : 'Não foi possível atualizar o status do tenant.';
                 toastr.error(message);
             }
         });

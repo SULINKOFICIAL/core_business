@@ -14,7 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'auth.bearer'   => \App\Http\Middleware\ValidateBearerToken::class,
-            'attach.client' => \App\Http\Middleware\AttachClientByToken::class,
+            'attach.tenant' => \App\Http\Middleware\AttachTenantByToken::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

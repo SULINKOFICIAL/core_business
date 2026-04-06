@@ -7,7 +7,7 @@ use App\Models\TenantDomain;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
-class ClientSeeder extends Seeder
+class TenantSeeder extends Seeder
 {
     /**
      * Run the database seeds.

@@ -84,7 +84,7 @@
                 <tr class="fw-bold fs-6 text-gray-700 px-7">
                     <th class="text-start">ID</th>
                     <th class="text-start">API</th>
-                    <th class="text-start">Cliente</th>
+                    <th class="text-start">Tenant</th>
                     <th class="text-start">JSON</th>
                     <th class="text-center">Reprocessado</th>
                     <th class="text-center">Status</th>
@@ -373,7 +373,7 @@
         columns: [
             { data: 'id', name: 'id' },
             { data: 'api', name: 'api' },
-            { data: 'client', name: 'client' },
+            { data: 'tenant', name: 'tenant' },
             { data: 'json', name: 'json', orderable: false, searchable: false },
             { data: 'reprocessed', name: 'reprocessed', orderable: false, searchable: false, className: 'text-center' },
             { data: 'status', name: 'status', orderable: false, searchable: false, className: 'text-center' },

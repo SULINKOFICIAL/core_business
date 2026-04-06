@@ -4,7 +4,7 @@
             <div class="modal-header py-3 bg-dark">
                 <div>
                     <h5 class="modal-title text-white mb-1">{{ $ticket->title }}</h5>
-                    <div class="text-gray-300 fs-8">Cliente: {{ $ticket->client?->name ?? 'N/A' }}</div>
+                    <div class="text-gray-300 fs-8">Cliente: {{ $ticket->tenant?->name ?? 'N/A' }}</div>
                 </div>
                 <div class="btn btn-icon bg-dark ms-2" data-bs-dismiss="modal" aria-label="Close">
                     <span class="svg-icon svg-icon-2x fw-bolder">X</span>
@@ -40,7 +40,7 @@
                             <div class="border rounded p-4">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <span class="fw-bold text-gray-800">
-                                        {{ $reply->user?->name ?? $reply->client?->name ?? 'Cliente' }}
+                                        {{ $reply->user?->name ?? $reply->tenant?->name ?? 'Cliente' }}
                                     </span>
                                     <span class="fs-8 text-gray-600">{{ $reply->created_at?->format('d/m/Y H:i') }}</span>
                                 </div>
@@ -62,7 +62,7 @@
                             </div>
                             <div class="mb-4">
                                 <div class="fs-8 text-gray-600 text-uppercase">Empresa</div>
-                                <div class="fw-bold text-gray-800">{{ $ticket->client?->company ?? $ticket->client?->name ?? '-' }}</div>
+                                <div class="fw-bold text-gray-800">{{ $ticket->tenant?->company ?? $ticket->tenant?->name ?? '-' }}</div>
                             </div>
                             <div class="mb-4">
                                 <div class="fs-8 text-gray-600 text-uppercase">Usuário solicitante</div>
