@@ -14,17 +14,15 @@ use App\Http\Controllers\MetaApiOnboardingController;
 use Illuminate\Support\Facades\Route;
 
 /**
- * API para comunicação com o WebSite micore.com.br
- */
-Route::prefix('micore')->group(function () {
-    Route::post('/cadastrar-se',      [ApisController::class, 'newClient']);
-    Route::post('/encontrar-cliente', [ApisController::class, 'findClient']);
-});
-
-/**
  * API para comunicação com os sistemas miCore
  */
 Route::prefix('central')->middleware('auth.bearer')->group(function () {
+
+    /**
+     * API para comunicação com o WebSite micore.com.br
+     */
+    Route::post('/cadastrar-se',      [ApisController::class, 'newClient']);
+    Route::post('/encontrar-cliente', [ApisController::class, 'findClient']);
 
     /** Retorna as informações do banco de dados */
     Route::get('/meu-banco',      [ApisController::class, 'getDatabase']);
