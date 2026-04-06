@@ -5,9 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-class ClientIntegration extends Model
+class TenantIntegration extends Model
 {
-    protected $table = 'clients_integrations';
+    protected $table = 'tenants_integrations';
 
     protected $fillable = [
         'client_id',
@@ -24,11 +24,11 @@ class ClientIntegration extends Model
 
     public function client(): HasOne
     {
-        return $this->hasOne(Client::class, 'id', 'client_id');
+        return $this->hasOne(Tenant::class, 'id', 'client_id');
     }
 
     public function meta(): HasOne
     {
-        return $this->hasOne(ClientMeta::class, 'id', 'client_provider_id');
+        return $this->hasOne(TenantMeta::class, 'id', 'client_provider_id');
     }
 }

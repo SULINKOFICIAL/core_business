@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Client;
+use App\Models\Tenant;
 use Illuminate\Http\Request;
 
 class ApisDomainsController extends Controller

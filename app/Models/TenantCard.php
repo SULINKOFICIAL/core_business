@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class ClientCard extends Model
+class TenantCard extends Model
 {
-    protected $table = 'clients_cards';
+    protected $table = 'tenants_cards';
     protected $fillable = [
         'client_id',
         'main',

@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ClientPackageItem;
+use App\Models\TenantPackageItem;
 use App\Models\Module;
 use App\Models\ModulePricingTier;
 use App\Models\Order;
-use App\Models\ClientPackageItemConfiguration;
+use App\Models\TenantPackageItemConfiguration;
 use App\Services\OrderService;
 use App\Services\PagarMeService;
 use Illuminate\Http\Request;
@@ -254,7 +254,7 @@ class ApisOrdersController extends Controller
         }
 
         // Cria item de módulo no pedido
-        ClientPackageItem::create([
+        TenantPackageItem::create([
             'package_id'   => $package->id,
             'item_id'      => $module->id,
             'module_name'  => $module->name,
@@ -313,7 +313,7 @@ class ApisOrdersController extends Controller
         }
 
         // Persiste a configuração de uso para auditoria e retomada do fluxo.
-        ClientPackageItemConfiguration::updateOrCreate(
+        TenantPackageItemConfiguration::updateOrCreate(
             [
                 'item_id' => $orderItem->id,
                 'key' => 'usage',

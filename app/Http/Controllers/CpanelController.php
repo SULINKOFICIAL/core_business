@@ -19,21 +19,21 @@ class CpanelController extends Controller
 
     public function clientMakeDomain($id)
     {
-        $result = $this->cpanelProvisioningService->createSubdomainForClient((int) $id);
+        $result = $this->cpanelProvisioningService->createSubdomainForTenant((int) $id);
 
         return response()->json($result);
     }
 
     public function clientMakeDatabase($id)
     {
-        $result = $this->cpanelProvisioningService->cloneDatabaseForClient((int) $id);
+        $result = $this->cpanelProvisioningService->cloneDatabaseForTenant((int) $id);
 
         return response()->json($result);
     }
 
     public function clientAddTokenAndUser($id)
     {
-        $result = $this->cpanelProvisioningService->addTokenAndUserForClient((int) $id);
+        $result = $this->cpanelProvisioningService->addTokenAndUserForTenant((int) $id);
 
         return response()->json($result);
     }

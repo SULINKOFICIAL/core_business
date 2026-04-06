@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\Client;
-use App\Models\ClientCard;
+use App\Models\Tenant;
+use App\Models\TenantCard;
 use App\Models\Order;
 use Illuminate\Support\Facades\Http;
 
@@ -27,7 +27,7 @@ class PagarMeService
     public function findOrCreateCustomer($clientInfo)
     {
         // Obtem o cliente
-        $client = Client::find($clientInfo['id']);
+        $client = Tenant::find($clientInfo['id']);
 
         // Verifica se o cliente ja possui um customer na PagarMe
         if (isset($client) && $client->pagarme_customer_id) {
@@ -112,10 +112,10 @@ class PagarMeService
     public function findOrCreateCard($clientId, $cardId, $cvv = null, $address = null)
     {
         // Obtem o cliente
-        $client = Client::find($clientId);
+        $client = Tenant::find($clientId);
 
         // Verifica se o cliente já tem um cartão na PagarMe
-        $card = ClientCard::find($cardId);
+        $card = TenantCard::find($cardId);
 
         // Verifica se o cartão ja existe
         if (isset($card) && $card->pagarme_card_id) {
@@ -195,7 +195,7 @@ class PagarMeService
 
         // Monta o payload para a criação do plano
         $payload = [
-            'name'           => "Assinatura Cliente - {$package->client->name} #{$package->client->id}",
+            'name'           => "Assinatura Tenante - {$package->client->name} #{$package->client->id}",
             'description'    => $description,
             'interval'       => $intervalCycle,
             'interval_count' => 1,

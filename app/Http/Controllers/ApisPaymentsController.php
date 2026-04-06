@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ClientCard;
+use App\Models\TenantCard;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -61,7 +61,7 @@ class ApisPaymentsController extends Controller
     {
         if (isset($data['card_id'])) {
             // Busca cartão existente do próprio cliente.
-            $existingCard = ClientCard::where('client_id', $data['client']->id)
+            $existingCard = TenantCard::where('client_id', $data['client']->id)
                 ->where('id', $data['card_id'])
                 ->first();
 
@@ -87,13 +87,13 @@ class ApisPaymentsController extends Controller
         $data['card']['number'] = $this->normalizeCardNumber($data['card']['number']);
 
         // Reaproveita cartão já salvo para esse cliente.
-        $card = ClientCard::where('client_id', $data['client']->id)
+        $card = TenantCard::where('client_id', $data['client']->id)
             ->where('number', $data['card']['number'])
             ->first();
 
         if (!$card) {
             // Cria novo cartão quando ainda não existe.
-            $card = ClientCard::create([
+            $card = TenantCard::create([
                 'client_id' => $data['client']->id,
                 'main' => true,
                 'name' => $data['card']['name'],

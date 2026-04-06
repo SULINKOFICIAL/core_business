@@ -6,9 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class ClientSubscription extends Model
+class TenantSubscription extends Model
 {
-    protected $table = 'clients_subscriptions';
+    protected $table = 'tenants_subscriptions';
     protected $casts = [
         'start_date' => 'datetime',
         'end_date' => 'datetime',
@@ -41,7 +41,7 @@ class ClientSubscription extends Model
 
     public function client(): BelongsTo
     {
-       return $this->belongsTo(Client::class, 'client_id');
+       return $this->belongsTo(Tenant::class, 'client_id');
     }
 
     public function package(): BelongsTo
@@ -51,7 +51,7 @@ class ClientSubscription extends Model
 
     public function items(): HasMany
     {
-       return $this->hasMany(ClientSubscriptionItem::class, 'client_subscription_id');
+       return $this->hasMany(TenantSubscriptionItem::class, 'client_subscription_id');
     }
 
 }

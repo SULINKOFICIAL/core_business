@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
-use App\Models\ClientModule;
-use App\Models\ClientPackage;
+use App\Models\TenantModule;
+use App\Models\TenantPackage;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\ClientPackageItemConfiguration;
-use App\Models\ClientSubscription;
+use App\Models\TenantPackageItemConfiguration;
+use App\Models\TenantSubscription;
 use App\Models\Package;
 use App\Models\Module;
 use App\Models\Subscription;
@@ -38,9 +38,9 @@ class OrderService
     /**
      * Cria um pacote em rascunho com base nos módulos e configurações.
      */
-    public function getPackageInProgress($client): ClientPackage
+    public function getPackageInProgress($client): TenantPackage
     {
-        return ClientPackage::firstOrCreate(
+        return TenantPackage::firstOrCreate(
             [
                 'client_id' => $client->id,
                 'progress'  => 'draft',
@@ -89,10 +89,10 @@ class OrderService
             return 0.0;
         }
 
-        $configs = ClientPackageItemConfiguration::whereIn('item_id', $itemIds)
+        $configs = TenantPackageItemConfiguration::whereIn('item_id', $itemIds)
             ->get(['derived_pricing_effect']);
 
-        return (float) $configs->sum(function (ClientPackageItemConfiguration $config) {
+        return (float) $configs->sum(function (TenantPackageItemConfiguration $config) {
             $price = data_get($config->derived_pricing_effect, 'price');
             return is_numeric($price) ? (float) $price : 0.0;
         });
@@ -332,11 +332,11 @@ class OrderService
             }
 
             // Remove módulos antigos
-            ClientModule::where('client_id', $client->id)->delete();
+            TenantModule::where('client_id', $client->id)->delete();
 
             // Adiciona novos módulos
             foreach ($package->modules as $module) {
-                ClientModule::create([
+                TenantModule::create([
                     'client_id'  => $client->id,
                     'module_id'  => $module->id,
                 ]);
@@ -362,7 +362,7 @@ class OrderService
         $endDate = $startDate->clone();
 
         // Criar nova assinatura
-        ClientSubscription::create([
+        TenantSubscription::create([
             'client_id'  => $client->id,
             'package_id' => $package->id,
             'order_id'   => $order->id,

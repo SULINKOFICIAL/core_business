@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ClientPackage;
-use App\Models\ClientPackageItem;
+use App\Models\TenantPackage;
+use App\Models\TenantPackageItem;
 use App\Models\Module;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
 
-class ClientsPackagesController extends Controller
+class TenantsPackagesController extends Controller
 {
     /**
      * Cria um pacote em rascunho com base nos módulos desejados.
@@ -46,7 +46,7 @@ class ClientsPackagesController extends Controller
         $module = Module::find($moduleId);
 
         // Verifica se esse pedido já tem esse item
-        $existingItem = ClientPackageItem::where('package_id', $package->id)
+        $existingItem = TenantPackageItem::where('package_id', $package->id)
             ->where('item_id', $moduleId)
             ->first();
 
@@ -64,7 +64,7 @@ class ClientsPackagesController extends Controller
         }
 
         // Cria item de módulo no pedido
-        ClientPackageItem::create([
+        TenantPackageItem::create([
             'package_id' => $package->id,
             'item_id' => $module->id,
             'module_name' => $module->name,
@@ -85,7 +85,7 @@ class ClientsPackagesController extends Controller
     /**
      * Ajusta o preço do pacote
      */
-    public function recalculatePackageTotal(ClientPackage $package)
+    public function recalculatePackageTotal(TenantPackage $package)
     {
         // Soma o subtotal atual caso não seja informado
         $itemsSubtotal = $package->modules()->sum('value');

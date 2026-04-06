@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Client;
-use App\Models\ClientDomain;
-use App\Models\ClientProvisioning;
+use App\Models\Tenant;
+use App\Models\TenantDomain;
+use App\Models\TenantProvisioning;
 use App\Models\ErrorMiCore;
 use App\Models\IntegrationSuggestion;
 use App\Models\Module;
@@ -30,7 +30,7 @@ class ApisController extends Controller
     private $cpanelProvisioningService;
 
     public function __construct(
-        Client $content,
+        Tenant $content,
         CpanelProvisioningService $cpanelProvisioningService
     )
     {
@@ -43,7 +43,7 @@ class ApisController extends Controller
      * por exemplo o site comercial micore.com.br, mas também pode ser
      * utilizado para criar sistemas através de landing pages.
      */
-    public function newClient(Request $request){
+    public function newTenant(Request $request){
 
         // Obtém dados
         $data = $this->mapOnboardingPayload($request->all());
@@ -72,7 +72,7 @@ class ApisController extends Controller
         // Realiza verificações de duplicidade
         foreach ($verifications as $field => $message) {
             if (!empty($data[$field])) {
-                if ($client = Client::where($field, $data[$field])->first()) {
+                if ($client = Tenant::where($field, $data[$field])->first()) {
                     return response()->json([
                         'message' => $message,
                         'url'     => $client->domain,
@@ -112,7 +112,7 @@ class ApisController extends Controller
             'table_user' => $data['table_usr'],
             'table_password' => $data['table_password'],
             'first_user' => $data['first_user'],
-            'install' => ClientProvisioning::STEP_SUBDOMAIN,
+            'install' => TenantProvisioning::STEP_SUBDOMAIN,
         ];
 
         unset($data['table'], $data['table_usr'], $data['table_password'], $data['first_user'], $data['password']);
@@ -202,15 +202,15 @@ class ApisController extends Controller
      * Função responsável por obter o cliente no banco de dados
      * e pegar o dominio do cliente para acessar via micore.com.br
      */
-    public function findClient(Request $request)
+    public function findTenant(Request $request)
     {
         // Obtém dados
         $data = $request->all();
 
         // Obtém dados do cliente
-        $client = isset($data['email']) ? Client::where('email', $data['email'])->first()
-                : (isset($data['cnpj']) ? Client::where('cnpj', $data['cnpj'])->first()
-                : (isset($data['cpf']) ? Client::where('cpf', $data['cpf'])->first()
+        $client = isset($data['email']) ? Tenant::where('email', $data['email'])->first()
+                : (isset($data['cnpj']) ? Tenant::where('cnpj', $data['cnpj'])->first()
+                : (isset($data['cpf']) ? Tenant::where('cpf', $data['cpf'])->first()
                 : null));
 
         // Verifica se o cliente foi encontrado
@@ -218,7 +218,7 @@ class ApisController extends Controller
             $domain = $client->domains()->where('status', true)->first()?->domain;
 
             if (!$domain) {
-                return response()->json(['message' => 'Cliente encontrado, mas sem domínio ativo vinculado.'], 404);
+                return response()->json(['message' => 'Tenante encontrado, mas sem domínio ativo vinculado.'], 404);
             }
 
             return response()->json(['domain' => $domain]);
@@ -244,7 +244,7 @@ class ApisController extends Controller
         $domain = str_replace('www.', '', $domain);
 
         // Busca na lista de domínios
-        $domain = ClientDomain::where('domain', $domain)->first();
+        $domain = TenantDomain::where('domain', $domain)->first();
 
         // Verifica se o domínio existe
         if (!$domain) return response()->json(['error' => 'Domínio não encontrado.'], 404);

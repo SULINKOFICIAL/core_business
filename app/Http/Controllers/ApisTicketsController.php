@@ -154,7 +154,7 @@ class ApisTicketsController extends Controller
                     'message' => $reply->message,
                     'created_at' => optional($reply->created_at)->toISOString(),
                     'author_type' => $reply->user_id ? 'user' : 'client',
-                    'author_name' => $reply->user?->name ?? $reply->client?->name ?? 'Cliente',
+                    'author_name' => $reply->user?->name ?? $reply->client?->name ?? 'Tenante',
                 ];
             })->values()->all(),
             'attachments' => $ticket->attachments->map(function ($attachment) {

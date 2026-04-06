@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Client;
-use App\Models\ClientDomain;
-use App\Models\ClientPackage;
-use App\Models\ClientPackageItem;
-use App\Models\ClientProvisioning;
+use App\Models\Tenant;
+use App\Models\TenantDomain;
+use App\Models\TenantPackage;
+use App\Models\TenantPackageItem;
+use App\Models\TenantProvisioning;
 use App\Models\Module;
 use App\Models\Order;
 use App\Models\OrderTransaction;
@@ -18,11 +18,11 @@ use Illuminate\Support\Facades\Auth;
 use GuzzleHttp\Client as Guzzle;
 use Illuminate\Support\Str;
 
-class ClientController extends Controller
+class TenantController extends Controller
 {
     private $repository;
 
-    public function __construct(Client $content)
+    public function __construct(Tenant $content)
     {
         $this->repository = $content;
     }
@@ -98,7 +98,7 @@ class ClientController extends Controller
             'table_user' => $data['table_user'],
             'table_password' => $data['table_password'],
             'first_user' => $data['first_user'],
-            'install' => ClientProvisioning::STEP_SUBDOMAIN,
+            'install' => TenantProvisioning::STEP_SUBDOMAIN,
         ];
 
         unset($data['table'], $data['table_user'], $data['table_password'], $data['first_user'], $data['user']);
@@ -109,7 +109,7 @@ class ClientController extends Controller
         $created->runtimeStatus()->create();
 
         // Cria o pacote do cliente
-        $package = ClientPackage::create([
+        $package = TenantPackage::create([
             'client_id' => $created->id,
             'name' => 'DEMO 30 DIAS',
             'price' => 0,
@@ -135,7 +135,7 @@ class ClientController extends Controller
         })->toArray();
 
         // Cria os itens do pacote
-        ClientPackageItem::insert($packageItems);
+        TenantPackageItem::insert($packageItems);
 
         // Cria uma assinatura fictícia
         $subscription = Subscription::create([
@@ -187,7 +187,7 @@ class ClientController extends Controller
         ]);
 
         // Registra o domínio do cliente
-        ClientDomain::create([
+        TenantDomain::create([
             'client_id'     => $created->id,
             'auto_generate' => true,
             'domain'        => $data['domain'] . '.micore.com.br',
@@ -198,7 +198,7 @@ class ClientController extends Controller
         // Retorna a página
         return redirect()
                 ->route('clients.install.index', $created->id)
-                ->with('message', 'Cliente <b>'. $created->name . '</b> adicionado com sucesso.');
+                ->with('message', 'Tenante <b>'. $created->name . '</b> adicionado com sucesso.');
 
     }
 
@@ -219,7 +219,7 @@ class ClientController extends Controller
             return optional($module->category)->name ?: 'Sem Categoria';
         });
 
-        // Obtém dados do Cliente
+        // Obtém dados do Tenante
         $client = $this->repository->find($id);
 
         // Valida se não aconteceu algum erro com a API
@@ -379,7 +379,7 @@ class ClientController extends Controller
         // Retorna a página
         return redirect()
                 ->route('clients.index')
-                ->with('message', 'Cliente <b>'. $request->name . '</b> atualizado com sucesso.');
+                ->with('message', 'Tenante <b>'. $request->name . '</b> atualizado com sucesso.');
 
     }
 
@@ -387,7 +387,7 @@ class ClientController extends Controller
      * Salva a logo do cliente, caso enviada.
      *
      * @param  \Illuminate\Http\UploadedFile|null  $logo
-     * @param  \App\Models\Client  $client
+     * @param  \App\Models\Tenant  $client
      * @param  string  $filename
      * @return void
      */
@@ -425,7 +425,7 @@ class ClientController extends Controller
 
         if ($this->request->ajax()) {
             return response()->json([
-                'message' => 'Cliente <b>'. $content->name . '</b> '. $message .' com sucesso.',
+                'message' => 'Tenante <b>'. $content->name . '</b> '. $message .' com sucesso.',
                 'status' => $status
             ]);
         }
@@ -433,7 +433,7 @@ class ClientController extends Controller
         // Retorna a página
         return redirect()
                 ->route('clients.index')
-                ->with('message', 'Cliente <b>'. $content->name . '</b> '. $message .' com sucesso.');
+                ->with('message', 'Tenante <b>'. $content->name . '</b> '. $message .' com sucesso.');
 
     }
 

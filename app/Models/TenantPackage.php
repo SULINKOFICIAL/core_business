@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
-class ClientPackage extends Model
+class TenantPackage extends Model
 {
-    protected $table = 'clients_packages';
+    protected $table = 'tenants_packages';
 
     protected $fillable = [
         'client_id',
@@ -25,19 +25,19 @@ class ClientPackage extends Model
 
     public function client(): BelongsTo
     {
-        return $this->belongsTo(Client::class, 'client_id', 'id');
+        return $this->belongsTo(Tenant::class, 'client_id', 'id');
     }
 
     public function items(): HasMany
     {
-        return $this->hasMany(ClientPackageItem::class, 'package_id', 'id');
+        return $this->hasMany(TenantPackageItem::class, 'package_id', 'id');
     }
 
     public function modules(): HasManyThrough
     {
         return $this->hasManyThrough(
             Module::class,
-            ClientPackageItem::class,
+            TenantPackageItem::class,
             'package_id',
             'id',
             'id',

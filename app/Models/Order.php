@@ -47,7 +47,7 @@ class Order extends Model
 
     public function client(): BelongsTo
     {
-        return $this->belongsTo(Client::class, 'client_id');
+        return $this->belongsTo(Tenant::class, 'client_id');
     }
 
     public function transactions(): HasMany
@@ -67,7 +67,7 @@ class Order extends Model
 
     public function package(): BelongsTo
     {
-        return $this->belongsTo(ClientPackage::class, 'package_id', 'id');
+        return $this->belongsTo(TenantPackage::class, 'package_id', 'id');
     }
 
     public function previousPackage(): BelongsTo

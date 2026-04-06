@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Client;
-use App\Models\ClientRuntimeStatus;
+use App\Models\Tenant;
+use App\Models\TenantRuntimeStatus;
 use App\Models\Module;
 use App\Models\ModuleCategory;
 use App\Models\Resource;
@@ -17,21 +17,21 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use RuntimeException;
 
-class ClientsActionsController extends Controller
+class TenantsActionsController extends Controller
 {
 
     protected $request;
     private $repository;
     protected $guzzleService;
 
-    public function __construct(Request $request, Client $content, GuzzleService $guzzleService)
+    public function __construct(Request $request, Tenant $content, GuzzleService $guzzleService)
     {
         $this->request = $request;
         $this->repository = $content;
         $this->guzzleService = $guzzleService;
     }
 
-    private function runtimeStatusFor(Client $client): ClientRuntimeStatus
+    private function runtimeStatusFor(Tenant $client): TenantRuntimeStatus
     {
         $runtimeStatus = $client->runtimeStatus()->first();
 
@@ -84,7 +84,7 @@ class ClientsActionsController extends Controller
         $moduleService = app(ModuleService::class);
 
         // Realiza solicitação
-        $response = $moduleService->configureFeatureForClient($client, [
+        $response = $moduleService->configureFeatureForTenant($client, [
             [
                 'name'   => $data['name'],
                 'module' => $data['module'],
@@ -148,13 +148,13 @@ class ClientsActionsController extends Controller
         $clientsId = $this->repository->all();
         
         // Sinaliza todos como desatualizados
-        ClientRuntimeStatus::query()->update(['db_last_version' => false]);
+        TenantRuntimeStatus::query()->update(['db_last_version' => false]);
         
         // Contador de erros
         $errors = 0;
 
         // Total de clientes
-        $totalClients = count($clientsId);
+        $totalTenants = count($clientsId);
 
         // Loop para percorrer todos os clientes
         foreach ($clientsId as $client) {
@@ -166,7 +166,7 @@ class ClientsActionsController extends Controller
 
         // Define a mensagem final com base no número de erros
         $message = $errors > 0
-        ? "$errors de $totalClients cliente(s) apresentaram erro(s) durante a atualização."
+        ? "$errors de $totalTenants cliente(s) apresentaram erro(s) durante a atualização."
         : 'Bancos de dados atualizados com sucesso';
 
         // Redireciona com a mensagem final
@@ -221,7 +221,7 @@ class ClientsActionsController extends Controller
             }
 
             if (!empty($updateColumns)) {
-                ClientRuntimeStatus::query()->update($updateColumns);
+                TenantRuntimeStatus::query()->update($updateColumns);
             }
         }
 
@@ -246,18 +246,18 @@ class ClientsActionsController extends Controller
         }
 
         // Busca um cliente compartilhado para aplicar operações compartilhadas.
-        $sharedClient = $clients->first(function($client) {
+        $sharedTenant = $clients->first(function($client) {
             return $client->type_installation == 'shared';
         });
 
-        if ($sharedClient) {
+        if ($sharedTenant) {
             
             if ($shouldUpdateGit) {
                 // Verifica se o cliente compartilhado foi atualizado com sucesso.
-                $this->updateGit($sharedClient->id);
+                $this->updateGit($sharedTenant->id);
 
                 // Atualiza o git de todas as hospedagens compartilhadas.
-                $sharedRuntimeStatus = $this->runtimeStatusFor($sharedClient)->refresh();
+                $sharedRuntimeStatus = $this->runtimeStatusFor($sharedTenant)->refresh();
                 foreach ($clients->where('type_installation', 'shared') as $client) {
                     $this->runtimeStatusFor($client)->update([
                         'git_last_version' => $sharedRuntimeStatus->git_last_version,
@@ -268,10 +268,10 @@ class ClientsActionsController extends Controller
 
             if ($shouldRestartSupervisor) {
                 // Verifica se o restart de filas no cliente compartilhado foi concluído.
-                $this->restartSupervisor($sharedClient->id);
+                $this->restartSupervisor($sharedTenant->id);
 
                 // Atualiza o status do supervisor em todas as hospedagens compartilhadas.
-                $sharedRuntimeStatus = $this->runtimeStatusFor($sharedClient)->refresh();
+                $sharedRuntimeStatus = $this->runtimeStatusFor($sharedTenant)->refresh();
                 foreach ($clients->where('type_installation', 'shared') as $client) {
                     $this->runtimeStatusFor($client)->update([
                         'sp_last_version' => $sharedRuntimeStatus->sp_last_version,
@@ -281,7 +281,7 @@ class ClientsActionsController extends Controller
             }
 
             if ($shouldBuildJavascript) {
-                $this->runNpmBuild($sharedClient->id);
+                $this->runNpmBuild($sharedTenant->id);
             }
 
         }
@@ -448,10 +448,10 @@ class ClientsActionsController extends Controller
         // Mantém o status sincronizado para todos os clientes compartilhados.
         if ($client->type_installation === 'shared') {
             $sharedRuntimeStatus = $this->runtimeStatusFor($client)->refresh();
-            $sharedClients = $this->repository->where('type_installation', 'shared')->get();
+            $sharedTenants = $this->repository->where('type_installation', 'shared')->get();
 
-            foreach ($sharedClients as $sharedClient) {
-                $this->runtimeStatusFor($sharedClient)->update([
+            foreach ($sharedTenants as $sharedTenant) {
+                $this->runtimeStatusFor($sharedTenant)->update([
                     'sp_last_version' => $sharedRuntimeStatus->sp_last_version,
                     'sp_error' => $sharedRuntimeStatus->sp_error,
                 ]);
@@ -656,7 +656,7 @@ class ClientsActionsController extends Controller
         // Obtém dados do formulário
         $data = $request->all();
 
-        // Encontra o Cliente modelo 1
+        // Encontra o Tenante modelo 1
         $client = $this->repository->find(1);
 
         // Realiza solicitação

@@ -10,9 +10,9 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Http;
 
-class Client extends Model
+class Tenant extends Model
 {
-    protected $table = 'clients';
+    protected $table = 'tenants';
 
     /**
      * The attributes that are mass assignable.
@@ -53,43 +53,43 @@ class Client extends Model
     // Dados de provisionamento técnico do cliente
     public function provisioning(): HasOne
     {
-        return $this->hasOne(ClientProvisioning::class, 'client_id', 'id');
+        return $this->hasOne(TenantProvisioning::class, 'client_id', 'id');
     }
 
     // Status técnico de atualização do cliente
     public function runtimeStatus(): HasOne
     {
-        return $this->hasOne(ClientRuntimeStatus::class, 'client_id', 'id');
+        return $this->hasOne(TenantRuntimeStatus::class, 'client_id', 'id');
     }
 
     // Pacote atual do cliente
     public function packages(): HasMany
     {
-        return $this->hasMany(ClientPackage::class, 'client_id', 'id');
+        return $this->hasMany(TenantPackage::class, 'client_id', 'id');
     }
 
     // Pacote atual do cliente
     public function package(): HasOne
     {
-        return $this->hasOne(ClientPackage::class, 'client_id', 'id')->where('status', true);
+        return $this->hasOne(TenantPackage::class, 'client_id', 'id')->where('status', true);
     }
 
     // Domínios do cliente
     public function domains(): HasMany
     {
-        return $this->hasMany(ClientDomain::class, 'client_id', 'id');
+        return $this->hasMany(TenantDomain::class, 'client_id', 'id');
     }
 
     // Objetivos principais selecionados no onboarding
     public function mainGoals(): HasMany
     {
-        return $this->hasMany(ClientMainGoal::class, 'client_id', 'id');
+        return $this->hasMany(TenantMainGoal::class, 'client_id', 'id');
     }
 
     // Módulos habilitados para o cliente
     public function modules(): BelongsToMany
     {
-        return $this->belongsToMany(Module::class, 'clients_modules', 'client_id', 'module_id');
+        return $this->belongsToMany(Module::class, 'tenants_modules', 'client_id', 'module_id');
     }
 
     // Compras realizadas pelo cliente
@@ -101,7 +101,7 @@ class Client extends Model
     // Compras realizadas pelo cliente
     public function cards(): HasMany
     {
-        return $this->hasMany(ClientCard::class, 'client_id', 'id');
+        return $this->hasMany(TenantCard::class, 'client_id', 'id');
     }
 
     // Assinaturas realizadas pelo cliente

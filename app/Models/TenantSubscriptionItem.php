@@ -5,9 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class ClientSubscriptionItem extends Model
+class TenantSubscriptionItem extends Model
 {
-    protected $table = 'client_subscription_items';
+    protected $table = 'tenant_subscription_items';
 
     protected $casts = [
         'current_config_snapshot' => 'array',
@@ -25,6 +25,6 @@ class ClientSubscriptionItem extends Model
 
     public function subscription(): BelongsTo
     {
-        return $this->belongsTo(ClientSubscription::class, 'client_subscription_id');
+        return $this->belongsTo(TenantSubscription::class, 'client_subscription_id');
     }
 }

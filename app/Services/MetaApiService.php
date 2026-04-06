@@ -9,9 +9,9 @@ class MetaApiService
     // Serviço Guzzle
     protected $RequestService;
     private $metaAppId;
-    private $metaAppClientSecret;
+    private $metaAppTenantSecret;
     private $metaAppIdInstagram;
-    private $metaAppClientSecretInstagram;
+    private $metaAppTenantSecretInstagram;
 
     public function __construct()
     {
@@ -21,11 +21,11 @@ class MetaApiService
         
         // Carrega credenciais do Meta App a partir do config/meta.php
         $this->metaAppId = config('meta.client_id');
-        $this->metaAppClientSecret = config('meta.client_secret');
+        $this->metaAppTenantSecret = config('meta.client_secret');
 
 
         $this->metaAppIdInstagram = config('meta.app_instagram_id');
-        $this->metaAppClientSecretInstagram = config('meta.app_instagram_secret');
+        $this->metaAppTenantSecretInstagram = config('meta.app_instagram_secret');
 
     }
 
@@ -45,7 +45,7 @@ class MetaApiService
         $query = [
             'code'          => $code,
             'client_id'     => $this->metaAppId,
-            'client_secret' => $this->metaAppClientSecret,
+            'client_secret' => $this->metaAppTenantSecret,
         ];
 
         // Só adiciona redirect_uri se $type existir
@@ -86,7 +86,7 @@ class MetaApiService
             [
                 'form_params' => [
                     'client_id'     => $this->metaAppIdInstagram,
-                    'client_secret' => $this->metaAppClientSecretInstagram,
+                    'client_secret' => $this->metaAppTenantSecretInstagram,
                     'grant_type'    => 'authorization_code',
                     'redirect_uri'  => route('callbacks.meta.' . $type),
                     'code'          => $code,
@@ -210,7 +210,7 @@ class MetaApiService
                 'query' => [
                     'grant_type'        => 'fb_exchange_token',
                     'client_id'         => $this->metaAppId,
-                    'client_secret'     => $this->metaAppClientSecret,
+                    'client_secret'     => $this->metaAppTenantSecret,
                     'fb_exchange_token' => $accessToken,
                 ]
             ]

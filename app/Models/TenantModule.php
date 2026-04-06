@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class ClientModule extends Model
+class TenantModule extends Model
 {
-    protected $table = 'clients_modules';
+    protected $table = 'tenants_modules';
     protected $fillable = [
         'client_id',
         'module_id',

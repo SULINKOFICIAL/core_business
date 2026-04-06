@@ -5,21 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class ClientDomain extends Model
+class TenantMainGoal extends Model
 {
-
-    protected $table = 'clients_domains';
+    protected $table = 'tenants_main_goals';
 
     protected $fillable = [
         'client_id',
-        'domain',
-        'auto_generate',
-        'description',
-        'status',
+        'goal',
     ];
 
     public function client(): BelongsTo
     {
-        return $this->belongsTo(Client::class, 'client_id', 'id');
+        return $this->belongsTo(Tenant::class, 'client_id', 'id');
     }
 }

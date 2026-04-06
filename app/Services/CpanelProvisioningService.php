@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\Client;
-use App\Models\ClientProvisioning;
+use App\Models\Tenant;
+use App\Models\TenantProvisioning;
 use App\Models\Package;
 use Exception;
 use GuzzleHttp\Client as Guzzle;
@@ -32,44 +32,44 @@ class CpanelProvisioningService
     /**
      * Executa o fluxo de provisionamento da próxima etapa do cliente.
      */
-    public function runProvisioning(Client|int $clientInput): array
+    public function runProvisioning(Tenant|int $clientInput): array
     {
-        $client = $this->resolveClient($clientInput);
-        $provisioning = $this->getClientProvisioningOrFail($client);
+        $client = $this->resolveTenant($clientInput);
+        $provisioning = $this->getTenantProvisioningOrFail($client);
 
-        if ($provisioning->install === ClientProvisioning::STEP_SUBDOMAIN) {
+        if ($provisioning->install === TenantProvisioning::STEP_SUBDOMAIN) {
             return $this->handleSubdomainStep($client, $provisioning);
         }
 
-        if ($provisioning->install === ClientProvisioning::STEP_DATABASE) {
+        if ($provisioning->install === TenantProvisioning::STEP_DATABASE) {
             return $this->handleDatabaseStep($client, $provisioning);
         }
 
-        if ($provisioning->install === ClientProvisioning::STEP_USER_TOKEN) {
+        if ($provisioning->install === TenantProvisioning::STEP_USER_TOKEN) {
             return $this->handleUserTokenStep($client, $provisioning);
         }
 
-        if ($provisioning->install === ClientProvisioning::STEP_MODULES) {
+        if ($provisioning->install === TenantProvisioning::STEP_MODULES) {
             return $this->handleModulesStep($client, $provisioning);
         }
 
-        $provisioning->install = ClientProvisioning::STEP_COMPLETED;
+        $provisioning->install = TenantProvisioning::STEP_COMPLETED;
         $provisioning->save();
 
         return [
-            'url' => $this->getClientPrimaryDomainOrFail($client),
+            'url' => $this->getTenantPrimaryDomainOrFail($client),
             'message' => 'Conta criada com sucesso',
-            'step' => ClientProvisioning::STEP_COMPLETED,
+            'step' => TenantProvisioning::STEP_COMPLETED,
         ];
     }
 
     /**
      * Cria o subdomínio do cliente manualmente.
      */
-    public function createSubdomainForClient(int $clientId): array
+    public function createSubdomainForTenant(int $clientId): array
     {
-        $client = $this->resolveClient($clientId);
-        $domain = $this->getClientPrimaryDomainOrFail($client);
+        $client = $this->resolveTenant($clientId);
+        $domain = $this->getTenantPrimaryDomainOrFail($client);
 
         return $this->createSubdomain($domain);
     }
@@ -77,9 +77,9 @@ class CpanelProvisioningService
     /**
      * Clona o banco template para o cliente manualmente.
      */
-    public function cloneDatabaseForClient(int $clientId): array
+    public function cloneDatabaseForTenant(int $clientId): array
     {
-        $client = $this->resolveClient($clientId);
+        $client = $this->resolveTenant($clientId);
 
         return $this->cloneDatabase($client);
     }
@@ -87,34 +87,34 @@ class CpanelProvisioningService
     /**
      * Insere usuário inicial e token no banco do cliente manualmente.
      */
-    public function addTokenAndUserForClient(int $clientId): array
+    public function addTokenAndUserForTenant(int $clientId): array
     {
-        $client = $this->resolveClient($clientId);
+        $client = $this->resolveTenant($clientId);
         $this->insertTokenAndUser($client);
 
         return [
             'message' => 'Usuário e token inseridos com sucesso',
-            'step' => ClientProvisioning::STEP_MODULES,
+            'step' => TenantProvisioning::STEP_MODULES,
         ];
     }
 
-    private function handleSubdomainStep(Client $client, ClientProvisioning $provisioning): array
+    private function handleSubdomainStep(Tenant $client, TenantProvisioning $provisioning): array
     {
-        $domain = $this->getClientPrimaryDomainOrFail($client);
+        $domain = $this->getTenantPrimaryDomainOrFail($client);
 
         Log::info('Criando subdomínio do cliente', ['client_id' => $client->id, 'domain' => $domain]);
         $this->createSubdomain($domain);
 
-        $provisioning->install = ClientProvisioning::STEP_DATABASE;
+        $provisioning->install = TenantProvisioning::STEP_DATABASE;
         $provisioning->save();
 
         return [
             'message' => 'Subdomínio criado com sucesso',
-            'step' => ClientProvisioning::STEP_DATABASE,
+            'step' => TenantProvisioning::STEP_DATABASE,
         ];
     }
 
-    private function handleDatabaseStep(Client $client, ClientProvisioning $provisioning): array
+    private function handleDatabaseStep(Tenant $client, TenantProvisioning $provisioning): array
     {
         Log::info('Clonando banco template para cliente', [
             'client_id' => $client->id,
@@ -123,16 +123,16 @@ class CpanelProvisioningService
 
         $this->cloneDatabase($client);
 
-        $provisioning->install = ClientProvisioning::STEP_USER_TOKEN;
+        $provisioning->install = TenantProvisioning::STEP_USER_TOKEN;
         $provisioning->save();
 
         return [
             'message' => 'Banco de dados clonado com sucesso',
-            'step' => ClientProvisioning::STEP_USER_TOKEN,
+            'step' => TenantProvisioning::STEP_USER_TOKEN,
         ];
     }
 
-    private function handleUserTokenStep(Client $client, ClientProvisioning $provisioning): array
+    private function handleUserTokenStep(Tenant $client, TenantProvisioning $provisioning): array
     {
         Log::info('Inserindo usuário e token no banco do cliente', [
             'client_id' => $client->id,
@@ -141,47 +141,47 @@ class CpanelProvisioningService
 
         $this->insertTokenAndUser($client);
 
-        $provisioning->install = ClientProvisioning::STEP_MODULES;
+        $provisioning->install = TenantProvisioning::STEP_MODULES;
         $provisioning->save();
 
         return [
             'message' => 'Usuário e token inseridos com sucesso',
-            'step' => ClientProvisioning::STEP_MODULES,
+            'step' => TenantProvisioning::STEP_MODULES,
         ];
     }
 
-    private function handleModulesStep(Client $client, ClientProvisioning $provisioning): array
+    private function handleModulesStep(Tenant $client, TenantProvisioning $provisioning): array
     {
         Log::info('Configurando módulos do cliente', [
             'client_id' => $client->id,
             'database' => $provisioning->table,
         ]);
 
-        $this->configureModulesForClient($client);
+        $this->configureModulesForTenant($client);
 
-        $provisioning->install = ClientProvisioning::STEP_FINALIZING;
+        $provisioning->install = TenantProvisioning::STEP_FINALIZING;
         $provisioning->save();
 
         return [
             'message' => 'Módulos configurados com sucesso',
-            'step' => ClientProvisioning::STEP_FINALIZING,
+            'step' => TenantProvisioning::STEP_FINALIZING,
         ];
     }
 
-    private function resolveClient(Client|int $clientInput): Client
+    private function resolveTenant(Tenant|int $clientInput): Tenant
     {
-        $client = $clientInput instanceof Client
+        $client = $clientInput instanceof Tenant
             ? $clientInput->loadMissing('provisioning', 'domains')
-            : Client::with(['provisioning', 'domains'])->find($clientInput);
+            : Tenant::with(['provisioning', 'domains'])->find($clientInput);
 
         if (!$client) {
-            throw new RuntimeException('Cliente não encontrado para provisionamento.');
+            throw new RuntimeException('Tenante não encontrado para provisionamento.');
         }
 
         return $client;
     }
 
-    private function getClientProvisioningOrFail(Client $client): ClientProvisioning
+    private function getTenantProvisioningOrFail(Tenant $client): TenantProvisioning
     {
         $provisioning = $client->provisioning;
 
@@ -192,7 +192,7 @@ class CpanelProvisioningService
         return $provisioning;
     }
 
-    private function getClientPrimaryDomainOrFail(Client $client): string
+    private function getTenantPrimaryDomainOrFail(Tenant $client): string
     {
         $domain = $client->domains[0]->domain ?? null;
 
@@ -203,9 +203,9 @@ class CpanelProvisioningService
         return $domain;
     }
 
-    private function insertTokenAndUser(Client $client): void
+    private function insertTokenAndUser(Tenant $client): void
     {
-        $provisioning = $this->getClientProvisioningOrFail($client);
+        $provisioning = $this->getTenantProvisioningOrFail($client);
 
         $tenantDatabase = [
             'name' => $provisioning->table,
@@ -269,7 +269,7 @@ class CpanelProvisioningService
         ]);
     }
 
-    private function configureModulesForClient(Client $client): void
+    private function configureModulesForTenant(Tenant $client): void
     {
         $package = $client->package;
 
@@ -321,9 +321,9 @@ class CpanelProvisioningService
     /**
      * @throws Exception
      */
-    private function cloneDatabase(Client $client): array
+    private function cloneDatabase(Tenant $client): array
     {
-        $provisioning = $this->getClientProvisioningOrFail($client);
+        $provisioning = $this->getTenantProvisioningOrFail($client);
 
         $database = [
             'name' => $provisioning->table,

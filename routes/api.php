@@ -8,7 +8,7 @@ use App\Http\Controllers\ApisTicketsController;
 use App\Http\Controllers\ApisDomainsController;
 use App\Http\Controllers\ApisNewsController;
 use App\Http\Controllers\ApisTokensController;
-use App\Http\Controllers\ClientsPackagesController;
+use App\Http\Controllers\TenantsPackagesController;
 use App\Http\Controllers\MetaApiController;
 use App\Http\Controllers\MetaApiOnboardingController;
 use Illuminate\Support\Facades\Route;
@@ -21,8 +21,8 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
     /**
      * API para comunicação com o WebSite micore.com.br
      */
-    Route::post('/cadastrar-se',      [ApisController::class, 'newClient']);
-    Route::post('/encontrar-cliente', [ApisController::class, 'findClient']);
+    Route::post('/cadastrar-se',      [ApisController::class, 'newTenant']);
+    Route::post('/encontrar-cliente', [ApisController::class, 'findTenant']);
 
     /** Retorna as informações do banco de dados */
     Route::get('/meu-banco',      [ApisController::class, 'getDatabase']);
@@ -36,7 +36,7 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
         Route::get('/minhas-compras',     [ApisAccountController::class, 'orders']);
         Route::get('/compra/{id}',        [ApisAccountController::class, 'invoice']);
         Route::get('/cartoes',            [ApisAccountController::class, 'cards']);
-        Route::get('/meu-pacote',         [ClientsPackagesController::class, 'package']);
+        Route::get('/meu-pacote',         [TenantsPackagesController::class, 'package']);
 
         /**
          * API que gerencia os pedidos

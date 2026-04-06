@@ -210,7 +210,7 @@ class ModuleController extends Controller
             return;
         }
 
-        $extension = $coverImage->getClientOriginalExtension();
+        $extension = $coverImage->getTenantOriginalExtension();
         $filename = $extension ? "cover.{$extension}" : 'cover';
         $path = "modules/{$module->id}";
 

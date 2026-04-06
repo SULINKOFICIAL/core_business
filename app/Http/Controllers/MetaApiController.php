@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ClientDomain;
-use App\Models\ClientIntegration;
-use App\Models\ClientMeta;
+use App\Models\TenantDomain;
+use App\Models\TenantIntegration;
+use App\Models\TenantMeta;
 use App\Models\LogsApi;
 use App\Jobs\MetaDispatchRequest;
-use App\Models\Client;
+use App\Models\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Config;
@@ -175,7 +175,7 @@ class MetaApiController extends Controller
             $accountId = $accountInformations['data']['id'];
 
             // Encontra o cliente que é dono do domínio
-            $client = ClientDomain::where('domain', $data['decoded']['origin'])->first();
+            $client = TenantDomain::where('domain', $data['decoded']['origin'])->first();
 
             /**
              * Lista de permissões
@@ -188,7 +188,7 @@ class MetaApiController extends Controller
             /**
              * Enviar para a conta miCore responsável
              */
-            $clientIntegration = ClientIntegration::updateOrCreate([
+            $clientIntegration = TenantIntegration::updateOrCreate([
                 'external_account_id'   => $accountId,
                 'client_id'             => $client->client_id,
                 'provider'              => 'meta',
@@ -293,7 +293,7 @@ class MetaApiController extends Controller
         $host = $request->host;
 
         // Obtém o Token solicitado
-        $token = ClientIntegration::find($id);
+        $token = TenantIntegration::find($id);
 
         // Verifica se o token foi encontrado
         if (!$token) {
@@ -304,7 +304,7 @@ class MetaApiController extends Controller
         }
 
         // Verifica se o token pertence ao mesmo host
-        $domain = ClientDomain::where('domain', $host)->first();
+        $domain = TenantDomain::where('domain', $host)->first();
 
         // Verifica se o token pertence ao mesmo host
         if (!$domain || $domain->client_id !== $token->client_id) {
@@ -336,10 +336,10 @@ class MetaApiController extends Controller
         $data = $request->all();
 
         // Obtém cliente associado ao miCore através do Token dele
-        $client = Client::where('token', $data['token_micore'])->first();
+        $client = Tenant::where('token', $data['token_micore'])->first();
 
         // Obtém o Token solicitado
-        ClientMeta::updateOrCreate([
+        TenantMeta::updateOrCreate([
             'client_id' => $client->id,
             'meta_id' => $data['waba_id'],
         ], [

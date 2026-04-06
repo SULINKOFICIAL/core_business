@@ -5,9 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class ClientRuntimeStatus extends Model
+class TenantRuntimeStatus extends Model
 {
-    protected $table = 'client_runtime_statuses';
+    protected $table = 'tenant_runtime_statuses';
 
     protected $fillable = [
         'client_id',
@@ -27,6 +27,6 @@ class ClientRuntimeStatus extends Model
 
     public function client(): BelongsTo
     {
-        return $this->belongsTo(Client::class, 'client_id', 'id');
+        return $this->belongsTo(Tenant::class, 'client_id', 'id');
     }
 }

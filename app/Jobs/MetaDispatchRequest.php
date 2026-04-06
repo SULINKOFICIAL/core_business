@@ -2,8 +2,8 @@
 
 namespace App\Jobs;
 
-use App\Models\Client;
-use App\Models\ClientMeta;
+use App\Models\Tenant;
+use App\Models\TenantMeta;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Models\LogsApi;
@@ -52,7 +52,7 @@ class MetaDispatchRequest implements ShouldQueue
         if(in_array($platform, ['whatsapp', 'instagram', 'facebook'])){
 
             // Obtem o cliente pelo id da meta
-            $clientMeta = ClientMeta::where('meta_id', $id)->first();
+            $clientMeta = TenantMeta::where('meta_id', $id)->first();
 
             // Se não encontrar retorna erro
             if(!$clientMeta){
@@ -83,7 +83,7 @@ class MetaDispatchRequest implements ShouldQueue
         } elseif ($platform == 'whatsapp_web') {
 
             // Obtem o cliente
-            $client = Client::find($id);
+            $client = Tenant::find($id);
             if (!$client) {
                 $this->logApi->update([
                     'status' => 'Erro',

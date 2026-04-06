@@ -23,7 +23,7 @@ class Package extends Model
 
     public function clients()
     {
-        return $this->belongsToMany(Client::class, 'clients_packages')
+        return $this->belongsToMany(Tenant::class, 'tenants_packages')
                     ->withPivot('start_date', 'end_date', 'status')
                     ->withTimestamps();
     }

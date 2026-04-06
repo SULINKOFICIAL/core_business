@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 
-class ClientIntegrationProcessingController extends Controller
+class TenantIntegrationProcessingController extends Controller
 {
     public function process(Request $request)
     {
@@ -23,22 +23,22 @@ class ClientIntegrationProcessingController extends Controller
 
     public function loadTables()
     {
-        return DB::table('clients_integrations')
-            ->leftJoin('clients', 'clients.id', '=', 'clients_integrations.client_id');
+        return DB::table('tenants_integrations')
+            ->leftJoin('tenants', 'tenants.id', '=', 'tenants_integrations.client_id');
     }
 
     public function filters($query, array $data)
     {
         if (!empty($data['provider_filter']) && $data['provider_filter'] !== 'all') {
-            $query->where('clients_integrations.provider', $data['provider_filter']);
+            $query->where('tenants_integrations.provider', $data['provider_filter']);
         }
 
         if (!empty($data['type_filter']) && $data['type_filter'] !== 'all') {
-            $query->where('clients_integrations.type', $data['type_filter']);
+            $query->where('tenants_integrations.type', $data['type_filter']);
         }
 
         if (!empty($data['status_filter']) && $data['status_filter'] !== 'all') {
-            $query->where('clients_integrations.status', $data['status_filter']);
+            $query->where('tenants_integrations.status', $data['status_filter']);
         }
 
         return $query;
@@ -50,12 +50,12 @@ class ClientIntegrationProcessingController extends Controller
 
         if (!empty($searchBy)) {
             $query->where(function ($sub) use ($searchBy) {
-                $sub->where('clients_integrations.id', 'like', "%{$searchBy}%")
-                    ->orWhere('clients_integrations.client_id', 'like', "%{$searchBy}%")
-                    ->orWhere('clients.name', 'like', "%{$searchBy}%")
-                    ->orWhere('clients_integrations.provider', 'like', "%{$searchBy}%")
-                    ->orWhere('clients_integrations.type', 'like', "%{$searchBy}%")
-                    ->orWhere('clients_integrations.external_account_id', 'like', "%{$searchBy}%");
+                $sub->where('tenants_integrations.id', 'like', "%{$searchBy}%")
+                    ->orWhere('tenants_integrations.client_id', 'like', "%{$searchBy}%")
+                    ->orWhere('tenants.name', 'like', "%{$searchBy}%")
+                    ->orWhere('tenants_integrations.provider', 'like', "%{$searchBy}%")
+                    ->orWhere('tenants_integrations.type', 'like', "%{$searchBy}%")
+                    ->orWhere('tenants_integrations.external_account_id', 'like', "%{$searchBy}%");
             });
         }
 
@@ -70,35 +70,35 @@ class ClientIntegrationProcessingController extends Controller
             $orderThis = $data['order_by'] ?? ($data['columns'][$index]['data'] ?? 'created_at');
 
             $column = match ($orderThis) {
-                'id' => 'clients_integrations.id',
-                'client' => 'clients.name',
-                'provider' => 'clients_integrations.provider',
-                'type' => 'clients_integrations.type',
-                'external_account_id' => 'clients_integrations.external_account_id',
-                'token_expires_at' => 'clients_integrations.token_expires_at',
-                'status' => 'clients_integrations.status',
-                'created_at' => 'clients_integrations.created_at',
-                default => 'clients_integrations.created_at',
+                'id' => 'tenants_integrations.id',
+                'client' => 'tenants.name',
+                'provider' => 'tenants_integrations.provider',
+                'type' => 'tenants_integrations.type',
+                'external_account_id' => 'tenants_integrations.external_account_id',
+                'token_expires_at' => 'tenants_integrations.token_expires_at',
+                'status' => 'tenants_integrations.status',
+                'created_at' => 'tenants_integrations.created_at',
+                default => 'tenants_integrations.created_at',
             };
 
             return $query->orderBy($column, $direction);
         }
 
-        return $query->orderByDesc('clients_integrations.created_at');
+        return $query->orderByDesc('tenants_integrations.created_at');
     }
 
     public function formatResults($query)
     {
         $query->select(
-            'clients_integrations.id',
-            'clients_integrations.client_id',
-            'clients.name as client_name',
-            'clients_integrations.provider',
-            'clients_integrations.type',
-            'clients_integrations.external_account_id',
-            'clients_integrations.token_expires_at',
-            'clients_integrations.status',
-            'clients_integrations.created_at'
+            'tenants_integrations.id',
+            'tenants_integrations.client_id',
+            'tenants.name as client_name',
+            'tenants_integrations.provider',
+            'tenants_integrations.type',
+            'tenants_integrations.external_account_id',
+            'tenants_integrations.token_expires_at',
+            'tenants_integrations.status',
+            'tenants_integrations.created_at'
         );
 
         return DataTables::query($query)
@@ -107,7 +107,7 @@ class ClientIntegrationProcessingController extends Controller
                     return '<a href="' . route('clients.show', $row->client_id) . '" class="text-gray-700 text-hover-primary fw-bolder">' . e($row->client_name) . ' <span class="text-gray-500 fw-normal fs-8">#' . e($row->client_id) . '</span></a>';
                 }
 
-                return '<span class="text-gray-500">Cliente #' . e($row->client_id) . '</span>';
+                return '<span class="text-gray-500">Tenante #' . e($row->client_id) . '</span>';
             })
             ->addColumn('status_badge', function ($row) {
                 return match ((string) $row->status) {

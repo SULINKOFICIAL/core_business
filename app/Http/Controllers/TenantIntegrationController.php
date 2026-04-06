@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\View\View;
 
-class ClientIntegrationController extends Controller
+class TenantIntegrationController extends Controller
 {
     public function index(): View
     {

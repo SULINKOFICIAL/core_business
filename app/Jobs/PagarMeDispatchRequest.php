@@ -2,8 +2,8 @@
 
 namespace App\Jobs;
 
-use App\Models\Client;
-use App\Models\ClientPackage;
+use App\Models\Tenant;
+use App\Models\TenantPackage;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Models\LogsApi;
@@ -127,13 +127,13 @@ class PagarMeDispatchRequest implements ShouldQueue
         if (!$transaction) {
 
             // Obtem o cliente
-            $client = Client::where('pagarme_customer_id', $data->customer->id)->first();
+            $client = Tenant::where('pagarme_customer_id', $data->customer->id)->first();
 
             // Obtem a assinatura
             $subscription = Subscription::where('pagarme_subscription_id', $data->subscription->id)->first();
 
             // Obtem o ultimo pacote do cliente
-            $lastPackage = ClientPackage::where('client_id', $client->id)->orderBy('id', 'desc')->first();
+            $lastPackage = TenantPackage::where('client_id', $client->id)->orderBy('id', 'desc')->first();
 
             // Cria um pedido
             $order = Order::create([

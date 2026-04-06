@@ -6,9 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class ClientPackageItem extends Model
+class TenantPackageItem extends Model
 {
-    protected $table = 'clients_packages_items';
+    protected $table = 'tenants_packages_items';
 
     protected $fillable = [
         'package_id',
@@ -23,7 +23,7 @@ class ClientPackageItem extends Model
 
     public function package(): BelongsTo
     {
-        return $this->belongsTo(ClientPackage::class, 'package_id', 'id');
+        return $this->belongsTo(TenantPackage::class, 'package_id', 'id');
     }
 
     public function item(): BelongsTo
@@ -33,6 +33,6 @@ class ClientPackageItem extends Model
 
     public function configurations(): HasMany
     {
-        return $this->hasMany(ClientPackageItemConfiguration::class, 'item_id', 'id');
+        return $this->hasMany(TenantPackageItemConfiguration::class, 'item_id', 'id');
     }
 }

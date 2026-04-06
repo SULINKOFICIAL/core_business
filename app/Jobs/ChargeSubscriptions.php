@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Models\ClientSubscription;
+use App\Models\TenantSubscription;
 use App\Models\Order;
 use App\Models\OrderTransaction;
 use App\Services\ERedeService;
@@ -31,7 +31,7 @@ class ChargeSubscriptions implements ShouldQueue
     public function handle(): void
     {
         // Pega as assinaturas que vencem hoje
-        $subscriptionsToPaid = ClientSubscription::whereDate('end_date', date('Y-m-d'))->where('status', 'Ativo')->get();
+        $subscriptionsToPaid = TenantSubscription::whereDate('end_date', date('Y-m-d'))->where('status', 'Ativo')->get();
 
         // Cobra dos cartões dos clientes
         foreach ($subscriptionsToPaid as $subscription) {

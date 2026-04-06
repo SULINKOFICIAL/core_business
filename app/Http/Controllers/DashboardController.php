@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Client;
+use App\Models\Tenant;
 use App\Models\CouponRedemption;
 use App\Models\Order;
 use Carbon\Carbon;
@@ -22,10 +22,10 @@ class DashboardController extends Controller
         $startDate = now()->startOfMonth()->subMonths(11);
 
         // Agrupa clientes ativos por mês de criação para gerar a série mensal.
-        $grouped = Client::where('status', true)
+        $grouped = Tenant::where('status', true)
             ->where('created_at', '>=', $startDate)
             ->get(['created_at'])
-            ->groupBy(fn (Client $client) => Carbon::parse($client->created_at)->format('Y-m'))
+            ->groupBy(fn (Tenant $client) => Carbon::parse($client->created_at)->format('Y-m'))
             ->map(fn ($items) => $items->count());
 
         // Garante todos os meses no gráfico, preenchendo com zero quando não houver dados.
@@ -41,16 +41,16 @@ class DashboardController extends Controller
             });
 
         // Total geral de sistemas ativos.
-        $totalActiveSystems = Client::where('status', true)
+        $totalActiveSystems = Tenant::where('status', true)
             ->count();
 
         // Total de sistemas ativos criados no mês atual.
-        $activeSystemsThisMonth = Client::where('status', true)
+        $activeSystemsThisMonth = Tenant::where('status', true)
             ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
             ->count();
 
         // Busca os 5 MiCores mais recentes para o card de resumo.
-        $latestMiCores = Client::with('domains')
+        $latestMiCores = Tenant::with('domains')
             ->orderByDesc('id')
             ->limit(5)
             ->get();
@@ -124,9 +124,9 @@ class DashboardController extends Controller
         $daysInMonth = $monthStartDate->daysInMonth;
 
         // Agrupa os sistemas por dia de criação dentro do mês selecionado.
-        $createdByDay = Client::whereBetween('created_at', [$monthStartDate, $monthEndDate])
+        $createdByDay = Tenant::whereBetween('created_at', [$monthStartDate, $monthEndDate])
             ->get(['created_at'])
-            ->groupBy(fn (Client $client) => Carbon::parse($client->created_at)->day)
+            ->groupBy(fn (Tenant $client) => Carbon::parse($client->created_at)->day)
             ->map(fn ($items) => $items->count());
 
         // Agrupa as vendas por dia com base no campo paid_at.

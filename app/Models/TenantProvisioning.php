@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class ClientProvisioning extends Model
+class TenantProvisioning extends Model
 {
     public const STEP_SUBDOMAIN = 'subdomain';
     public const STEP_DATABASE = 'database';
@@ -23,7 +23,7 @@ class ClientProvisioning extends Model
         self::STEP_COMPLETED,
     ];
 
-    protected $table = 'client_provisionings';
+    protected $table = 'tenant_provisionings';
 
     protected $fillable = [
         'client_id',
@@ -53,6 +53,6 @@ class ClientProvisioning extends Model
 
     public function client(): BelongsTo
     {
-        return $this->belongsTo(Client::class, 'client_id', 'id');
+        return $this->belongsTo(Tenant::class, 'client_id', 'id');
     }
 }

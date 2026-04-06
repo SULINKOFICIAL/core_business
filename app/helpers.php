@@ -1,6 +1,6 @@
 <?php
-use App\Models\Client;
-use App\Models\ClientDomain;
+use App\Models\Tenant;
+use App\Models\TenantDomain;
 
 /**
  * Verifica se o domínio está disponível e gera um novo se necessário.
@@ -30,7 +30,7 @@ if (!function_exists('verifyIfAllow')) {
         $originalDomain = $domain;
         $counter = 1;
 
-        while (ClientDomain::where('domain', $domain . '.micore.com.br')->exists()) {
+        while (TenantDomain::where('domain', $domain . '.micore.com.br')->exists()) {
             // Adiciona um número incremental ao domínio
             $domain = $originalDomain . '-' . $counter;
             $counter++;
@@ -273,7 +273,7 @@ if (! function_exists('header_menu_items')) {
                 ],
                 'children' => [
                     [
-                        'label' => 'Erros de Clientes',
+                        'label' => 'Erros de Tenantes',
                         'route' => 'errors.index',
                         'active_routes' => ['errors.index'],
                         'icon' => ['class' => 'fa-solid fa-circle-exclamation fs-5'],

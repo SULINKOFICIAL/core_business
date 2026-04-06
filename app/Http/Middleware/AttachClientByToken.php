@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Client;
+use App\Models\Tenant;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,15 +18,15 @@ class AttachClientByToken
     {
 
         // Obtém dados do cliente
-        $tokenClient = $request->input('token_micore');
+        $tokenTenant = $request->input('token_micore');
 
         // Verifica se o token foi enviado
-        if (!$tokenClient) {
+        if (!$tokenTenant) {
             return response()->json(['error' => 'Token de cliente não fornecido'], 400);
         }
 
         // Obtém dados do cliente
-        $client = Client::where('token', $tokenClient)->first();
+        $client = Tenant::where('token', $tokenTenant)->first();
 
         // Caso não encontre a conta do cliente
         if(!$client) return response()->json('Conta não encontrada', 404);

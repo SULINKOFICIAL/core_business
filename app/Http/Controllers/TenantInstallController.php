@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Client;
+use App\Models\Tenant;
 
-class ClientInstallController extends Controller
+class TenantInstallController extends Controller
 {
     /**
      * Retorna página de instalação do cliente.
@@ -12,7 +12,7 @@ class ClientInstallController extends Controller
     public function index($id){
 
         // Obtém o cliente
-        $client = Client::with('provisioning')->find($id);
+        $client = Tenant::with('provisioning')->find($id);
 
         // Retorna a página
         return view('pages.clients.install')->with([

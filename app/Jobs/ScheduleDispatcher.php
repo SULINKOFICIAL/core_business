@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Models\Client;
+use App\Models\Tenant;
 use App\Models\ScheduledTaskDispatch;
 use App\Models\ScheduledTaskDispatchItem;
 use Illuminate\Bus\Queueable;
@@ -35,7 +35,7 @@ class ScheduleDispatcher implements ShouldQueue
     public function handle()
     {
         // Busca todos os tenants ativos
-        $clients = Client::where('status', true)->get();
+        $clients = Tenant::where('status', true)->get();
 
         // Cria lote de execução agendada
         $successCount = 0;

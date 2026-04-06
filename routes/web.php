@@ -1,9 +1,9 @@
 <?php
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ClientController;
-use App\Http\Controllers\ClientIntegrationController;
-use App\Http\Controllers\ClientInstallController;
-use App\Http\Controllers\ClientsActionsController;
+use App\Http\Controllers\TenantController;
+use App\Http\Controllers\TenantIntegrationController;
+use App\Http\Controllers\TenantInstallController;
+use App\Http\Controllers\TenantsActionsController;
 use App\Http\Controllers\CpanelController;
 use App\Http\Controllers\DeveloperController;
 use App\Http\Controllers\ERedeController;
@@ -31,8 +31,8 @@ use App\Http\Controllers\TaskDispatchHistoryProcessingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WhatsAppApiController;
 use App\Http\Controllers\LogsApiController;
-use App\Http\Controllers\ClientProcessingController;
-use App\Http\Controllers\ClientIntegrationProcessingController;
+use App\Http\Controllers\TenantProcessingController;
+use App\Http\Controllers\TenantIntegrationProcessingController;
 use App\Http\Controllers\CouponProcessingController;
 use App\Http\Controllers\LogsApiProcessingController;
 use App\Http\Controllers\ModuleCategoryProcessingController;
@@ -94,14 +94,14 @@ Route::middleware(['auth'])->group(function () {
      */
     Route::prefix('clientes')->group(function () {
         Route::name('clients.')->group(function () {
-            Route::get('/',                 [ClientController::class, 'index'])->name('index');
-            Route::get('/processar',        [ClientProcessingController::class, 'process'])->name('process');
-            Route::get('/adicionar',        [ClientController::class, 'create'])->name('create');
-            Route::post('/adicionar',       [ClientController::class, 'store'])->name('store');
-            Route::get('/visualizar/{id}',  [ClientController::class, 'show'])->name('show');
-            Route::get('/editar/{id}',      [ClientController::class, 'edit'])->name('edit');
-            Route::put('/editar/{id}',      [ClientController::class, 'update'])->name('update');
-            Route::get('/desabilitar/{id}', [ClientController::class, 'destroy'])->name('destroy');       
+            Route::get('/',                 [TenantController::class, 'index'])->name('index');
+            Route::get('/processar',        [TenantProcessingController::class, 'process'])->name('process');
+            Route::get('/adicionar',        [TenantController::class, 'create'])->name('create');
+            Route::post('/adicionar',       [TenantController::class, 'store'])->name('store');
+            Route::get('/visualizar/{id}',  [TenantController::class, 'show'])->name('show');
+            Route::get('/editar/{id}',      [TenantController::class, 'edit'])->name('edit');
+            Route::put('/editar/{id}',      [TenantController::class, 'update'])->name('update');
+            Route::get('/desabilitar/{id}', [TenantController::class, 'destroy'])->name('destroy');       
             
 
             /**
@@ -112,7 +112,7 @@ Route::middleware(['auth'])->group(function () {
                  * Rotas para etapas da instalação dos clientes.
                  */
                 Route::prefix('instalacao')->group(function () {
-                    Route::get('/{id}', [ClientInstallController::class, 'index'])->name('index');
+                    Route::get('/{id}', [TenantInstallController::class, 'index'])->name('index');
 
                     /**
                      * Rotas para automações da API do cPanel.
@@ -293,8 +293,8 @@ Route::middleware(['auth'])->group(function () {
      */
     Route::prefix('integracoes-clientes')->group(function () {
         Route::name('clients.integrations.')->group(function () {
-            Route::get('/',                 [ClientIntegrationController::class, 'index'])->name('index');
-            Route::get('/processar',        [ClientIntegrationProcessingController::class, 'process'])->name('process');
+            Route::get('/',                 [TenantIntegrationController::class, 'index'])->name('index');
+            Route::get('/processar',        [TenantIntegrationProcessingController::class, 'process'])->name('process');
         });
     });
 
@@ -372,20 +372,20 @@ Route::middleware(['auth'])->group(function () {
      */
     Route::prefix('sistemas')->group(function () {
         Route::name('systems.')->group(function () {
-            Route::get('/modulo',                       [ClientsActionsController::class, 'module'])->name('module');
-            Route::get('/recurso',                      [ClientsActionsController::class, 'feature'])->name('feature');
-            Route::get('/assinatura',                   [ClientsActionsController::class, 'subscription'])->name('subscription');
-            Route::get('/acessar-recursos',             [ClientsActionsController::class, 'getResources'])->name('get.resources');
-            Route::get('/atualizar-banco/{id}',         [ClientsActionsController::class, 'updateDatabaseManual'])->name('update.database');
-            Route::get('/atualizar-git/{id}',           [ClientsActionsController::class, 'updateGitManual'])->name('update.git');
-            Route::get('/reiniciar-filas/{id}',         [ClientsActionsController::class, 'updateSupervisorManual'])->name('update.supervisor');
-            Route::get('/atualizar-em-massa',           [ClientsActionsController::class, 'updateAllDatabase'])->name('update.all.db');
-            Route::get('/ajustar-armazenamento',        [ClientsActionsController::class, 'updateSizeStorage'])->name('update.size.storage');
-            Route::get('/atualizar-sistemas',           [ClientsActionsController::class, 'updateAllSystems'])->name('update.all.systems');
-            Route::get('/disparar-jobs-agendados',      [ClientsActionsController::class, 'runScheduledNow'])->name('run.scheduled.now');
-            Route::get('/disparar-jobs-agendados/{id}', [ClientsActionsController::class, 'runScheduledNow'])->name('run.scheduled.now.client');
-            Route::post('/liberar-sistema/{id}',        [ClientsActionsController::class, 'addFree'])->name('add.free');
-            Route::get('/liberar-data/{id}',            [ClientsActionsController::class, 'addDate'])->name('add.date');
+            Route::get('/modulo',                       [TenantsActionsController::class, 'module'])->name('module');
+            Route::get('/recurso',                      [TenantsActionsController::class, 'feature'])->name('feature');
+            Route::get('/assinatura',                   [TenantsActionsController::class, 'subscription'])->name('subscription');
+            Route::get('/acessar-recursos',             [TenantsActionsController::class, 'getResources'])->name('get.resources');
+            Route::get('/atualizar-banco/{id}',         [TenantsActionsController::class, 'updateDatabaseManual'])->name('update.database');
+            Route::get('/atualizar-git/{id}',           [TenantsActionsController::class, 'updateGitManual'])->name('update.git');
+            Route::get('/reiniciar-filas/{id}',         [TenantsActionsController::class, 'updateSupervisorManual'])->name('update.supervisor');
+            Route::get('/atualizar-em-massa',           [TenantsActionsController::class, 'updateAllDatabase'])->name('update.all.db');
+            Route::get('/ajustar-armazenamento',        [TenantsActionsController::class, 'updateSizeStorage'])->name('update.size.storage');
+            Route::get('/atualizar-sistemas',           [TenantsActionsController::class, 'updateAllSystems'])->name('update.all.systems');
+            Route::get('/disparar-jobs-agendados',      [TenantsActionsController::class, 'runScheduledNow'])->name('run.scheduled.now');
+            Route::get('/disparar-jobs-agendados/{id}', [TenantsActionsController::class, 'runScheduledNow'])->name('run.scheduled.now.client');
+            Route::post('/liberar-sistema/{id}',        [TenantsActionsController::class, 'addFree'])->name('add.free');
+            Route::get('/liberar-data/{id}',            [TenantsActionsController::class, 'addDate'])->name('add.date');
         });
     });
 

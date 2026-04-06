@@ -97,7 +97,7 @@ class ModuleService
      * Pode ser enviado Manualmente
      * Ou Automaticamente quando o cliente gera a assinatura
      */
-    public function configureFeatureForClient($client, array $payloads)
+    public function configureFeatureForTenant($client, array $payloads)
     {
         return $this->guzzleService->pool(
             'put',

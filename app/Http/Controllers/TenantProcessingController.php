@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 
-class ClientProcessingController extends Controller
+class TenantProcessingController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -42,8 +42,8 @@ class ClientProcessingController extends Controller
     public function loadTables()
     {
         // Tabela principal
-        return DB::table('clients')
-            ->leftJoin('client_runtime_statuses as runtime', 'runtime.client_id', '=', 'clients.id');
+        return DB::table('tenants')
+            ->leftJoin('tenant_runtime_statuses as runtime', 'runtime.client_id', '=', 'tenants.id');
     }
 
     /**
@@ -55,17 +55,17 @@ class ClientProcessingController extends Controller
     {
         // Filtra por tipo de instalação
         if (!empty($data['payment_type']) && $data['payment_type'] !== 'all') {
-            $query->where('clients.type_installation', $data['payment_type']);
+            $query->where('tenants.type_installation', $data['payment_type']);
         }
 
         // Filtra por status (ativo/inativo)
         if (isset($data['client_status']) && $data['client_status'] !== 'all') {
-            $query->where('clients.status', (int) $data['client_status']);
+            $query->where('tenants.status', (int) $data['client_status']);
         }
 
         // Mantém compatibilidade com filtro antigo por array de status
         if (isset($data['status']) && is_array($data['status']) && !empty($data['status'])) {
-            $query->whereIn('clients.status', $data['status']);
+            $query->whereIn('tenants.status', $data['status']);
         }
 
         return $query;
@@ -87,7 +87,7 @@ class ClientProcessingController extends Controller
         if ($searchBy != '') {
 
             // Realiza busca no nome
-            $query->where('clients.name', 'like', "%$searchBy%");
+            $query->where('tenants.name', 'like', "%$searchBy%");
         
         }
 
@@ -114,19 +114,19 @@ class ClientProcessingController extends Controller
             // Define qual a lógica de ordenação
             switch ($orderThis) {
                 case 'name':
-                    $column = 'clients.name';
+                    $column = 'tenants.name';
                     break;
 
                 case 'created_at':
-                    $column = 'clients.created_at';
+                    $column = 'tenants.created_at';
                     break;
 
                 case 'status':
-                    $column = 'clients.status';
+                    $column = 'tenants.status';
                     break;
 
                 default:
-                    $column = 'clients.id';
+                    $column = 'tenants.id';
                     break;
             }
 
@@ -149,33 +149,33 @@ class ClientProcessingController extends Controller
     {
         // SELECT final
         $query->select(
-            'clients.id                as id',
-            'clients.name              as name',
-            'clients.type_installation as type_installation',
-            'clients.created_at        as created_at',
+            'tenants.id                as id',
+            'tenants.name              as name',
+            'tenants.type_installation as type_installation',
+            'tenants.created_at        as created_at',
             DB::raw('COALESCE(runtime.db_last_version, 1) as db_last_version'),
             'runtime.db_error          as db_error',
             DB::raw('COALESCE(runtime.git_last_version, 0) as git_last_version'),
             'runtime.git_error         as git_error',
             DB::raw('COALESCE(runtime.sp_last_version, 0) as sp_last_version'),
             'runtime.sp_error          as sp_error',
-            'clients.status            as status',
-            'clients.token             as token'
+            'tenants.status            as status',
+            'tenants.token             as token'
         );
 
         $query->selectSub(
-            DB::table('clients_domains')
+            DB::table('tenants_domains')
                 ->select('domain')
-                ->whereColumn('clients_domains.client_id', 'clients.id')
-                ->orderBy('clients_domains.id')
+                ->whereColumn('tenants_domains.client_id', 'tenants.id')
+                ->orderBy('tenants_domains.id')
                 ->limit(1),
             'first_domain'
         );
 
         $query->selectSub(
-            DB::table('clients_domains')
+            DB::table('tenants_domains')
                 ->selectRaw('COUNT(*)')
-                ->whereColumn('clients_domains.client_id', 'clients.id'),
+                ->whereColumn('tenants_domains.client_id', 'tenants.id'),
             'domains_count'
         );
 

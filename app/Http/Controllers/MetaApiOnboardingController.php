@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Client;
-use App\Models\ClientDomain;
-use App\Models\ClientIntegration;
-use App\Models\ClientMeta;
+use App\Models\Tenant;
+use App\Models\TenantDomain;
+use App\Models\TenantIntegration;
+use App\Models\TenantMeta;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -30,7 +30,7 @@ class MetaApiOnboardingController extends MetaApiController
         Log::info($data);
 
         // Garante que o domínio realmente pertence ao cliente autenticado via token_micore.
-        $domain = ClientDomain::where('domain', $host)->first();
+        $domain = TenantDomain::where('domain', $host)->first();
 
         if (!$domain) {
             return response()->json([
@@ -238,7 +238,7 @@ class MetaApiOnboardingController extends MetaApiController
         /**
          * Registra a conta meta em nosso sistema.
          */
-        $metaAccount = ClientMeta::updateOrCreate([
+        $metaAccount = TenantMeta::updateOrCreate([
             'meta_id'   => $dataRaw['data']['waba_id'],
             'client_id' => $session['client_id'],
         ],[
@@ -251,7 +251,7 @@ class MetaApiOnboardingController extends MetaApiController
         /**
          * Registra a integração (Número de telefone)
          */
-        ClientIntegration::updateOrCreate([
+        TenantIntegration::updateOrCreate([
             'temporary'             => $temporary,
         ],[
             'client_id'             => $session['client_id'],
@@ -323,7 +323,7 @@ class MetaApiOnboardingController extends MetaApiController
         }
 
         // Resgata a integração que iniciou o processo de onboarding
-        $integration = ClientIntegration::where('client_id', $client->id)->where('temporary', $state['signup_session'])->first();
+        $integration = TenantIntegration::where('client_id', $client->id)->where('temporary', $state['signup_session'])->first();
         if (!$integration || !$integration->meta) {
             return response()->json([
                 'success' => false,
@@ -351,7 +351,7 @@ class MetaApiOnboardingController extends MetaApiController
         $debug = $this->metaService->debugToken($accessToken);
 
         // Revoga integrações anteriores da mesma conta antes de ativar a nova.
-        ClientIntegration::where('client_id', $client->id)
+        TenantIntegration::where('client_id', $client->id)
                             ->where('external_account_id', $integration->external_account_id)
                             ->where('id', '!=', $integration->id)   
                             ->update([
@@ -414,12 +414,12 @@ class MetaApiOnboardingController extends MetaApiController
         }
 
         // Busca o cliente alvo informado no state assinado.
-        $client = Client::find($state['client_id']);
+        $client = Tenant::find($state['client_id']);
         if (!$client) {
             return response()->json([
                 'success' => false,
                 'status' => 'client_not_found',
-                'message' => 'Cliente não encontrado.',
+                'message' => 'Tenante não encontrado.',
                 'redirect_url' => 'https://' . $state['host'] . '/callbacks/meta?error=true',
             ], 404);
         }
