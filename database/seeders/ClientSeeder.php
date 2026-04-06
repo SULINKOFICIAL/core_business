@@ -2,14 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Http\Controllers\PackageController;
-use App\Jobs\GenerateRenewalOrders;
-use App\Models\Client;
-use App\Models\ClientDomain;
-use App\Models\Package;
-use App\Services\OrderService;
+use App\Models\Tenant;
+use App\Models\TenantDomain;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Database\Seeder;
 
 class ClientSeeder extends Seeder
@@ -23,7 +18,7 @@ class ClientSeeder extends Seeder
         // Cria usuário local para testes
         $userId = User::query()->min('id') ?? 1;
 
-        $client = Client::firstOrCreate(
+        $tenant = Tenant::firstOrCreate(
             ['email' => 'micore@testes.com'],
             [
                 'name'       => 'localhost',
@@ -32,13 +27,13 @@ class ClientSeeder extends Seeder
             ]
         );
 
-        ClientDomain::firstOrCreate(
-            ['client_id' => $client->id, 'domain' => '127.0.0.1:8001'],
+        TenantDomain::firstOrCreate(
+            ['tenant_id' => $tenant->id, 'domain' => '127.0.0.1:8001'],
             ['description' => 'Testes']
         );
 
         /* 
-        Client::create([
+        Tenant::create([
             'name' => 'Coca Cola',
             'email' => 'coca@cocacola.com.br',
             'domain' => '127.0.0.1:8001',
@@ -46,7 +41,7 @@ class ClientSeeder extends Seeder
             'created_by' => 1,
         ]);
         
-        Client::create([
+        Tenant::create([
             'name' => 'Porsche',
             'email' => 'porsche@porscheerp.com.br',
             'domain' => '127.0.0.1:8002',

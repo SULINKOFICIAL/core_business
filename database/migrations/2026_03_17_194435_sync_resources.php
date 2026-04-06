@@ -1,16 +1,8 @@
 <?php
 
-use App\Models\Client;
-use App\Models\ClientPackage;
-use App\Models\ClientPackageItem;
 use App\Models\Module;
 use App\Models\ModuleCategory;
-use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\OrderTransaction;
 use App\Models\Resource;
-use App\Models\Subscription;
-use App\Models\SubscriptionCycle;
 use App\Services\GuzzleService;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -28,13 +20,18 @@ return new class extends Migration
         $categories = null;
 
         // Usa um cliente que realmente tenha domínio ativo para evitar null durante migrate.
-        $client = Client::query()
-            ->whereHas('domains')
+        $client = DB::table('clients')
+            ->join('clients_domains', 'clients_domains.client_id', '=', 'clients.id')
+            ->select(['clients.id', 'clients_domains.domain'])
             ->first();
 
         if ($client) {
+            $guzzleTenant = (object) [
+                'domains' => collect([(object) ['domain' => $client->domain]]),
+            ];
+
             // Realiza solicitação
-            $response = $guzzleService->request('post', 'sistema/permissoes-recursos', $client, []);
+            $response = $guzzleService->request('post', 'sistema/permissoes-recursos', $guzzleTenant, []);
             $decoded = json_decode($response['data'] ?? '[]', true);
 
             if (is_array($decoded) && !empty($decoded)) {
@@ -133,50 +130,52 @@ return new class extends Migration
         }
 
         // Obtem todos os clientes
-        $clients = Client::all();
+        $clients = DB::table('clients')->select(['id'])->get();
 
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
-        Order::truncate();
-        OrderItem::truncate();
-        OrderTransaction::truncate();
-        SubscriptionCycle::truncate();
-        Subscription::truncate();
-        ClientPackage::truncate();
-        ClientPackageItem::truncate();
+        DB::table('orders')->truncate();
+        DB::table('order_items')->truncate();
+        DB::table('order_transactions')->truncate();
+        DB::table('subscriptions_cycles')->truncate();
+        DB::table('subscriptions')->truncate();
+        DB::table('clients_packages')->truncate();
+        DB::table('clients_packages_items')->truncate();
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         // Faz looping em cada cliente
         foreach ($clients as $client) {
 
-            $package = ClientPackage::create([
+            $packageId = DB::table('clients_packages')->insertGetId([
                 'client_id' => $client->id,
                 'name' => 'MIGRAÇÃO',
-                'price' => 0,
+                'value' => 0,
                 'status' => 1,
                 'created_at' => now(),
+                'updated_at' => now(),
             ]);
 
             // Pega todos os IDs de módulo
             $modules = Module::get();
 
-            $packageItems = $modules->map(function($module) use ($package) {
+            $packageItems = $modules->map(function($module) use ($packageId) {
                 return [
-                    'package_id' => $package->id,
+                    'package_id' => $packageId,
                     'item_id' => $module->id,
                     'module_name' => $module->name,
                     'module_value' => $module->value,
                     'billing_type' => $module->pricing_type,
                     'payload' => json_encode($module),
                     'created_at' => now(),
+                    'updated_at' => now(),
                 ];
             })->toArray();
 
             // Inserção em massa
-            ClientPackageItem::insert($packageItems);
+            DB::table('clients_packages_items')->insert($packageItems);
 
-            $subscription = Subscription::create([
+            $subscriptionId = DB::table('subscriptions')->insertGetId([
                 'pagarme_subscription_id' => '1',
                 'pagarme_card_id' => '1',
                 'interval' => 'year',
@@ -185,22 +184,24 @@ return new class extends Migration
                 'installments' => 1,
                 'status' => 'paid',
                 'created_at' => now(),
+                'updated_at' => now(),
             ]);
 
             // Cria um pedido
-            $order = Order::create([
+            $orderId = DB::table('orders')->insertGetId([
                 'client_id' => $client->id,
-                'package_id' => $package->id,
-                'subscription_id' => $subscription->id,
+                'package_id' => $packageId,
+                'subscription_id' => $subscriptionId,
                 'total_amount' => 0,
                 'status' => 'Liberado',
                 'type' => 'MIGRAÇÃO',
                 'current_step' => 'Pagamento',
                 'created_at' => now(),
+                'updated_at' => now(),
             ]);
 
-            SubscriptionCycle::create([
-                'subscription_id' => $subscription->id,
+            DB::table('subscriptions_cycles')->insert([
+                'subscription_id' => $subscriptionId,
                 'pagarme_cycle_id' => '1',
                 'start_date' => now(),
                 'end_date' => now()->addYear(),
@@ -209,17 +210,19 @@ return new class extends Migration
                 'billing_at' => now(),
                 'next_billing_at' => now()->addYear(),
                 'created_at' => now(),
+                'updated_at' => now(),
             ]);
 
-            OrderTransaction::create([
-                'order_id' => $order->id,
-                'subscription_id' => $subscription->id,
+            DB::table('order_transactions')->insert([
+                'order_id' => $orderId,
+                'subscription_id' => $subscriptionId,
                 'pagarme_transaction_id' => '1',
                 'amount' => 0,
                 'status' => 'paid',
                 'method' => 'liberado',
                 'currency' => 'BRL',
                 'created_at' => now(),
+                'updated_at' => now(),
             ]);
 
         }

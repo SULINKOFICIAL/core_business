@@ -68,7 +68,7 @@ class MetaDispatchRequest implements ShouldQueue
             ]);
 
             // Obtem os dominios do cliente
-            $clientDomains = $clientMeta->client->domains;
+            $clientDomains = $clientMeta->tenant->domains;
             if ($clientDomains->isEmpty()) {
                 $this->logApi->update([
                     'status' => 'Erro',
@@ -76,7 +76,7 @@ class MetaDispatchRequest implements ShouldQueue
                 return;
             }
 
-            $tenant = $clientMeta->client;
+            $tenant = $clientMeta->tenant;
 
             $url = "meta";
 

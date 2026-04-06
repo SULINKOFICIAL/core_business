@@ -32,7 +32,7 @@ class ApisOrdersController extends Controller
         $data = $request->all();
 
         // Obtem cliente
-        $tenant = $data['client'];
+        $tenant = $data['tenant'];
 
         // Obtem o pacote do cliente
         $package = $this->orderService->getPackageInProgress($tenant);
@@ -74,7 +74,7 @@ class ApisOrdersController extends Controller
 
         // Extrai dados e cliente já anexado pelo middleware
         $data = $request->all();
-        $tenant = $data['client'];
+        $tenant = $data['tenant'];
 
         // Busca o rascunho do cliente com itens e configurações
         $order = Order::where('tenant_id', $tenant->id)
@@ -133,7 +133,7 @@ class ApisOrdersController extends Controller
         $data = $request->all();
 
         // Obtém dados do cliente
-        $tenant = $data['client'];
+        $tenant = $data['tenant'];
 
         // Busca o pedido do cliente
         $order = Order::where('tenant_id', $tenant->id)->where('id', $id)->first();
@@ -187,7 +187,7 @@ class ApisOrdersController extends Controller
         $data = $request->all();
 
         // Extrai cliente
-        $tenant = $data['client'];
+        $tenant = $data['tenant'];
 
         // Obtem o pacote do cliente
         $package = $this->orderService->getPackageInProgress($tenant);
@@ -347,10 +347,10 @@ class ApisOrdersController extends Controller
         $data = $request->all();
 
         // Verifica se veio o id do pedido
-        if (isset($data['client'])) {
+        if (isset($data['tenant'])) {
 
             // Encontra o pedido do cliente
-            $order = $data['client']->lastOrder();
+            $order = $data['tenant']->lastOrder();
 
             // Se ele existir atualiza para cancelado
             if ($order) {

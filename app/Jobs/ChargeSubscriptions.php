@@ -37,7 +37,7 @@ class ChargeSubscriptions implements ShouldQueue
         foreach ($subscriptionsToPaid as $subscription) {
             
             // Obtém o cliente
-            $tenant = $subscription->client;
+            $tenant = $subscription->tenant;
 
             // Obtém cartão principal do usuário
             $mainCard = $tenant->cards()->where('main', true)->first();

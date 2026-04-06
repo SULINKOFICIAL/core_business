@@ -45,7 +45,7 @@ class Order extends Model
         'expired_at',
     ];
 
-    public function client(): BelongsTo
+    public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }

@@ -46,7 +46,7 @@ class TaskDispatchHistoryController extends Controller
 
         // Carrega os itens paginados para manter a tela leve.
         $items = $this->repositoryItems->query()
-            ->with(['client'])
+            ->with(['tenant'])
             ->where('dispatch_id', $dispatch->id)
             ->orderBy('id')
             ->paginate(50);

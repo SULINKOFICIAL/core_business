@@ -31,8 +31,8 @@ class AttachClientByToken
         // Caso não encontre a conta do cliente
         if(!$tenant) return response()->json('Conta não encontrada', 404);
 
-        // Adiciona o cliente ao request
-        $request->merge(['client' => $tenant]);
+        // Adiciona o tenant ao request
+        $request->merge(['tenant' => $tenant]);
 
         return $next($request);
     }

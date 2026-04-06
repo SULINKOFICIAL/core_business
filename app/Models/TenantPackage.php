@@ -23,7 +23,7 @@ class TenantPackage extends Model
         'updated_at',
     ];
 
-    public function client(): BelongsTo
+    public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id', 'id');
     }

@@ -250,7 +250,7 @@ class ApisController extends Controller
         if (!$domain) return response()->json(['error' => 'Domínio não encontrado.'], 404);
 
         // Busca o banco de dados correspondente ao subdomínio
-        $tenant = $domain->client;
+        $tenant = $domain->tenant;
 
         // Evita erro quando existir domínio órfão (sem cliente relacionado)
         if (!$tenant) {
@@ -290,7 +290,7 @@ class ApisController extends Controller
         ]);
 
         // Prioriza o cliente resolvido pelo middleware para evitar spoofing.
-        $tenant = $request->input('client');
+        $tenant = $request->input('tenant');
         $data['tenant_id'] = $tenant->id ?? ($data['tenant_id'] ?? null);
 
         // Registra erro que veio através do MiCore.

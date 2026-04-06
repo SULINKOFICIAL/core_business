@@ -23,7 +23,7 @@ class LogsApi extends Model
         'dispatched_at' => 'datetime',
     ];
 
-    public function client(): BelongsTo
+    public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }

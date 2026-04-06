@@ -18,7 +18,7 @@ class ApisDomainsController extends Controller
         $data = $request->all();
 
          // Obtém dados do cliente
-        $tenant = $data['client'];
+        $tenant = $data['tenant'];
 
         // Obtém plano atual do cliente
         $domains = $tenant->domains;
@@ -38,7 +38,7 @@ class ApisDomainsController extends Controller
         $data = $request->all();
 
          // Obtém dados do cliente
-        $tenant = $data['client'];
+        $tenant = $data['tenant'];
 
         // Obtém plano atual do cliente
         $domains = $tenant->domains()->create([
@@ -61,7 +61,7 @@ class ApisDomainsController extends Controller
         $data = $request->all();
 
          // Obtém dados do cliente
-        $tenant = $data['client'];
+        $tenant = $data['tenant'];
 
         // Obtém plano atual do cliente
         $domain = $tenant->domains()->find($id);
@@ -82,7 +82,7 @@ class ApisDomainsController extends Controller
         $data = $request->all();
 
          // Obtém dados do cliente
-        $tenant = $data['client'];
+        $tenant = $data['tenant'];
 
         // Obtém plano atual do cliente
         $domain = $tenant->domains()->find($id);
@@ -115,7 +115,7 @@ class ApisDomainsController extends Controller
         $data = $request->all();
 
          // Obtém dados do cliente
-        $tenant = $data['client'];
+        $tenant = $data['tenant'];
 
         // Obtém plano atual do cliente
         $domain = $tenant->domains()->find($id);

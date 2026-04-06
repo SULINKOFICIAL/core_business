@@ -25,7 +25,7 @@ class TenantRuntimeStatus extends Model
         'sp_last_version' => 'boolean',
     ];
 
-    public function client(): BelongsTo
+    public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id', 'id');
     }

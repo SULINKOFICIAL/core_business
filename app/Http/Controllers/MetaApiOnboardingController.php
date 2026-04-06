@@ -46,7 +46,7 @@ class MetaApiOnboardingController extends MetaApiController
         // Monta o state assinado para trafegar contexto do fluxo com validade.
         $statePayload = [
             'signup_session' => $signupSession,
-            'tenant_id' => $data['client']->id,
+            'tenant_id' => $data['tenant']->id,
             'host' => $host,
             'type' => $type,
             'exp' => $expiresAt->timestamp,
@@ -57,7 +57,7 @@ class MetaApiOnboardingController extends MetaApiController
 
         // Persiste sessão temporária para validações futuras do fluxo embedded.
         Cache::put('meta_embedded_signup:' . $signupSession, [
-            'tenant_id' => $data['client']->id,
+            'tenant_id' => $data['tenant']->id,
             'host' => $host,
             'type' => $type,
         ], $expiresAt);
@@ -287,7 +287,7 @@ class MetaApiOnboardingController extends MetaApiController
         }
 
         // Extrai cliente
-        $tenant = $validationResult['client'];
+        $tenant = $validationResult['tenant'];
 
         /**
          * Realiza a troca de um token

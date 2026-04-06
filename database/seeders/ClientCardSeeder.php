@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\ClientCard;
-use App\Models\Client;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\TenantCard;
+use App\Models\Tenant;
 use Illuminate\Database\Seeder;
 
 class ClientCardSeeder extends Seeder
@@ -14,13 +13,13 @@ class ClientCardSeeder extends Seeder
      */
     public function run(): void
     {
-        $clientId = Client::query()->min('id');
-        if (!$clientId) {
+        $tenantId = Tenant::query()->min('id');
+        if (!$tenantId) {
             return;
         }
 
-        ClientCard::create([
-            'client_id'         => $clientId,
+        TenantCard::create([
+            'tenant_id'         => $tenantId,
             'name'              => 'John Snow',
             'number'            => 5448280000000007,
             'expiration_month'  => 1,

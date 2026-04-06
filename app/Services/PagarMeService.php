@@ -195,7 +195,7 @@ class PagarMeService
 
         // Monta o payload para a criação do plano
         $payload = [
-            'name'           => "Assinatura Tenante - {$package->client->name} #{$package->client->id}",
+            'name'           => "Assinatura Tenante - {$package->tenant->name} #{$package->tenant->id}",
             'description'    => $description,
             'interval'       => $intervalCycle,
             'interval_count' => 1,

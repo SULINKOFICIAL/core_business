@@ -32,7 +32,7 @@ class Ticket extends Model
         'finished_at',
     ];
 
-    public function client()
+    public function tenant()
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }

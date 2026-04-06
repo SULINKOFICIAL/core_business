@@ -16,7 +16,7 @@ class NewsRead extends Model
         'viewed_at',
     ];
 
-    public function client()
+    public function tenant()
     {
         return $this->belongsTo(Tenant::class);
     }

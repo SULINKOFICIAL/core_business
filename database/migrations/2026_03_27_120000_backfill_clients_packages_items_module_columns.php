@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\ClientPackageItem;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -10,9 +10,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        ClientPackageItem::query()
+        DB::table('clients_packages_items')
             ->select(['id', 'item_id'])
-            ->with('item')
             ->where(function ($query) {
                 $query->whereNull('module_name')
                     ->orWhereNull('module_value')
@@ -22,19 +21,22 @@ return new class extends Migration
             ->orderBy('id')
             ->chunkById(200, function ($items) {
                 foreach ($items as $item) {
-                    $module = $item->item;
+                    $module = DB::table('modules')
+                        ->select(['id', 'name', 'value', 'pricing_type'])
+                        ->where('id', $item->item_id)
+                        ->first();
 
                     if (!$module) {
                         continue;
                     }
 
-                    $item->fill([
+                    DB::table('clients_packages_items')->where('id', $item->id)->update([
                         'module_name'  => $module->name,
                         'module_value' => $module->value,
                         'billing_type' => $module->pricing_type,
                         'payload'      => json_encode($module),
+                        'updated_at'   => now(),
                     ]);
-                    $item->save();
                 }
             });
     }

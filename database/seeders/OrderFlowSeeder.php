@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Client;
+use App\Models\Tenant;
 use App\Models\Gateway;
 use App\Models\Module;
 use App\Models\ModulePricingTier;
@@ -75,10 +75,10 @@ class OrderFlowSeeder extends Seeder
         }
 
         // Ensure clients
-        $clients = Client::all();
+        $clients = Tenant::all();
         if ($clients->isEmpty()) {
             $clients = collect([
-                Client::create([
+                Tenant::create([
                     'name' => 'Cliente Exemplo 1',
                     'email' => 'cliente1@example.com',
                     'company' => 'Empresa 1',
@@ -86,7 +86,7 @@ class OrderFlowSeeder extends Seeder
                     'status' => 1,
                     'created_by' => 1,
                 ]),
-                Client::create([
+                Tenant::create([
                     'name' => 'Cliente Exemplo 2',
                     'email' => 'cliente2@example.com',
                     'company' => 'Empresa 2',

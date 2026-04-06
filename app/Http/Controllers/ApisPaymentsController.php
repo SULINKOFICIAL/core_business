@@ -20,10 +20,10 @@ class ApisPaymentsController extends Controller
         $data = $request->all();
 
         // Obtem o pacote do cliente
-        $package = $service->getPackageInProgress($data['client']);
+        $package = $service->getPackageInProgress($data['tenant']);
 
         // Busca o pedido em andamento
-        $order = $service->getOrderInProgress($data['client'], $package);
+        $order = $service->getOrderInProgress($data['tenant'], $package);
 
         // Resolve cartão (existente ou novo) com validações de payload.
         $cardResult = $this->resolveCardFromRequest($data);
@@ -40,7 +40,7 @@ class ApisPaymentsController extends Controller
         $response = $service->createOrderPayment(
             $package,
             $order,
-            $data['client'],
+            $data['tenant'],
             $data['client_info'],
             $card,
             $this->extractCardCvv($data),
@@ -61,7 +61,7 @@ class ApisPaymentsController extends Controller
     {
         if (isset($data['card_id'])) {
             // Busca cartão existente do próprio cliente.
-            $existingCard = TenantCard::where('tenant_id', $data['client']->id)
+            $existingCard = TenantCard::where('tenant_id', $data['tenant']->id)
                 ->where('id', $data['card_id'])
                 ->first();
 
@@ -87,14 +87,14 @@ class ApisPaymentsController extends Controller
         $data['card']['number'] = $this->normalizeCardNumber($data['card']['number']);
 
         // Reaproveita cartão já salvo para esse cliente.
-        $card = TenantCard::where('tenant_id', $data['client']->id)
+        $card = TenantCard::where('tenant_id', $data['tenant']->id)
             ->where('number', $data['card']['number'])
             ->first();
 
         if (!$card) {
             // Cria novo cartão quando ainda não existe.
             $card = TenantCard::create([
-                'tenant_id' => $data['client']->id,
+                'tenant_id' => $data['tenant']->id,
                 'main' => true,
                 'name' => $data['card']['name'],
                 'number' => $data['card']['number'],

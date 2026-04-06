@@ -138,7 +138,7 @@ class TicketProcessingController extends Controller
                 return '<button type="button" class="btn btn-sm btn-light-primary ticket-view-trigger" data-id="' . $ticket->id . '">Abrir</button>';
             })
             ->editColumn('tenant_id', function ($ticket) {
-                return $ticket->client?->name ?? $ticket->tenant_id;
+                return $ticket->tenant?->name ?? $ticket->tenant_id;
             })
             ->editColumn('created_at', function ($ticket) {
                 return $ticket->created_at?->format('d/m/Y');

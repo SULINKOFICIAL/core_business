@@ -41,7 +41,7 @@ class OrderProcessingController extends Controller
      */
     public function loadTables()
     {
-        return Order::with(['client']);
+        return Order::with(['tenant']);
     }
 
     /**
@@ -124,10 +124,10 @@ class OrderProcessingController extends Controller
                 return '<span class="fw-bolder text-gray-700">#' . str_pad($order->id, 4, '0', STR_PAD_LEFT) . '</span>';
             })
             ->addColumn('client_name', function ($order) {
-                if (!$order->client) {
+                if (!$order->tenant) {
                     return '<span class="text-muted">N/A</span>';
                 }
-                return '<a href="' . route('tenants.show', $order->client->id) . '" class="text-gray-700 text-hover-primary fw-bold">' . e($order->client->name) . '</a>';
+                return '<a href="' . route('tenants.show', $order->tenant->id) . '" class="text-gray-700 text-hover-primary fw-bold">' . e($order->tenant->name) . '</a>';
             })
             ->editColumn('type', function ($order) {
                 return '<span class="text-gray-600">' . e($order->type ?? '—') . '</span>';

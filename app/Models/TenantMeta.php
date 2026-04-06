@@ -14,7 +14,7 @@ class TenantMeta extends Model
         'status',
     ];
 
-    public function client(): HasOne
+    public function tenant(): HasOne
     {
         return $this->hasOne(Tenant::class, 'id', 'tenant_id');
     }

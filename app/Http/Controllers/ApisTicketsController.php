@@ -22,7 +22,7 @@ class ApisTicketsController extends Controller
         ]);
 
         $requestData = $request->all();
-        $tenant = $request->input('client');
+        $tenant = $request->input('tenant');
 
         // Normaliza o usuario solicitante quando ele chega serializado em JSON.
         if (!empty($requestData['requester_user']) && is_string($requestData['requester_user']))
@@ -47,7 +47,7 @@ class ApisTicketsController extends Controller
      */
     public function index(Request $request)
     {
-        $tenant = $request->input('client');
+        $tenant = $request->input('tenant');
 
         // Restringe a consulta ao cliente do token para evitar vazamento entre tenants.
         return response()->json(
@@ -63,7 +63,7 @@ class ApisTicketsController extends Controller
      */
     public function show(Request $request, $id)
     {
-        $tenant = $request->input('client');
+        $tenant = $request->input('tenant');
 
         // Carrega as relacoes usadas no modal do coresulink.
         $ticket = Ticket::with(['replies.user', 'replies.client'])
@@ -78,7 +78,7 @@ class ApisTicketsController extends Controller
      */
     public function reply(Request $request, $id)
     {
-        $tenant = $request->input('client');
+        $tenant = $request->input('tenant');
 
         // Garante que o cliente so responda em tickets da propria empresa.
         $ticket = Ticket::where('tenant_id', $tenant->id)->findOrFail($id);
@@ -111,7 +111,7 @@ class ApisTicketsController extends Controller
             'attachments.*.size_bytes' => ['nullable', 'integer'],
         ]);
 
-        $tenant = $request->input('client');
+        $tenant = $request->input('tenant');
         $ticket = Ticket::where('tenant_id', $tenant->id)->findOrFail($id);
 
         foreach ($request->input('attachments', []) as $attachment)
@@ -154,7 +154,7 @@ class ApisTicketsController extends Controller
                     'message' => $reply->message,
                     'created_at' => optional($reply->created_at)->toISOString(),
                     'author_type' => $reply->user_id ? 'user' : 'client',
-                    'author_name' => $reply->user?->name ?? $reply->client?->name ?? 'Tenante',
+                    'author_name' => $reply->user?->name ?? $reply->tenant?->name ?? 'Tenante',
                 ];
             })->values()->all(),
             'attachments' => $ticket->attachments->map(function ($attachment) {

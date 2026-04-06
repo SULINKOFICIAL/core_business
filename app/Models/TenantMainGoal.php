@@ -14,7 +14,7 @@ class TenantMainGoal extends Model
         'goal',
     ];
 
-    public function client(): BelongsTo
+    public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id', 'id');
     }

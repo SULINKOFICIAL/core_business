@@ -32,7 +32,7 @@ class ScheduledTaskDispatchItem extends Model
         return $this->belongsTo(ScheduledTaskDispatch::class, 'dispatch_id');
     }
 
-    public function client(): BelongsTo
+    public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }

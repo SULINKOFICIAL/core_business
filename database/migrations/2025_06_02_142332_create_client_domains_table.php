@@ -1,9 +1,8 @@
 <?php
 
-use App\Models\Client;
-use App\Models\ClientDomain;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -21,12 +20,17 @@ return new class extends Migration
         });
 
         // Obtém clientes
-        $clients = Client::all();
+        $clients = DB::table('clients')
+            ->select(['id', 'domain'])
+            ->whereNotNull('domain')
+            ->get();
 
         foreach ($clients as $client) {
-            ClientDomain::create([
+            DB::table('clients_domains')->insert([
                 'client_id' => $client->id,
                 'domain' => $client->domain,
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         }
 
@@ -41,6 +45,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('client_domains');
+        Schema::dropIfExists('clients_domains');
     }
 };

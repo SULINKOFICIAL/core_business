@@ -25,7 +25,7 @@ class TicketReply extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function client()
+    public function tenant()
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }

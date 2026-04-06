@@ -283,13 +283,13 @@ class OrderService
                 /**
                  * Cria o tempo da assinatura no miCore
                  */
-                $moduleService->createSubscriptionCore($orderPayment->client, $transaction['cycle']['start_at'], $transaction['cycle']['end_at']);
+                $moduleService->createSubscriptionCore($orderPayment->tenant, $transaction['cycle']['start_at'], $transaction['cycle']['end_at']);
 
                 /**
                  * Envia os modulos com os itens para o Micore
                  */
                 $moduleService->configureModules(
-                    $package->client,
+                    $package->tenant,
                     $package->modules->pluck('id')->toArray(),
                     true
                 );
@@ -309,7 +309,7 @@ class OrderService
         if ($order->status === 'Pago') return 'Esse Pagamento já foi aprovado.';
 
         // Busca o cliente
-        $tenant = $order->client;
+        $tenant = $order->tenant;
 
         // Busca o pacote a ser renovado
         $package = Package::find($order->key_id);

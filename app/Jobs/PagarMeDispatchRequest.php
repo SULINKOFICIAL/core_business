@@ -242,7 +242,7 @@ class PagarMeDispatchRequest implements ShouldQueue
                     /**
                      * Parte responsável por liberar o MiCore
                      */
-                    $this->releaseModule($transaction->order->client, $transaction->order->package, $data->cycle);
+                    $this->releaseModule($transaction->order->tenant, $transaction->order->package, $data->cycle);
                 }
 
             }

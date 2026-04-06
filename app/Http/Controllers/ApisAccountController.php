@@ -13,7 +13,7 @@ class ApisAccountController extends Controller
     public function order(Request $request)
     {
         // Obtém cliente já anexado pelo middleware.
-        $tenant = $request->all()['client'];
+        $tenant = $request->all()['tenant'];
 
         // Carrega o pacote atual do cliente.
         $package = $tenant->packages()->where('status', true)->first();
@@ -51,7 +51,7 @@ class ApisAccountController extends Controller
     public function orders(Request $request)
     {
         // Obtém cliente já anexado pelo middleware.
-        $tenant = $request->all()['client'];
+        $tenant = $request->all()['tenant'];
 
         // Obtém página e limite.
         $page = (int) $request->get('page', 1);
@@ -107,7 +107,7 @@ class ApisAccountController extends Controller
     public function invoice(Request $request, $id)
     {
         // Obtém cliente já anexado pelo middleware.
-        $tenant = $request->all()['client'];
+        $tenant = $request->all()['tenant'];
 
         // Obtem o pedido selecionado
         $order = $tenant->orders()->where('id', $id)->first();
@@ -140,7 +140,7 @@ class ApisAccountController extends Controller
     public function cards(Request $request)
     {
         // Obtém cliente já anexado pelo middleware.
-        $tenant = $request->all()['client'];
+        $tenant = $request->all()['tenant'];
 
         // Busca cartões do cliente do mais recente para o mais antigo.
         $cards = $tenant->cards()->orderBy('created_at', 'DESC')->get();
