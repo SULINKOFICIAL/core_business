@@ -22,10 +22,10 @@ class CheckOnboardingIdentityRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['nullable', 'email', 'required_without_all:cpf,cnpj'],
-            'document_type' => ['nullable', 'in:cpf,cnpj', 'required_without:email'],
-            'cpf' => ['nullable', 'string', 'size:11', 'required_if:document_type,cpf'],
-            'cnpj' => ['nullable', 'string', 'size:14', 'required_if:document_type,cnpj'],
+            'email'             => ['nullable', 'email', 'required_without_all:cpf,cnpj'],
+            'document_type'     => ['nullable', 'in:cpf,cnpj', 'required_without:email'],
+            'cpf'               => ['nullable', 'string', 'size:11', 'required_if:document_type,cpf'],
+            'cnpj'              => ['nullable', 'string', 'size:14', 'required_if:document_type,cnpj'],
         ];
     }
 
