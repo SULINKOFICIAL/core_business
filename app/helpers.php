@@ -156,7 +156,7 @@ if (! function_exists('header_menu_items')) {
             ],
             [
                 'type' => 'submenu',
-                'label' => 'Clientes',
+                'label' => 'Instalações',
                 'active_routes' => [
                     'clients.index',
                     'tickets.index',
