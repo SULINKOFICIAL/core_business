@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TenantSubscriptionItem extends Model
 {
-    protected $table = 'tenant_subscription_items';
+    protected $table = 'tenants_subscription_items';
 
     protected $casts = [
         'current_config_snapshot' => 'array',

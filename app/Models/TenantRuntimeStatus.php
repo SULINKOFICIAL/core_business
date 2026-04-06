@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TenantRuntimeStatus extends Model
 {
-    protected $table = 'tenant_runtime_statuses';
+    protected $table = 'tenants_runtime_statuses';
 
     protected $fillable = [
         'tenant_id',

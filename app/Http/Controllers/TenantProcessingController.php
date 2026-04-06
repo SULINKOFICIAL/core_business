@@ -43,7 +43,7 @@ class TenantProcessingController extends Controller
     {
         // Tabela principal
         return DB::table('tenants')
-            ->leftJoin('tenant_runtime_statuses as runtime', 'runtime.tenant_id', '=', 'tenants.id');
+            ->leftJoin('tenants_runtime_statuses as runtime', 'runtime.tenant_id', '=', 'tenants.id');
     }
 
     /**

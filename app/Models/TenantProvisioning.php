@@ -23,7 +23,7 @@ class TenantProvisioning extends Model
         self::STEP_COMPLETED,
     ];
 
-    protected $table = 'tenant_provisionings';
+    protected $table = 'tenants_provisionings';
 
     protected $fillable = [
         'tenant_id',
