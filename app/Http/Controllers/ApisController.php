@@ -46,7 +46,9 @@ class ApisController extends Controller
     public function newClient(Request $request){
 
         // Obtém dados
-        $data = $request->all();
+        $data = $this->mapOnboardingPayload($request->all());
+        $mainGoals = $data['main_goals'] ?? [];
+        unset($data['main_goals']);
 
         // Autor
         $data['created_by'] = 1;
@@ -65,7 +67,7 @@ class ApisController extends Controller
         }
 
         // Limpa WhatsApp
-        $data['whatsapp'] = onlyNumbers($data['whatsapp']);
+        $data['whatsapp'] = !empty($data['whatsapp']) ? onlyNumbers($data['whatsapp']) : null;
 
         // Realiza verificações de duplicidade
         foreach ($verifications as $field => $message) {
@@ -117,6 +119,11 @@ class ApisController extends Controller
 
         // Insere no banco de dados
         $client = $this->repository->create($data);
+        if (!empty($mainGoals)) {
+            $client->mainGoals()->createMany(array_map(function ($goal) {
+                return ['goal' => $goal];
+            }, $mainGoals));
+        }
         $client->provisioning()->create($provisioningData);
         $client->runtimeStatus()->create();
 
@@ -129,6 +136,66 @@ class ApisController extends Controller
         // Gera subdomínio, banco de dados e usuário no Cpanel miCore.com.br
         return response()->json($this->cpanelProvisioningService->runProvisioning($client));
 
+    }
+
+    /**
+     * Normaliza payload vindo do onboarding para o formato esperado na central.
+     * Mantém compatibilidade com integrações antigas e novas chaves do formulário.
+     */
+    private function mapOnboardingPayload(array $data): array
+    {
+        $allowedMainGoals = [
+            'centralizar_atendimentos',
+            'vender_online',
+            'controlar_estoque',
+            'vender_servicos',
+        ];
+
+        if (empty($data['name']) && !empty($data['full_name'])) {
+            $data['name'] = $data['full_name'];
+        }
+
+        if (empty($data['whatsapp']) && !empty($data['phone'])) {
+            $data['whatsapp'] = $data['phone'];
+        }
+
+        if (empty($data['company']) && !empty($data['name'])) {
+            // Fallback para não quebrar criação quando onboarding não enviar razão social.
+            $data['company'] = $data['name'];
+        }
+
+        if (!empty($data['main_goal']) && empty($data['main_goals'])) {
+            $data['main_goals'] = [$data['main_goal']];
+        }
+
+        if (isset($data['main_goals']) && !is_array($data['main_goals'])) {
+            $data['main_goals'] = [$data['main_goals']];
+        }
+
+        $data['main_goals'] = array_values(array_unique(array_filter(
+            $data['main_goals'] ?? [],
+            function ($goal) use ($allowedMainGoals) {
+                return in_array($goal, $allowedMainGoals, true);
+            }
+        )));
+        unset($data['main_goal']);
+
+        $data['tips_whatsapp'] = !empty($data['tips_whatsapp']);
+        $data['tips_email'] = !empty($data['tips_email']);
+        $data['has_coupon'] = !empty($data['has_coupon']);
+        if (!empty($data['document_type']) && in_array($data['document_type'], ['cnpj', 'cpf'], true)) {
+            $data['document_type'] = $data['document_type'];
+        } else {
+            // Compatibilidade com payload antigo que enviava checkbox no_cnpj.
+            $data['document_type'] = !empty($data['no_cnpj']) ? 'cpf' : 'cnpj';
+        }
+        unset($data['no_cnpj']);
+
+        if (!empty($data['company_zip_code'])) {
+            $data['company_zip_code'] = onlyNumbers($data['company_zip_code']);
+        }
+
+        return $data;
     }
 
     /**

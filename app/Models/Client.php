@@ -28,6 +28,18 @@ class Client extends Model
         'company',
         'cnpj',
         'cpf',
+        'company_profile',
+        'company_zip_code',
+        'company_city_state',
+        'company_address',
+        'company_neighborhood',
+        'company_number',
+        'company_complement',
+        'tips_whatsapp',
+        'tips_email',
+        'has_coupon',
+        'coupon_code',
+        'document_type',
         'package_id',
         'users_limit',
         'logo',
@@ -66,6 +78,12 @@ class Client extends Model
     public function domains(): HasMany
     {
         return $this->hasMany(ClientDomain::class, 'client_id', 'id');
+    }
+
+    // Objetivos principais selecionados no onboarding
+    public function mainGoals(): HasMany
+    {
+        return $this->hasMany(ClientMainGoal::class, 'client_id', 'id');
     }
 
     // Módulos habilitados para o cliente
