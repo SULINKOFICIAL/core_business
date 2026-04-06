@@ -22,7 +22,7 @@ class Ticket extends Model
     protected $fillable = [
         'title',
         'description',
-        'client_id',
+        'tenant_id',
         'requester_user',
         'progress',
         'status',
@@ -34,7 +34,7 @@ class Ticket extends Model
 
     public function client()
     {
-        return $this->belongsTo(Tenant::class, 'client_id');
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     public function replies()

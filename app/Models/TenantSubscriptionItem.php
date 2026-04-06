@@ -15,7 +15,7 @@ class TenantSubscriptionItem extends Model
     ];
 
     protected $fillable = [
-        'client_subscription_id',
+        'tenant_subscription_id',
         'module_id',
         'module_code',
         'status',
@@ -25,6 +25,6 @@ class TenantSubscriptionItem extends Model
 
     public function subscription(): BelongsTo
     {
-        return $this->belongsTo(TenantSubscription::class, 'client_subscription_id');
+        return $this->belongsTo(TenantSubscription::class, 'tenant_subscription_id');
     }
 }

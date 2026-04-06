@@ -31,7 +31,7 @@ class ApisTicketsController extends Controller
         }
 
         // Forca o vinculo do ticket ao cliente autenticado na API.
-        $requestData['client_id'] = $client->id;
+        $requestData['tenant_id'] = $client->id;
         $requestData['progress'] = 'pendente';
 
         $ticket = Ticket::create($requestData);
@@ -52,7 +52,7 @@ class ApisTicketsController extends Controller
         // Restringe a consulta ao cliente do token para evitar vazamento entre tenants.
         return response()->json(
             Ticket::query()
-                ->where('client_id', $client->id)
+                ->where('tenant_id', $client->id)
                 ->orderByDesc('created_at')
                 ->get()
         );
@@ -67,7 +67,7 @@ class ApisTicketsController extends Controller
 
         // Carrega as relacoes usadas no modal do coresulink.
         $ticket = Ticket::with(['replies.user', 'replies.client'])
-            ->where('client_id', $client->id)
+            ->where('tenant_id', $client->id)
             ->findOrFail($id);
 
         return response()->json($this->formatTicket($ticket));
@@ -81,11 +81,11 @@ class ApisTicketsController extends Controller
         $client = $request->input('client');
 
         // Garante que o cliente so responda em tickets da propria empresa.
-        $ticket = Ticket::where('client_id', $client->id)->findOrFail($id);
+        $ticket = Ticket::where('tenant_id', $client->id)->findOrFail($id);
 
         TicketReply::create([
             'ticket_id' => $ticket->id,
-            'client_id' => $client->id,
+            'tenant_id' => $client->id,
             'message' => $request->input('message'),
         ]);
 
@@ -112,7 +112,7 @@ class ApisTicketsController extends Controller
         ]);
 
         $client = $request->input('client');
-        $ticket = Ticket::where('client_id', $client->id)->findOrFail($id);
+        $ticket = Ticket::where('tenant_id', $client->id)->findOrFail($id);
 
         foreach ($request->input('attachments', []) as $attachment)
         {
@@ -142,7 +142,7 @@ class ApisTicketsController extends Controller
 
         return [
             'id' => $ticket->id,
-            'client_id' => $ticket->client_id,
+            'tenant_id' => $ticket->tenant_id,
             'title' => $ticket->title,
             'description' => $ticket->description,
             'progress' => $ticket->progress,

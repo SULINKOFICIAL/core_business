@@ -102,7 +102,7 @@ class CpanelProvisioningService
     {
         $domain = $this->getTenantPrimaryDomainOrFail($client);
 
-        Log::info('Criando subdomínio do cliente', ['client_id' => $client->id, 'domain' => $domain]);
+        Log::info('Criando subdomínio do cliente', ['tenant_id' => $client->id, 'domain' => $domain]);
         $this->createSubdomain($domain);
 
         $provisioning->install = TenantProvisioning::STEP_DATABASE;
@@ -117,7 +117,7 @@ class CpanelProvisioningService
     private function handleDatabaseStep(Tenant $client, TenantProvisioning $provisioning): array
     {
         Log::info('Clonando banco template para cliente', [
-            'client_id' => $client->id,
+            'tenant_id' => $client->id,
             'database' => $provisioning->table,
         ]);
 
@@ -135,7 +135,7 @@ class CpanelProvisioningService
     private function handleUserTokenStep(Tenant $client, TenantProvisioning $provisioning): array
     {
         Log::info('Inserindo usuário e token no banco do cliente', [
-            'client_id' => $client->id,
+            'tenant_id' => $client->id,
             'database' => $provisioning->table,
         ]);
 
@@ -153,7 +153,7 @@ class CpanelProvisioningService
     private function handleModulesStep(Tenant $client, TenantProvisioning $provisioning): array
     {
         Log::info('Configurando módulos do cliente', [
-            'client_id' => $client->id,
+            'tenant_id' => $client->id,
             'database' => $provisioning->table,
         ]);
 

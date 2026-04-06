@@ -24,7 +24,7 @@ class TenantIntegrationProcessingController extends Controller
     public function loadTables()
     {
         return DB::table('tenants_integrations')
-            ->leftJoin('tenants', 'tenants.id', '=', 'tenants_integrations.client_id');
+            ->leftJoin('tenants', 'tenants.id', '=', 'tenants_integrations.tenant_id');
     }
 
     public function filters($query, array $data)
@@ -51,7 +51,7 @@ class TenantIntegrationProcessingController extends Controller
         if (!empty($searchBy)) {
             $query->where(function ($sub) use ($searchBy) {
                 $sub->where('tenants_integrations.id', 'like', "%{$searchBy}%")
-                    ->orWhere('tenants_integrations.client_id', 'like', "%{$searchBy}%")
+                    ->orWhere('tenants_integrations.tenant_id', 'like', "%{$searchBy}%")
                     ->orWhere('tenants.name', 'like', "%{$searchBy}%")
                     ->orWhere('tenants_integrations.provider', 'like', "%{$searchBy}%")
                     ->orWhere('tenants_integrations.type', 'like', "%{$searchBy}%")
@@ -91,7 +91,7 @@ class TenantIntegrationProcessingController extends Controller
     {
         $query->select(
             'tenants_integrations.id',
-            'tenants_integrations.client_id',
+            'tenants_integrations.tenant_id',
             'tenants.name as client_name',
             'tenants_integrations.provider',
             'tenants_integrations.type',
@@ -104,10 +104,10 @@ class TenantIntegrationProcessingController extends Controller
         return DataTables::query($query)
             ->addColumn('client', function ($row) {
                 if (!empty($row->client_name)) {
-                    return '<a href="' . route('tenants.show', $row->client_id) . '" class="text-gray-700 text-hover-primary fw-bolder">' . e($row->client_name) . ' <span class="text-gray-500 fw-normal fs-8">#' . e($row->client_id) . '</span></a>';
+                    return '<a href="' . route('tenants.show', $row->tenant_id) . '" class="text-gray-700 text-hover-primary fw-bolder">' . e($row->client_name) . ' <span class="text-gray-500 fw-normal fs-8">#' . e($row->tenant_id) . '</span></a>';
                 }
 
-                return '<span class="text-gray-500">Tenante #' . e($row->client_id) . '</span>';
+                return '<span class="text-gray-500">Tenante #' . e($row->tenant_id) . '</span>';
             })
             ->addColumn('status_badge', function ($row) {
                 return match ((string) $row->status) {

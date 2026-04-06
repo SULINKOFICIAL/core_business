@@ -256,7 +256,7 @@ class ApisController extends Controller
         if (!$client) {
             Log::warning('Domínio sem cliente vinculado na API getDatabase', [
                 'domain_id' => $domain->id,
-                'client_id' => $domain->client_id,
+                'tenant_id' => $domain->tenant_id,
                 'domain' => $domain->domain,
             ]);
 
@@ -291,7 +291,7 @@ class ApisController extends Controller
 
         // Prioriza o cliente resolvido pelo middleware para evitar spoofing.
         $client = $request->input('client');
-        $data['client_id'] = $client->id ?? ($data['client_id'] ?? null);
+        $data['tenant_id'] = $client->id ?? ($data['tenant_id'] ?? null);
 
         // Registra erro que veio através do MiCore.
         $error = ErrorMiCore::create($data);

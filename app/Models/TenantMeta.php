@@ -9,13 +9,13 @@ class TenantMeta extends Model
 {
     protected $table = 'tenants_metas';
     protected $fillable = [
-        'client_id',
+        'tenant_id',
         'meta_id',
         'status',
     ];
 
     public function client(): HasOne
     {
-        return $this->hasOne(Tenant::class, 'id', 'client_id');
+        return $this->hasOne(Tenant::class, 'id', 'tenant_id');
     }
 }

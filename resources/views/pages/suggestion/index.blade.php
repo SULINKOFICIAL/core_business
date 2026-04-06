@@ -84,7 +84,7 @@
             },
             order: [[3, 'desc']],
             columns: [
-                { data: 'client_id', name: 'client_id', className: 'text-center pe-8' },
+                { data: 'tenant_id', name: 'tenant_id', className: 'text-center pe-8' },
                 { data: 'name', name: 'name' },
                 { data: 'description', name: 'description', className: 'text-start' },
                 { data: 'created_at', name: 'created_at', className: 'text-center' },

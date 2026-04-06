@@ -77,7 +77,7 @@ class ApisOrdersController extends Controller
         $client = $data['client'];
 
         // Busca o rascunho do cliente com itens e configurações
-        $order = Order::where('client_id', $client->id)
+        $order = Order::where('tenant_id', $client->id)
             ->where('status', 'draft')
             ->first();
 
@@ -136,7 +136,7 @@ class ApisOrdersController extends Controller
         $client = $data['client'];
 
         // Busca o pedido do cliente
-        $order = Order::where('client_id', $client->id)->where('id', $id)->first();
+        $order = Order::where('tenant_id', $client->id)->where('id', $id)->first();
 
         // Formata o pedido
         $orderJson['id'] = $order->id;

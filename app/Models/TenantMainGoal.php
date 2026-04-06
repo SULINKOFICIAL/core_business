@@ -10,12 +10,12 @@ class TenantMainGoal extends Model
     protected $table = 'tenants_main_goals';
 
     protected $fillable = [
-        'client_id',
+        'tenant_id',
         'goal',
     ];
 
     public function client(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class, 'client_id', 'id');
+        return $this->belongsTo(Tenant::class, 'tenant_id', 'id');
     }
 }

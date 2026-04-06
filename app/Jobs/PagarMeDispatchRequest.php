@@ -133,11 +133,11 @@ class PagarMeDispatchRequest implements ShouldQueue
             $subscription = Subscription::where('pagarme_subscription_id', $data->subscription->id)->first();
 
             // Obtem o ultimo pacote do cliente
-            $lastPackage = TenantPackage::where('client_id', $client->id)->orderBy('id', 'desc')->first();
+            $lastPackage = TenantPackage::where('tenant_id', $client->id)->orderBy('id', 'desc')->first();
 
             // Cria um pedido
             $order = Order::create([
-                'client_id'       => $client->id,
+                'tenant_id'       => $client->id,
                 'subscription_id' => $subscription->id,
                 'package_id'      => $lastPackage->id ?? null,
                 'status'          => $data->charge->status,

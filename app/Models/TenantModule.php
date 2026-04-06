@@ -8,7 +8,7 @@ class TenantModule extends Model
 {
     protected $table = 'tenants_modules';
     protected $fillable = [
-        'client_id',
+        'tenant_id',
         'module_id',
     ];
 }

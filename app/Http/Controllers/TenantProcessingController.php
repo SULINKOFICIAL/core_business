@@ -43,7 +43,7 @@ class TenantProcessingController extends Controller
     {
         // Tabela principal
         return DB::table('tenants')
-            ->leftJoin('tenant_runtime_statuses as runtime', 'runtime.client_id', '=', 'tenants.id');
+            ->leftJoin('tenant_runtime_statuses as runtime', 'runtime.tenant_id', '=', 'tenants.id');
     }
 
     /**
@@ -166,7 +166,7 @@ class TenantProcessingController extends Controller
         $query->selectSub(
             DB::table('tenants_domains')
                 ->select('domain')
-                ->whereColumn('tenants_domains.client_id', 'tenants.id')
+                ->whereColumn('tenants_domains.tenant_id', 'tenants.id')
                 ->orderBy('tenants_domains.id')
                 ->limit(1),
             'first_domain'
@@ -175,7 +175,7 @@ class TenantProcessingController extends Controller
         $query->selectSub(
             DB::table('tenants_domains')
                 ->selectRaw('COUNT(*)')
-                ->whereColumn('tenants_domains.client_id', 'tenants.id'),
+                ->whereColumn('tenants_domains.tenant_id', 'tenants.id'),
             'domains_count'
         );
 

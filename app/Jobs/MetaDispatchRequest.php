@@ -64,7 +64,7 @@ class MetaDispatchRequest implements ShouldQueue
 
             // Salva cliente vinculado ao log
             $this->logApi->update([
-                'client_id' => $clientMeta->client_id,
+                'tenant_id' => $clientMeta->tenant_id,
             ]);
 
             // Obtem os dominios do cliente
@@ -93,7 +93,7 @@ class MetaDispatchRequest implements ShouldQueue
 
             // Salva cliente vinculado ao log
             $this->logApi->update([
-                'client_id' => $client->id,
+                'tenant_id' => $client->id,
             ]);
 
             // Obtem os dominios do cliente

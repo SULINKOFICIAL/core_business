@@ -24,7 +24,7 @@ class Order extends Model
     ];
 
     protected $fillable = [
-        'client_id',
+        'tenant_id',
         'package_id',
         'subscription_id',
         'status',
@@ -47,7 +47,7 @@ class Order extends Model
 
     public function client(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class, 'client_id');
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     public function transactions(): HasMany

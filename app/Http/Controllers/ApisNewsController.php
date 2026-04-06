@@ -107,7 +107,7 @@ class ApisNewsController extends Controller
 
         foreach($data['readIds'] as $newsId) {
             $newsRead = NewsRead::firstOrCreate([
-                'client_id'      => $data['client']->id,
+                'tenant_id'      => $data['client']->id,
                 'news_id'        => $newsId,
                 'client_user_id' => $id,
             ],[

@@ -11,7 +11,7 @@ class TicketReply extends Model
     protected $fillable = [
         'ticket_id',
         'user_id',
-        'client_id',
+        'tenant_id',
         'message',
     ];
 
@@ -27,6 +27,6 @@ class TicketReply extends Model
 
     public function client()
     {
-        return $this->belongsTo(Tenant::class, 'client_id');
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 }

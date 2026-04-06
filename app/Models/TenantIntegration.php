@@ -10,7 +10,7 @@ class TenantIntegration extends Model
     protected $table = 'tenants_integrations';
 
     protected $fillable = [
-        'client_id',
+        'tenant_id',
         'provider',
         'client_provider_id',
         'temporary',
@@ -24,7 +24,7 @@ class TenantIntegration extends Model
 
     public function client(): HasOne
     {
-        return $this->hasOne(Tenant::class, 'id', 'client_id');
+        return $this->hasOne(Tenant::class, 'id', 'tenant_id');
     }
 
     public function meta(): HasOne

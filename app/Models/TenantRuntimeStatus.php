@@ -10,7 +10,7 @@ class TenantRuntimeStatus extends Model
     protected $table = 'tenant_runtime_statuses';
 
     protected $fillable = [
-        'client_id',
+        'tenant_id',
         'db_last_version',
         'db_error',
         'git_last_version',
@@ -27,6 +27,6 @@ class TenantRuntimeStatus extends Model
 
     public function client(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class, 'client_id', 'id');
+        return $this->belongsTo(Tenant::class, 'tenant_id', 'id');
     }
 }

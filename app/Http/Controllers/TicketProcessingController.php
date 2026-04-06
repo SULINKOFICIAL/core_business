@@ -98,7 +98,7 @@ class TicketProcessingController extends Controller
             $orderThis = $data['order_by'] ?? ($data['columns'][$index]['data'] ?? 'created_at');
 
             $column = match ($orderThis) {
-                'client_id' => 'client_id',
+                'tenant_id' => 'tenant_id',
                 'title' => 'title',
                 'description' => 'description',
                 'created_at' => 'created_at',
@@ -137,8 +137,8 @@ class TicketProcessingController extends Controller
             ->addColumn('actions', function ($ticket) {
                 return '<button type="button" class="btn btn-sm btn-light-primary ticket-view-trigger" data-id="' . $ticket->id . '">Abrir</button>';
             })
-            ->editColumn('client_id', function ($ticket) {
-                return $ticket->client?->name ?? $ticket->client_id;
+            ->editColumn('tenant_id', function ($ticket) {
+                return $ticket->client?->name ?? $ticket->tenant_id;
             })
             ->editColumn('created_at', function ($ticket) {
                 return $ticket->created_at?->format('d/m/Y');

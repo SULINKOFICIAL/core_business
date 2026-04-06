@@ -110,7 +110,7 @@ class TenantController extends Controller
 
         // Cria o pacote do cliente
         $package = TenantPackage::create([
-            'client_id' => $created->id,
+            'tenant_id' => $created->id,
             'name' => 'DEMO 30 DIAS',
             'price' => 0,
             'status' => 1,
@@ -151,7 +151,7 @@ class TenantController extends Controller
 
         // Cria um pedido fictício
         $order = Order::create([
-            'client_id' => $created->id,
+            'tenant_id' => $created->id,
             'package_id' => $package->id,
             'subscription_id' => $subscription->id,
             'total_amount' => 0,
@@ -188,7 +188,7 @@ class TenantController extends Controller
 
         // Registra o domínio do cliente
         TenantDomain::create([
-            'client_id'     => $created->id,
+            'tenant_id'     => $created->id,
             'auto_generate' => true,
             'domain'        => $data['domain'] . '.micore.com.br',
             'description'   => 'Domínio cadastrado ao criar a conta do cliente',

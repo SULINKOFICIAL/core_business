@@ -86,7 +86,7 @@ class ScheduleDispatcher implements ShouldQueue
             // Registra item do lote por cliente
             ScheduledTaskDispatchItem::create([
                 'dispatch_id' => $dispatch->id,
-                'client_id' => $client->id,
+                'tenant_id' => $client->id,
                 'job_name' => $this->jobName,
                 'success' => $success,
                 'response_status_code' => $response['status_code'] ?? null,
@@ -103,7 +103,7 @@ class ScheduleDispatcher implements ShouldQueue
             }
 
             Log::info('Disparo de job realizado para cliente', [
-                'client_id' => $client->id,
+                'tenant_id' => $client->id,
                 'job_name' => $this->jobName,
                 'success' => $success,
             ]);

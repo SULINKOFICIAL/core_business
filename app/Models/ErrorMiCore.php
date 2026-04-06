@@ -8,7 +8,7 @@ class ErrorMiCore extends Model
 {
     protected $table = 'errors_micore';
     protected $fillable = [
-        'client_id',
+        'tenant_id',
         'url',
         'ip_address',
         'message',

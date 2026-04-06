@@ -46,7 +46,7 @@ class MetaApiOnboardingController extends MetaApiController
         // Monta o state assinado para trafegar contexto do fluxo com validade.
         $statePayload = [
             'signup_session' => $signupSession,
-            'client_id' => $data['client']->id,
+            'tenant_id' => $data['client']->id,
             'host' => $host,
             'type' => $type,
             'exp' => $expiresAt->timestamp,
@@ -57,7 +57,7 @@ class MetaApiOnboardingController extends MetaApiController
 
         // Persiste sessão temporária para validações futuras do fluxo embedded.
         Cache::put('meta_embedded_signup:' . $signupSession, [
-            'client_id' => $data['client']->id,
+            'tenant_id' => $data['client']->id,
             'host' => $host,
             'type' => $type,
         ], $expiresAt);
@@ -182,7 +182,7 @@ class MetaApiOnboardingController extends MetaApiController
             }
 
             // Valida estrutura mínima do state.
-            if (!$state || !isset($state['signup_session'], $state['host'], $state['client_id'], $state['exp'])) {
+            if (!$state || !isset($state['signup_session'], $state['host'], $state['tenant_id'], $state['exp'])) {
                 return response()->json([
                     'success' => false,
                     'status' => 'invalid_state',
@@ -210,7 +210,7 @@ class MetaApiOnboardingController extends MetaApiController
             }
 
             // Garante que a sessão corresponde ao mesmo cliente e host do state.
-            if ((int) $session['client_id'] !== (int) $state['client_id'] || $session['host'] !== $state['host']) {
+            if ((int) $session['tenant_id'] !== (int) $state['tenant_id'] || $session['host'] !== $state['host']) {
                 return response()->json([
                     'success' => false,
                     'status' => 'session_mismatch',
@@ -240,7 +240,7 @@ class MetaApiOnboardingController extends MetaApiController
          */
         $metaAccount = TenantMeta::updateOrCreate([
             'meta_id'   => $dataRaw['data']['waba_id'],
-            'client_id' => $session['client_id'],
+            'tenant_id' => $session['tenant_id'],
         ],[
             'status' => true,
         ]);
@@ -254,7 +254,7 @@ class MetaApiOnboardingController extends MetaApiController
         TenantIntegration::updateOrCreate([
             'temporary'             => $temporary,
         ],[
-            'client_id'             => $session['client_id'],
+            'tenant_id'             => $session['tenant_id'],
             'external_account_id'   => $dataRaw['data']['phone_number_id'],
             'provider'              => 'meta',
             'client_provider_id'    => $metaAccount->id,
@@ -323,7 +323,7 @@ class MetaApiOnboardingController extends MetaApiController
         }
 
         // Resgata a integração que iniciou o processo de onboarding
-        $integration = TenantIntegration::where('client_id', $client->id)->where('temporary', $state['signup_session'])->first();
+        $integration = TenantIntegration::where('tenant_id', $client->id)->where('temporary', $state['signup_session'])->first();
         if (!$integration || !$integration->meta) {
             return response()->json([
                 'success' => false,
@@ -351,7 +351,7 @@ class MetaApiOnboardingController extends MetaApiController
         $debug = $this->metaService->debugToken($accessToken);
 
         // Revoga integrações anteriores da mesma conta antes de ativar a nova.
-        TenantIntegration::where('client_id', $client->id)
+        TenantIntegration::where('tenant_id', $client->id)
                             ->where('external_account_id', $integration->external_account_id)
                             ->where('id', '!=', $integration->id)   
                             ->update([
@@ -414,7 +414,7 @@ class MetaApiOnboardingController extends MetaApiController
         }
 
         // Busca o cliente alvo informado no state assinado.
-        $client = Tenant::find($state['client_id']);
+        $client = Tenant::find($state['tenant_id']);
         if (!$client) {
             return response()->json([
                 'success' => false,

@@ -12,7 +12,7 @@ class TenantPackage extends Model
     protected $table = 'tenants_packages';
 
     protected $fillable = [
-        'client_id',
+        'tenant_id',
         'name',
         'value',
         'progress',
@@ -25,7 +25,7 @@ class TenantPackage extends Model
 
     public function client(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class, 'client_id', 'id');
+        return $this->belongsTo(Tenant::class, 'tenant_id', 'id');
     }
 
     public function items(): HasMany

@@ -194,7 +194,7 @@
                 url: "{{ route('systems.module') }}",
                 data: {
                     status: checked,
-                    client_id: "{{ $client->id }}",
+                    tenant_id: "{{ $client->id }}",
                     module_id: moduleId,
                 },
                 success: function(response) {
@@ -249,7 +249,7 @@
                 type:'GET',
                 url: "{{ route('systems.subscription') }}",
                 data: {
-                    client_id: "{{ $client->id }}",
+                    tenant_id: "{{ $client->id }}",
                     start_date: startDate ? startDate : "",
                     end_date: endDate ? endDate : "",
                 },

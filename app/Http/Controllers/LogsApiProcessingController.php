@@ -43,7 +43,7 @@ class LogsApiProcessingController extends Controller
     {
         // Tabela principal
         $query = DB::table('logs_apis')
-            ->leftJoin('tenants', 'tenants.id', '=', 'logs_apis.client_id');
+            ->leftJoin('tenants', 'tenants.id', '=', 'logs_apis.tenant_id');
 
         // Retorna consulta
         return $query;
@@ -84,7 +84,7 @@ class LogsApiProcessingController extends Controller
                 $sub->where('logs_apis.api', 'like', "%$searchBy%")
                     ->orWhere('logs_apis.id', 'like', "%$searchBy%")
                     ->orWhere('logs_apis.new_log_id', 'like', "%$searchBy%")
-                    ->orWhere('logs_apis.client_id', 'like', "%$searchBy%")
+                    ->orWhere('logs_apis.tenant_id', 'like', "%$searchBy%")
                     ->orWhere('tenants.name', 'like', "%$searchBy%");
             });
         }
@@ -159,7 +159,7 @@ class LogsApiProcessingController extends Controller
         $query->select(
             'logs_apis.id as id',
             'logs_apis.api as api',
-            'logs_apis.client_id as client_id',
+            'logs_apis.tenant_id as tenant_id',
             'tenants.name as client_name',
             'logs_apis.json as json',
             'logs_apis.reprocessed as reprocessed',
@@ -186,7 +186,7 @@ class LogsApiProcessingController extends Controller
             })
             ->addColumn('client', function ($row) {
                 if (!empty($row->client_name)) {
-                    return '<a href="' . route('tenants.show', $row->client_id) . '" class="text-gray-700 text-hover-primary fw-bolder">' . e($row->client_name) . ' <span class="text-gray-500 fw-normal fs-8">#' . e($row->client_id) . '</span></a>';
+                    return '<a href="' . route('tenants.show', $row->tenant_id) . '" class="text-gray-700 text-hover-primary fw-bolder">' . e($row->client_name) . ' <span class="text-gray-500 fw-normal fs-8">#' . e($row->tenant_id) . '</span></a>';
                 }
                 return '<span class="text-gray-500">-</span>';
             })

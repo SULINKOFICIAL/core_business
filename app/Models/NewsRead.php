@@ -11,7 +11,7 @@ class NewsRead extends Model
 
     protected $fillable = [
         'news_id',
-        'client_id',
+        'tenant_id',
         'client_user_id',
         'viewed_at',
     ];

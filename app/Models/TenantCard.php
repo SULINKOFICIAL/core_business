@@ -8,7 +8,7 @@ class TenantCard extends Model
 {
     protected $table = 'tenants_cards';
     protected $fillable = [
-        'client_id',
+        'tenant_id',
         'main',
         'name',
         'number',

@@ -98,7 +98,7 @@ class SuggestionProcessingController extends Controller
             $orderThis = $data['order_by'] ?? ($data['columns'][$index]['data'] ?? 'created_at');
 
             $column = match ($orderThis) {
-                'client_id' => 'client_id',
+                'tenant_id' => 'tenant_id',
                 'name' => 'name',
                 'description' => 'description',
                 'created_at' => 'created_at',

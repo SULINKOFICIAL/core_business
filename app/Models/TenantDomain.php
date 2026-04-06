@@ -11,7 +11,7 @@ class TenantDomain extends Model
     protected $table = 'tenants_domains';
 
     protected $fillable = [
-        'client_id',
+        'tenant_id',
         'domain',
         'auto_generate',
         'description',
@@ -20,6 +20,6 @@ class TenantDomain extends Model
 
     public function client(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class, 'client_id', 'id');
+        return $this->belongsTo(Tenant::class, 'tenant_id', 'id');
     }
 }

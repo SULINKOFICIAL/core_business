@@ -53,55 +53,55 @@ class Tenant extends Model
     // Dados de provisionamento técnico do cliente
     public function provisioning(): HasOne
     {
-        return $this->hasOne(TenantProvisioning::class, 'client_id', 'id');
+        return $this->hasOne(TenantProvisioning::class, 'tenant_id', 'id');
     }
 
     // Status técnico de atualização do cliente
     public function runtimeStatus(): HasOne
     {
-        return $this->hasOne(TenantRuntimeStatus::class, 'client_id', 'id');
+        return $this->hasOne(TenantRuntimeStatus::class, 'tenant_id', 'id');
     }
 
     // Pacote atual do cliente
     public function packages(): HasMany
     {
-        return $this->hasMany(TenantPackage::class, 'client_id', 'id');
+        return $this->hasMany(TenantPackage::class, 'tenant_id', 'id');
     }
 
     // Pacote atual do cliente
     public function package(): HasOne
     {
-        return $this->hasOne(TenantPackage::class, 'client_id', 'id')->where('status', true);
+        return $this->hasOne(TenantPackage::class, 'tenant_id', 'id')->where('status', true);
     }
 
     // Domínios do cliente
     public function domains(): HasMany
     {
-        return $this->hasMany(TenantDomain::class, 'client_id', 'id');
+        return $this->hasMany(TenantDomain::class, 'tenant_id', 'id');
     }
 
     // Objetivos principais selecionados no onboarding
     public function mainGoals(): HasMany
     {
-        return $this->hasMany(TenantMainGoal::class, 'client_id', 'id');
+        return $this->hasMany(TenantMainGoal::class, 'tenant_id', 'id');
     }
 
     // Módulos habilitados para o cliente
     public function modules(): BelongsToMany
     {
-        return $this->belongsToMany(Module::class, 'tenants_modules', 'client_id', 'module_id');
+        return $this->belongsToMany(Module::class, 'tenants_modules', 'tenant_id', 'module_id');
     }
 
     // Compras realizadas pelo cliente
     public function orders(): HasMany
     {
-        return $this->hasMany(Order::class, 'client_id', 'id');
+        return $this->hasMany(Order::class, 'tenant_id', 'id');
     }
 
     // Compras realizadas pelo cliente
     public function cards(): HasMany
     {
-        return $this->hasMany(TenantCard::class, 'client_id', 'id');
+        return $this->hasMany(TenantCard::class, 'tenant_id', 'id');
     }
 
     // Assinaturas realizadas pelo cliente
@@ -110,7 +110,7 @@ class Tenant extends Model
         return $this->hasManyThrough(
             Subscription::class,
             Order::class,
-            'client_id',
+            'tenant_id',
             'order_id',
             'id',
             'id'

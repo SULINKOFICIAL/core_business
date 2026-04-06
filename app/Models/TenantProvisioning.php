@@ -26,7 +26,7 @@ class TenantProvisioning extends Model
     protected $table = 'tenant_provisionings';
 
     protected $fillable = [
-        'client_id',
+        'tenant_id',
         'table',
         'table_user',
         'table_password',
@@ -53,6 +53,6 @@ class TenantProvisioning extends Model
 
     public function client(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class, 'client_id', 'id');
+        return $this->belongsTo(Tenant::class, 'tenant_id', 'id');
     }
 }

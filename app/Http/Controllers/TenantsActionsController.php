@@ -49,7 +49,7 @@ class TenantsActionsController extends Controller
         $data = $request->all();
 
         // Encontra o cliente
-        $client = $this->repository->find($data['client_id']);
+        $client = $this->repository->find($data['tenant_id']);
 
         // Converte 'status' para booleano
         $status = filter_var($data['status'], FILTER_VALIDATE_BOOLEAN);
@@ -75,7 +75,7 @@ class TenantsActionsController extends Controller
         $data = $request->all();
         
         // Encontra o cliente
-        $client = $this->repository->find($data['client_id']);
+        $client = $this->repository->find($data['tenant_id']);
 
         // Converte 'status' para booleano (true ou false)
         $data['status']  = filter_var($data['status'], FILTER_VALIDATE_BOOLEAN);
@@ -104,7 +104,7 @@ class TenantsActionsController extends Controller
         $data = $request->all();
 
         // Encontra o cliente
-        $client = $this->repository->find($data['client_id']);
+        $client = $this->repository->find($data['tenant_id']);
 
         // Inicia serviço de módulos
         $moduleService = app(ModuleService::class);
@@ -479,7 +479,7 @@ class TenantsActionsController extends Controller
 
         if (!$response['success']) {
             Log::warning('Falha ao executar npm build no cliente.', [
-                'client_id' => $client->id,
+                'tenant_id' => $client->id,
                 'client_name' => $client->name,
                 'message' => $response['message'] ?? 'Erro desconhecido',
             ]);
@@ -492,7 +492,7 @@ class TenantsActionsController extends Controller
 
         if (!$apiSuccess) {
             Log::warning('API do tenant retornou erro no npm build.', [
-                'client_id' => $client->id,
+                'tenant_id' => $client->id,
                 'client_name' => $client->name,
                 'error' => $responseData['error'] ?? $responseData['message'] ?? 'Erro desconhecido',
             ]);
@@ -540,7 +540,7 @@ class TenantsActionsController extends Controller
             'job_name' => 'manual_batch',
             'job_data' => [
                 'jobs' => $jobs,
-                'target_client_id' => $id,
+                'target_tenant_id' => $id,
             ],
             'source' => 'manual',
             'dispatched_by' => Auth::id(),
@@ -598,7 +598,7 @@ class TenantsActionsController extends Controller
                 // Registra o item filho para rastrear esse cliente e job.
                 ScheduledTaskDispatchItem::create([
                     'dispatch_id' => $dispatch->id,
-                    'client_id' => $client->id,
+                    'tenant_id' => $client->id,
                     'job_name' => $jobName,
                     'success' => $success,
                     'response_status_code' => $response['status_code'] ?? null,

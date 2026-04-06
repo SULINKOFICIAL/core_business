@@ -11,7 +11,7 @@ class LogsApi extends Model
 
     protected $fillable = [
         'api',
-        'client_id',
+        'tenant_id',
         'json',
         'reprocessed',
         'new_log_id',
@@ -25,6 +25,6 @@ class LogsApi extends Model
 
     public function client(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class, 'client_id');
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 }

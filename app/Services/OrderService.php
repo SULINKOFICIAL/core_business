@@ -27,7 +27,7 @@ class OrderService
     {
         return Order::firstOrCreate(
             [
-                'client_id'  => $client->id,
+                'tenant_id'  => $client->id,
                 'package_id' => $package->id,
                 'type'       => 'Pacote',
                 'status'     => 'draft',
@@ -42,7 +42,7 @@ class OrderService
     {
         return TenantPackage::firstOrCreate(
             [
-                'client_id' => $client->id,
+                'tenant_id' => $client->id,
                 'progress'  => 'draft',
             ],
         );
@@ -144,7 +144,7 @@ class OrderService
             ]);
 
             // Obtem o ultimo pedido pago
-            $lastOrder = Order::where('client_id', $client->id)
+            $lastOrder = Order::where('tenant_id', $client->id)
                 ->where('status', 'paid')
                 ->orderBy('created_at', 'desc')
                 ->first();
@@ -332,12 +332,12 @@ class OrderService
             }
 
             // Remove módulos antigos
-            TenantModule::where('client_id', $client->id)->delete();
+            TenantModule::where('tenant_id', $client->id)->delete();
 
             // Adiciona novos módulos
             foreach ($package->modules as $module) {
                 TenantModule::create([
-                    'client_id'  => $client->id,
+                    'tenant_id'  => $client->id,
                     'module_id'  => $module->id,
                 ]);
             }
@@ -363,7 +363,7 @@ class OrderService
 
         // Criar nova assinatura
         TenantSubscription::create([
-            'client_id'  => $client->id,
+            'tenant_id'  => $client->id,
             'package_id' => $package->id,
             'order_id'   => $order->id,
             'start_date' => $startDate,

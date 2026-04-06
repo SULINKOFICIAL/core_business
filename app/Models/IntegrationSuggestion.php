@@ -16,7 +16,7 @@ class IntegrationSuggestion extends Model
     protected $fillable = [
         'name',
         'description',
-        'client_id',
+        'tenant_id',
         'progress',
         'status',
         'filed_by',

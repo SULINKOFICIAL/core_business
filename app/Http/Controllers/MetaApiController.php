@@ -190,7 +190,7 @@ class MetaApiController extends Controller
              */
             $clientIntegration = TenantIntegration::updateOrCreate([
                 'external_account_id'   => $accountId,
-                'client_id'             => $client->client_id,
+                'tenant_id'             => $client->tenant_id,
                 'provider'              => 'meta',
                 'type'                  => $type,
             ], [
@@ -307,7 +307,7 @@ class MetaApiController extends Controller
         $domain = TenantDomain::where('domain', $host)->first();
 
         // Verifica se o token pertence ao mesmo host
-        if (!$domain || $domain->client_id !== $token->client_id) {
+        if (!$domain || $domain->tenant_id !== $token->tenant_id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Resgate não autorizado',
@@ -340,7 +340,7 @@ class MetaApiController extends Controller
 
         // Obtém o Token solicitado
         TenantMeta::updateOrCreate([
-            'client_id' => $client->id,
+            'tenant_id' => $client->id,
             'meta_id' => $data['waba_id'],
         ], [
             'status' => $data['status'],

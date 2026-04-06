@@ -17,7 +17,7 @@ class ScheduledTaskDispatchItem extends Model
 
     protected $fillable = [
         'dispatch_id',
-        'client_id',
+        'tenant_id',
         'job_name',
         'success',
         'response_status_code',
@@ -34,6 +34,6 @@ class ScheduledTaskDispatchItem extends Model
 
     public function client(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class, 'client_id');
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 }

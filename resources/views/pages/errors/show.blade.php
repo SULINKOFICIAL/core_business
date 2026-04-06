@@ -12,7 +12,7 @@
     <tbody>
         @foreach ($contents as $content)
             <tr>
-                <td class="text-center pe-8">{{ $content->client_id }}</td>
+                <td class="text-center pe-8">{{ $content->tenant_id }}</td>
                 <td>
                     <a class="text-gray-800 text-hover-primary" href="{{ $content->url }}" target="_blank" data-bs-toggle="tooltip" title="{{ $content->message }}">{{ Str::limit($content->message, 50) }}</a>
                 </td>

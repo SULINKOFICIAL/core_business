@@ -46,7 +46,7 @@ class ChargeSubscriptions implements ShouldQueue
             if($mainCard){
                 
                 // Obtém pedido gerado pela renovação
-                $orderRenovation = Order::where('client_id', $client->id)
+                $orderRenovation = Order::where('tenant_id', $client->id)
                                         ->where('type', 'Renovação')
                                         ->where('status', 'Pendente')
                                         ->first();
