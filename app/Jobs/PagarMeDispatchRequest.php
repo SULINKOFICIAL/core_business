@@ -127,17 +127,17 @@ class PagarMeDispatchRequest implements ShouldQueue
         if (!$transaction) {
 
             // Obtem o cliente
-            $client = Tenant::where('pagarme_customer_id', $data->customer->id)->first();
+            $tenant = Tenant::where('pagarme_customer_id', $data->customer->id)->first();
 
             // Obtem a assinatura
             $subscription = Subscription::where('pagarme_subscription_id', $data->subscription->id)->first();
 
             // Obtem o ultimo pacote do cliente
-            $lastPackage = TenantPackage::where('tenant_id', $client->id)->orderBy('id', 'desc')->first();
+            $lastPackage = TenantPackage::where('tenant_id', $tenant->id)->orderBy('id', 'desc')->first();
 
             // Cria um pedido
             $order = Order::create([
-                'tenant_id'       => $client->id,
+                'tenant_id'       => $tenant->id,
                 'subscription_id' => $subscription->id,
                 'package_id'      => $lastPackage->id ?? null,
                 'status'          => $data->charge->status,
@@ -181,7 +181,7 @@ class PagarMeDispatchRequest implements ShouldQueue
                 /**
                  * Parte responsável por liberar o MiCore
                  */
-                $this->releaseModule($client, $lastPackage, $data->cycle);
+                $this->releaseModule($tenant, $lastPackage, $data->cycle);
 
             }
 
@@ -255,21 +255,21 @@ class PagarMeDispatchRequest implements ShouldQueue
     /**
      * Libera os módulos para o cliente
      */
-    private function releaseModule($client, $package, $cycle)
+    private function releaseModule($tenant, $package, $cycle)
     {
         // Inicia o serviço de módulos
         $moduleService = app(ModuleService::class);
 
         // Realiza solicitação
         $moduleService->configureModules(
-            $client,
+            $tenant,
             $package->modules->pluck('id')->toArray(),
             true
         );
 
         // Cria o tempo da assinatura no MiCore
         $moduleService->createSubscriptionCore(
-            $client,
+            $tenant,
             $cycle->billingAt,
             $cycle->nextBillingAt
         );

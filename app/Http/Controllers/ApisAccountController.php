@@ -13,10 +13,10 @@ class ApisAccountController extends Controller
     public function order(Request $request)
     {
         // Obtém cliente já anexado pelo middleware.
-        $client = $request->all()['client'];
+        $tenant = $request->all()['client'];
 
         // Carrega o pacote atual do cliente.
-        $package = $client->packages()->where('status', true)->first();
+        $package = $tenant->packages()->where('status', true)->first();
 
         // Resposta padrão quando não há pacote ativo.
         if (!$package) {
@@ -30,16 +30,16 @@ class ApisAccountController extends Controller
         $package['modules'] = $package->modules;
 
         // Verifica se já existe renovação pendente.
-        $existsRenovation = $client->orders()
+        $existsRenovation = $tenant->orders()
             ->where('type', 'Renovação')
             ->where('status', 'pending')
             ->exists();
 
         return response()->json([
             'package' => $package,
-            'order' => $client->package?->orders()->orderBy('created_at', 'DESC')->first(),
-            'cycle'   => $client->package?->orders()->orderBy('created_at', 'DESC')->first()->subscription->cycles()->orderBy('created_at', 'DESC')->first(),
-            'renovation' => $client->renovation(),
+            'order' => $tenant->package?->orders()->orderBy('created_at', 'DESC')->first(),
+            'cycle'   => $tenant->package?->orders()->orderBy('created_at', 'DESC')->first()->subscription->cycles()->orderBy('created_at', 'DESC')->first(),
+            'renovation' => $tenant->renovation(),
             'existsOrder' => $existsRenovation,
         ], 200);
     }
@@ -51,7 +51,7 @@ class ApisAccountController extends Controller
     public function orders(Request $request)
     {
         // Obtém cliente já anexado pelo middleware.
-        $client = $request->all()['client'];
+        $tenant = $request->all()['client'];
 
         // Obtém página e limite.
         $page = (int) $request->get('page', 1);
@@ -61,7 +61,7 @@ class ApisAccountController extends Controller
         $offset = ($page - 1) * $limit;
 
         // Busca pedidos ordenados do mais recente para o mais antigo.
-        $orders = $client->orders()
+        $orders = $tenant->orders()
                     ->where('status', '!=', 'draft')
                     ->orderBy('created_at', 'DESC')
                     ->orderBy('id', 'DESC')
@@ -70,7 +70,7 @@ class ApisAccountController extends Controller
                     ->get();
 
         // verifica se existe mais registros depois
-        $hasMore = $client->orders()
+        $hasMore = $tenant->orders()
                             ->skip($offset + $limit)
                             ->limit(10)
                             ->exists();
@@ -107,10 +107,10 @@ class ApisAccountController extends Controller
     public function invoice(Request $request, $id)
     {
         // Obtém cliente já anexado pelo middleware.
-        $client = $request->all()['client'];
+        $tenant = $request->all()['client'];
 
         // Obtem o pedido selecionado
-        $order = $client->orders()->where('id', $id)->first();
+        $order = $tenant->orders()->where('id', $id)->first();
 
         $subscription = $order->subscription;
 
@@ -140,10 +140,10 @@ class ApisAccountController extends Controller
     public function cards(Request $request)
     {
         // Obtém cliente já anexado pelo middleware.
-        $client = $request->all()['client'];
+        $tenant = $request->all()['client'];
 
         // Busca cartões do cliente do mais recente para o mais antigo.
-        $cards = $client->cards()->orderBy('created_at', 'DESC')->get();
+        $cards = $tenant->cards()->orderBy('created_at', 'DESC')->get();
 
         // Inicia lista de resposta.
         $cardsJson = [];

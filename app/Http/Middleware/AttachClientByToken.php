@@ -26,13 +26,13 @@ class AttachClientByToken
         }
 
         // Obtém dados do cliente
-        $client = Tenant::where('token', $tokenTenant)->first();
+        $tenant = Tenant::where('token', $tokenTenant)->first();
 
         // Caso não encontre a conta do cliente
-        if(!$client) return response()->json('Conta não encontrada', 404);
+        if(!$tenant) return response()->json('Conta não encontrada', 404);
 
         // Adiciona o cliente ao request
-        $request->merge(['client' => $client]);
+        $request->merge(['client' => $tenant]);
 
         return $next($request);
     }

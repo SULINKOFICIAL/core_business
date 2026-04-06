@@ -76,15 +76,15 @@ class MetaDispatchRequest implements ShouldQueue
                 return;
             }
 
-            $client = $clientMeta->client;
+            $tenant = $clientMeta->client;
 
             $url = "meta";
 
         } elseif ($platform == 'whatsapp_web') {
 
             // Obtem o cliente
-            $client = Tenant::find($id);
-            if (!$client) {
+            $tenant = Tenant::find($id);
+            if (!$tenant) {
                 $this->logApi->update([
                     'status' => 'Erro',
                 ]);
@@ -93,11 +93,11 @@ class MetaDispatchRequest implements ShouldQueue
 
             // Salva cliente vinculado ao log
             $this->logApi->update([
-                'tenant_id' => $client->id,
+                'tenant_id' => $tenant->id,
             ]);
 
             // Obtem os dominios do cliente
-            $clientDomains = $client->domains;
+            $clientDomains = $tenant->domains;
             if ($clientDomains->isEmpty()) {
                 $this->logApi->update([
                     'status' => 'Erro',
@@ -110,7 +110,7 @@ class MetaDispatchRequest implements ShouldQueue
         }
 
         // O tenant sempre responde apenas com o aceite do disparo.
-        $response = $guzzleService->request('POST', $url, $client, $this->data, [], 'webhooks');
+        $response = $guzzleService->request('POST', $url, $tenant, $this->data, [], 'webhooks');
 
         // // Realiza a requisição
         // $response = $requestService->request('POST', $url, [

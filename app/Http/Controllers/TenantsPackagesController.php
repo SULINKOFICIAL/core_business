@@ -19,10 +19,10 @@ class TenantsPackagesController extends Controller
         $data = $request->all();
 
         // Extrai cliente
-        $client = $data['client'];
+        $tenant = $data['client'];
 
         // Cria ou atualiza o pacote em rascunho com os módulos enviados
-        $package = $this->getPackageInProgress($client);
+        $package = $this->getPackageInProgress($tenant);
 
         // Realiza ação desejada
         $action = match ($data['action']) {

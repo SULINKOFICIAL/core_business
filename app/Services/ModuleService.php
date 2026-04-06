@@ -13,7 +13,7 @@ class ModuleService
         $this->guzzleService = $guzzleService;
     }
 
-    public function configureModules($client, array $moduleIds, $status = true)
+    public function configureModules($tenant, array $moduleIds, $status = true)
     {
         // Obtem os Módulos
         $modules = Module::with(['resources', 'category'])
@@ -72,7 +72,7 @@ class ModuleService
         $this->guzzleService->pool(
             'put',
             'sistema/configurar-modulo',
-            $client,
+            $tenant,
             $modulePayloads
         );
 
@@ -83,7 +83,7 @@ class ModuleService
             $this->guzzleService->pool(
                 'put',
                 'sistema/configurar-permissao',
-                $client,
+                $tenant,
                 $resourcePayloads
             );
         }
@@ -97,12 +97,12 @@ class ModuleService
      * Pode ser enviado Manualmente
      * Ou Automaticamente quando o cliente gera a assinatura
      */
-    public function configureFeatureForTenant($client, array $payloads)
+    public function configureFeatureForTenant($tenant, array $payloads)
     {
         return $this->guzzleService->pool(
             'put',
             'sistema/configurar-permissao',
-            $client,
+            $tenant,
             $payloads
         );
     }
@@ -110,12 +110,12 @@ class ModuleService
     /**
      * Cria o tempo da assinatura no MiCore
      */
-    public function createSubscriptionCore($client, $startDate, $endDate)
+    public function createSubscriptionCore($tenant, $startDate, $endDate)
     {
         return $this->guzzleService->request(
             'post',
             'sistema/atualizar-assinatura',
-            $client,
+            $tenant,
             [
                 'start_date' => $startDate,
                 'end_date'   => $endDate,

@@ -175,7 +175,7 @@ class MetaApiController extends Controller
             $accountId = $accountInformations['data']['id'];
 
             // Encontra o cliente que é dono do domínio
-            $client = TenantDomain::where('domain', $data['decoded']['origin'])->first();
+            $tenant = TenantDomain::where('domain', $data['decoded']['origin'])->first();
 
             /**
              * Lista de permissões
@@ -190,7 +190,7 @@ class MetaApiController extends Controller
              */
             $clientIntegration = TenantIntegration::updateOrCreate([
                 'external_account_id'   => $accountId,
-                'tenant_id'             => $client->tenant_id,
+                'tenant_id'             => $tenant->tenant_id,
                 'provider'              => 'meta',
                 'type'                  => $type,
             ], [
@@ -336,11 +336,11 @@ class MetaApiController extends Controller
         $data = $request->all();
 
         // Obtém cliente associado ao miCore através do Token dele
-        $client = Tenant::where('token', $data['token_micore'])->first();
+        $tenant = Tenant::where('token', $data['token_micore'])->first();
 
         // Obtém o Token solicitado
         TenantMeta::updateOrCreate([
-            'tenant_id' => $client->id,
+            'tenant_id' => $tenant->id,
             'meta_id' => $data['waba_id'],
         ], [
             'status' => $data['status'],

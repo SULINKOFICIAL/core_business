@@ -32,13 +32,13 @@ class ApisOrdersController extends Controller
         $data = $request->all();
 
         // Obtem cliente
-        $client = $data['client'];
+        $tenant = $data['client'];
 
         // Obtem o pacote do cliente
-        $package = $this->orderService->getPackageInProgress($client);
+        $package = $this->orderService->getPackageInProgress($tenant);
 
         // Busca o pedido em andamento
-        $order = $this->orderService->getOrderInProgress($client, $package);
+        $order = $this->orderService->getOrderInProgress($tenant, $package);
 
         // Monta os itens com os dados relevantes para o front
         $items = $package->modules->map(function ($module) {
@@ -74,10 +74,10 @@ class ApisOrdersController extends Controller
 
         // Extrai dados e cliente já anexado pelo middleware
         $data = $request->all();
-        $client = $data['client'];
+        $tenant = $data['client'];
 
         // Busca o rascunho do cliente com itens e configurações
-        $order = Order::where('tenant_id', $client->id)
+        $order = Order::where('tenant_id', $tenant->id)
             ->where('status', 'draft')
             ->first();
 
@@ -133,10 +133,10 @@ class ApisOrdersController extends Controller
         $data = $request->all();
 
         // Obtém dados do cliente
-        $client = $data['client'];
+        $tenant = $data['client'];
 
         // Busca o pedido do cliente
-        $order = Order::where('tenant_id', $client->id)->where('id', $id)->first();
+        $order = Order::where('tenant_id', $tenant->id)->where('id', $id)->first();
 
         // Formata o pedido
         $orderJson['id'] = $order->id;
@@ -150,7 +150,7 @@ class ApisOrdersController extends Controller
         $orderJson['packageName'] = $order->package->name;
 
         // Caso não encontre a conta do cliente
-        if (!$client) {
+        if (!$tenant) {
             return response()->json('Pedido não encontrado', 404);
         }
 
@@ -187,13 +187,13 @@ class ApisOrdersController extends Controller
         $data = $request->all();
 
         // Extrai cliente
-        $client = $data['client'];
+        $tenant = $data['client'];
 
         // Obtem o pacote do cliente
-        $package = $this->orderService->getPackageInProgress($client);
+        $package = $this->orderService->getPackageInProgress($tenant);
 
         // Busca o pedido em andamento
-        $order = $this->orderService->getOrderInProgress($client, $package);
+        $order = $this->orderService->getOrderInProgress($tenant, $package);
 
         // Realiza ação desejada
         $action = match ($data['action']) {

@@ -27,13 +27,13 @@ class PagarMeService
     public function findOrCreateCustomer($clientInfo)
     {
         // Obtem o cliente
-        $client = Tenant::find($clientInfo['id']);
+        $tenant = Tenant::find($clientInfo['id']);
 
         // Verifica se o cliente ja possui um customer na PagarMe
-        if (isset($client) && $client->pagarme_customer_id) {
+        if (isset($tenant) && $tenant->pagarme_customer_id) {
 
             // Cria o cliente na PagarMe
-            $response = Http::withBasicAuth($this->apiKey, '')->get($this->baseUrl . '/customers/' . $client->pagarme_customer_id)->json();
+            $response = Http::withBasicAuth($this->apiKey, '')->get($this->baseUrl . '/customers/' . $tenant->pagarme_customer_id)->json();
 
             // Monta o array
             $payload = [
@@ -55,7 +55,7 @@ class PagarMeService
             Http::withBasicAuth($this->apiKey, '')->put($this->baseUrl . '/customers/' . $response['id'], $payload);
 
             // Adiciona o email ao response
-            $response['email'] = $client->email;
+            $response['email'] = $tenant->email;
 
             // Verifica se a resposta foi bem sucedida
             if (isset($response) && isset($response['id'])) {
@@ -89,7 +89,7 @@ class PagarMeService
             if (isset($response) && isset($response['id'])) {
 
                 // Atualiza o cliente com o id do customer na PagarMe
-                $client->update([
+                $tenant->update([
                     'pagarme_customer_id' => $response['id']
                 ]);
 
@@ -112,7 +112,7 @@ class PagarMeService
     public function findOrCreateCard($clientId, $cardId, $cvv = null, $address = null)
     {
         // Obtem o cliente
-        $client = Tenant::find($clientId);
+        $tenant = Tenant::find($clientId);
 
         // Verifica se o cliente já tem um cartão na PagarMe
         $card = TenantCard::find($cardId);
@@ -121,7 +121,7 @@ class PagarMeService
         if (isset($card) && $card->pagarme_card_id) {
 
             // Cria o cliente na PagarMe
-            $response = Http::withBasicAuth($this->apiKey, '')->get($this->baseUrl . '/customers/' . $client->pagarme_customer_id . '/cards/' . $card->pagarme_card_id)->json();
+            $response = Http::withBasicAuth($this->apiKey, '')->get($this->baseUrl . '/customers/' . $tenant->pagarme_customer_id . '/cards/' . $card->pagarme_card_id)->json();
 
             // Verifica se a resposta foi bem sucedida
             if (isset($response) && isset($response['id'])) {
@@ -149,7 +149,7 @@ class PagarMeService
             ];
 
             // Cria o cliente na PagarMe
-            $response = Http::withBasicAuth($this->apiKey, '')->post($this->baseUrl . '/customers/' . $client->pagarme_customer_id . '/cards', $payload)->json();
+            $response = Http::withBasicAuth($this->apiKey, '')->post($this->baseUrl . '/customers/' . $tenant->pagarme_customer_id . '/cards', $payload)->json();
 
             // Verifica se a resposta foi bem sucedida
             if (isset($response) && isset($response['id'])) {

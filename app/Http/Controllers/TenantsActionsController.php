@@ -31,12 +31,12 @@ class TenantsActionsController extends Controller
         $this->guzzleService = $guzzleService;
     }
 
-    private function runtimeStatusFor(Tenant $client): TenantRuntimeStatus
+    private function runtimeStatusFor(Tenant $tenant): TenantRuntimeStatus
     {
-        $runtimeStatus = $client->runtimeStatus()->first();
+        $runtimeStatus = $tenant->runtimeStatus()->first();
 
         if (!$runtimeStatus) {
-            throw new RuntimeException("Runtime status não encontrado para o cliente {$client->id}.");
+            throw new RuntimeException("Runtime status não encontrado para o cliente {$tenant->id}.");
         }
 
         return $runtimeStatus;
@@ -49,7 +49,7 @@ class TenantsActionsController extends Controller
         $data = $request->all();
 
         // Encontra o cliente
-        $client = $this->repository->find($data['tenant_id']);
+        $tenant = $this->repository->find($data['tenant_id']);
 
         // Converte 'status' para booleano
         $status = filter_var($data['status'], FILTER_VALIDATE_BOOLEAN);
@@ -59,7 +59,7 @@ class TenantsActionsController extends Controller
 
         // Realiza solicitação
         $response = $moduleService->configureModules(
-            $client,
+            $tenant,
             [$data['module_id']],
             $status
         );
@@ -75,7 +75,7 @@ class TenantsActionsController extends Controller
         $data = $request->all();
         
         // Encontra o cliente
-        $client = $this->repository->find($data['tenant_id']);
+        $tenant = $this->repository->find($data['tenant_id']);
 
         // Converte 'status' para booleano (true ou false)
         $data['status']  = filter_var($data['status'], FILTER_VALIDATE_BOOLEAN);
@@ -84,7 +84,7 @@ class TenantsActionsController extends Controller
         $moduleService = app(ModuleService::class);
 
         // Realiza solicitação
-        $response = $moduleService->configureFeatureForTenant($client, [
+        $response = $moduleService->configureFeatureForTenant($tenant, [
             [
                 'name'   => $data['name'],
                 'module' => $data['module'],
@@ -104,7 +104,7 @@ class TenantsActionsController extends Controller
         $data = $request->all();
 
         // Encontra o cliente
-        $client = $this->repository->find($data['tenant_id']);
+        $tenant = $this->repository->find($data['tenant_id']);
 
         // Inicia serviço de módulos
         $moduleService = app(ModuleService::class);
@@ -127,7 +127,7 @@ class TenantsActionsController extends Controller
 
         // Cria o tempo da assinatura no MiCore
         $response = $moduleService->createSubscriptionCore(
-            $client,
+            $tenant,
             $startDate,
             $endDate
         );
@@ -157,9 +157,9 @@ class TenantsActionsController extends Controller
         $totalTenants = count($clientsId);
 
         // Loop para percorrer todos os clientes
-        foreach ($clientsId as $client) {
+        foreach ($clientsId as $tenant) {
             // Se a atualização retornar false incrementa o contador de erros
-            if ($this->updateDatabase($client->id)) {
+            if ($this->updateDatabase($tenant->id)) {
                 $errors++;
             }
         }
@@ -226,28 +226,28 @@ class TenantsActionsController extends Controller
         }
 
         // Obtém todos os clientes com instalações dedicadas
-        $clientsDedicateds = $clients->filter(function($client) {
-            return $client->type_installation == 'dedicated';
+        $clientsDedicateds = $clients->filter(function($tenant) {
+            return $tenant->type_installation == 'dedicated';
         });
 
         // Atualiza sistemas das instalações dedicadas.
-        foreach ($clientsDedicateds as $client) {
+        foreach ($clientsDedicateds as $tenant) {
             if ($shouldUpdateGit) {
-                $this->updateGit($client->id);
+                $this->updateGit($tenant->id);
             }
 
             if ($shouldRestartSupervisor) {
-                $this->restartSupervisor($client->id);
+                $this->restartSupervisor($tenant->id);
             }
 
             if ($shouldBuildJavascript) {
-                $this->runNpmBuild($client->id);
+                $this->runNpmBuild($tenant->id);
             }
         }
 
         // Busca um cliente compartilhado para aplicar operações compartilhadas.
-        $sharedTenant = $clients->first(function($client) {
-            return $client->type_installation == 'shared';
+        $sharedTenant = $clients->first(function($tenant) {
+            return $tenant->type_installation == 'shared';
         });
 
         if ($sharedTenant) {
@@ -258,8 +258,8 @@ class TenantsActionsController extends Controller
 
                 // Atualiza o git de todas as hospedagens compartilhadas.
                 $sharedRuntimeStatus = $this->runtimeStatusFor($sharedTenant)->refresh();
-                foreach ($clients->where('type_installation', 'shared') as $client) {
-                    $this->runtimeStatusFor($client)->update([
+                foreach ($clients->where('type_installation', 'shared') as $tenant) {
+                    $this->runtimeStatusFor($tenant)->update([
                         'git_last_version' => $sharedRuntimeStatus->git_last_version,
                         'git_error' => $sharedRuntimeStatus->git_error,
                     ]);
@@ -272,8 +272,8 @@ class TenantsActionsController extends Controller
 
                 // Atualiza o status do supervisor em todas as hospedagens compartilhadas.
                 $sharedRuntimeStatus = $this->runtimeStatusFor($sharedTenant)->refresh();
-                foreach ($clients->where('type_installation', 'shared') as $client) {
-                    $this->runtimeStatusFor($client)->update([
+                foreach ($clients->where('type_installation', 'shared') as $tenant) {
+                    $this->runtimeStatusFor($tenant)->update([
                         'sp_last_version' => $sharedRuntimeStatus->sp_last_version,
                         'sp_error' => $sharedRuntimeStatus->sp_error,
                     ]);
@@ -288,8 +288,8 @@ class TenantsActionsController extends Controller
         
         if ($shouldUpdateDatabase) {
             // Loop para percorrer todos os clientes quando banco foi selecionado.
-            foreach ($clients as $client) {
-                $this->updateDatabase($client->id);
+            foreach ($clients as $tenant) {
+                $this->updateDatabase($tenant->id);
             }
         }
 
@@ -316,11 +316,11 @@ class TenantsActionsController extends Controller
     public function updateDatabase($id){
 
         // Encontra o cliente
-        $client = $this->repository->find($id);
-        $runtimeStatus = $this->runtimeStatusFor($client);
+        $tenant = $this->repository->find($id);
+        $runtimeStatus = $this->runtimeStatusFor($tenant);
 
         // Realiza solicitação
-        $response = $this->guzzleService->request('POST', 'sistema/atualizar-banco', $client);
+        $response = $this->guzzleService->request('POST', 'sistema/atualizar-banco', $tenant);
 
         // Verifica a resposta antes de tentar acessar as chaves
         if (!$response['success']) {
@@ -345,11 +345,11 @@ class TenantsActionsController extends Controller
     public function updateGit($id){
 
         // Encontra o cliente
-        $client = $this->repository->find($id);
-        $runtimeStatus = $this->runtimeStatusFor($client);
+        $tenant = $this->repository->find($id);
+        $runtimeStatus = $this->runtimeStatusFor($tenant);
 
         // Realiza solicitação
-        $response = $this->guzzleService->request('POST', 'sistema/atualizar-git', $client);
+        $response = $this->guzzleService->request('POST', 'sistema/atualizar-git', $tenant);
 
         Log::info($response);
 
@@ -374,11 +374,11 @@ class TenantsActionsController extends Controller
     public function restartSupervisor($id){
 
         // Encontra o cliente
-        $client = $this->repository->find($id);
-        $runtimeStatus = $this->runtimeStatusFor($client);
+        $tenant = $this->repository->find($id);
+        $runtimeStatus = $this->runtimeStatusFor($tenant);
 
         // Realiza solicitação
-        $response = $this->guzzleService->request('POST', 'sistema/supervisor-restart', $client);
+        $response = $this->guzzleService->request('POST', 'sistema/supervisor-restart', $tenant);
 
         if (!$response['success']) {
             $runtimeStatus->sp_last_version = false;
@@ -408,10 +408,10 @@ class TenantsActionsController extends Controller
     public function updateDatabaseManual($id){
 
         // Encontra o cliente
-        $client = $this->repository->find($id);
+        $tenant = $this->repository->find($id);
 
         // Realiza solicitação
-        $this->updateDatabase($client->id);
+        $this->updateDatabase($tenant->id);
 
         // Retorna a página
         return redirect()
@@ -424,10 +424,10 @@ class TenantsActionsController extends Controller
     public function updateGitManual($id){
 
         // Encontra o cliente
-        $client = $this->repository->find($id);
+        $tenant = $this->repository->find($id);
 
         // Realiza solicitação
-        $this->updateGit($client->id);
+        $this->updateGit($tenant->id);
 
         // Retorna a página
         return redirect()
@@ -440,14 +440,14 @@ class TenantsActionsController extends Controller
     public function updateSupervisorManual($id){
 
         // Encontra o cliente
-        $client = $this->repository->find($id);
+        $tenant = $this->repository->find($id);
 
         // Realiza solicitação
-        $response = $this->restartSupervisor($client->id);
+        $response = $this->restartSupervisor($tenant->id);
 
         // Mantém o status sincronizado para todos os clientes compartilhados.
-        if ($client->type_installation === 'shared') {
-            $sharedRuntimeStatus = $this->runtimeStatusFor($client)->refresh();
+        if ($tenant->type_installation === 'shared') {
+            $sharedRuntimeStatus = $this->runtimeStatusFor($tenant)->refresh();
             $sharedTenants = $this->repository->where('type_installation', 'shared')->get();
 
             foreach ($sharedTenants as $sharedTenant) {
@@ -469,18 +469,18 @@ class TenantsActionsController extends Controller
     public function runNpmBuild($id)
     {
         // Encontra o cliente
-        $client = $this->repository->find($id);
+        $tenant = $this->repository->find($id);
 
         // Realiza solicitação com timeout maior pois build pode demorar.
-        $response = $this->guzzleService->request('POST', 'sistema/npm-build', $client, null, [
+        $response = $this->guzzleService->request('POST', 'sistema/npm-build', $tenant, null, [
             'connect_timeout' => 10,
             'timeout' => 1200,
         ]);
 
         if (!$response['success']) {
             Log::warning('Falha ao executar npm build no cliente.', [
-                'tenant_id' => $client->id,
-                'client_name' => $client->name,
+                'tenant_id' => $tenant->id,
+                'client_name' => $tenant->name,
                 'message' => $response['message'] ?? 'Erro desconhecido',
             ]);
 
@@ -492,8 +492,8 @@ class TenantsActionsController extends Controller
 
         if (!$apiSuccess) {
             Log::warning('API do tenant retornou erro no npm build.', [
-                'tenant_id' => $client->id,
-                'client_name' => $client->name,
+                'tenant_id' => $tenant->id,
+                'client_name' => $tenant->name,
                 'error' => $responseData['error'] ?? $responseData['message'] ?? 'Erro desconhecido',
             ]);
 
@@ -570,13 +570,13 @@ class TenantsActionsController extends Controller
          * Percorre os clientes e executa todos os jobs definidos no lote.
          * Cada combinação cliente + job gera um item filho no histórico.
          */
-        foreach ($clients as $client) {
+        foreach ($clients as $tenant) {
             foreach ($jobs as $jobName) {
                 // Marca o início do disparo individual para auditoria.
                 $startedAt = now();
 
                 // O tenant sempre responde apenas com o aceite do disparo.
-                $response = $this->guzzleService->request('post', 'sistema/processar-tarefa', $client, [
+                $response = $this->guzzleService->request('post', 'sistema/processar-tarefa', $tenant, [
                     'job' => $jobName,
                     'data' => [],
                 ], [
@@ -598,7 +598,7 @@ class TenantsActionsController extends Controller
                 // Registra o item filho para rastrear esse cliente e job.
                 ScheduledTaskDispatchItem::create([
                     'dispatch_id' => $dispatch->id,
-                    'tenant_id' => $client->id,
+                    'tenant_id' => $tenant->id,
                     'job_name' => $jobName,
                     'success' => $success,
                     'response_status_code' => $response['status_code'] ?? null,
@@ -657,10 +657,10 @@ class TenantsActionsController extends Controller
         $data = $request->all();
 
         // Encontra o Tenante modelo 1
-        $client = $this->repository->find(1);
+        $tenant = $this->repository->find(1);
 
         // Realiza solicitação
-        $categories = $this->guzzleService->request('post', 'sistema/permissoes-recursos', $client, $data);
+        $categories = $this->guzzleService->request('post', 'sistema/permissoes-recursos', $tenant, $data);
 
         // Decodifica a resposta
         $categories = json_decode($categories['data'], true);
@@ -760,27 +760,27 @@ class TenantsActionsController extends Controller
         $data = $request->all();
 
         // Encontra o cliente
-        $client = $this->repository->find($id);
+        $tenant = $this->repository->find($id);
         
         // Inicia serviço de módulos
         $moduleService = app(ModuleService::class);
 
         // Realiza solicitação
         $moduleService->configureModules(
-            $client,
+            $tenant,
             $data['modules'],
             true
         );
 
         // Cria o tempo da assinatura no MiCore
         $moduleService->createSubscriptionCore(
-            $client,
+            $tenant,
             now()->toDateString(),
             now()->addDays(30)->toDateString()
         );
 
         // Retorna a página
-        return redirect()->route('tenants.show', $client->id)->with('message', 'Módulos liberados com sucesso!');
+        return redirect()->route('tenants.show', $tenant->id)->with('message', 'Módulos liberados com sucesso!');
 
     }
 
@@ -790,20 +790,20 @@ class TenantsActionsController extends Controller
     public function addDate($id)
     {   
         // Encontra o cliente
-        $client = $this->repository->find($id);
+        $tenant = $this->repository->find($id);
         
         // Inicia serviço de módulos
         $moduleService = app(ModuleService::class);
 
         // Cria o tempo da assinatura no MiCore
         $moduleService->createSubscriptionCore(
-            $client,
+            $tenant,
             now()->toDateString(),
             now()->addYears(1)->toDateString()
         );
 
         // Retorna a página
-        return redirect()->route('tenants.show', $client->id)->with('message', 'Data enviada com sucesso!');
+        return redirect()->route('tenants.show', $tenant->id)->with('message', 'Data enviada com sucesso!');
 
     }
 

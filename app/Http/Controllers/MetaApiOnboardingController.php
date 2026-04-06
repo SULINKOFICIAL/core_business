@@ -287,7 +287,7 @@ class MetaApiOnboardingController extends MetaApiController
         }
 
         // Extrai cliente
-        $client = $validationResult['client'];
+        $tenant = $validationResult['client'];
 
         /**
          * Realiza a troca de um token
@@ -323,7 +323,7 @@ class MetaApiOnboardingController extends MetaApiController
         }
 
         // Resgata a integração que iniciou o processo de onboarding
-        $integration = TenantIntegration::where('tenant_id', $client->id)->where('temporary', $state['signup_session'])->first();
+        $integration = TenantIntegration::where('tenant_id', $tenant->id)->where('temporary', $state['signup_session'])->first();
         if (!$integration || !$integration->meta) {
             return response()->json([
                 'success' => false,
@@ -351,7 +351,7 @@ class MetaApiOnboardingController extends MetaApiController
         $debug = $this->metaService->debugToken($accessToken);
 
         // Revoga integrações anteriores da mesma conta antes de ativar a nova.
-        TenantIntegration::where('tenant_id', $client->id)
+        TenantIntegration::where('tenant_id', $tenant->id)
                             ->where('external_account_id', $integration->external_account_id)
                             ->where('id', '!=', $integration->id)   
                             ->update([
@@ -414,8 +414,8 @@ class MetaApiOnboardingController extends MetaApiController
         }
 
         // Busca o cliente alvo informado no state assinado.
-        $client = Tenant::find($state['tenant_id']);
-        if (!$client) {
+        $tenant = Tenant::find($state['tenant_id']);
+        if (!$tenant) {
             return response()->json([
                 'success' => false,
                 'status' => 'client_not_found',
@@ -425,7 +425,7 @@ class MetaApiOnboardingController extends MetaApiController
         }
 
         return [
-            'client' => $client,
+            'client' => $tenant,
         ];
     }
 }

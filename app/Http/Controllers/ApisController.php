@@ -72,10 +72,10 @@ class ApisController extends Controller
         // Realiza verificações de duplicidade
         foreach ($verifications as $field => $message) {
             if (!empty($data[$field])) {
-                if ($client = Tenant::where($field, $data[$field])->first()) {
+                if ($tenant = Tenant::where($field, $data[$field])->first()) {
                     return response()->json([
                         'message' => $message,
-                        'url'     => $client->domain,
+                        'url'     => $tenant->domain,
                     ], 409);
                 }
             }
@@ -118,23 +118,23 @@ class ApisController extends Controller
         unset($data['table'], $data['table_usr'], $data['table_password'], $data['first_user'], $data['password']);
 
         // Insere no banco de dados
-        $client = $this->repository->create($data);
+        $tenant = $this->repository->create($data);
         if (!empty($mainGoals)) {
-            $client->mainGoals()->createMany(array_map(function ($goal) {
+            $tenant->mainGoals()->createMany(array_map(function ($goal) {
                 return ['goal' => $goal];
             }, $mainGoals));
         }
-        $client->provisioning()->create($provisioningData);
-        $client->runtimeStatus()->create();
+        $tenant->provisioning()->create($provisioningData);
+        $tenant->runtimeStatus()->create();
 
         // Simula solicitação de troca de pacote
         $request = new Request(['package_id' => 1]);
 
         // Adiciona pacote básico ao cliente
-        app(PackageController::class)->assign($request, $client->id);
+        app(PackageController::class)->assign($request, $tenant->id);
 
         // Gera subdomínio, banco de dados e usuário no Cpanel miCore.com.br
-        return response()->json($this->cpanelProvisioningService->runProvisioning($client));
+        return response()->json($this->cpanelProvisioningService->runProvisioning($tenant));
 
     }
 
@@ -208,14 +208,14 @@ class ApisController extends Controller
         $data = $request->all();
 
         // Obtém dados do cliente
-        $client = isset($data['email']) ? Tenant::where('email', $data['email'])->first()
+        $tenant = isset($data['email']) ? Tenant::where('email', $data['email'])->first()
                 : (isset($data['cnpj']) ? Tenant::where('cnpj', $data['cnpj'])->first()
                 : (isset($data['cpf']) ? Tenant::where('cpf', $data['cpf'])->first()
                 : null));
 
         // Verifica se o cliente foi encontrado
-        if ($client) {
-            $domain = $client->domains()->where('status', true)->first()?->domain;
+        if ($tenant) {
+            $domain = $tenant->domains()->where('status', true)->first()?->domain;
 
             if (!$domain) {
                 return response()->json(['message' => 'Tenante encontrado, mas sem domínio ativo vinculado.'], 404);
@@ -250,10 +250,10 @@ class ApisController extends Controller
         if (!$domain) return response()->json(['error' => 'Domínio não encontrado.'], 404);
 
         // Busca o banco de dados correspondente ao subdomínio
-        $client = $domain->client;
+        $tenant = $domain->client;
 
         // Evita erro quando existir domínio órfão (sem cliente relacionado)
-        if (!$client) {
+        if (!$tenant) {
             Log::warning('Domínio sem cliente vinculado na API getDatabase', [
                 'domain_id' => $domain->id,
                 'tenant_id' => $domain->tenant_id,
@@ -265,10 +265,10 @@ class ApisController extends Controller
 
         // Retorna os dados do banco de dados
         return response()->json([
-            'tenant'        => $client->id,
-            'db_name'       => $client->provisioning?->table,
-            'db_user'       => $client->provisioning?->table_user,
-            'db_password'   => $client->provisioning?->table_password,
+            'tenant'        => $tenant->id,
+            'db_name'       => $tenant->provisioning?->table,
+            'db_user'       => $tenant->provisioning?->table_user,
+            'db_password'   => $tenant->provisioning?->table_password,
         ]);
 
     }
@@ -290,8 +290,8 @@ class ApisController extends Controller
         ]);
 
         // Prioriza o cliente resolvido pelo middleware para evitar spoofing.
-        $client = $request->input('client');
-        $data['tenant_id'] = $client->id ?? ($data['tenant_id'] ?? null);
+        $tenant = $request->input('client');
+        $data['tenant_id'] = $tenant->id ?? ($data['tenant_id'] ?? null);
 
         // Registra erro que veio através do MiCore.
         $error = ErrorMiCore::create($data);

@@ -141,7 +141,7 @@ class ERedeService
      *
      * @param string $method Método HTTP (get, post, etc)
      * @param string $url URL para a solicitação
-     * @param object $client Objeto cliente contendo informações do cliente
+     * @param object $tenant Objeto cliente contendo informações do cliente
      * @param array|null $data Dados opcionais para incluir na requisição
      * @return array Resposta da API
      */

@@ -20,7 +20,7 @@ class GuzzleService
      * Também permite sobrescrever timeout e outras opções sem afetar as chamadas antigas.
      * Isso foi adicionado para jobs rápidos poderem aguardar retorno imediato.
      */
-    public function request($method, $url, $client, $data = null, array $requestOptions = [], $type = 'api')
+    public function request($method, $url, $tenant, $data = null, array $requestOptions = [], $type = 'api')
     {
         $guzzle = new Guzzle();
 
@@ -48,8 +48,8 @@ class GuzzleService
         try {
 
             // Monta URL
-            if($client->domains->count() > 0){
-                $url = "$protocol://{$client->domains[0]->domain}/$type/$url";
+            if($tenant->domains->count() > 0){
+                $url = "$protocol://{$tenant->domains[0]->domain}/$type/$url";
             } else {
                 return [
                     'success' => false,
@@ -135,18 +135,18 @@ class GuzzleService
         return json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
-    public function pool($method, $url, $client, $payloads)
+    public function pool($method, $url, $tenant, $payloads)
     {
         $protocol = env('APP_ENV') === 'local' ? 'http' : 'https';
 
-        if ($client->domains->count() == 0) {
+        if ($tenant->domains->count() == 0) {
             return [
                 'success' => false,
                 'message' => 'Nenhum domínio encontrado para o cliente.',
             ];
         }
 
-        $baseUrl = "$protocol://{$client->domains[0]->domain}/api/";
+        $baseUrl = "$protocol://{$tenant->domains[0]->domain}/api/";
 
         $guzzle = new Guzzle([
             'base_uri' => $baseUrl,

@@ -55,14 +55,14 @@ class ScheduleDispatcher implements ShouldQueue
         /**
          * Envia o comando para cada cliente.
          */
-        foreach ($clients as $client) {
+        foreach ($clients as $tenant) {
             $requestedAt = now();
 
             // O tenant sempre responde apenas com o aceite do disparo.
             $response = $this->guzzleService->request(
                 'post', 
                 'sistema/processar-tarefa', 
-                $client, 
+                $tenant, 
                 [
                     'job' => $this->jobName,
                     'data' => $this->jobData,
@@ -86,7 +86,7 @@ class ScheduleDispatcher implements ShouldQueue
             // Registra item do lote por cliente
             ScheduledTaskDispatchItem::create([
                 'dispatch_id' => $dispatch->id,
-                'tenant_id' => $client->id,
+                'tenant_id' => $tenant->id,
                 'job_name' => $this->jobName,
                 'success' => $success,
                 'response_status_code' => $response['status_code'] ?? null,
@@ -103,7 +103,7 @@ class ScheduleDispatcher implements ShouldQueue
             }
 
             Log::info('Disparo de job realizado para cliente', [
-                'tenant_id' => $client->id,
+                'tenant_id' => $tenant->id,
                 'job_name' => $this->jobName,
                 'success' => $success,
             ]);

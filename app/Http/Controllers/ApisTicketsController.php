@@ -22,7 +22,7 @@ class ApisTicketsController extends Controller
         ]);
 
         $requestData = $request->all();
-        $client = $request->input('client');
+        $tenant = $request->input('client');
 
         // Normaliza o usuario solicitante quando ele chega serializado em JSON.
         if (!empty($requestData['requester_user']) && is_string($requestData['requester_user']))
@@ -31,7 +31,7 @@ class ApisTicketsController extends Controller
         }
 
         // Forca o vinculo do ticket ao cliente autenticado na API.
-        $requestData['tenant_id'] = $client->id;
+        $requestData['tenant_id'] = $tenant->id;
         $requestData['progress'] = 'pendente';
 
         $ticket = Ticket::create($requestData);
@@ -47,12 +47,12 @@ class ApisTicketsController extends Controller
      */
     public function index(Request $request)
     {
-        $client = $request->input('client');
+        $tenant = $request->input('client');
 
         // Restringe a consulta ao cliente do token para evitar vazamento entre tenants.
         return response()->json(
             Ticket::query()
-                ->where('tenant_id', $client->id)
+                ->where('tenant_id', $tenant->id)
                 ->orderByDesc('created_at')
                 ->get()
         );
@@ -63,11 +63,11 @@ class ApisTicketsController extends Controller
      */
     public function show(Request $request, $id)
     {
-        $client = $request->input('client');
+        $tenant = $request->input('client');
 
         // Carrega as relacoes usadas no modal do coresulink.
         $ticket = Ticket::with(['replies.user', 'replies.client'])
-            ->where('tenant_id', $client->id)
+            ->where('tenant_id', $tenant->id)
             ->findOrFail($id);
 
         return response()->json($this->formatTicket($ticket));
@@ -78,14 +78,14 @@ class ApisTicketsController extends Controller
      */
     public function reply(Request $request, $id)
     {
-        $client = $request->input('client');
+        $tenant = $request->input('client');
 
         // Garante que o cliente so responda em tickets da propria empresa.
-        $ticket = Ticket::where('tenant_id', $client->id)->findOrFail($id);
+        $ticket = Ticket::where('tenant_id', $tenant->id)->findOrFail($id);
 
         TicketReply::create([
             'ticket_id' => $ticket->id,
-            'tenant_id' => $client->id,
+            'tenant_id' => $tenant->id,
             'message' => $request->input('message'),
         ]);
 
@@ -111,8 +111,8 @@ class ApisTicketsController extends Controller
             'attachments.*.size_bytes' => ['nullable', 'integer'],
         ]);
 
-        $client = $request->input('client');
-        $ticket = Ticket::where('tenant_id', $client->id)->findOrFail($id);
+        $tenant = $request->input('client');
+        $ticket = Ticket::where('tenant_id', $tenant->id)->findOrFail($id);
 
         foreach ($request->input('attachments', []) as $attachment)
         {

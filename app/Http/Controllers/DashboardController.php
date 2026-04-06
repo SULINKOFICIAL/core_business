@@ -25,7 +25,7 @@ class DashboardController extends Controller
         $grouped = Tenant::where('status', true)
             ->where('created_at', '>=', $startDate)
             ->get(['created_at'])
-            ->groupBy(fn (Tenant $client) => Carbon::parse($client->created_at)->format('Y-m'))
+            ->groupBy(fn (Tenant $tenant) => Carbon::parse($tenant->created_at)->format('Y-m'))
             ->map(fn ($items) => $items->count());
 
         // Garante todos os meses no gráfico, preenchendo com zero quando não houver dados.
@@ -126,7 +126,7 @@ class DashboardController extends Controller
         // Agrupa os sistemas por dia de criação dentro do mês selecionado.
         $createdByDay = Tenant::whereBetween('created_at', [$monthStartDate, $monthEndDate])
             ->get(['created_at'])
-            ->groupBy(fn (Tenant $client) => Carbon::parse($client->created_at)->day)
+            ->groupBy(fn (Tenant $tenant) => Carbon::parse($tenant->created_at)->day)
             ->map(fn ($items) => $items->count());
 
         // Agrupa as vendas por dia com base no campo paid_at.

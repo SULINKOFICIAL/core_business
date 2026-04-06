@@ -18,10 +18,10 @@ class ApisDomainsController extends Controller
         $data = $request->all();
 
          // Obtém dados do cliente
-        $client = $data['client'];
+        $tenant = $data['client'];
 
         // Obtém plano atual do cliente
-        $domains = $client->domains;
+        $domains = $tenant->domains;
 
         // Retorna domínios
         return response()->json($domains);
@@ -38,10 +38,10 @@ class ApisDomainsController extends Controller
         $data = $request->all();
 
          // Obtém dados do cliente
-        $client = $data['client'];
+        $tenant = $data['client'];
 
         // Obtém plano atual do cliente
-        $domains = $client->domains()->create([
+        $domains = $tenant->domains()->create([
             'domain'        => $data['domain'],
             'description'   => $data['description'],
             'auto_generate' => false,
@@ -61,10 +61,10 @@ class ApisDomainsController extends Controller
         $data = $request->all();
 
          // Obtém dados do cliente
-        $client = $data['client'];
+        $tenant = $data['client'];
 
         // Obtém plano atual do cliente
-        $domain = $client->domains()->find($id);
+        $domain = $tenant->domains()->find($id);
 
         // Caso não encontre o domínio
         if(!$domain) return response()->json('Domínio não encontrado', 404);
@@ -82,10 +82,10 @@ class ApisDomainsController extends Controller
         $data = $request->all();
 
          // Obtém dados do cliente
-        $client = $data['client'];
+        $tenant = $data['client'];
 
         // Obtém plano atual do cliente
-        $domain = $client->domains()->find($id);
+        $domain = $tenant->domains()->find($id);
 
         // Caso não encontre o domínio
         if(!$domain) return response()->json('Domínio não encontrado', 404);
@@ -115,10 +115,10 @@ class ApisDomainsController extends Controller
         $data = $request->all();
 
          // Obtém dados do cliente
-        $client = $data['client'];
+        $tenant = $data['client'];
 
         // Obtém plano atual do cliente
-        $domain = $client->domains()->find($id);
+        $domain = $tenant->domains()->find($id);
 
         // Caso não encontre o domínio
         if(!$domain) return response()->json('Domínio não encontrado', 404);

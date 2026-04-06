@@ -23,11 +23,11 @@ class OrderService
     /**
      * Cria um pedido em rascunho com base nos módulos e configurações.
      */
-    public function getOrderInProgress($client, $package): Order
+    public function getOrderInProgress($tenant, $package): Order
     {
         return Order::firstOrCreate(
             [
-                'tenant_id'  => $client->id,
+                'tenant_id'  => $tenant->id,
                 'package_id' => $package->id,
                 'type'       => 'Pacote',
                 'status'     => 'draft',
@@ -38,11 +38,11 @@ class OrderService
     /**
      * Cria um pacote em rascunho com base nos módulos e configurações.
      */
-    public function getPackageInProgress($client): TenantPackage
+    public function getPackageInProgress($tenant): TenantPackage
     {
         return TenantPackage::firstOrCreate(
             [
-                'tenant_id' => $client->id,
+                'tenant_id' => $tenant->id,
                 'progress'  => 'draft',
             ],
         );
@@ -98,7 +98,7 @@ class OrderService
         });
     }
 
-    public function createOrderPayment($package, $orderPayment, $client, $clientInfo, $card, $cvv = null, $intervalCycle, $address = null)
+    public function createOrderPayment($package, $orderPayment, $tenant, $clientInfo, $card, $cvv = null, $intervalCycle, $address = null)
     {
 
         // Inicia o serviço da PagarMe
@@ -108,11 +108,11 @@ class OrderService
          * Retorna o customer na PagarMe 
          */
         $customer = $pagarMeService->findOrCreateCustomer([
-            'id'           => $client->id,
-            'name'         => $client->name ?? $clientInfo['name'],
-            'email'        => $client->email ?? $clientInfo['email'],
-            'type'         => (isset($client->company) || $clientInfo['type'] == 1) ? 'company' : 'individual',
-            'document'     => isset($client->company) ? ($client->cnpj ?? $clientInfo['document']) : ($client->cpf ?? $clientInfo['document']),
+            'id'           => $tenant->id,
+            'name'         => $tenant->name ?? $clientInfo['name'],
+            'email'        => $tenant->email ?? $clientInfo['email'],
+            'type'         => (isset($tenant->company) || $clientInfo['type'] == 1) ? 'company' : 'individual',
+            'document'     => isset($tenant->company) ? ($tenant->cnpj ?? $clientInfo['document']) : ($tenant->cpf ?? $clientInfo['document']),
             'country_code' => $clientInfo['phone']['country_code'],
             'area_code'    => $clientInfo['phone']['area_code'],
             'number'       => $clientInfo['phone']['phone'],
@@ -121,7 +121,7 @@ class OrderService
         /**
          * Retorna o cartão na PagarMe 
          */
-        $card = $pagarMeService->findOrCreateCard($client->id, $card->id, $cvv ?? null, $address ?? null);
+        $card = $pagarMeService->findOrCreateCard($tenant->id, $card->id, $cvv ?? null, $address ?? null);
 
         /**
          * Retorna a assinatura na PagarMe 
@@ -144,7 +144,7 @@ class OrderService
             ]);
 
             // Obtem o ultimo pedido pago
-            $lastOrder = Order::where('tenant_id', $client->id)
+            $lastOrder = Order::where('tenant_id', $tenant->id)
                 ->where('status', 'paid')
                 ->orderBy('created_at', 'desc')
                 ->first();
@@ -309,13 +309,13 @@ class OrderService
         if ($order->status === 'Pago') return 'Esse Pagamento já foi aprovado.';
 
         // Busca o cliente
-        $client = $order->client;
+        $tenant = $order->client;
 
         // Busca o pacote a ser renovado
         $package = Package::find($order->key_id);
 
         // Obtém a última assinatura
-        $currentSubscription = $client->lastSubscription();
+        $currentSubscription = $tenant->lastSubscription();
 
         /**
          * Caso não seja uma renovação, indica que o usuário esta 
@@ -332,12 +332,12 @@ class OrderService
             }
 
             // Remove módulos antigos
-            TenantModule::where('tenant_id', $client->id)->delete();
+            TenantModule::where('tenant_id', $tenant->id)->delete();
 
             // Adiciona novos módulos
             foreach ($package->modules as $module) {
                 TenantModule::create([
-                    'tenant_id'  => $client->id,
+                    'tenant_id'  => $tenant->id,
                     'module_id'  => $module->id,
                 ]);
             }
@@ -363,7 +363,7 @@ class OrderService
 
         // Criar nova assinatura
         TenantSubscription::create([
-            'tenant_id'  => $client->id,
+            'tenant_id'  => $tenant->id,
             'package_id' => $package->id,
             'order_id'   => $order->id,
             'start_date' => $startDate,
@@ -372,7 +372,7 @@ class OrderService
         ]);
 
         // Atualizar cliente com novo pacote
-        $client->update([
+        $tenant->update([
             'package_id' => $package->id,
         ]);
 

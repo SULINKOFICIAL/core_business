@@ -220,7 +220,7 @@ class TenantController extends Controller
         });
 
         // Obtém dados do Tenante
-        $client = $this->repository->find($id);
+        $tenant = $this->repository->find($id);
 
         // Valida se não aconteceu algum erro com a API
         $apiError = false;
@@ -232,16 +232,16 @@ class TenantController extends Controller
         $allowModules = [];
 
         // Realiza consulta para verificar se consegue se comunicar com o miCore
-        $apiVerifyStatus = $this->guzzle('get', 'sistema/status', $client);
+        $apiVerifyStatus = $this->guzzle('get', 'sistema/status', $tenant);
 
         // Realiza consulta para verificar se consegue se comunicar com o miCore
-        $apiGetPermissions = $this->guzzle('get', 'sistema/permissoes', $client);
+        $apiGetPermissions = $this->guzzle('get', 'sistema/permissoes', $tenant);
 
         // Realiza consulta para verificar se consegue se comunicar com o miCore
-        $apiGetModules = $this->guzzle('get', 'sistema/modulos', $client);
+        $apiGetModules = $this->guzzle('get', 'sistema/modulos', $tenant);
 
         // Realiza consulta para verificar se consegue se comunicar com o miCore
-        $apiGetSubscription = $this->guzzle('get', 'sistema/assinatura', $client);
+        $apiGetSubscription = $this->guzzle('get', 'sistema/assinatura', $tenant);
 
         // Se conseguir conectar ao miCore do cliente
         if(!isset($apiVerifyStatus['error'])){
@@ -271,7 +271,7 @@ class TenantController extends Controller
 
         // Retorna a página
         return view('pages.tenants.show')->with([
-            'client'            => $client,
+            'client'            => $tenant,
             'modules'           => $modules,
             'modulesByCategory' => $modulesByCategory,
             'packages'          => $packages,
@@ -289,11 +289,11 @@ class TenantController extends Controller
      *
      * @param string $method Método HTTP (get, post, etc)
      * @param string $url URL para a solicitação
-     * @param object $client Objeto cliente contendo informações do cliente
+     * @param object $tenant Objeto cliente contendo informações do cliente
      * @param array|null $data Dados opcionais para incluir na requisição
      * @return array Resposta da API
      */
-    public function guzzle($method, $url, $client, $data = null)
+    public function guzzle($method, $url, $tenant, $data = null)
     {
         try {
             // Instancia o Guzzle
@@ -312,7 +312,7 @@ class TenantController extends Controller
             }
 
             // Realiza a solicitação
-            $response = $guzzle->$method("{$client->domains[0]->domain}/api/$url", $options);
+            $response = $guzzle->$method("{$tenant->domains[0]->domain}/api/$url", $options);
 
             // Obtém o corpo da resposta
             $response = $response->getBody()->getContents();
@@ -387,16 +387,16 @@ class TenantController extends Controller
      * Salva a logo do cliente, caso enviada.
      *
      * @param  \Illuminate\Http\UploadedFile|null  $logo
-     * @param  \App\Models\Tenant  $client
+     * @param  \App\Models\Tenant  $tenant
      * @param  string  $filename
      * @return void
      */
-    public function saveLogo($client, $logo = null, $filename = 'logo.png')
+    public function saveLogo($tenant, $logo = null, $filename = 'logo.png')
     {
         if ($logo && $logo->isValid()) {
-            $logo->storeAs("clientes/{$client->id}", $filename, 'public');
-            $client->logo = true;
-            $client->save();
+            $logo->storeAs("clientes/{$tenant->id}", $filename, 'public');
+            $tenant->logo = true;
+            $tenant->save();
         }
     }
 

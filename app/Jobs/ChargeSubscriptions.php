@@ -37,16 +37,16 @@ class ChargeSubscriptions implements ShouldQueue
         foreach ($subscriptionsToPaid as $subscription) {
             
             // Obtém o cliente
-            $client = $subscription->client;
+            $tenant = $subscription->client;
 
             // Obtém cartão principal do usuário
-            $mainCard = $client->cards()->where('main', true)->first();
+            $mainCard = $tenant->cards()->where('main', true)->first();
 
             // Se tiver um cartão cadastrado para renovação automática
             if($mainCard){
                 
                 // Obtém pedido gerado pela renovação
-                $orderRenovation = Order::where('tenant_id', $client->id)
+                $orderRenovation = Order::where('tenant_id', $tenant->id)
                                         ->where('type', 'Renovação')
                                         ->where('status', 'Pendente')
                                         ->first();

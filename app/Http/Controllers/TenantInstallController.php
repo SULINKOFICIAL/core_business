@@ -12,12 +12,12 @@ class TenantInstallController extends Controller
     public function index($id){
 
         // Obtém o cliente
-        $client = Tenant::with('provisioning')->find($id);
+        $tenant = Tenant::with('provisioning')->find($id);
 
         // Retorna a página
         return view('pages.tenants.install')->with([
-            'client' => $client,
-            'provisioning' => $client->provisioning,
+            'client' => $tenant,
+            'provisioning' => $tenant->provisioning,
         ]);
 
     }
