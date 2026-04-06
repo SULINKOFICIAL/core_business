@@ -22,8 +22,8 @@
                             <div class="mb-10">
                                 <label class="form-label fs-5 fw-semibold mb-3">Status:</label>
                                 <div class="d-flex flex-column flex-wrap fw-semibold">
-                                    <label class="form-check form-check-sm form-check-custom form-check-solid mb-3 me-5"><input class="form-check-input" type="radio" name="client_status" value="1" checked><span class="form-check-label text-gray-600">Ativos</span></label>
-                                    <label class="form-check form-check-sm form-check-custom form-check-solid mb-3"><input class="form-check-input" type="radio" name="client_status" value="0"><span class="form-check-label text-gray-600">Inativos</span></label>
+                                    <label class="form-check form-check-sm form-check-custom form-check-solid mb-3 me-5"><input class="form-check-input" type="radio" name="status_filter" value="1" checked><span class="form-check-label text-gray-600">Ativos</span></label>
+                                    <label class="form-check form-check-sm form-check-custom form-check-solid mb-3"><input class="form-check-input" type="radio" name="status_filter" value="0"><span class="form-check-label text-gray-600">Inativos</span></label>
                                 </div>
                             </div>
                             <div class="d-flex justify-content-end">
@@ -65,7 +65,7 @@
             data: function (data) {
                 data.searchBy = data.search.value;
                 data.order_by = data.columns[data.order[0].column].data;
-                data.client_status = $('input[name="client_status"]:checked').val();
+                data.status_filter = $('input[name="status_filter"]:checked').val();
             },
         },
         order: [[3, 'desc']],

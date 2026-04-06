@@ -9,7 +9,7 @@
                 <div class="me-12">
                     <div class="h-150px w-150px">
                         @if ($client->logo)
-                            <img src="{{ asset('storage/clientes/' . $client->id . '/logo.png') }}" alt="Logo do Cliente" class="img-fluid w-100 object-fit-contain rounded shadow">
+                            <img src="{{ asset('storage/tenants/' . $client->id . '/logo.png') }}" alt="Logo do Cliente" class="img-fluid w-100 object-fit-contain rounded shadow">
                         @else
                             <img src="{{ asset('assets/media/images/logo.png') }}" alt="Logo do Cliente" class="img-fluid w-100 object-fit-contain rounded shadow">
                         @endif
@@ -24,7 +24,7 @@
                             <a href="{{ route('systems.update.database', $client->id) }}" class="btn btn-icon btn-sm btn-light-primary">
                                 <i class="fa-solid fa-database" data-bs-toggle="tooltip" title="Atualizar banco de dados"></i>
                             </a>
-                            <a href="{{ route('clients.edit', $client->id) }}" class="btn btn-icon btn-sm btn-light-primary">
+                            <a href="{{ route('tenants.edit', $client->id) }}" class="btn btn-icon btn-sm btn-light-primary">
                                 <i class="fa-solid fa-gear" data-bs-toggle="tooltip" title="Configurações"></i>
                             </a>
                         </div>
@@ -130,16 +130,16 @@
                 </button>
             </div>
             <div class="divs-sections div-cards" style="display: none;">
-                @include('pages.clients._cards')
+                @include('pages.tenants._cards')
             </div>
             <div class="divs-sections div-resources" style="display: none;">
-                @include('pages.clients._resources')
+                @include('pages.tenants._resources')
             </div>
             <div class="divs-sections div-orders">
-                @include('pages.clients._orders')
+                @include('pages.tenants._orders')
             </div>
             <div class="divs-sections div-signatures" style="display: none;">
-                {{-- @include('pages.clients._signatures') --}}
+                {{-- @include('pages.tenants._signatures') --}}
             </div>
         </div>
     </div>
@@ -158,12 +158,12 @@
         </div>
     @endif
     @if (!$client->package_id)
-    @include('pages.clients._add_package')
+    @include('pages.tenants._add_package')
     @else
-    @include('pages.clients._change_package')
+    @include('pages.tenants._change_package')
     @endif
-    @include('pages.clients._upgrade')
-    @include('pages.clients._add_free')
+    @include('pages.tenants._upgrade')
+    @include('pages.tenants._add_free')
 @endsection
 
 @section('custom-footer')

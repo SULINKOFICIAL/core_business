@@ -19,7 +19,7 @@
           </span>
         </h3>
         <div class="card-toolbar">
-          <a href="{{ route('clients.index') }}" class="btn btn-sm btn-light">Ver MiCores</a>
+          <a href="{{ route('tenants.index') }}" class="btn btn-sm btn-light">Ver MiCores</a>
         </div>
       </div>
 
@@ -38,7 +38,7 @@
             >
               <div class="me-5">
                 <a
-                  href="{{ route('clients.show', $miCore->id) }}"
+                  href="{{ route('tenants.show', $miCore->id) }}"
                   class="text-gray-800 fw-bold text-hover-primary fs-6"
                 >
                   {{ $miCore->name }}

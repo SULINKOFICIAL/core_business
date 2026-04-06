@@ -191,7 +191,7 @@ class TenantsActionsController extends Controller
 
         if (empty($selectedActions)) {
             return redirect()
-                ->route('clients.index')
+                ->route('tenants.index')
                 ->with('type', 'warning')
                 ->with('message', 'Selecione ao menos uma ação para atualizar os sistemas.');
         }
@@ -308,7 +308,7 @@ class TenantsActionsController extends Controller
 
         // Redireciona com a mensagem final
         return redirect()
-            ->route('clients.index')
+            ->route('tenants.index')
             ->with('message', 'Processo concluído para: ' . $selectedActionLabels . '.');
     }
 
@@ -415,7 +415,7 @@ class TenantsActionsController extends Controller
 
         // Retorna a página
         return redirect()
-                ->route('clients.index')
+                ->route('tenants.index')
                 ->with('message', 'Migração executada com sucesso');
 
     }
@@ -431,7 +431,7 @@ class TenantsActionsController extends Controller
 
         // Retorna a página
         return redirect()
-                ->route('clients.index')
+                ->route('tenants.index')
                 ->with('message', 'GIT Pull executado com sucesso');
 
     }
@@ -460,7 +460,7 @@ class TenantsActionsController extends Controller
 
         // Retorna a página
         return redirect()
-                ->route('clients.index')
+                ->route('tenants.index')
                 ->with('message', $response ? 'Filas reiniciadas com sucesso' : 'Falha ao reiniciar as filas');
 
     }
@@ -780,7 +780,7 @@ class TenantsActionsController extends Controller
         );
 
         // Retorna a página
-        return redirect()->route('clients.show', $client->id)->with('message', 'Módulos liberados com sucesso!');
+        return redirect()->route('tenants.show', $client->id)->with('message', 'Módulos liberados com sucesso!');
 
     }
 
@@ -803,7 +803,7 @@ class TenantsActionsController extends Controller
         );
 
         // Retorna a página
-        return redirect()->route('clients.show', $client->id)->with('message', 'Data enviada com sucesso!');
+        return redirect()->route('tenants.show', $client->id)->with('message', 'Data enviada com sucesso!');
 
     }
 

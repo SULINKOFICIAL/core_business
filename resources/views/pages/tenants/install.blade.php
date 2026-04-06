@@ -117,7 +117,7 @@
                     @if (!$provisioning->installAtLeast('completed'))
                         <button class="btn btn-success btn-sm fw-bolder w-100 mt-4 text-uppercase" id="run-install">Rodar instalação</button>
                     @else
-                        <a href="{{ route('clients.show', $client->id) }}" class="btn btn-success btn-sm fw-bolder w-100 mt-4 text-uppercase">Ver Cliente</a>
+                        <a href="{{ route('tenants.show', $client->id) }}" class="btn btn-success btn-sm fw-bolder w-100 mt-4 text-uppercase">Ver Cliente</a>
                     @endif
                 </div>
             </div>
@@ -148,7 +148,7 @@
 
         // Envia a requisição AJAX
         $.ajax({
-            url: "{{ route('clients.install.make', '') }}/" + {{ $client->id }},
+            url: "{{ route('tenants.install.make', '') }}/" + {{ $client->id }},
             type: 'GET',
             success: function(response){
 
@@ -166,7 +166,7 @@
                 // Se a etapa for a última
                 if(response.step === 'completed'){
                     // Redireciona para a página de instalação
-                    window.location.href = "{{ route('clients.show', '') }}/" + {{ $client->id }};
+                    window.location.href = "{{ route('tenants.show', '') }}/" + {{ $client->id }};
                 } else {
                     
                     // Executa a instalação

@@ -8,6 +8,6 @@ class TenantIntegrationController extends Controller
 {
     public function index(): View
     {
-        return view('pages.clients_integrations.index');
+        return view('pages.tenants_integrations.index');
     }
 }

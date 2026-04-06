@@ -41,7 +41,7 @@ class OrderController extends Controller
         $order = $this->repository->find($id);
 
         if (request()->ajax()) {
-            return view('pages.clients._order')->with([
+            return view('pages.tenants._order')->with([
                 'order' => $order,
             ]);
         }

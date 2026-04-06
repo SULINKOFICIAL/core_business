@@ -35,7 +35,7 @@ class TenantController extends Controller
     public function index()
     {
         // Retorna a página. Os dados são carregados por AJAX (DataTables server-side).
-        return view('pages.clients.index');
+        return view('pages.tenants.index');
 
     }
 
@@ -48,7 +48,7 @@ class TenantController extends Controller
     {
 
         // Retorna a página
-        return view('pages.clients.create');
+        return view('pages.tenants.create');
 
     }
 
@@ -197,7 +197,7 @@ class TenantController extends Controller
 
         // Retorna a página
         return redirect()
-                ->route('clients.install.index', $created->id)
+                ->route('tenants.install.index', $created->id)
                 ->with('message', 'Tenante <b>'. $created->name . '</b> adicionado com sucesso.');
 
     }
@@ -270,7 +270,7 @@ class TenantController extends Controller
         $packages = Package::where('status', true)->get();
 
         // Retorna a página
-        return view('pages.clients.show')->with([
+        return view('pages.tenants.show')->with([
             'client'            => $client,
             'modules'           => $modules,
             'modulesByCategory' => $modulesByCategory,
@@ -347,7 +347,7 @@ class TenantController extends Controller
         if(!$content) return redirect()->back();
 
         // Retorna a página
-        return view('pages.clients.edit')->with([
+        return view('pages.tenants.edit')->with([
             'content' => $content
         ]);
     }
@@ -378,7 +378,7 @@ class TenantController extends Controller
 
         // Retorna a página
         return redirect()
-                ->route('clients.index')
+                ->route('tenants.index')
                 ->with('message', 'Tenante <b>'. $request->name . '</b> atualizado com sucesso.');
 
     }
@@ -432,7 +432,7 @@ class TenantController extends Controller
 
         // Retorna a página
         return redirect()
-                ->route('clients.index')
+                ->route('tenants.index')
                 ->with('message', 'Tenante <b>'. $content->name . '</b> '. $message .' com sucesso.');
 
     }

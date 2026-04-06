@@ -27,7 +27,7 @@
             <div class="card-body hover-scroll-overlay-y p-0">
                 <div class="col-12 mb-4">
                     @foreach ($packages as $package)
-                        @include('pages.clients._package')
+                        @include('pages.tenants._package')
                     @endforeach
                 </div>
             </div>

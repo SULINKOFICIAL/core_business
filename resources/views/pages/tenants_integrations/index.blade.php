@@ -86,7 +86,7 @@
             serverSide: true,
             processing: true,
             ajax: {
-                url: '{{ route("clients.integrations.process") }}',
+                url: '{{ route("tenants.integrations.process") }}',
                 data: function (data) {
                     data.searchBy = data.search.value;
                     data.order_by = data.columns[data.order[0].column].data;

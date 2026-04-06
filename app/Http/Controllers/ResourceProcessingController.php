@@ -51,8 +51,8 @@ class ResourceProcessingController extends Controller
      */
     public function filters($query, $data)
     {
-        if (isset($data['client_status']) && $data['client_status'] !== 'all') {
-            $query->where('status', (int) $data['client_status']);
+        if (isset($data['status_filter']) && $data['status_filter'] !== 'all') {
+            $query->where('status', (int) $data['status_filter']);
         }
 
         return $query;

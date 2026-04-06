@@ -59,8 +59,8 @@ class TenantProcessingController extends Controller
         }
 
         // Filtra por status (ativo/inativo)
-        if (isset($data['client_status']) && $data['client_status'] !== 'all') {
-            $query->where('tenants.status', (int) $data['client_status']);
+        if (isset($data['status_filter']) && $data['status_filter'] !== 'all') {
+            $query->where('tenants.status', (int) $data['status_filter']);
         }
 
         // Mantém compatibilidade com filtro antigo por array de status
@@ -181,7 +181,7 @@ class TenantProcessingController extends Controller
 
         return DataTables::query($query)
             ->addColumn('name', function ($row) {
-                $html = '<a href="' . route('clients.show', $row->id) . '" class="text-gray-700 text-hover-primary fw-bold">'
+                $html = '<a href="' . route('tenants.show', $row->id) . '" class="text-gray-700 text-hover-primary fw-bold">'
                     . e($row->name)
                     . '</a><br>';
 
@@ -248,7 +248,7 @@ class TenantProcessingController extends Controller
                 $toggleText = (int) $row->status === 0 ? 'Ativar' : 'Desativar';
 
                 $html = '<div class="d-flex gap-4 align-items-center">';
-                $html .= '<a href="' . route('clients.show', $row->id) . '" class="btn btn-sm btn-primary btn-active-success fw-bolder text-uppercase py-2">Visualizar</a>';
+                $html .= '<a href="' . route('tenants.show', $row->id) . '" class="btn btn-sm btn-primary btn-active-success fw-bolder text-uppercase py-2">Visualizar</a>';
                 $html .= '<a href="#" class="btn btn-light-primary btn-active-light-primary btn-sm" data-kt-menu-trigger="hover" data-kt-menu-placement="bottom-end" data-kt-menu-flip="top-end">';
                 $html .= '<i class="fa-solid fa-ellipsis-vertical p-0"></i>';
                 $html .= '</a>';
@@ -263,7 +263,7 @@ class TenantProcessingController extends Controller
                 $html .= '<div class="menu-item px-3"><a href="' . route('systems.update.database', $row->id) . '" class="menu-link px-3 js-client-action-confirm" data-action-label="atualizar banco de dados" data-client-name="' . e($row->name) . '"><i class="fa-solid fa-database me-2"></i>Atualiza banco de dados</a></div>';
                 $html .= '<div class="menu-item px-3"><a href="' . route('systems.update.git', $row->id) . '" class="menu-link px-3 js-client-action-confirm" data-action-label="atualizar git" data-client-name="' . e($row->name) . '"><i class="fa-solid fa-code me-2"></i>Atualiza git</a></div>';
                 $html .= '<div class="menu-item px-3"><a href="' . route('systems.update.supervisor', $row->id) . '" class="menu-link px-3 js-client-action-confirm" data-action-label="reiniciar filas" data-client-name="' . e($row->name) . '"><i class="fa-solid fa-arrows-rotate me-2"></i>Reiniciar Filas</a></div>';
-                $html .= '<div class="menu-item px-3"><a href="' . route('clients.destroy', $row->id) . '" class="menu-link px-3 js-client-toggle-status" data-action-label="' . e(mb_strtolower($toggleText)) . '" data-client-id="' . e($row->id) . '" data-client-name="' . e($row->name) . '"><i class="fa-solid fa-toggle-off me-2"></i>' . $toggleText . '</a></div>';
+                $html .= '<div class="menu-item px-3"><a href="' . route('tenants.destroy', $row->id) . '" class="menu-link px-3 js-client-toggle-status" data-action-label="' . e(mb_strtolower($toggleText)) . '" data-client-id="' . e($row->id) . '" data-client-name="' . e($row->name) . '"><i class="fa-solid fa-toggle-off me-2"></i>' . $toggleText . '</a></div>';
 
                 $html .= '</div></div>';
 

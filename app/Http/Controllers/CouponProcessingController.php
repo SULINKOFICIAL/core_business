@@ -55,8 +55,8 @@ class CouponProcessingController extends Controller
             $query->where('type', $data['coupon_type']);
         }
 
-        if (isset($data['client_status']) && $data['client_status'] !== 'all') {
-            $query->where('is_active', (int) $data['client_status']);
+        if (isset($data['status_filter']) && $data['status_filter'] !== 'all') {
+            $query->where('is_active', (int) $data['status_filter']);
         }
 
         return $query;

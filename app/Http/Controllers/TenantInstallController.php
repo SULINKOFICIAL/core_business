@@ -15,7 +15,7 @@ class TenantInstallController extends Controller
         $client = Tenant::with('provisioning')->find($id);
 
         // Retorna a página
-        return view('pages.clients.install')->with([
+        return view('pages.tenants.install')->with([
             'client' => $client,
             'provisioning' => $client->provisioning,
         ]);

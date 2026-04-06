@@ -158,17 +158,17 @@ if (! function_exists('header_menu_items')) {
                 'type' => 'submenu',
                 'label' => 'Instalações',
                 'active_routes' => [
-                    'clients.index',
+                    'tenants.index',
                     'tickets.index',
                     'suggestions.index',
-                    'clients.integrations.index',
-                    'clients.integrations.process',
+                    'tenants.integrations.index',
+                    'tenants.integrations.process',
                 ],
                 'children' => [
                     [
                         'label' => 'Listagem',
-                        'route' => 'clients.index',
-                        'active_routes' => ['clients.index'],
+                        'route' => 'tenants.index',
+                        'active_routes' => ['tenants.index'],
                         'icon' => ['class' => 'fa-solid fa-list fs-5'],
                     ],
                     [
@@ -185,8 +185,8 @@ if (! function_exists('header_menu_items')) {
                     ],
                     [
                         'label' => 'Integrações',
-                        'route' => 'clients.integrations.index',
-                        'active_routes' => ['clients.integrations.index', 'clients.integrations.process'],
+                        'route' => 'tenants.integrations.index',
+                        'active_routes' => ['tenants.integrations.index', 'tenants.integrations.process'],
                         'icon' => ['class' => 'fa-solid fa-plug fs-5'],
                     ],
                 ],

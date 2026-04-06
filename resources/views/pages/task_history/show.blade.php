@@ -62,7 +62,7 @@
                             </td>
                             <td>
                                 @if ($item->client)
-                                    <a href="{{ route('clients.show', $item->client->id) }}" class="text-gray-800 text-hover-primary fw-bold">
+                                    <a href="{{ route('tenants.show', $item->client->id) }}" class="text-gray-800 text-hover-primary fw-bold">
                                         {{ $item->client->name }}
                                     </a>
                                     <div class="text-gray-500 fs-8">#{{ $item->client->id }}</div>

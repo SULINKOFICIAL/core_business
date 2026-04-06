@@ -92,8 +92,8 @@ Route::middleware(['auth'])->group(function () {
     /**
      * Rotas para gerenciamento dos clientes.
      */
-    Route::prefix('clientes')->group(function () {
-        Route::name('clients.')->group(function () {
+    Route::prefix('tenants')->group(function () {
+        Route::name('tenants.')->group(function () {
             Route::get('/',                 [TenantController::class, 'index'])->name('index');
             Route::get('/processar',        [TenantProcessingController::class, 'process'])->name('process');
             Route::get('/adicionar',        [TenantController::class, 'create'])->name('create');
@@ -291,8 +291,8 @@ Route::middleware(['auth'])->group(function () {
     /**
      * Rotas para gerenciamento das integrações dos clientes.
      */
-    Route::prefix('integracoes-clientes')->group(function () {
-        Route::name('clients.integrations.')->group(function () {
+    Route::prefix('integracoes-tenants')->group(function () {
+        Route::name('tenants.integrations.')->group(function () {
             Route::get('/',                 [TenantIntegrationController::class, 'index'])->name('index');
             Route::get('/processar',        [TenantIntegrationProcessingController::class, 'process'])->name('process');
         });

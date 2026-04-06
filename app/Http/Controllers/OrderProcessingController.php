@@ -127,7 +127,7 @@ class OrderProcessingController extends Controller
                 if (!$order->client) {
                     return '<span class="text-muted">N/A</span>';
                 }
-                return '<a href="' . route('clients.show', $order->client->id) . '" class="text-gray-700 text-hover-primary fw-bold">' . e($order->client->name) . '</a>';
+                return '<a href="' . route('tenants.show', $order->client->id) . '" class="text-gray-700 text-hover-primary fw-bold">' . e($order->client->name) . '</a>';
             })
             ->editColumn('type', function ($order) {
                 return '<span class="text-gray-600">' . e($order->type ?? '—') . '</span>';

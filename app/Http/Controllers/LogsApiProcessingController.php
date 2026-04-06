@@ -43,7 +43,7 @@ class LogsApiProcessingController extends Controller
     {
         // Tabela principal
         $query = DB::table('logs_apis')
-            ->leftJoin('clients', 'clients.id', '=', 'logs_apis.client_id');
+            ->leftJoin('tenants', 'tenants.id', '=', 'logs_apis.client_id');
 
         // Retorna consulta
         return $query;
@@ -85,7 +85,7 @@ class LogsApiProcessingController extends Controller
                     ->orWhere('logs_apis.id', 'like', "%$searchBy%")
                     ->orWhere('logs_apis.new_log_id', 'like', "%$searchBy%")
                     ->orWhere('logs_apis.client_id', 'like', "%$searchBy%")
-                    ->orWhere('clients.name', 'like', "%$searchBy%");
+                    ->orWhere('tenants.name', 'like', "%$searchBy%");
             });
         }
 
@@ -119,7 +119,7 @@ class LogsApiProcessingController extends Controller
                     break;
 
                 case 'client':
-                    $column = 'clients.name';
+                    $column = 'tenants.name';
                     break;
 
                 case 'created_at':
@@ -160,7 +160,7 @@ class LogsApiProcessingController extends Controller
             'logs_apis.id as id',
             'logs_apis.api as api',
             'logs_apis.client_id as client_id',
-            'clients.name as client_name',
+            'tenants.name as client_name',
             'logs_apis.json as json',
             'logs_apis.reprocessed as reprocessed',
             'logs_apis.new_log_id as new_log_id',
@@ -186,7 +186,7 @@ class LogsApiProcessingController extends Controller
             })
             ->addColumn('client', function ($row) {
                 if (!empty($row->client_name)) {
-                    return '<a href="' . route('clients.show', $row->client_id) . '" class="text-gray-700 text-hover-primary fw-bolder">' . e($row->client_name) . ' <span class="text-gray-500 fw-normal fs-8">#' . e($row->client_id) . '</span></a>';
+                    return '<a href="' . route('tenants.show', $row->client_id) . '" class="text-gray-700 text-hover-primary fw-bolder">' . e($row->client_name) . ' <span class="text-gray-500 fw-normal fs-8">#' . e($row->client_id) . '</span></a>';
                 }
                 return '<span class="text-gray-500">-</span>';
             })
