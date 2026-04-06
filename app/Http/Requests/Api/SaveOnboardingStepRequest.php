@@ -7,6 +7,10 @@ use Illuminate\Validation\Rule;
 
 class SaveOnboardingStepRequest extends FormRequest
 {
+
+    /**
+     * Perfis de empresa
+     */
     private const COMPANY_PROFILES = [
         'lucro_presumido',
         'lucro_real',
@@ -14,6 +18,9 @@ class SaveOnboardingStepRequest extends FormRequest
         'mei',
     ];
 
+    /**
+     * Possíveis objetivos
+     */
     private const MAIN_GOALS = [
         'centralizar_atendimentos',
         'vender_online',
@@ -74,20 +81,16 @@ class SaveOnboardingStepRequest extends FormRequest
         $mainGoals = $this->input('main_goals');
 
         $this->merge([
-            'email' => is_string($email) ? mb_strtolower(trim($email)) : $email,
-            'document_type' => is_string($this->input('document_type'))
-                ? trim((string) $this->input('document_type'))
-                : $this->input('document_type'),
-            'whatsapp' => is_string($whatsapp) ? preg_replace('/\D+/', '', $whatsapp) : $whatsapp,
-            'cpf' => is_string($cpf) ? preg_replace('/\D+/', '', $cpf) : $cpf,
-            'cnpj' => is_string($cnpj) ? preg_replace('/\D+/', '', $cnpj) : $cnpj,
-            'company_zip_code' => is_string($zipCode) ? preg_replace('/\D+/', '', $zipCode) : $zipCode,
-            'has_coupon' => $this->boolean('has_coupon'),
-            'tips_whatsapp' => $this->boolean('tips_whatsapp'),
-            'tips_email' => $this->boolean('tips_email'),
-            'main_goals' => is_array($mainGoals)
-                ? array_values(array_unique(array_filter($mainGoals, fn ($goal) => is_string($goal) && $goal !== '')))
-                : $mainGoals,
+            'email'             => is_string($email) ? mb_strtolower(trim($email)) : $email,
+            'document_type'     => is_string($this->input('document_type')) ? trim((string) $this->input('document_type')) : $this->input('document_type'),
+            'whatsapp'          => is_string($whatsapp) ? preg_replace('/\D+/', '', $whatsapp) : $whatsapp,
+            'cpf'               => is_string($cpf) ? preg_replace('/\D+/', '', $cpf) : $cpf,
+            'cnpj'              => is_string($cnpj) ? preg_replace('/\D+/', '', $cnpj) : $cnpj,
+            'company_zip_code'  => is_string($zipCode) ? preg_replace('/\D+/', '', $zipCode) : $zipCode,
+            'has_coupon'        => $this->boolean('has_coupon'),
+            'tips_whatsapp'     => $this->boolean('tips_whatsapp'),
+            'tips_email'        => $this->boolean('tips_email'),
+            'main_goals'        => is_array($mainGoals) ? array_values(array_unique(array_filter($mainGoals, fn ($goal) => is_string($goal) && $goal !== ''))) : $mainGoals,
         ]);
     }
 }
