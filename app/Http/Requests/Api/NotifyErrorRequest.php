@@ -22,16 +22,16 @@ class NotifyErrorRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'url' => ['nullable', 'string', 'max:1000'],
-            'ip_address' => ['nullable', 'string', 'max:45'],
-            'message' => ['required', 'string', 'max:5000'],
-            'stack_trace' => ['nullable', 'string'],
-            'status_code' => ['nullable', 'integer'],
-            'system_name' => ['nullable', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:5000'],
-            'event_date' => ['nullable', 'string', 'max:50'],
-            'source' => ['nullable', 'string', 'max:255'],
-            'context' => ['nullable', 'array'],
+            'url'           => ['nullable', 'string', 'max:1000'],
+            'ip_address'    => ['nullable', 'string', 'max:45'],
+            'message'       => ['required', 'string', 'max:5000'],
+            'stack_trace'   => ['nullable', 'string'],
+            'status_code'   => ['nullable', 'integer'],
+            'system_name'   => ['nullable', 'string', 'max:255'],
+            'description'   => ['nullable', 'string', 'max:5000'],
+            'event_date'    => ['nullable', 'string', 'max:50'],
+            'source'        => ['nullable', 'string', 'max:255'],
+            'context'       => ['nullable', 'array'],
         ];
     }
 }
