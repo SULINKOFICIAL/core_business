@@ -1,13 +1,15 @@
 <?php
 
 use App\Http\Controllers\ApisAccountController;
-use App\Http\Controllers\ApisController;
+use App\Http\Controllers\ApisDiscoveryController;
 use App\Http\Controllers\ApisOrdersController;
 use App\Http\Controllers\ApisPaymentsController;
 use App\Http\Controllers\ApisTicketsController;
 use App\Http\Controllers\ApisDomainsController;
 use App\Http\Controllers\ApisNewsController;
+use App\Http\Controllers\ApisOnboardingController;
 use App\Http\Controllers\ApisTokensController;
+use App\Http\Controllers\ApisUtilityController;
 use App\Http\Controllers\TenantsPackagesController;
 use App\Http\Controllers\MetaApiController;
 use App\Http\Controllers\MetaApiOnboardingController;
@@ -21,12 +23,16 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
     /**
      * API para comunicação com o WebSite micore.com.br
      */
-    Route::post('/cadastrar-se',      [ApisController::class, 'newTenant']);
-    Route::post('/encontrar-cliente', [ApisController::class, 'findTenant']);
+    Route::post('/encontrar-cliente', [ApisDiscoveryController::class, 'findTenant']);
+    Route::prefix('onboarding')->group(function () {
+        Route::post('/verificar-identidade', [ApisOnboardingController::class, 'checkOnboardingIdentity']);
+        Route::post('/salvar-etapa', [ApisOnboardingController::class, 'saveOnboardingStep']);
+        Route::post('/finalizar', [ApisOnboardingController::class, 'finalizeOnboarding']);
+    });
 
     /** Retorna as informações do banco de dados */
-    Route::get('/meu-banco',      [ApisController::class, 'getDatabase']);
-    Route::get('/modulos',        [ApisController::class, 'modules']);
+    Route::get('/meu-banco',      [ApisDiscoveryController::class, 'getDatabase']);
+    Route::get('/modulos',        [ApisUtilityController::class, 'modules']);
 
     /** APIS que necessitam de um cliente */
     Route::middleware('attach.tenant')->group(function () {
@@ -62,9 +68,8 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
         Route::post('/tickets',                [ApisTicketsController::class, 'store']);
         Route::post('/tickets/{id}/anexos',    [ApisTicketsController::class, 'attach']);
         Route::post('/tickets/{id}/respostas', [ApisTicketsController::class, 'reply']);
-        Route::post('/sugestoes',              [ApisController::class, 'suggestions']);
-        Route::post('/cartao',                 [ApisController::class, 'newCard']);
-        Route::post('/error',                  [ApisController::class, 'notifyErrors']);
+        Route::post('/sugestoes',              [ApisUtilityController::class, 'suggestions']);
+        Route::post('/error',                  [ApisUtilityController::class, 'notifyErrors']);
 
         /** API gerencia os domínios */
         Route::prefix('dominios')->group(function () {
