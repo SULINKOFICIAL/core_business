@@ -22,9 +22,26 @@ class CheckOnboardingIdentityRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['nullable', 'email'],
-            'cpf' => ['nullable', 'string'],
-            'cnpj' => ['nullable', 'string'],
+            'email' => ['nullable', 'email', 'required_without_all:cpf,cnpj'],
+            'document_type' => ['nullable', 'in:cpf,cnpj', 'required_without:email'],
+            'cpf' => ['nullable', 'string', 'size:11', 'required_if:document_type,cpf'],
+            'cnpj' => ['nullable', 'string', 'size:14', 'required_if:document_type,cnpj'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $email = $this->input('email');
+        $cpf = $this->input('cpf');
+        $cnpj = $this->input('cnpj');
+
+        $this->merge([
+            'email' => is_string($email) ? mb_strtolower(trim($email)) : $email,
+            'document_type' => is_string($this->input('document_type'))
+                ? trim((string) $this->input('document_type'))
+                : $this->input('document_type'),
+            'cpf' => is_string($cpf) ? preg_replace('/\D+/', '', $cpf) : $cpf,
+            'cnpj' => is_string($cnpj) ? preg_replace('/\D+/', '', $cnpj) : $cnpj,
+        ]);
     }
 }
