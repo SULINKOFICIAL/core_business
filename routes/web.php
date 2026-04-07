@@ -92,7 +92,7 @@ Route::middleware(['auth'])->group(function () {
     /**
      * Rotas para gerenciamento dos clientes.
      */
-    Route::prefix('tenants')->group(function () {
+    Route::prefix('instalacoes')->group(function () {
         Route::name('tenants.')->group(function () {
             Route::get('/',                 [TenantController::class, 'index'])->name('index');
             Route::get('/processar',        [TenantProcessingController::class, 'process'])->name('process');

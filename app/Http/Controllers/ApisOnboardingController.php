@@ -43,10 +43,12 @@ class ApisOnboardingController extends Controller
                 ]);
             }
 
+            $isCompleted = !empty($tenantByEmail->onboarding_completed_at);
+
             return response()->json([
                 'exists' => true,
-                'is_completed' => !empty($tenantByEmail->onboarding_completed_at),
-                'can_continue' => false,
+                'is_completed' => $isCompleted,
+                'can_continue' => !$isCompleted,
             ]);
         }
 
