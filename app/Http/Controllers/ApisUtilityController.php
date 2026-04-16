@@ -114,18 +114,18 @@ class ApisUtilityController extends Controller
 
         foreach ($packages as $package) {
             $packageJson[] = [
-                'id' => $package->id,
-                'name' => $package->name,
-                'description' => $package->description,
-                'popular' => (bool) ($package->popular ?? false),
-                'value' => (float) $package->value,
+                'id'            => $package->id,
+                'name'          => $package->name,
+                'description'   => $package->description,
+                'popular'       => (bool) ($package->popular ?? false),
+                'value'         => (float) $package->value,
                 'duration_days' => (int) $package->duration_days,
-                'benefits' => $package->benefits->map(function ($benefit) {
+                'benefits'      => $package->benefits->map(function ($benefit) {
                     return [
-                        'icon' => $benefit->icon,
-                        'title' => $benefit->title,
-                        'label' => $benefit->label,
-                        'label_color' => $benefit->label_color,
+                        'icon'          => $benefit->icon,
+                        'title'         => $benefit->title,
+                        'label'         => $benefit->label,
+                        'label_color'   => $benefit->label_color,
                     ];
                 })->values()->toArray(),
                 'modules' => $package->modules->map(function ($module) {
