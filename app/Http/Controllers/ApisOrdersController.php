@@ -270,14 +270,44 @@ class ApisOrdersController extends Controller
         $draftPackage->items()->delete();
 
         foreach ($selectedPackage->modules as $module) {
-            TenantPackageItem::create([
+            $tierId = (int) ($module->pivot->module_pricing_tier_id ?? 0);
+            $moduleValue = (float) $module->value;
+
+            $createdItem = TenantPackageItem::create([
                 'package_id'   => $draftPackage->id,
                 'item_id'      => $module->id,
                 'module_name'  => $module->name,
-                'module_value' => $module->value,
+                'module_value' => $moduleValue,
                 'billing_type' => $module->pricing_type,
                 'payload'      => json_encode($module),
             ]);
+
+            if (($module->pricing_type ?? 'Preço Fixo') !== 'Preço Por Uso' || $tierId <= 0) {
+                continue;
+            }
+
+            $tier = ModulePricingTier::where('id', $tierId)
+                ->where('module_id', $module->id)
+                ->first();
+
+            if (!$tier) {
+                continue;
+            }
+
+            TenantPackageItemConfiguration::updateOrCreate(
+                [
+                    'item_id' => $createdItem->id,
+                    'key' => 'usage',
+                ],
+                [
+                    'value' => (string) $tier->usage_limit,
+                    'derived_pricing_effect' => [
+                        'usage_limit' => (int) $tier->usage_limit,
+                        'price' => (float) $tier->price,
+                    ],
+                    'description' => 'Configuração padrão do pacote aplicada automaticamente.',
+                ]
+            );
         }
 
         $this->orderService->recalculateOrderTotals($order);

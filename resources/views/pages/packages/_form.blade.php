@@ -31,113 +31,349 @@
             'label_color' => 'primary',
         ]];
     }
+
+    $initialSelectedModules = old('module_items');
+
+    if (!is_array($initialSelectedModules)) {
+        $initialSelectedModules = [];
+
+        if (isset($package)) {
+            foreach ($package->modules as $module) {
+                $moduleId = (int) $module->id;
+                $config = $packageModuleConfigs[$moduleId] ?? null;
+
+                $initialSelectedModules[] = [
+                    'module_id' => $moduleId,
+                    'module_pricing_tier_id' => $config ? (int) ($config->module_pricing_tier_id ?? 0) : 0,
+                ];
+            }
+        }
+    } else {
+        $initialSelectedModules = array_map(function ($row) {
+            return [
+                'module_id' => (int) ($row['module_id'] ?? 0),
+                'module_pricing_tier_id' => (int) ($row['module_pricing_tier_id'] ?? 0),
+            ];
+        }, $initialSelectedModules);
+    }
+
+    $selectedModuleIds = collect($initialSelectedModules)
+        ->pluck('module_id')
+        ->filter()
+        ->map(fn ($id) => (int) $id)
+        ->values()
+        ->all();
+
+    $moduleCatalog = collect($modules)->map(function ($module) {
+        return [
+            'id' => (int) $module->id,
+            'name' => $module->name,
+            'description' => $module->description,
+            'pricing_type' => $module->pricing_type,
+            'is_usage' => ($module->pricing_type === 'Preço Por Uso'),
+            'value' => (float) $module->value,
+            'value_formatted' => 'R$ ' . number_format((float) $module->value, 2, ',', '.'),
+            'tiers' => $module->pricingTiers->sortBy('usage_limit')->values()->map(function ($tier) {
+                return [
+                    'id' => (int) $tier->id,
+                    'usage_limit' => (int) $tier->usage_limit,
+                    'price' => (float) $tier->price,
+                    'price_formatted' => 'R$ ' . number_format((float) $tier->price, 2, ',', '.'),
+                ];
+            })->all(),
+        ];
+    })->values()->all();
 @endphp
 
-<div class="row">
-    <div class="col-6 mb-4">
-        <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Nome</label>
-        <input type="text" class="form-control form-control-solid" placeholder="Nome" name="name" value="{{ $package->name ?? old('name') }}" required>
+<div class="card mb-6">
+    <div class="card-header">
+        <h3 class="card-title">Informações gerais</h3>
     </div>
-    <div class="col-3 mb-4">
-        <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Valor</label>
-        <input type="text" class="form-control form-control-solid input-money" name="value" value="R$ {{ number_format(($package->value ?? 0), 2, ',', '.') }}" required>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-6 mb-4">
+                <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Nome</label>
+                <input type="text" class="form-control form-control-solid" placeholder="Nome" name="name" value="{{ $package->name ?? old('name') }}" required>
+            </div>
+            <div class="col-3 mb-4">
+                <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Valor</label>
+                <input type="text" class="form-control form-control-solid input-money" name="value" value="R$ {{ number_format(($package->value ?? 0), 2, ',', '.') }}" required>
+            </div>
+            <div class="col-3 mb-4">
+                <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">É popular?</label>
+                <select name="popular" class="form-select form-select-solid" data-control="select2" data-hide-search="true" data-placeholder="Selecione" required>
+                    <option value="0" @selected((int) old('popular', $package->popular ?? 0) === 0)>Não</option>
+                    <option value="1" @selected((int) old('popular', $package->popular ?? 0) === 1)>Sim</option>
+                </select>
+            </div>
+            <div class="col-3 mb-4">
+                <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Ordem</label>
+                <input type="text" class="form-control form-control-solid" name="order" value="{{ $package->order ?? 1 }}" required>
+            </div>
+            <div class="col-12 mb-4">
+                <label class="form-label fs-6 fw-bold text-gray-700 mb-2">Descrição</label>
+                <textarea class="form-control form-control-solid" rows="4" placeholder="Descrição do pacote" name="description">{{ old('description', $package->description ?? '') }}</textarea>
+            </div>
+        </div>
+
+        {{-- Mantém campos legados sem exibir no formulário --}}
+        <input type="hidden" name="duration_days" value="{{ old('duration_days', $package->duration_days ?? 30) }}">
+        <input type="hidden" name="size_storage" value="{{ old('size_storage', $package->size_storage ?? 5368709120) }}">
     </div>
-    <div class="col-1 mb-4">
-        <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Teste grátis?</label>
-        <select name="free" class="form-select form-select-solid" data-control="select2" data-hide-search="true" data-placeholder="Selecione" required>
-            <option value=""></option>
-            <option value="0" @if(!isset($package) || $package->free == false) selected @endif>Não</option>
-            <option value="1" @if(isset($package) && $package->free == true) selected @endif>Sim</option>
-        </select>
+</div>
+
+<div class="card mb-6">
+    <div class="card-header">
+        <h3 class="card-title">Módulos do pacote</h3>
     </div>
-    <div class="col-2 mb-4">
-        <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Ordem</label>
-        <input type="text" class="form-control form-control-solid" name="order" value="{{ $package->order ?? 1 }}" required>
-    </div>
-    <div class="col-6 mb-4">
-        <label class="form-label fs-6 fw-bold text-gray-700 mb-2">Descrição</label>
-        <input type="text" class="form-control form-control-solid" placeholder="Descrição" name="description" value="{{ $package->description ?? old('description') }}">
-    </div>
-    <div class="col-3 mb-4">
-        <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Dias liberados</label>
-        <input type="number" class="form-control form-control-solid" min="1" name="duration_days" value="{{ $package->duration_days ?? 30 }}" required>
-    </div>
-    <div class="col-3 mb-4">
-        <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Espaço</label>
-        <select name="size_storage" class="form-select form-select-solid" data-control="select2" data-hide-search="true" data-placeholder="Selecione" required>
-            <option value=""></option>
-            <option value="1073741824" @if(isset($package) && $package->size_storage == 1073741824) selected @endif>1GB</option>
-            <option value="2684354560" @if(isset($package) && $package->size_storage == 2684354560) selected @endif>2.5GB</option>
-            <option value="5368709120" @if(!isset($package) || $package->size_storage == 5368709120) selected @endif>5GB</option>
-            <option value="10737418240" @if(isset($package) && $package->size_storage == 10737418240) selected @endif>10GB</option>
-            <option value="16106127360" @if(isset($package) && $package->size_storage == 16106127360) selected @endif>15GB</option>
-            <option value="21474836480" @if(isset($package) && $package->size_storage == 21474836480) selected @endif>20GB</option>
-            <option value="26843545600" @if(isset($package) && $package->size_storage == 26843545600) selected @endif>25GB</option>
-            <option value="32212254720" @if(isset($package) && $package->size_storage == 32212254720) selected @endif>30GB</option>
-            <option value="37580963840" @if(isset($package) && $package->size_storage == 37580963840) selected @endif>35GB</option>
-            <option value="42949672960" @if(isset($package) && $package->size_storage == 42949672960) selected @endif>40GB</option>
-            <option value="48318382080" @if(isset($package) && $package->size_storage == 48318382080) selected @endif>45GB</option>
-            <option value="53687091200" @if(isset($package) && $package->size_storage == 53687091200) selected @endif>50GB</option>
-        </select>
-    </div>
-    <div class="col-12 mb-4">
-        <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Modulos</label>
-        <select name="modules[]" class="form-select form-select-solid" data-control="select2" data-placeholder="Selecione" multiple required>
-            <option value=""></option>
+    <div class="card-body">
+        <div class="row" id="package-modules-grid">
             @foreach ($modules as $module)
-            <option value="{{ $module->id }}" @if(isset($package) && in_array($module->id, $package->modules->pluck('id')->toArray())) selected @endif>{{ $module->name }}</option>
+                @php
+                    $isSelected = in_array((int) $module->id, $selectedModuleIds, true);
+                    $isUsage = ($module->pricing_type === 'Preço Por Uso');
+                    $priceLabel = $isUsage
+                        ? 'Preço por uso'
+                        : 'R$ ' . number_format((float) $module->value, 2, ',', '.');
+                @endphp
+                <div class="col-md-4 mb-4">
+                    <div class="card border border-gray-300 h-100 cursor-pointer package-module-card {{ $isSelected ? 'border-primary' : '' }}" data-module-id="{{ $module->id }}">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <p class="text-gray-800 fw-bolder mb-0">{{ $module->name }}</p>
+                                <span class="badge badge-light-primary package-module-selected-badge" @if (!$isSelected) style="display:none" @endif>Selecionado</span>
+                            </div>
+                            @if (!empty($module->description))
+                                <p class="text-gray-600 fs-8 mb-2">{{ $module->description }}</p>
+                            @endif
+                            <p class="text-gray-700 fw-bolder fs-6 mb-0">{{ $priceLabel }}</p>
+                            @if ($isUsage)
+                                <span class="badge badge-light-warning mt-2">Requer limite (tiers)</span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
             @endforeach
-        </select>
+        </div>
+
+        <div class="separator my-6"></div>
+
+        <h4 class="mb-3">Módulos inclusos</h4>
+        <div class="table-responsive">
+            <table class="table table-row-dashed align-middle gs-0 gy-2" id="selected-modules-table">
+                <thead>
+                    <tr class="fw-bolder text-muted">
+                        <th>Módulo</th>
+                        <th class="text-end">Preço</th>
+                        <th class="text-end">Limite do pacote</th>
+                    </tr>
+                </thead>
+                <tbody id="selected-modules-summary"></tbody>
+            </table>
+        </div>
+        <div id="selected-modules-empty" class="text-muted fs-7">Nenhum módulo selecionado.</div>
+        <div id="module-items-inputs"></div>
     </div>
 </div>
 
-<div class="separator my-6"></div>
-
-<div class="d-flex align-items-center justify-content-between mb-4">
-    <div>
-        <h3 class="mb-1">Benefícios</h3>
-        <p class="text-gray-600 mb-0">Itens exibidos no card do pacote.</p>
+<div class="card mb-6">
+    <div class="card-header">
+        <h3 class="card-title">Benefícios</h3>
     </div>
-    <button type="button" class="btn btn-light-primary" id="add-package-benefit">Adicionar benefício</button>
-</div>
+    <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <p class="text-gray-600 mb-0">Itens exibidos no card do pacote.</p>
+            <button type="button" class="btn btn-light-primary" id="add-package-benefit">Adicionar benefício</button>
+        </div>
 
-<div id="package-benefits">
-    @foreach ($benefits as $index => $benefit)
-    <div class="row align-items-end package-benefit-row mb-3 border border-gray-200 rounded p-4">
-        <div class="col-md-3 mb-3 mb-md-0">
-            <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Ícone</label>
-            <input type="text" class="form-control form-control-solid" name="benefits[{{ $index }}][icon]" placeholder="Ex: shop ou fa-solid fa-shop" value="{{ $benefit['icon'] }}">
-        </div>
-        <div class="col-md-3 mb-3 mb-md-0">
-            <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Título</label>
-            <input type="text" class="form-control form-control-solid" name="benefits[{{ $index }}][title]" placeholder="Ex: Vendas e Pedidos" value="{{ $benefit['title'] }}">
-        </div>
-        <div class="col-md-3 mb-3 mb-md-0">
-            <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Label</label>
-            <input type="text" class="form-control form-control-solid" name="benefits[{{ $index }}][label]" placeholder="Ex: Ilimitado" value="{{ $benefit['label'] }}">
-        </div>
-        <div class="col-md-2 mb-3 mb-md-0">
-            <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Cor do label</label>
-            <select class="form-select form-select-solid" name="benefits[{{ $index }}][label_color]">
-                <option value="success" @selected(($benefit['label_color'] ?? 'primary') === 'success')>success</option>
-                <option value="primary" @selected(($benefit['label_color'] ?? 'primary') === 'primary')>primary</option>
-                <option value="info" @selected(($benefit['label_color'] ?? 'primary') === 'info')>info</option>
-                <option value="warning" @selected(($benefit['label_color'] ?? 'primary') === 'warning')>warning</option>
-            </select>
-        </div>
-        <div class="col-md-1">
-            <button type="button" class="btn btn-light-danger w-100 remove-package-benefit">Remover</button>
+        <div id="package-benefits">
+            @foreach ($benefits as $index => $benefit)
+            <div class="row align-items-end package-benefit-row mb-3 border border-gray-200 rounded p-4">
+                <div class="col-md-3 mb-3 mb-md-0">
+                    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Ícone</label>
+                    <input type="text" class="form-control form-control-solid" name="benefits[{{ $index }}][icon]" placeholder="Ex: shop ou fa-solid fa-shop" value="{{ $benefit['icon'] }}">
+                </div>
+                <div class="col-md-3 mb-3 mb-md-0">
+                    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Título</label>
+                    <input type="text" class="form-control form-control-solid" name="benefits[{{ $index }}][title]" placeholder="Ex: Vendas e Pedidos" value="{{ $benefit['title'] }}">
+                </div>
+                <div class="col-md-3 mb-3 mb-md-0">
+                    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Label</label>
+                    <input type="text" class="form-control form-control-solid" name="benefits[{{ $index }}][label]" placeholder="Ex: Ilimitado" value="{{ $benefit['label'] }}">
+                </div>
+                <div class="col-md-2 mb-3 mb-md-0">
+                    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Cor do label</label>
+                    <select class="form-select form-select-solid" name="benefits[{{ $index }}][label_color]">
+                        <option value="success" @selected(($benefit['label_color'] ?? 'primary') === 'success')>success</option>
+                        <option value="primary" @selected(($benefit['label_color'] ?? 'primary') === 'primary')>primary</option>
+                        <option value="info" @selected(($benefit['label_color'] ?? 'primary') === 'info')>info</option>
+                        <option value="warning" @selected(($benefit['label_color'] ?? 'primary') === 'warning')>warning</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <button type="button" class="btn btn-light-danger w-100 remove-package-benefit">Remover</button>
+                </div>
+            </div>
+            @endforeach
         </div>
     </div>
-    @endforeach
 </div>
 
 @section('custom-footer')
     @parent
     <script>
         $(function () {
-            var benefitsContainer = $('#package-benefits');
-            var addBenefitButton = $('#add-package-benefit');
+            const moduleCatalog = @json($moduleCatalog);
+            let selectedModules = @json($initialSelectedModules);
+
+            const benefitsContainer = $('#package-benefits');
+            const addBenefitButton = $('#add-package-benefit');
+            const summaryBody = $('#selected-modules-summary');
+            const emptySummary = $('#selected-modules-empty');
+            const moduleItemsInputs = $('#module-items-inputs');
+
+            function normalizeSelectedModules() {
+                const validIds = moduleCatalog.map((module) => Number(module.id));
+
+                selectedModules = selectedModules
+                    .map((row) => ({
+                        module_id: Number(row.module_id || 0),
+                        module_pricing_tier_id: Number(row.module_pricing_tier_id || 0),
+                    }))
+                    .filter((row, index, list) => row.module_id > 0 && validIds.includes(row.module_id) && list.findIndex((item) => item.module_id === row.module_id) === index);
+            }
+
+            function findModule(moduleId) {
+                return moduleCatalog.find((module) => Number(module.id) === Number(moduleId)) || null;
+            }
+
+            function formatCurrency(value) {
+                return (Number(value) || 0).toLocaleString('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                });
+            }
+
+            function selectedMap() {
+                const map = {};
+                selectedModules.forEach((item) => {
+                    map[Number(item.module_id)] = item;
+                });
+                return map;
+            }
+
+            function syncCardsVisual() {
+                const map = selectedMap();
+
+                $('.package-module-card').each(function () {
+                    const card = $(this);
+                    const moduleId = Number(card.data('module-id'));
+                    const selected = !!map[moduleId];
+
+                    card.toggleClass('border-primary', selected);
+                    card.find('.package-module-selected-badge').toggle(selected);
+                });
+            }
+
+            function buildTierSelect(module, selectedTierId) {
+                if (!module.is_usage) {
+                    return {
+                        html: '<span class="text-muted">-</span>',
+                        selectedTierId: 0,
+                        selectedTier: null,
+                    };
+                }
+
+                const tiers = Array.isArray(module.tiers) ? module.tiers : [];
+                const fallbackTierId = tiers.length ? Number(tiers[0].id) : 0;
+                const finalTierId = tiers.some((tier) => Number(tier.id) === Number(selectedTierId))
+                    ? Number(selectedTierId)
+                    : fallbackTierId;
+
+                const selectedTier = tiers.find((tier) => Number(tier.id) === finalTierId) || null;
+
+                if (!tiers.length) {
+                    return {
+                        html: '<span class="text-muted">Sem tiers</span>',
+                        selectedTierId: 0,
+                        selectedTier: null,
+                    };
+                }
+
+                const options = tiers.map((tier) => {
+                    const tierId = Number(tier.id);
+                    const selected = tierId === finalTierId ? 'selected' : '';
+                    return '<option value="' + tierId + '" ' + selected + '>Até ' + tier.usage_limit + ' - ' + tier.price_formatted + '</option>';
+                }).join('');
+
+                return {
+                    html: '<select class="form-select form-select-sm form-select-solid package-module-tier-select" data-module-id="' + module.id + '">' + options + '</select>',
+                    selectedTierId: finalTierId,
+                    selectedTier,
+                };
+            }
+
+            function renderSelectedModules() {
+                normalizeSelectedModules();
+
+                summaryBody.empty();
+                moduleItemsInputs.empty();
+
+                if (!selectedModules.length) {
+                    emptySummary.show();
+                    return;
+                }
+
+                emptySummary.hide();
+
+                selectedModules.forEach((item, index) => {
+                    const module = findModule(item.module_id);
+                    if (!module) return;
+
+                    const tierState = buildTierSelect(module, item.module_pricing_tier_id);
+                    item.module_pricing_tier_id = tierState.selectedTierId;
+
+                    const priceText = module.is_usage
+                        ? (tierState.selectedTier ? tierState.selectedTier.price_formatted : formatCurrency(0))
+                        : module.value_formatted;
+
+                    const rowHtml = [
+                        '<tr>',
+                        '  <td class="text-gray-800 fw-bold">' + module.name + '</td>',
+                        '  <td class="text-end text-gray-700 fw-bold">' + priceText + '</td>',
+                        '  <td class="text-end">' + tierState.html + '</td>',
+                        '</tr>'
+                    ].join('');
+
+                    summaryBody.append(rowHtml);
+
+                    moduleItemsInputs.append('<input type="hidden" name="module_items[' + index + '][module_id]" value="' + module.id + '">');
+                    moduleItemsInputs.append('<input type="hidden" name="module_items[' + index + '][module_pricing_tier_id]" value="' + (item.module_pricing_tier_id || 0) + '">');
+                });
+            }
+
+            function toggleModule(moduleId) {
+                const module = findModule(moduleId);
+                if (!module) return;
+
+                const existingIndex = selectedModules.findIndex((item) => Number(item.module_id) === Number(moduleId));
+
+                if (existingIndex >= 0) {
+                    selectedModules.splice(existingIndex, 1);
+                } else {
+                    const defaultTierId = module.is_usage && module.tiers.length
+                        ? Number(module.tiers[0].id)
+                        : 0;
+
+                    selectedModules.push({
+                        module_id: Number(module.id),
+                        module_pricing_tier_id: defaultTierId,
+                    });
+                }
+
+                syncCardsVisual();
+                renderSelectedModules();
+            }
 
             function nextBenefitIndex() {
                 return benefitsContainer.length ? benefitsContainer.find('.package-benefit-row').length : 0;
@@ -145,8 +381,9 @@
 
             function addBenefitRow() {
                 if (!benefitsContainer.length) return;
-                var index = nextBenefitIndex();
-                var rowHtml = [
+                const index = nextBenefitIndex();
+
+                const rowHtml = [
                     '<div class="row align-items-end package-benefit-row mb-3 border border-gray-200 rounded p-4">',
                     '  <div class="col-md-3 mb-3 mb-md-0">',
                     '    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Ícone</label>',
@@ -172,11 +409,31 @@
                     '  <div class="col-md-1">',
                     '    <button type="button" class="btn btn-light-danger w-100 remove-package-benefit">Remover</button>',
                     '  </div>',
-                    '</div>',
+                    '</div>'
                 ].join('');
 
                 benefitsContainer.append(rowHtml);
             }
+
+            $(document).on('click', '.package-module-card', function () {
+                const moduleId = Number($(this).data('module-id'));
+                toggleModule(moduleId);
+            });
+
+            $(document).on('change', '.package-module-tier-select', function () {
+                const moduleId = Number($(this).data('module-id'));
+                const tierId = Number($(this).val() || 0);
+
+                selectedModules = selectedModules.map((item) => {
+                    if (Number(item.module_id) !== moduleId) return item;
+                    return {
+                        ...item,
+                        module_pricing_tier_id: tierId,
+                    };
+                });
+
+                renderSelectedModules();
+            });
 
             addBenefitButton.on('click', function () {
                 addBenefitRow();
@@ -185,6 +442,9 @@
             $(document).on('click', '.remove-package-benefit', function () {
                 $(this).closest('.package-benefit-row').remove();
             });
+
+            syncCardsVisual();
+            renderSelectedModules();
         });
     </script>
 @endsection
