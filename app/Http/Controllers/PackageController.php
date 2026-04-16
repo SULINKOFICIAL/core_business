@@ -74,6 +74,8 @@ class PackageController extends Controller
             ]);
         }
 
+        $this->syncBenefits($created, $request->input('benefits', []));
+
         // Retorna a página
         return redirect()
             ->route('packages.index')
@@ -83,7 +85,7 @@ class PackageController extends Controller
     public function edit($id)
     {
         // Obtém dados
-        $package = $this->repository->find($id);
+        $package = $this->repository->with('benefits')->find($id);
         $modules = Module::where('status', true)->get();
 
         // Verifica se existe
@@ -127,6 +129,8 @@ class PackageController extends Controller
             ]);
         }
 
+        $this->syncBenefits($package, $request->input('benefits', []));
+
         // Retorna a página
         return redirect()
             ->route('packages.edit', $id)
@@ -152,5 +156,39 @@ class PackageController extends Controller
         return redirect()
             ->route('packages.index')
             ->with('message', 'Pacote <b>' . $package->name . '</b> ' . $message . ' com sucesso.');
+    }
+
+    private function syncBenefits(Package $package, array $benefits): void
+    {
+        $allowedColors = ['success', 'primary', 'info', 'warning'];
+
+        $package->benefits()->delete();
+
+        foreach ($benefits as $index => $benefit) {
+            $icon = trim((string) ($benefit['icon'] ?? ''));
+            $title = trim((string) ($benefit['title'] ?? ''));
+            $label = trim((string) ($benefit['label'] ?? ''));
+            $labelColor = strtolower(trim((string) ($benefit['label_color'] ?? 'primary')));
+
+            if ($icon === '' && $title === '' && $label === '') {
+                continue;
+            }
+
+            if ($icon === '' || $title === '' || $label === '') {
+                continue;
+            }
+
+            if (!in_array($labelColor, $allowedColors, true)) {
+                $labelColor = 'primary';
+            }
+
+            $package->benefits()->create([
+                'icon' => $icon,
+                'title' => $title,
+                'label' => $label,
+                'label_color' => $labelColor,
+                'position' => (int) $index,
+            ]);
+        }
     }
 }

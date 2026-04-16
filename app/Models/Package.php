@@ -32,5 +32,10 @@ class Package extends Model
     {
         return $this->belongsToMany(Module::class, 'packages_modules', 'package_id', 'module_id');
     }
+
+    public function benefits(): HasMany
+    {
+        return $this->hasMany(PackageBenefit::class)->orderBy('position');
+    }
     
 }

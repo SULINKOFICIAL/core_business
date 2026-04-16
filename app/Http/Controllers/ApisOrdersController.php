@@ -6,6 +6,7 @@ use App\Models\TenantPackageItem;
 use App\Models\Module;
 use App\Models\ModulePricingTier;
 use App\Models\Order;
+use App\Models\Package;
 use App\Models\TenantPackageItemConfiguration;
 use App\Services\OrderService;
 use App\Services\PagarMeService;
@@ -197,6 +198,7 @@ class ApisOrdersController extends Controller
 
         // Realiza ação desejada
         $action = match ($data['action']) {
+            'change_package' => $this->changePackage($order, (int) ($data['value'] ?? 0)),
             'change_module' => $this->toggleModule($order, $data['value']),
             'usage' => $this->updateUsage($order, $data['value'] ?? []),
             'step' => $this->updateStep($order, $data['value']),
@@ -224,6 +226,65 @@ class ApisOrdersController extends Controller
         return [
             'message' => 'Passo atualizado com sucesso',
             'order' => $order
+        ];
+    }
+
+    /**
+     * Aplica um pacote base no rascunho atual.
+     * Substitui os módulos do rascunho pelos módulos do pacote selecionado.
+     */
+    private function changePackage($order, int $selectedPackageId): array
+    {
+        if ($selectedPackageId <= 0) {
+            return [
+                'message' => 'Pacote inválido.',
+                'action' => 'invalid_package',
+            ];
+        }
+
+        $selectedPackage = Package::with('modules')
+            ->where('status', true)
+            ->find($selectedPackageId);
+
+        if (!$selectedPackage) {
+            return [
+                'message' => 'Pacote não encontrado.',
+                'action' => 'package_not_found',
+            ];
+        }
+
+        $draftPackage = $order->package;
+
+        if (!$draftPackage) {
+            return [
+                'message' => 'Pacote em progresso não encontrado.',
+                'action' => 'draft_not_found',
+            ];
+        }
+
+        $existingItemIds = $draftPackage->items()->pluck('id');
+        if ($existingItemIds->isNotEmpty()) {
+            TenantPackageItemConfiguration::whereIn('item_id', $existingItemIds)->delete();
+        }
+
+        $draftPackage->items()->delete();
+
+        foreach ($selectedPackage->modules as $module) {
+            TenantPackageItem::create([
+                'package_id'   => $draftPackage->id,
+                'item_id'      => $module->id,
+                'module_name'  => $module->name,
+                'module_value' => $module->value,
+                'billing_type' => $module->pricing_type,
+                'payload'      => json_encode($module),
+            ]);
+        }
+
+        $this->orderService->recalculateOrderTotals($order);
+
+        return [
+            'message' => 'Pacote aplicado com sucesso.',
+            'action' => 'changed',
         ];
     }
 

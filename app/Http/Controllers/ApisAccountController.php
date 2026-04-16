@@ -26,8 +26,9 @@ class ApisAccountController extends Controller
             ], 200);
         }
 
-        // Inclui módulos no payload do pacote.
+        // Inclui módulos e benefícios no payload do pacote.
         $package['modules'] = $package->modules;
+        $package['benefits'] = $package->benefits;
 
         // Verifica se já existe renovação pendente.
         $existsRenovation = $tenant->orders()

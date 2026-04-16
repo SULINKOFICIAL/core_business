@@ -1,3 +1,38 @@
+@php
+    $benefits = old('benefits');
+
+    if (is_array($benefits)) {
+        $benefits = array_map(function ($benefit) {
+            return [
+                'icon' => trim((string) ($benefit['icon'] ?? '')),
+                'title' => trim((string) ($benefit['title'] ?? '')),
+                'label' => trim((string) ($benefit['label'] ?? '')),
+                'label_color' => strtolower(trim((string) ($benefit['label_color'] ?? 'primary'))),
+            ];
+        }, $benefits);
+    }
+
+    if ($benefits === null && isset($package) && method_exists($package, 'benefits')) {
+        $benefits = $package->benefits->map(function ($benefit) {
+            return [
+                'icon' => $benefit->icon,
+                'title' => $benefit->title,
+                'label' => $benefit->label,
+                'label_color' => $benefit->label_color,
+            ];
+        })->toArray();
+    }
+
+    if (empty($benefits)) {
+        $benefits = [[
+            'icon' => 'shop',
+            'title' => 'Vendas e Pedidos',
+            'label' => 'Ilimitado',
+            'label_color' => 'primary',
+        ]];
+    }
+@endphp
+
 <div class="row">
     <div class="col-6 mb-4">
         <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Nome</label>
@@ -55,3 +90,101 @@
         </select>
     </div>
 </div>
+
+<div class="separator my-6"></div>
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h3 class="mb-1">Benefícios</h3>
+        <p class="text-gray-600 mb-0">Itens exibidos no card do pacote.</p>
+    </div>
+    <button type="button" class="btn btn-light-primary" id="add-package-benefit">Adicionar benefício</button>
+</div>
+
+<div id="package-benefits">
+    @foreach ($benefits as $index => $benefit)
+    <div class="row align-items-end package-benefit-row mb-3 border border-gray-200 rounded p-4">
+        <div class="col-md-3 mb-3 mb-md-0">
+            <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Ícone</label>
+            <input type="text" class="form-control form-control-solid" name="benefits[{{ $index }}][icon]" placeholder="Ex: shop ou fa-solid fa-shop" value="{{ $benefit['icon'] }}">
+        </div>
+        <div class="col-md-3 mb-3 mb-md-0">
+            <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Título</label>
+            <input type="text" class="form-control form-control-solid" name="benefits[{{ $index }}][title]" placeholder="Ex: Vendas e Pedidos" value="{{ $benefit['title'] }}">
+        </div>
+        <div class="col-md-3 mb-3 mb-md-0">
+            <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Label</label>
+            <input type="text" class="form-control form-control-solid" name="benefits[{{ $index }}][label]" placeholder="Ex: Ilimitado" value="{{ $benefit['label'] }}">
+        </div>
+        <div class="col-md-2 mb-3 mb-md-0">
+            <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Cor do label</label>
+            <select class="form-select form-select-solid" name="benefits[{{ $index }}][label_color]">
+                <option value="success" @selected(($benefit['label_color'] ?? 'primary') === 'success')>success</option>
+                <option value="primary" @selected(($benefit['label_color'] ?? 'primary') === 'primary')>primary</option>
+                <option value="info" @selected(($benefit['label_color'] ?? 'primary') === 'info')>info</option>
+                <option value="warning" @selected(($benefit['label_color'] ?? 'primary') === 'warning')>warning</option>
+            </select>
+        </div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-light-danger w-100 remove-package-benefit">Remover</button>
+        </div>
+    </div>
+    @endforeach
+</div>
+
+@section('custom-footer')
+    @parent
+    <script>
+        $(function () {
+            var benefitsContainer = $('#package-benefits');
+            var addBenefitButton = $('#add-package-benefit');
+
+            function nextBenefitIndex() {
+                return benefitsContainer.length ? benefitsContainer.find('.package-benefit-row').length : 0;
+            }
+
+            function addBenefitRow() {
+                if (!benefitsContainer.length) return;
+                var index = nextBenefitIndex();
+                var rowHtml = [
+                    '<div class="row align-items-end package-benefit-row mb-3 border border-gray-200 rounded p-4">',
+                    '  <div class="col-md-3 mb-3 mb-md-0">',
+                    '    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Ícone</label>',
+                    '    <input type="text" class="form-control form-control-solid" name="benefits[' + index + '][icon]" placeholder="Ex: shop ou fa-solid fa-shop" value="">',
+                    '  </div>',
+                    '  <div class="col-md-3 mb-3 mb-md-0">',
+                    '    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Título</label>',
+                    '    <input type="text" class="form-control form-control-solid" name="benefits[' + index + '][title]" placeholder="Ex: Vendas e Pedidos" value="">',
+                    '  </div>',
+                    '  <div class="col-md-3 mb-3 mb-md-0">',
+                    '    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Label</label>',
+                    '    <input type="text" class="form-control form-control-solid" name="benefits[' + index + '][label]" placeholder="Ex: Ilimitado" value="">',
+                    '  </div>',
+                    '  <div class="col-md-2 mb-3 mb-md-0">',
+                    '    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Cor do label</label>',
+                    '    <select class="form-select form-select-solid" name="benefits[' + index + '][label_color]">',
+                    '      <option value="success">success</option>',
+                    '      <option value="primary" selected>primary</option>',
+                    '      <option value="info">info</option>',
+                    '      <option value="warning">warning</option>',
+                    '    </select>',
+                    '  </div>',
+                    '  <div class="col-md-1">',
+                    '    <button type="button" class="btn btn-light-danger w-100 remove-package-benefit">Remover</button>',
+                    '  </div>',
+                    '</div>',
+                ].join('');
+
+                benefitsContainer.append(rowHtml);
+            }
+
+            addBenefitButton.on('click', function () {
+                addBenefitRow();
+            });
+
+            $(document).on('click', '.remove-package-benefit', function () {
+                $(this).closest('.package-benefit-row').remove();
+            });
+        });
+    </script>
+@endsection
