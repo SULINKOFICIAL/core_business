@@ -55,7 +55,7 @@ class ApisUtilityController extends Controller
      */
     public function modules(): JsonResponse
     {
-        $modules = Module::with(['category', 'pricingTiers'])->where('status', true)->get();
+        $modules = Module::with(['category', 'pricingTiers', 'benefits'])->where('status', true)->get();
         $moduleJson = [];
 
         foreach ($modules as $module) {
@@ -70,6 +70,14 @@ class ApisUtilityController extends Controller
                 'pricing' => [
                     'type' => $module->pricing_type,
                 ],
+                'benefits' => $module->benefits->map(function ($benefit) {
+                    return [
+                        'icon' => $benefit->icon,
+                        'title' => $benefit->title,
+                        'label' => $benefit->label,
+                        'label_color' => $benefit->label_color,
+                    ];
+                })->values()->toArray(),
             ];
 
             if ($module->pricing_type === 'Preço Por Uso') {
