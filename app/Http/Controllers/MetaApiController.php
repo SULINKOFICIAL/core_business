@@ -282,46 +282,6 @@ class MetaApiController extends Controller
     }
 
     /**
-     * API em que um MiCore solicita os dados de um token
-     * em que um dos usuários dele autorizou através do 
-     * sistema de atendimento. 
-     */
-    public function token(Request $request, $id)
-    {
-        
-        // Obtém host
-        $host = $request->host;
-
-        // Obtém o Token solicitado
-        $token = TenantIntegration::find($id);
-
-        // Verifica se o token foi encontrado
-        if (!$token) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Token não encontrado',
-            ], 404);
-        }
-
-        // Verifica se o token pertence ao mesmo host
-        $domain = TenantDomain::where('domain', $host)->first();
-
-        // Verifica se o token pertence ao mesmo host
-        if (!$domain || $domain->tenant_id !== $token->tenant_id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Resgate não autorizado',
-            ], 404);
-        }
-
-        // Localiza o token e verifica a autorização
-        return response()->json([
-            'success' => true,
-            'data' => $token->toArray(),
-        ]);
-    }
-
-    /**
      * Recebe da conta do cliente quais serão os negócios
      * da meta que serão responsabilidade da central receber
      * as notificações.
