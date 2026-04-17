@@ -102,12 +102,6 @@ class ScheduleDispatcher implements ShouldQueue
                 $failureCount++;
             }
 
-            Log::info('Disparo de job realizado para cliente', [
-                'tenant_id' => $tenant->id,
-                'job_name' => $this->jobName,
-                'success' => $success,
-            ]);
-
         }
 
         // Atualiza lote com os totais finais
