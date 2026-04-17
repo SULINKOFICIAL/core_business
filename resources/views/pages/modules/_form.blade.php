@@ -32,6 +32,41 @@
             ['limit' => '', 'price' => ''],
         ];
     }
+
+    $benefits = old('benefits');
+
+    if (is_array($benefits)) {
+        $benefits = array_map(function ($benefit) {
+            return [
+                'icon' => trim((string) ($benefit['icon'] ?? '')),
+                'title' => trim((string) ($benefit['title'] ?? '')),
+                'label' => trim((string) ($benefit['label'] ?? '')),
+                'label_color' => strtolower(trim((string) ($benefit['label_color'] ?? 'primary'))),
+            ];
+        }, $benefits);
+    }
+
+    if ($benefits === null && isset($modules)) {
+        $benefits = $modules->benefits->map(function ($benefit) {
+            return [
+                'icon' => $benefit->icon,
+                'title' => $benefit->title,
+                'label' => $benefit->label,
+                'label_color' => $benefit->label_color,
+            ];
+        })->toArray();
+    }
+
+    if (empty($benefits)) {
+        $benefits = [
+            [
+                'icon' => 'shop',
+                'title' => 'Vendas e Pedidos',
+                'label' => 'Ilimitado',
+                'label_color' => 'primary',
+            ],
+        ];
+    }
 @endphp
 
 <div class="card mb-6">
@@ -129,6 +164,48 @@
     </div>
 </div>
 
+<div class="card mt-6">
+    <div class="card-header">
+        <h3 class="card-title">Benefícios</h3>
+    </div>
+    <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <p class="text-gray-600 mb-0">Itens exibidos abaixo do botão "Incluir no Plano".</p>
+            <button type="button" class="btn btn-light-primary" id="add-benefit">Adicionar benefício</button>
+        </div>
+        <div id="module-benefits">
+            @foreach ($benefits as $index => $benefit)
+            <div class="row align-items-end module-benefit-row mb-3 border border-gray-200 rounded p-4">
+                <div class="col-md-3 mb-3 mb-md-0">
+                    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Ícone</label>
+                    <input type="text" class="form-control form-control-solid" name="benefits[{{ $index }}][icon]" placeholder="Ex: shop ou fa-solid fa-shop" value="{{ $benefit['icon'] }}">
+                </div>
+                <div class="col-md-3 mb-3 mb-md-0">
+                    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Título</label>
+                    <input type="text" class="form-control form-control-solid" name="benefits[{{ $index }}][title]" placeholder="Ex: Vendas e Pedidos" value="{{ $benefit['title'] }}">
+                </div>
+                <div class="col-md-3 mb-3 mb-md-0">
+                    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Label</label>
+                    <input type="text" class="form-control form-control-solid" name="benefits[{{ $index }}][label]" placeholder="Ex: Ilimitado" value="{{ $benefit['label'] }}">
+                </div>
+                <div class="col-md-2 mb-3 mb-md-0">
+                    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Cor do label</label>
+                    <select class="form-select form-select-solid" name="benefits[{{ $index }}][label_color]">
+                        <option value="success" @selected(($benefit['label_color'] ?? 'primary') === 'success')>success</option>
+                        <option value="primary" @selected(($benefit['label_color'] ?? 'primary') === 'primary')>primary</option>
+                        <option value="info" @selected(($benefit['label_color'] ?? 'primary') === 'info')>info</option>
+                        <option value="warning" @selected(($benefit['label_color'] ?? 'primary') === 'warning')>warning</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <button type="button" class="btn btn-light-danger w-100 remove-benefit">Remover</button>
+                </div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+</div>
+
 @section('custom-footer')
     @parent
     <script>
@@ -142,6 +219,8 @@
             var tiersContainer = $('#pricing-tiers');
             var addTierButton = $('#add-tier');
             var valueInput = $('input[name="value"]');
+            var benefitsContainer = $('#module-benefits');
+            var addBenefitButton = $('#add-benefit');
 
             function togglePricingBlocks() {
                 // Alterna visibilidade entre Preço Fixo e Preço Por Uso
@@ -186,14 +265,59 @@
                 }
             }
 
+            function nextBenefitIndex() {
+                return benefitsContainer.length ? benefitsContainer.find('.module-benefit-row').length : 0;
+            }
+
+            function addBenefitRow() {
+                if (!benefitsContainer.length) return;
+                var index = nextBenefitIndex();
+                var rowHtml = [
+                    '<div class="row align-items-end module-benefit-row mb-3 border border-gray-200 rounded p-4">',
+                    '  <div class="col-md-3 mb-3 mb-md-0">',
+                    '    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Ícone</label>',
+                    '    <input type="text" class="form-control form-control-solid" name="benefits[' + index + '][icon]" placeholder="Ex: shop ou fa-solid fa-shop" value="">',
+                    '  </div>',
+                    '  <div class="col-md-3 mb-3 mb-md-0">',
+                    '    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Título</label>',
+                    '    <input type="text" class="form-control form-control-solid" name="benefits[' + index + '][title]" placeholder="Ex: Vendas e Pedidos" value="">',
+                    '  </div>',
+                    '  <div class="col-md-3 mb-3 mb-md-0">',
+                    '    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Label</label>',
+                    '    <input type="text" class="form-control form-control-solid" name="benefits[' + index + '][label]" placeholder="Ex: Ilimitado" value="">',
+                    '  </div>',
+                    '  <div class="col-md-2 mb-3 mb-md-0">',
+                    '    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Cor do label</label>',
+                    '    <select class="form-select form-select-solid" name="benefits[' + index + '][label_color]">',
+                    '      <option value="success">success</option>',
+                    '      <option value="primary" selected>primary</option>',
+                    '      <option value="info">info</option>',
+                    '      <option value="warning">warning</option>',
+                    '    </select>',
+                    '  </div>',
+                    '  <div class="col-md-1">',
+                    '    <button type="button" class="btn btn-light-danger w-100 remove-benefit">Remover</button>',
+                    '  </div>',
+                    '</div>',
+                ].join('');
+
+                benefitsContainer.append(rowHtml);
+            }
+
             // Botão de adicionar faixa
             addTierButton.on('click', function () {
                 addTierRow();
+            });
+            addBenefitButton.on('click', function () {
+                addBenefitRow();
             });
 
             // Remove faixa clicando no botão "Remover"
             $(document).on('click', '.remove-tier', function () {
                 $(this).closest('.pricing-tier-row').remove();
+            });
+            $(document).on('click', '.remove-benefit', function () {
+                $(this).closest('.module-benefit-row').remove();
             });
 
             // Atualiza a UI quando muda o tipo de cobrança

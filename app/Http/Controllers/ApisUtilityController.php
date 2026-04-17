@@ -6,6 +6,7 @@ use App\Http\Requests\Api\NotifyErrorRequest;
 use App\Models\ErrorMiCore;
 use App\Models\IntegrationSuggestion;
 use App\Models\Module;
+use App\Models\Package;
 use App\Services\SystemProblemNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -55,7 +56,7 @@ class ApisUtilityController extends Controller
      */
     public function modules(): JsonResponse
     {
-        $modules = Module::with(['category', 'pricingTiers'])->where('status', true)->get();
+        $modules = Module::with(['category', 'pricingTiers', 'benefits'])->where('status', true)->get();
         $moduleJson = [];
 
         foreach ($modules as $module) {
@@ -70,6 +71,14 @@ class ApisUtilityController extends Controller
                 'pricing' => [
                     'type' => $module->pricing_type,
                 ],
+                'benefits' => $module->benefits->map(function ($benefit) {
+                    return [
+                        'icon' => $benefit->icon,
+                        'title' => $benefit->title,
+                        'label' => $benefit->label,
+                        'label_color' => $benefit->label_color,
+                    ];
+                })->values()->toArray(),
             ];
 
             if ($module->pricing_type === 'Preço Por Uso') {
@@ -93,5 +102,41 @@ class ApisUtilityController extends Controller
         }
 
         return response()->json($moduleJson, 200);
+    }
+
+    /**
+     * Retorna pacotes ativos com módulos e benefícios para seleção no checkout.
+     */
+    public function packages(): JsonResponse
+    {
+        $packages = Package::with(['modules', 'benefits'])->where('status', true)->orderBy('order')->get();
+        $packageJson = [];
+
+        foreach ($packages as $package) {
+            $packageJson[] = [
+                'id'            => $package->id,
+                'name'          => $package->name,
+                'description'   => $package->description,
+                'popular'       => (bool) ($package->popular ?? false),
+                'value'         => (float) $package->value,
+                'duration_days' => (int) $package->duration_days,
+                'benefits'      => $package->benefits->map(function ($benefit) {
+                    return [
+                        'icon'          => $benefit->icon,
+                        'title'         => $benefit->title,
+                        'label'         => $benefit->label,
+                        'label_color'   => $benefit->label_color,
+                    ];
+                })->values()->toArray(),
+                'modules' => $package->modules->map(function ($module) {
+                    return [
+                        'id' => $module->id,
+                        'name' => $module->name,
+                    ];
+                })->values()->toArray(),
+            ];
+        }
+
+        return response()->json($packageJson, 200);
     }
 }

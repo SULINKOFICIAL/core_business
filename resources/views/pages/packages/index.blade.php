@@ -14,8 +14,8 @@
                 <div class="w-75">
                     <a href="{{ route('modules.edit', $package->id) }}" class="mb-0 fw-bolder @if ($package->status == 0) text-danger @else text-gray-700 @endif text-hover-primary m-0 fs-5 text-uppercase lh-1">
                         {{ Str::limit($package->name, 25) }}
-                        @if ($package->free)
-                            <span class="text-success fs-7">Teste Grátis</span>
+                        @if ($package->popular)
+                            <span class="badge badge-success ms-1">Popular</span>
                         @endif
                     </a>
                     <p class="text-gray-500 mb-0 fw-semibold fs-7 lh-1">

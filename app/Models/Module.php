@@ -46,6 +46,11 @@ class Module extends Model
         return $this->hasMany(ModulePricingTier::class);
     }
 
+    public function benefits(): HasMany
+    {
+        return $this->hasMany(ModuleBenefit::class)->orderBy('position');
+    }
+
     public function resources(): HasMany
     {
         return $this->hasMany(Resource::class, 'module_id', 'id');

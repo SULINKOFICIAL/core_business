@@ -10,7 +10,9 @@ class Package extends Model
 {
     protected $fillable = [
         'name',
+        'description',
         'free',
+        'popular',
         'size_storage',
         'value',
         'duration_days',
@@ -30,7 +32,13 @@ class Package extends Model
 
     public function modules(): BelongsToMany
     {
-        return $this->belongsToMany(Module::class, 'packages_modules', 'package_id', 'module_id');
+        return $this->belongsToMany(Module::class, 'packages_modules', 'package_id', 'module_id')
+            ->withPivot('module_pricing_tier_id');
+    }
+
+    public function benefits(): HasMany
+    {
+        return $this->hasMany(PackageBenefit::class)->orderBy('position');
     }
     
 }

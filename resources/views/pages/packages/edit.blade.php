@@ -9,11 +9,7 @@
 <form action="{{ route('packages.update', $package->id) }}" method="POST" enctype="multipart/form-data">
     @csrf
     @method('PUT')
-    <div class="card">
-        <div class="card-body">
-            @include('pages.packages._form')
-        </div>
-    </div>
+    @include('pages.packages._form')
     <div class="d-flex justify-content-between mt-4">
         @if ($package->status == 1)
             <a href="{{ route('packages.destroy', $package->id) }}" class="btn btn-lg btn-danger me-2">

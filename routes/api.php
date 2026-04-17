@@ -27,13 +27,14 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
     Route::post('/encontrar-cliente', [ApisDiscoveryController::class, 'findTenant']);
     Route::prefix('onboarding')->group(function () {
         Route::post('/verificar-identidade', [ApisOnboardingController::class, 'checkOnboardingIdentity']);
-        Route::post('/salvar-etapa', [ApisOnboardingController::class, 'saveOnboardingStep']);
-        Route::post('/finalizar', [ApisOnboardingController::class, 'finalizeOnboarding']);
+        Route::post('/salvar-etapa',         [ApisOnboardingController::class, 'saveOnboardingStep']);
+        Route::post('/finalizar',            [ApisOnboardingController::class, 'finalizeOnboarding']);
     });
 
     /** Retorna as informações do banco de dados */
     Route::get('/meu-banco',      [ApisDiscoveryController::class, 'getDatabase']);
     Route::get('/modulos',        [ApisUtilityController::class, 'modules']);
+    Route::get('/pacotes',        [ApisUtilityController::class, 'packages']);
 
     /** APIS que necessitam de um cliente */
     Route::middleware('attach.tenant')->group(function () {

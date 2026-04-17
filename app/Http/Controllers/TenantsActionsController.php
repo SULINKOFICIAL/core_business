@@ -657,7 +657,7 @@ class TenantsActionsController extends Controller
         $data = $request->all();
 
         // Encontra o Tenante modelo 1
-        $tenant = $this->repository->find(1);
+        $tenant = $this->repository->where('type_installation', 'shared')->first();
 
         // Realiza solicitação
         $categories = $this->guzzleService->request('post', 'sistema/permissoes-recursos', $tenant, $data);

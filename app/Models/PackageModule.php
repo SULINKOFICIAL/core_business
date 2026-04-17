@@ -10,6 +10,7 @@ class PackageModule extends Model
     protected $fillable = [
         'module_id',
         'package_id',
+        'module_pricing_tier_id',
         'filed_by',
         'created_by',
         'updated_by',

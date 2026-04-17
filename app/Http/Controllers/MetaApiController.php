@@ -70,6 +70,7 @@ class MetaApiController extends Controller
             'status' => 'Accepted',
             'message' => 'Webhook recebido e será processado em background.'
         ], 202);
+
     }
 
     public function handle(array $data, $logOld = null)

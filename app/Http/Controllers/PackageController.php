@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Package;
 use App\Models\Module;
 use App\Models\PackageModule;
+use App\Models\ModulePricingTier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -43,11 +44,12 @@ class PackageController extends Controller
     {
 
         // Obtém módulos
-        $modules = Module::where('status', true)->get();
+        $modules = Module::with('pricingTiers')->where('status', true)->get();
 
         // Retorna a página
         return view('pages.packages.create')->with([
             'modules' => $modules,
+            'packageModuleConfigs' => [],
         ]);
     }
 
@@ -56,8 +58,11 @@ class PackageController extends Controller
         // Obtém dados
         $data = $request->all();
 
-        // Autor
+        // Normaliza campos centrais
+        $data['popular'] = (bool) ($data['popular'] ?? false);
         $data['value'] = toDecimal($data['value']);
+        $data['duration_days'] = (int) ($data['duration_days'] ?? 30);
+        $data['size_storage'] = (int) ($data['size_storage'] ?? 5368709120);
 
         // Autor
         $data['created_by'] = Auth::id();
@@ -65,14 +70,9 @@ class PackageController extends Controller
         // Insere no banco de dados
         $created = $this->repository->create($data);
 
-        // Insere módulos no pacote
-        foreach ($data['modules'] as $moduleId) {
-            PackageModule::create([
-                'module_id'  => $moduleId,
-                'package_id' => $created->id,
-                'created_by' => Auth::id(),
-            ]);
-        }
+        $this->syncModules($created, $request->input('module_items', []));
+
+        $this->syncBenefits($created, $request->input('benefits', []));
 
         // Retorna a página
         return redirect()
@@ -83,8 +83,8 @@ class PackageController extends Controller
     public function edit($id)
     {
         // Obtém dados
-        $package = $this->repository->find($id);
-        $modules = Module::where('status', true)->get();
+        $package = $this->repository->with('benefits')->find($id);
+        $modules = Module::with('pricingTiers')->where('status', true)->get();
 
         // Verifica se existe
         if (!$package) return redirect()->back();
@@ -93,6 +93,10 @@ class PackageController extends Controller
         return view('pages.packages.edit')->with([
             'package' => $package,
             'modules' => $modules,
+            'packageModuleConfigs' => PackageModule::where('package_id', $id)
+                ->get()
+                ->keyBy('module_id')
+                ->all(),
         ]);
     }
 
@@ -106,8 +110,11 @@ class PackageController extends Controller
 
         $oldName = $package->name;
 
-        // Autor
+        // Normaliza campos centrais
+        $data['popular'] = (bool) ($data['popular'] ?? false);
         $data['value'] = toDecimal($data['value']);
+        $data['duration_days'] = (int) ($data['duration_days'] ?? ($package->duration_days ?? 30));
+        $data['size_storage'] = (int) ($data['size_storage'] ?? ($package->size_storage ?? 5368709120));
 
         // Autor
         $data['updated_by'] = Auth::id();
@@ -115,17 +122,9 @@ class PackageController extends Controller
         // Atualiza dados
         $package->update($data);
 
-        // Remove pacotes anteriores
-        PackageModule::where('package_id', $id)->delete();
+        $this->syncModules($package, $request->input('module_items', []));
 
-        // Insere módulos no pacote
-        foreach ($data['modules'] as $moduleId) {
-            PackageModule::create([
-                'module_id'  => $moduleId,
-                'package_id' => $id,
-                'created_by' => Auth::id(),
-            ]);
-        }
+        $this->syncBenefits($package, $request->input('benefits', []));
 
         // Retorna a página
         return redirect()
@@ -152,5 +151,80 @@ class PackageController extends Controller
         return redirect()
             ->route('packages.index')
             ->with('message', 'Pacote <b>' . $package->name . '</b> ' . $message . ' com sucesso.');
+    }
+
+    private function syncBenefits(Package $package, array $benefits): void
+    {
+        $allowedColors = ['success', 'primary', 'info', 'warning'];
+
+        $package->benefits()->delete();
+
+        foreach ($benefits as $index => $benefit) {
+            $icon = trim((string) ($benefit['icon'] ?? ''));
+            $title = trim((string) ($benefit['title'] ?? ''));
+            $label = trim((string) ($benefit['label'] ?? ''));
+            $labelColor = strtolower(trim((string) ($benefit['label_color'] ?? 'primary')));
+
+            if ($icon === '' && $title === '' && $label === '') {
+                continue;
+            }
+
+            if ($icon === '' || $title === '' || $label === '') {
+                continue;
+            }
+
+            if (!in_array($labelColor, $allowedColors, true)) {
+                $labelColor = 'primary';
+            }
+
+            $package->benefits()->create([
+                'icon' => $icon,
+                'title' => $title,
+                'label' => $label,
+                'label_color' => $labelColor,
+                'position' => (int) $index,
+            ]);
+        }
+    }
+
+    private function syncModules(Package $package, array $moduleItems): void
+    {
+        $packageId = $package->id;
+        $createdBy = Auth::id();
+
+        PackageModule::where('package_id', $packageId)->delete();
+
+        foreach ($moduleItems as $row) {
+            $moduleId = (int) ($row['module_id'] ?? 0);
+            $tierId = (int) ($row['module_pricing_tier_id'] ?? 0);
+
+            if ($moduleId <= 0) {
+                continue;
+            }
+
+            $module = Module::find($moduleId);
+            if (!$module) {
+                continue;
+            }
+
+            $modulePricingTierId = null;
+
+            if (($module->pricing_type ?? 'Preço Fixo') === 'Preço Por Uso' && $tierId > 0) {
+                $tier = ModulePricingTier::where('id', $tierId)
+                    ->where('module_id', $moduleId)
+                    ->first();
+
+                if ($tier) {
+                    $modulePricingTierId = $tier->id;
+                }
+            }
+
+            PackageModule::create([
+                'module_id' => $moduleId,
+                'package_id' => $packageId,
+                'module_pricing_tier_id' => $modulePricingTierId,
+                'created_by' => $createdBy,
+            ]);
+        }
     }
 }

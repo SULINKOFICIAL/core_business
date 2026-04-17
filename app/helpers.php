@@ -229,17 +229,17 @@ if (! function_exists('header_menu_items')) {
                     ],
                 ],
             ],
-            // [
-            //     'type' => 'link',
-            //     'label' => 'Pacotes',
-            //     'route' => 'packages.index',
-            //     'active_routes' => ['packages.index'],
-            // ],
             [
                 'type' => 'submenu',
                 'label' => 'Produto',
                 'active_routes' => ['modules.index', 'modules.categories.index', 'groups.index', 'resources.index'],
                 'children' => [
+                    [
+                        'label' => 'Pacotes',
+                        'route' => 'packages.index',
+                        'active_routes' => ['packages.index'],
+                        'icon' => ['class' => 'fa-solid fa-cloud-arrow-up fs-5'],
+                    ],
                     [
                         'label' => 'Lista de modulos',
                         'route' => 'modules.index',

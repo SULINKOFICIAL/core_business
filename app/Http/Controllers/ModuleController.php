@@ -83,6 +83,7 @@ class ModuleController extends Controller
 
         // Persiste as faixas de preço quando o tipo é por uso
         $this->syncPricingTiers($created, $request->input('tiers', []), $data['pricing_type']);
+        $this->syncBenefits($created, $request->input('benefits', []));
 
         // Salva capa do módulo, se enviada
         if ($request->hasFile('cover_image')) {
@@ -103,7 +104,7 @@ class ModuleController extends Controller
         $categories = ModuleCategory::where('status', true)->get();
 
         // Obtém dados
-        $modules = $this->repository->find($id);
+        $modules = $this->repository->with('benefits')->find($id);
 
         // Verifica se existe
         if(!$modules) return redirect()->back();
@@ -153,6 +154,7 @@ class ModuleController extends Controller
 
         // Atualiza as faixas de preço quando o tipo é por uso
         $this->syncPricingTiers($modules, $request->input('tiers', []), $data['pricing_type']);
+        $this->syncBenefits($modules, $request->input('benefits', []));
 
         // Atualiza capa do módulo, se enviada
         if ($request->hasFile('cover_image')) {
@@ -204,13 +206,49 @@ class ModuleController extends Controller
         }
     }
 
+    // Sincroniza os benefícios exibidos no card do módulo
+    private function syncBenefits(Module $module, array $benefits): void
+    {
+        $allowedColors = ['success', 'primary', 'info', 'warning'];
+
+        $module->benefits()->delete();
+
+        foreach ($benefits as $index => $benefit) {
+            $icon = trim((string) ($benefit['icon'] ?? ''));
+            $title = trim((string) ($benefit['title'] ?? ''));
+            $label = trim((string) ($benefit['label'] ?? ''));
+            $labelColor = strtolower(trim((string) ($benefit['label_color'] ?? 'primary')));
+
+            // Ignora linhas vazias ou incompletas para não persistir dados inválidos.
+            if ($icon === '' && $title === '' && $label === '') {
+                continue;
+            }
+
+            if ($icon === '' || $title === '' || $label === '') {
+                continue;
+            }
+
+            if (!in_array($labelColor, $allowedColors, true)) {
+                $labelColor = 'primary';
+            }
+
+            $module->benefits()->create([
+                'icon' => $icon,
+                'title' => $title,
+                'label' => $label,
+                'label_color' => $labelColor,
+                'position' => (int) $index,
+            ]);
+        }
+    }
+
     private function saveCoverImage(Module $module, $coverImage): void
     {
         if (!$coverImage || !$coverImage->isValid()) {
             return;
         }
 
-        $extension = $coverImage->getTenantOriginalExtension();
+        $extension = $coverImage->getClientOriginalExtension();
         $filename = $extension ? "cover.{$extension}" : 'cover';
         $path = "modules/{$module->id}";
 
