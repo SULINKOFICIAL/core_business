@@ -4,7 +4,7 @@
  * Configurações do TikTok
  * 
  * Parametros obtidos no aplicativo:
- * https://developers.facebook.com/apps/3920427851582223/
+ * https://partner.tiktokshop.com/service/gather?service_id=7623028088969103120
  * 
  */
 return [
