@@ -99,6 +99,30 @@
                 </div>
             </div>
             <div class="card mb-4">
+                <div class="card-body p-6 pb-4">
+                    <p class="fw-bolder text-gray-700 fs-3 text-uppercase">Usuários</p>
+                    <div class="d-flex flex-column align-items-start mb-1">
+                        <p class="text-gray-700 fw-bolder mb-1 fs-5">Total</p>
+                        <p class="text-gray-600 mb-0 fw-bold fs-7">
+                            {{ $totalUsers }}
+                        </p>
+                    </div>
+                    <div class="d-flex flex-column align-items-start">
+                        <p class="text-gray-700 fw-bolder mb-1 fs-5">Limite</p>
+                        <div class="d-flex align-items-center gap-1">
+                            <p class="text-gray-600 mb-0 fw-bold fs-7 mb-0 text-hover-primary users-limits cursor-pointer">
+                                {{ $limitUsers }}
+                                <i class="fa-solid fa-pen text-gray-500"></i>
+                            </p>
+                            <input type="text" class="form-control form-control-sm users-limits-input" style="width:150px; display:none;" value="{{ $limitUsers }}">
+                        </div>
+                    </div>
+                    <button class="btn btn-sm w-100 h-25px btn-success d-flex align-items-center justify-content-center mt-1" id="update-users-limits">
+                        Atualizar
+                    </button>
+                </div>
+            </div>
+            <div class="card mb-4">
                 <div class="card-body p-6">
                     <p class="fw-bolder text-gray-700 fs-3 text-uppercase">Configuração</p>
                     @foreach ($modules as $module)
@@ -180,7 +204,6 @@
 
         });
         
-        
         $(document).on('change', '.input-modules', function(){
 
             // Obtém se esta checado ou não
@@ -231,6 +254,67 @@
             // Abre o flatpickr
             inputDate[0]._flatpickr.open();
             
+        });
+
+        /**
+         * Função responsável por alterar o limite de usuários  
+         */
+        $(document).on('click', '.users-limits', function(e) {
+
+            e.stopPropagation();
+
+            // Esconde o botão
+            $(this).hide();
+
+            // Mostra o input e da foco
+            $('.users-limits-input').show().focus();
+
+        });
+
+        /**
+         * Função responsável por atualizar o limite de usuários  
+         */
+        $(document).on('click', '.users-limits-input', function(e) {
+
+            e.stopPropagation();
+
+        });
+
+        // Clique fora
+        $(document).on('click', function() {
+            $('.users-limits-input').hide();
+            $('.users-limits').show();
+        });
+
+        /**
+         * Função responsável por atualizar o limite de usuários
+         */
+        $(document).on('click', '#update-users-limits', function(e) {
+
+            e.stopPropagation();
+
+            // Pega o valor do input
+            let usersLimit = $('.users-limits-input').val();
+
+            // Faz a requisição
+            $.ajax({
+                type:'GET',
+                url: "{{ route('systems.users-limits') }}",
+                data: {
+                    tenant_id: "{{ $client->id }}",
+                    users_limit: usersLimit,
+                },
+                success: function(response) {
+                    if(response.success){
+                        toastr.success(response.message);
+                        $('.users-limits').html(usersLimit + ' <i class="fa-solid fa-pen text-gray-500"></i>');
+                        $('.users-limits-input').hide();
+                        $('.users-limits').show();
+                    }else{
+                        toastr.error(response.message);
+                    }
+                },
+            });
         });
 
         /**

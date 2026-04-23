@@ -376,12 +376,13 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/modulo',                       [TenantsActionsController::class, 'module'])->name('module');
             Route::get('/recurso',                      [TenantsActionsController::class, 'feature'])->name('feature');
             Route::get('/assinatura',                   [TenantsActionsController::class, 'subscription'])->name('subscription');
+            Route::get('/limite-usuarios',              [TenantsActionsController::class, 'usersLimits'])->name('users-limits');
+            Route::get('/ajustar-armazenamento',        [TenantsActionsController::class, 'updateSizeStorage'])->name('update.size.storage');
             Route::get('/acessar-recursos',             [TenantsActionsController::class, 'getResources'])->name('get.resources');
             Route::get('/atualizar-banco/{id}',         [TenantsActionsController::class, 'updateDatabaseManual'])->name('update.database');
             Route::get('/atualizar-git/{id}',           [TenantsActionsController::class, 'updateGitManual'])->name('update.git');
             Route::get('/reiniciar-filas/{id}',         [TenantsActionsController::class, 'updateSupervisorManual'])->name('update.supervisor');
             Route::get('/atualizar-em-massa',           [TenantsActionsController::class, 'updateAllDatabase'])->name('update.all.db');
-            Route::get('/ajustar-armazenamento',        [TenantsActionsController::class, 'updateSizeStorage'])->name('update.size.storage');
             Route::get('/atualizar-sistemas',           [TenantsActionsController::class, 'updateAllSystems'])->name('update.all.systems');
             Route::get('/disparar-jobs-agendados',      [TenantsActionsController::class, 'runScheduledNow'])->name('run.scheduled.now');
             Route::get('/disparar-jobs-agendados/{id}', [TenantsActionsController::class, 'runScheduledNow'])->name('run.scheduled.now.tenant');

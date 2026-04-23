@@ -243,6 +243,11 @@ class TenantController extends Controller
         // Realiza consulta para verificar se consegue se comunicar com o miCore
         $apiGetSubscription = $this->guzzle('get', 'sistema/assinatura', $tenant);
 
+        // Realiza consulta para verificar se consegue se comunicar com o miCore
+        $apiGetUsers = $this->guzzle('get', 'sistema/usuarios', $tenant);
+
+        
+
         // Se conseguir conectar ao miCore do cliente
         if(!isset($apiVerifyStatus['error'])){
     
@@ -262,6 +267,10 @@ class TenantController extends Controller
 
             $allowSubscription = $apiGetSubscription['subscription'];
 
+            $totalUsers = $apiGetUsers['users'] ?? 0;
+
+            $limitUsers = $apiGetUsers['limit'] ?? 0;
+
         } else {
             $apiError = true;
         }
@@ -280,6 +289,8 @@ class TenantController extends Controller
             'allowSubscription' => $allowSubscription,
             'apiError'          => $apiError,
             'apiGetPermissions' => $apiGetPermissions,
+            'totalUsers'        => $totalUsers,
+            'limitUsers'        => $limitUsers,
         ]);
 
     }

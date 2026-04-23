@@ -284,6 +284,11 @@ class CpanelProvisioningService
             now()->toDateString(),
             now()->addDays(30)->toDateString()
         );
+
+        $this->moduleService->updateUsersLimitsCore(
+            $tenant,
+            $tenant->users_limit
+        );
     }
 
     private function connectTenantDatabase(array $tenantDatabase): void
