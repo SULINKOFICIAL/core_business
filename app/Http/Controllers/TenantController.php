@@ -252,6 +252,8 @@ class TenantController extends Controller
         // Realiza consulta para verificar se consegue se comunicar com o miCore
         $apiGetStorage = $guzzleService->request('GET', 'sistema/armazenamento', $tenant);
 
+        dd($apiGetUsers);
+
         // Se conseguir conectar ao miCore do cliente
         if(!isset($apiVerifyStatus['error'])){
 
