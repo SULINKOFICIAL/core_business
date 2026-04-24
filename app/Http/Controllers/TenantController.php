@@ -319,6 +319,8 @@ class TenantController extends Controller
      */
     public function guzzle($method, $url, $tenant, $data = null)
     {
+        dd(env('CENTRAL_TOKEN'));
+
         try {
             // Instancia o Guzzle
             $guzzle = new Guzzle();
