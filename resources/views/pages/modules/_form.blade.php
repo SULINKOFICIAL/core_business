@@ -99,7 +99,7 @@
                         title="Módulo incluso sem cobrança, usado para funcionamento do sistema."
                     ></i>
                 </div>
-                <select name="is_native" class="form-select form-select-solid">
+                <select name="is_native" class="form-select form-select-solid" id="is_native">
                     <option value="0" @selected(!$isNative)>Não</option>
                     <option value="1" @selected($isNative)>Sim</option>
                 </select>
@@ -130,7 +130,7 @@
     </div>
 </div>
 
-<div class="card">
+<div class="card" id="module-pricing-card">
     <div class="card-header">
         <h3 class="card-title">Precificação</h3>
     </div>
@@ -228,6 +228,8 @@
         $(function () {
             // Cacheia elementos principais do formulário
             var pricingTypeSelect = $('#pricing_type');
+            var nativeSelect = $('#is_native');
+            var pricingCard = $('#module-pricing-card');
             if (!pricingTypeSelect.length) return;
 
             var fixedBlocks = $('.pricing-fixed');
@@ -246,6 +248,18 @@
                 // Ajusta required do valor fixo
                 if (valueInput.length) {
                     valueInput.prop('required', !isUsage);
+                }
+            }
+
+            function togglePricingCard() {
+                // Módulo nativo não exibe bloco de precificação.
+                var isNative = nativeSelect.val() === '1';
+                pricingCard.toggle(!isNative);
+
+                if (isNative && valueInput.length) {
+                    valueInput.prop('required', false);
+                } else {
+                    togglePricingBlocks();
                 }
             }
 
@@ -338,7 +352,8 @@
 
             // Atualiza a UI quando muda o tipo de cobrança
             pricingTypeSelect.on('change', togglePricingBlocks);
-            togglePricingBlocks();
+            nativeSelect.on('change', togglePricingCard);
+            togglePricingCard();
         });
     </script>
 @endsection

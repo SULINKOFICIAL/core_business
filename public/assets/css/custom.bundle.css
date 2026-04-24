@@ -43,9 +43,9 @@ table.table.dataTable.table-striped>tbody>tr:nth-of-type(2n+1)>* {
     overflow: hidden;
 }
 
-.form-control.form-control-solid, .form-select.form-select-solid {
-    background-color: #f2f2f2;
-    border: none;
+.form-control-solid, .form-select-solid, input[type="file"] {
+    background-color: #f2f2f2 !important;
+    /* border: none !important; */
 }
 
 span.input-group-text {

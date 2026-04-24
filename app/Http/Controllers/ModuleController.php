@@ -65,6 +65,7 @@ class ModuleController extends Controller
 
         // Define o tipo de cobrança (fixo por padrão)
         $data['pricing_type'] = $data['pricing_type'];
+        $data['is_native'] = $request->boolean('is_native');
 
         if ($data['pricing_type'] === 'Preço Por Uso') {
             // Em preço por uso, o valor fixo não é utilizado
@@ -101,6 +102,7 @@ class ModuleController extends Controller
     public function editPrices()
     {
         $modules = Module::where('status', true)
+            ->where('is_native', false)
             ->orderBy('name')
             ->with(['pricingTiers' => function ($query) {
                 $query->orderBy('usage_limit');
@@ -133,6 +135,7 @@ class ModuleController extends Controller
         }
 
         $modules = Module::where('status', true)
+            ->where('is_native', false)
             ->whereIn('id', $moduleIds)
             ->get(['id', 'value']);
 
@@ -154,7 +157,8 @@ class ModuleController extends Controller
 
         $tiers = ModulePricingTier::whereIn('id', $tierIds)
             ->whereHas('module', function ($query) {
-                $query->where('status', true);
+                $query->where('status', true)
+                    ->where('is_native', false);
             })
             ->get(['id', 'price']);
 
@@ -216,6 +220,7 @@ class ModuleController extends Controller
         
         // Define o tipo de cobrança (fixo por padrão)
         $data['pricing_type'] = $data['pricing_type'];
+        $data['is_native'] = $request->boolean('is_native');
 
         if ($data['pricing_type'] === 'Preço Por Uso') {
             // Em preço por uso, o valor fixo não é utilizado

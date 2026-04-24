@@ -56,7 +56,10 @@ class ApisUtilityController extends Controller
      */
     public function modules(): JsonResponse
     {
-        $modules = Module::with(['category', 'pricingTiers', 'benefits'])->where('status', true)->get();
+        $modules = Module::with(['category', 'pricingTiers', 'benefits'])
+            ->where('status', true)
+            ->where('is_native', false)
+            ->get();
         $moduleJson = [];
 
         foreach ($modules as $module) {
@@ -113,6 +116,10 @@ class ApisUtilityController extends Controller
         $packageJson = [];
 
         foreach ($packages as $package) {
+            $nonNativeModules = $package->modules->filter(function ($module) {
+                return !(bool) ($module->is_native ?? false);
+            })->values();
+
             $packageJson[] = [
                 'id'            => $package->id,
                 'name'          => $package->name,
@@ -128,7 +135,7 @@ class ApisUtilityController extends Controller
                         'label_color'   => $benefit->label_color,
                     ];
                 })->values()->toArray(),
-                'modules' => $package->modules->map(function ($module) {
+                'modules' => $nonNativeModules->map(function ($module) {
                     return [
                         'id' => $module->id,
                         'name' => $module->name,
