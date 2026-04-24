@@ -252,14 +252,12 @@ class TenantController extends Controller
         // Realiza consulta para verificar se consegue se comunicar com o miCore
         $apiGetStorage = $guzzleService->request('GET', 'sistema/armazenamento', $tenant);
 
-        dd(json_decode($apiGetPermissions['data'], true)['permissions']);
-
         // Se conseguir conectar ao miCore do cliente
         if(!isset($apiVerifyStatus['error'])){
 
             // Transforma em uma coleção
-            $apiGetPermissions = json_decode($apiGetPermissions['data']['permissions'], true);
-            $apiGetModules     = json_decode($apiGetModules['data']['modules'], true);
+            $apiGetPermissions = json_decode($apiGetPermissions['data'], true)['permissions'];
+            $apiGetModules     = json_decode($apiGetModules['data'], true)['modules'];
     
             // Separa variáveis
             foreach ($apiGetPermissions as $value) {
@@ -271,15 +269,15 @@ class TenantController extends Controller
                 $allowModules[$value['name']] = $value['status'];
             }
 
-            $allowSubscription = json_decode($apiGetSubscription['data']['subscription'], true);
+            $allowSubscription = json_decode($apiGetSubscription['data'], true)['subscription'];
 
-            $totalUsers = json_decode($apiGetUsers['data']['users'], true);
+            $totalUsers = json_decode($apiGetUsers['data'], true)['users'];
 
-            $limitUsers = json_decode($apiGetUsers['data']['limit'], true);
+            $limitUsers = json_decode($apiGetUsers['data'], true)['limit'];
 
-            $totalStorage = json_decode($apiGetStorage['data']['used_storage'], true);
+            $totalStorage = json_decode($apiGetStorage['data'], true)['used_storage'];
 
-            $limitStorage = json_decode($apiGetStorage['data']['allow_storage'], true);
+            $limitStorage = json_decode($apiGetStorage['data'], true)['allow_storage'];
 
             $totalStorageGB = round($totalStorage / (1024 * 1024 * 1024), 2);
             
