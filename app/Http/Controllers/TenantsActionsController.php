@@ -140,6 +140,62 @@ class TenantsActionsController extends Controller
 
     }
 
+    // Atualiza o limite de usuários do cliente
+    public function usersLimits(Request $request){
+        
+        // Obtém dados do formulário
+        $data = $request->all();
+
+        // Encontra o cliente
+        $tenant = $this->repository->find($data['tenant_id']);
+
+        // Atualiza o limite de usuários
+        $tenant->update([
+            'users_limit' => $data['users_limit']
+        ]);
+
+        // Inicia serviço de módulos
+        $moduleService = app(ModuleService::class);
+        
+        // Cria o tempo da assinatura no MiCore
+        $response = $moduleService->updateUsersLimitsCore(
+            $tenant,
+            $data['users_limit']
+        );
+
+        return response()->json([
+            'success' => $response['success'],
+            'message' => $response['success'] == true ? json_decode($response['data'], true)['message'] : 'Erro ao atualizar limite de usuários'
+        ]);
+    }
+
+    // Atualiza o limite de armazenamento do cliente
+    public function updateSizeStorage(Request $request){
+        
+        // Obtém dados do formulário
+        $data = $request->all();
+
+        // Encontra o cliente
+        $tenant = $this->repository->find($data['tenant_id']);
+
+        // Converte para bytes
+        $sizeStorage = $data['storage_limit'] * 1024 * 1024 * 1024;
+
+        // Inicia serviço de módulos
+        $moduleService = app(ModuleService::class);
+        
+        // Cria o tempo da assinatura no MiCore
+        $response = $moduleService->updateSizeStorageCore(
+            $tenant,
+            $sizeStorage
+        );
+
+        return response()->json([
+            'success' => $response['success'],
+            'message' => $response['success'] == true ? json_decode($response['data'], true)['message'] : 'Erro ao atualizar limite de armazenamento'
+        ]);
+    }
+
     // Atualiza todos os bancos de dados via API
     public function updateAllDatabase()
     {

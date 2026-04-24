@@ -123,4 +123,34 @@ class ModuleService
             ]
         );
     }
+
+    /**
+     * Cria o tempo da assinatura no MiCore
+     */
+    public function updateUsersLimitsCore($tenant, $usersLimit)
+    {
+        return $this->guzzleService->request(
+            'post',
+            'sistema/atualizar-usuarios',
+            $tenant,
+            [
+                'users_limit' => $usersLimit,
+            ]
+        );
+    }
+
+    /**
+     * Cria o tempo da assinatura no MiCore
+     */
+    public function updateSizeStorageCore($tenant, $sizeStorage)
+    {
+        return $this->guzzleService->request(
+            'post',
+            'sistema/ajustar-armazenamento',
+            $tenant,
+            [
+                'size' => $sizeStorage,
+            ]
+        );
+    }
 }

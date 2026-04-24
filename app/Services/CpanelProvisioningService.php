@@ -284,6 +284,16 @@ class CpanelProvisioningService
             now()->toDateString(),
             now()->addDays(30)->toDateString()
         );
+
+        $this->moduleService->updateUsersLimitsCore(
+            $tenant,
+            $tenant->users_limit
+        );
+
+        $this->moduleService->updateSizeStorageCore(
+            $tenant,
+            5368709120 // 5GB em bytes
+        );
     }
 
     private function connectTenantDatabase(array $tenantDatabase): void

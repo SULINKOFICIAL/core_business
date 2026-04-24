@@ -42,6 +42,7 @@ use App\Http\Controllers\OrderProcessingController;
 use App\Http\Controllers\ResourceProcessingController;
 use App\Http\Controllers\SuggestionProcessingController;
 use App\Http\Controllers\TicketProcessingController;
+use App\Http\Controllers\TikTokApiController;
 use App\Http\Controllers\UserProcessingController;
 
 // Paínel de administração
@@ -377,12 +378,13 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/modulo',                       [TenantsActionsController::class, 'module'])->name('module');
             Route::get('/recurso',                      [TenantsActionsController::class, 'feature'])->name('feature');
             Route::get('/assinatura',                   [TenantsActionsController::class, 'subscription'])->name('subscription');
+            Route::get('/limite-usuarios',              [TenantsActionsController::class, 'usersLimits'])->name('users-limits');
+            Route::get('/ajustar-armazenamento',        [TenantsActionsController::class, 'updateSizeStorage'])->name('update.size.storage');
             Route::get('/acessar-recursos',             [TenantsActionsController::class, 'getResources'])->name('get.resources');
             Route::get('/atualizar-banco/{id}',         [TenantsActionsController::class, 'updateDatabaseManual'])->name('update.database');
             Route::get('/atualizar-git/{id}',           [TenantsActionsController::class, 'updateGitManual'])->name('update.git');
             Route::get('/reiniciar-filas/{id}',         [TenantsActionsController::class, 'updateSupervisorManual'])->name('update.supervisor');
             Route::get('/atualizar-em-massa',           [TenantsActionsController::class, 'updateAllDatabase'])->name('update.all.db');
-            Route::get('/ajustar-armazenamento',        [TenantsActionsController::class, 'updateSizeStorage'])->name('update.size.storage');
             Route::get('/atualizar-sistemas',           [TenantsActionsController::class, 'updateAllSystems'])->name('update.all.systems');
             Route::get('/disparar-jobs-agendados',      [TenantsActionsController::class, 'runScheduledNow'])->name('run.scheduled.now');
             Route::get('/disparar-jobs-agendados/{id}', [TenantsActionsController::class, 'runScheduledNow'])->name('run.scheduled.now.tenant');
@@ -437,6 +439,30 @@ Route::name('callbacks.')->prefix('callbacks')->group(function () {
 
         });
     });
+
+    /**
+     * Rotas de callback específicas do TikTok.
+     */
+    Route::prefix('tiktok')->group(function () {
+        /**
+         * Rotas nomeadas para callbacks dos produtos do TikTok.
+         */
+        Route::name('tiktok.')->group(function () {
+
+            /**
+             * Criamos rotas de callback separadas para TikTok,
+             * mesmo que ambas chamem a mesma função. Isso facilita o processo
+             * de validação do TikTok, pois cada produto possui um fluxo OAuth
+             * distinto e uma URL de redirecionamento específica.
+             *
+             * Ao manter endpoints independentes, deixamos explícito para o
+             * sistema do TikTok e para o App Review que tratamos permissões
+             * e integrações de cada produto de forma isolada.
+             */
+            Route::get('/',   [TikTokApiController::class, 'callback'])->name('tiktok');
+
+        });
+    });
 });
 
 /**
@@ -449,6 +475,10 @@ Route::prefix('webhooks')->withoutMiddleware(['web'])->group(function () {
     Route::post('/whatsapp', [WhatsAppApiController::class, 'return'])->name('whatsapp');
 
     Route::post('/pagarme', [PagarMeController::class, 'return'])->name('pagarme');
+
+    Route::get('/tiktok',  [TikTokApiController::class, 'return']);
+    Route::post('/tiktok', [TikTokApiController::class, 'return']);
+    
 });
 
 require __DIR__.'/auth.php';

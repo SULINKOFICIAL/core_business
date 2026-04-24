@@ -13,6 +13,7 @@ use App\Http\Controllers\ApisUtilityController;
 use App\Http\Controllers\TenantsPackagesController;
 use App\Http\Controllers\MetaApiController;
 use App\Http\Controllers\MetaApiOnboardingController;
+use App\Http\Controllers\TikTokApiController;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -44,6 +45,7 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
         Route::get('/compra/{id}',        [ApisAccountController::class, 'invoice']);
         Route::get('/cartoes',            [ApisAccountController::class, 'cards']);
         Route::get('/meu-pacote',         [TenantsPackagesController::class, 'package']);
+        Route::get('/token/{id}',         [ApisAccountController::class, 'token']);
 
         /**
          * API que gerencia os pedidos
@@ -85,10 +87,14 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
         Route::prefix('meta')->group(function () {
             Route::get('/auth/{type}/{host}', [MetaApiController::class, 'OAuth2']);
             Route::post('/onboarding/start',  [MetaApiOnboardingController::class, 'startOnboarding']);
-            Route::get('/token/{id}',         [MetaApiController::class, 'token']);
             Route::post('/inscricao',         [MetaApiController::class, 'subscribed']);
             Route::post('/intercambio',       [MetaApiController::class, 'exchange']);
             Route::delete('/desinscricao',    [MetaApiController::class, 'unsubscribed']);
+        });
+
+        /** API gerencia as contas TikTok */
+        Route::prefix('tiktok')->group(function () {
+            Route::get('/auth/{host}', [TikTokApiController::class, 'OAuth2']);
         });
 
         /** API gerencia as notícias */

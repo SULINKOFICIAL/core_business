@@ -17,8 +17,10 @@ class TenantIntegration extends Model
         'type',
         'external_account_id',
         'access_token',
+        'refresh_token',
         'scopes',
         'token_expires_at',
+        'refresh_expires_at',
         'status',
     ];
 
