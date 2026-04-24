@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Group;
 use App\Models\Module;
 use App\Models\ModuleCategory;
+use App\Models\ModulePricingTier;
 use App\Models\Resource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -95,6 +96,86 @@ class ModuleController extends Controller
                     ->route('modules.index')
                     ->with('message', 'Setor <b>'. $created->name . '</b> adicionado com sucesso.');
 
+    }
+
+    public function editPrices()
+    {
+        $modules = Module::where('status', true)
+            ->orderBy('name')
+            ->with(['pricingTiers' => function ($query) {
+                $query->orderBy('usage_limit');
+            }])
+            ->get(['id', 'name', 'value', 'pricing_type', 'usage_label']);
+
+        return view('pages.modules.update-prices')->with([
+            'modules' => $modules,
+        ]);
+    }
+
+    public function updatePrices(Request $request)
+    {
+        $validated = $request->validate([
+            'prices' => ['nullable', 'array'],
+            'prices.*' => ['nullable', 'string'],
+            'tier_prices' => ['nullable', 'array'],
+            'tier_prices.*' => ['nullable', 'string'],
+        ]);
+
+        $prices = $validated['prices'] ?? [];
+        $tierPrices = $validated['tier_prices'] ?? [];
+        $moduleIds = array_map('intval', array_keys($prices));
+        $tierIds = array_map('intval', array_keys($tierPrices));
+
+        if (empty($moduleIds) && empty($tierIds)) {
+            return redirect()
+                ->route('modules.prices.edit')
+                ->with('message', 'Nenhum preço informado para atualização.');
+        }
+
+        $modules = Module::where('status', true)
+            ->whereIn('id', $moduleIds)
+            ->get(['id', 'value']);
+
+        $updated = 0;
+
+        foreach ($modules as $module) {
+            $rawValue = trim((string) ($prices[$module->id] ?? ''));
+
+            if ($rawValue === '' || !preg_match('/\d/', $rawValue)) {
+                continue;
+            }
+
+            $module->value = toDecimal($rawValue);
+            $module->updated_by = Auth::id();
+            $module->save();
+
+            $updated++;
+        }
+
+        $tiers = ModulePricingTier::whereIn('id', $tierIds)
+            ->whereHas('module', function ($query) {
+                $query->where('status', true);
+            })
+            ->get(['id', 'price']);
+
+        foreach ($tiers as $tier) {
+            $rawValue = trim((string) ($tierPrices[$tier->id] ?? ''));
+
+            if ($rawValue === '' || !preg_match('/\d/', $rawValue)) {
+                continue;
+            }
+
+            $tier->price = toDecimal($rawValue);
+            $tier->save();
+
+            $updated++;
+        }
+
+        return redirect()
+            ->route('modules.prices.edit')
+            ->with('message', $updated > 0
+                ? "Preços atualizados com sucesso para {$updated} módulo(s)."
+                : 'Nenhum preço válido foi informado para atualização.');
     }
 
     public function edit($id)

@@ -701,6 +701,8 @@ class TenantsActionsController extends Controller
             'archive_finished_tasks',
             'refresh_mercado_livre',
             'notify_commitments_10m',
+            'import_cfop_table',
+            'import_ncm_table',
             'test_log',
         ];
     }

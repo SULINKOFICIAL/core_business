@@ -185,6 +185,8 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('modulos')->group(function () {
         Route::name('modules.')->group(function () {
             Route::get('/',                 [ModuleController::class, 'index'])->name('index');
+            Route::get('/atualizar-precos', [ModuleController::class, 'editPrices'])->name('prices.edit');
+            Route::put('/atualizar-precos', [ModuleController::class, 'updatePrices'])->name('prices.update');
             Route::get('/adicionar',        [ModuleController::class, 'create'])->name('create');
             Route::post('/adicionar',       [ModuleController::class, 'store'])->name('store');
             Route::get('/editar/{id}',      [ModuleController::class, 'edit'])->name('edit');

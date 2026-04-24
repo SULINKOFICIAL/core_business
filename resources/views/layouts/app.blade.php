@@ -56,7 +56,7 @@
                             <div class="bg-light rounded-4 mb-4 p-4">
                                 <label class="d-flex align-items-start gap-4 cursor-pointer" for="update_action_supervisor">
                                     <span class="form-check form-check-custom form-check-solid mt-1">
-                                        <input class="form-check-input" type="checkbox" name="actions[]" value="supervisor" id="update_action_supervisor" checked>
+                                        <input class="form-check-input" type="checkbox" name="actions[]" value="supervisor" id="update_action_supervisor">
                                     </span>
                                     <span>
                                         <span class="d-block fw-semibold text-gray-900">Reiniciar filas</span>
