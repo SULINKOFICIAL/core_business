@@ -34,6 +34,7 @@
     }
 
     $benefits = old('benefits');
+    $isNative = (bool) old('is_native', $modules->is_native ?? false);
 
     if (is_array($benefits)) {
         $benefits = array_map(function ($benefit) {
@@ -86,6 +87,21 @@
                     @foreach ($categories ?? [] as $category)
                     <option value="{{ $category->id }}" @if(old('module_category_id', $modules->module_category_id ?? null) == $category->id) selected @endif>{{ $category->name }}</option>
                     @endforeach
+                </select>
+            </div>
+            <div class="col-12 mb-4">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <label class="form-label fs-6 fw-bold text-gray-700 mb-0">Módulo Nativo</label>
+                    <i
+                        class="fa-solid fa-circle-info text-info cursor-pointer"
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="right"
+                        title="Módulo incluso sem cobrança, usado para funcionamento do sistema."
+                    ></i>
+                </div>
+                <select name="is_native" class="form-select form-select-solid">
+                    <option value="0" @selected(!$isNative)>Não</option>
+                    <option value="1" @selected($isNative)>Sim</option>
                 </select>
             </div>
             <div class="col-12 mb-4">
