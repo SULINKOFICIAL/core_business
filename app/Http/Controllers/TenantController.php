@@ -235,24 +235,22 @@ class TenantController extends Controller
         $allowModules = [];
 
         // Realiza consulta para verificar se consegue se comunicar com o miCore
-        $apiVerifyStatus = $guzzleService->request('GET', 'sistema/status', $tenant, null);
+        $apiVerifyStatus = $guzzleService->request('GET', 'sistema/status', $tenant);
 
         // Realiza consulta para verificar se consegue se comunicar com o miCore
-        $apiGetPermissions = $guzzleService->request('GET', 'sistema/permissoes', $tenant, null);
+        $apiGetPermissions = $guzzleService->request('GET', 'sistema/permissoes', $tenant);
 
         // Realiza consulta para verificar se consegue se comunicar com o miCore
-        $apiGetModules = $guzzleService->request('GET', 'sistema/modulos', $tenant, null);
+        $apiGetModules = $guzzleService->request('GET', 'sistema/modulos', $tenant);
 
         // Realiza consulta para verificar se consegue se comunicar com o miCore
-        $apiGetSubscription = $guzzleService->request('GET', 'sistema/assinatura', $tenant, null);
+        $apiGetSubscription = $guzzleService->request('GET', 'sistema/assinatura', $tenant);
 
         // Realiza consulta para verificar se consegue se comunicar com o miCore
-        $apiGetUsers = $guzzleService->request('GET', 'sistema/usuarios', $tenant, null);
+        $apiGetUsers = $guzzleService->request('GET', 'sistema/usuarios', $tenant);
 
         // Realiza consulta para verificar se consegue se comunicar com o miCore
-        $apiGetStorage = $guzzleService->request('GET', 'sistema/armazenamento', $tenant, null);
-
-        dd($apiVerifyStatus);
+        $apiGetStorage = $guzzleService->request('GET', 'sistema/armazenamento', $tenant);
 
         // Se conseguir conectar ao miCore do cliente
         if(!isset($apiVerifyStatus['error'])){
