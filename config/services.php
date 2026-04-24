@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'central' => [
+        'token' => env('CENTRAL_TOKEN'),
+    ],
+
 ];

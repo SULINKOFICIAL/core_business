@@ -319,8 +319,6 @@ class TenantController extends Controller
      */
     public function guzzle($method, $url, $tenant, $data = null)
     {
-        dd(env('CENTRAL_TOKEN'));
-
         try {
             // Instancia o Guzzle
             $guzzle = new Guzzle();
@@ -328,7 +326,7 @@ class TenantController extends Controller
             // Inicializa os parâmetros da requisição
             $options = [
                 'headers' => [
-                    'Authorization' => 'Bearer ' . env('CENTRAL_TOKEN'),
+                    'Authorization' => 'Bearer ' . config('services.central.token'),
                 ]
             ];
 
