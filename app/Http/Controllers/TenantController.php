@@ -323,30 +323,10 @@ class TenantController extends Controller
             // Instancia o Guzzle
             $guzzle = new Guzzle();
 
-            // Token de autenticação da central
-            $token = (string) config('services.central.token');
-
-            // Domínio base do tenant para chamada da API
-            $domain = (string) ($tenant->domains[0]->domain ?? '');
-
-            if ($domain === '') {
-                return [
-                    'error' => true,
-                    'message' => 'Tenant sem domínio configurado.',
-                ];
-            }
-
-            // Garante protocolo explícito para evitar redirect HTTP -> HTTPS.
-            $baseUrl = Str::startsWith($domain, ['http://', 'https://'])
-                ? $domain
-                : ((app()->environment('local') ? 'http://' : 'https://') . $domain);
-
             // Inicializa os parâmetros da requisição
             $options = [
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $token,
-                    // Fallback para ambientes onde Authorization é removido por proxy/webserver.
-                    'X-Central-Token' => $token,
+                    'Authorization' => 'Bearer ' . config('services.central.token'),
                 ]
             ];
 
@@ -355,16 +335,17 @@ class TenantController extends Controller
                 $options['json'] = $data;
             }
 
+            dd("{$tenant->domains[0]->domain}/api/$url", $options);
+
             // Realiza a solicitação
-            $endpoint = rtrim($baseUrl, '/') . '/api/' . ltrim($url, '/');
-            $response = $guzzle->$method($endpoint, $options);
+            $response = $guzzle->$method("{$tenant->domains[0]->domain}/api/$url", $options);
 
             // Obtém o corpo da resposta
             $response = $response->getBody()->getContents();
 
             // Decodifica o JSON
             $response = json_decode($response, true);
-
+            
             // Retorna a resposta
             return $response;
 
