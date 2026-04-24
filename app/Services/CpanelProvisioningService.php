@@ -289,6 +289,11 @@ class CpanelProvisioningService
             $tenant,
             $tenant->users_limit
         );
+
+        $this->moduleService->updateSizeStorageCore(
+            $tenant,
+            5368709120 // 5GB em bytes
+        );
     }
 
     private function connectTenantDatabase(array $tenantDatabase): void

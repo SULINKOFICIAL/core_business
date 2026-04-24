@@ -246,7 +246,8 @@ class TenantController extends Controller
         // Realiza consulta para verificar se consegue se comunicar com o miCore
         $apiGetUsers = $this->guzzle('get', 'sistema/usuarios', $tenant);
 
-        
+        // Realiza consulta para verificar se consegue se comunicar com o miCore
+        $apiGetStorage = $this->guzzle('get', 'sistema/armazenamento', $tenant);
 
         // Se conseguir conectar ao miCore do cliente
         if(!isset($apiVerifyStatus['error'])){
@@ -271,6 +272,14 @@ class TenantController extends Controller
 
             $limitUsers = $apiGetUsers['limit'] ?? 0;
 
+            $totalStorage = $apiGetStorage['used_storage'] ?? 0;
+
+            $limitStorage = $apiGetStorage['allow_storage'] ?? 0;
+
+            $totalStorageGB = round($totalStorage / (1024 * 1024 * 1024), 2);
+            
+            $limitStorageGB = round($limitStorage / (1024 * 1024 * 1024), 2);
+
         } else {
             $apiError = true;
         }
@@ -291,6 +300,8 @@ class TenantController extends Controller
             'apiGetPermissions' => $apiGetPermissions,
             'totalUsers'        => $totalUsers,
             'limitUsers'        => $limitUsers,
+            'totalStorage'      => $totalStorageGB,
+            'limitStorage'      => $limitStorageGB,
         ]);
 
     }

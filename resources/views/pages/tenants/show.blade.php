@@ -99,6 +99,30 @@
                 </div>
             </div>
             <div class="card mb-4">
+                <div class="card-body p-6 px-5 pb-4">
+                    <p class="fw-bolder text-gray-700 fs-3 text-uppercase">Armazenamento</p>
+                    <div class="d-flex flex-column align-items-start mb-1">
+                        <p class="text-gray-700 fw-bolder mb-1 fs-5">Usado</p>
+                        <p class="text-gray-600 mb-0 fw-bold fs-7">
+                            {{ $totalStorage ?? 0 }} GB
+                        </p>
+                    </div>
+                    <div class="d-flex flex-column align-items-start">
+                        <p class="text-gray-700 fw-bolder mb-1 fs-5">Limite</p>
+                        <div class="d-flex align-items-center gap-1">
+                            <p class="text-gray-600 mb-0 fw-bold fs-7 mb-0 text-hover-primary storage-limit cursor-pointer">
+                                {{ $limitStorage ?? 0 }} GB
+                                <i class="fa-solid fa-pen text-gray-500"></i>
+                            </p>
+                            <input type="text" class="form-control form-control-sm storage-limit-input" style="width:150px; display:none;" value="{{ $limitStorage ?? 0 }}">
+                        </div>
+                    </div>
+                    <button class="btn btn-sm w-100 h-25px btn-success d-flex align-items-center justify-content-center mt-1" id="update-storage">
+                        Atualizar
+                    </button>
+                </div>
+            </div>
+            <div class="card mb-4">
                 <div class="card-body p-6 pb-4">
                     <p class="fw-bolder text-gray-700 fs-3 text-uppercase">Usuários</p>
                     <div class="d-flex flex-column align-items-start mb-1">
@@ -274,7 +298,7 @@
         /**
          * Função responsável por atualizar o limite de usuários  
          */
-        $(document).on('click', '.users-limits-input', function(e) {
+        $(document).on('click', '.users-limits-input, .storage-limit-input', function(e) {
 
             e.stopPropagation();
 
@@ -284,6 +308,56 @@
         $(document).on('click', function() {
             $('.users-limits-input').hide();
             $('.users-limits').show();
+
+            $('.storage-limit-input').hide();
+            $('.storage-limit').show();
+        });
+
+        /**
+         * Função responsável por alterar o limite de armazenamento
+         */
+        $(document).on('click', '.storage-limit', function(e) {
+
+            e.stopPropagation();
+
+            // Esconde o botão
+            $(this).hide();
+
+            // Mostra o input e da foco
+            $('.storage-limit-input').show().focus();
+
+        });
+
+        /**
+         * Função responsável por atualizar o limite de armazenamento
+         */
+        $(document).on('click', '#update-storage', function(e) {
+
+            e.stopPropagation();
+
+            // Pega o valor do input
+            let storageLimit = $('.storage-limit-input').val();
+
+            // Faz a requisição
+            $.ajax({
+                type:'GET',
+                url: "{{ route('systems.update.size.storage') }}",
+                data: {
+                    tenant_id: "{{ $client->id }}",
+                    storage_limit: storageLimit,
+                },
+                success: function(response) {
+                    if(response.success){
+                        toastr.success(response.message);
+                        $('.storage-limit').html(storageLimit + ' GB <i class="fa-solid fa-pen text-gray-500"></i>');
+                        $('.storage-limit-input').hide();
+                        $('.storage-limit').show();
+                    }else{
+                        toastr.error(response.message);
+                    }
+                },
+            });
+
         });
 
         /**

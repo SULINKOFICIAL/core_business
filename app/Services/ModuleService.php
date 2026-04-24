@@ -138,4 +138,19 @@ class ModuleService
             ]
         );
     }
+
+    /**
+     * Cria o tempo da assinatura no MiCore
+     */
+    public function updateSizeStorageCore($tenant, $sizeStorage)
+    {
+        return $this->guzzleService->request(
+            'post',
+            'sistema/ajustar-armazenamento',
+            $tenant,
+            [
+                'size' => $sizeStorage,
+            ]
+        );
+    }
 }
