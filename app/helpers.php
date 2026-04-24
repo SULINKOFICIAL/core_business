@@ -232,7 +232,15 @@ if (! function_exists('header_menu_items')) {
             [
                 'type' => 'submenu',
                 'label' => 'Produto',
-                'active_routes' => ['modules.index', 'modules.categories.index', 'groups.index', 'resources.index'],
+                'active_routes' => [
+                    'packages.index',
+                    'modules.index',
+                    'modules.prices.edit',
+                    'modules.prices.update',
+                    'modules.categories.index',
+                    'groups.index',
+                    'resources.index',
+                ],
                 'children' => [
                     [
                         'label' => 'Pacotes',
@@ -245,6 +253,12 @@ if (! function_exists('header_menu_items')) {
                         'route' => 'modules.index',
                         'active_routes' => ['modules.index'],
                         'icon' => ['class' => 'fa-solid fa-cubes fs-5'],
+                    ],
+                    [
+                        'label' => 'Atualizar Preços',
+                        'route' => 'modules.prices.edit',
+                        'active_routes' => ['modules.prices.edit', 'modules.prices.update'],
+                        'icon' => ['class' => 'fa-solid fa-money-bill-transfer fs-5'],
                     ],
                     [
                         'label' => 'Recursos',
