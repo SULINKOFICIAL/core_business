@@ -13,6 +13,7 @@ use App\Models\OrderTransaction;
 use App\Models\Package;
 use App\Models\Subscription;
 use App\Models\SubscriptionCycle;
+use App\Services\GuzzleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use GuzzleHttp\Client as Guzzle;
@@ -219,6 +220,8 @@ class TenantController extends Controller
             return optional($module->category)->name ?: 'Sem Categoria';
         });
 
+        $guzzleService = new GuzzleService();
+
         // Obtém dados do Tenante
         $tenant = $this->repository->find($id);
 
@@ -232,22 +235,22 @@ class TenantController extends Controller
         $allowModules = [];
 
         // Realiza consulta para verificar se consegue se comunicar com o miCore
-        $apiVerifyStatus = $this->guzzle('get', 'sistema/status', $tenant);
+        $apiVerifyStatus = $guzzleService->request('GET', 'sistema/status', $tenant, null);
 
         // Realiza consulta para verificar se consegue se comunicar com o miCore
-        $apiGetPermissions = $this->guzzle('get', 'sistema/permissoes', $tenant);
+        $apiGetPermissions = $guzzleService->request('GET', 'sistema/permissoes', $tenant, null);
 
         // Realiza consulta para verificar se consegue se comunicar com o miCore
-        $apiGetModules = $this->guzzle('get', 'sistema/modulos', $tenant);
+        $apiGetModules = $guzzleService->request('GET', 'sistema/modulos', $tenant, null);
 
         // Realiza consulta para verificar se consegue se comunicar com o miCore
-        $apiGetSubscription = $this->guzzle('get', 'sistema/assinatura', $tenant);
+        $apiGetSubscription = $guzzleService->request('GET', 'sistema/assinatura', $tenant, null);
 
         // Realiza consulta para verificar se consegue se comunicar com o miCore
-        $apiGetUsers = $this->guzzle('get', 'sistema/usuarios', $tenant);
+        $apiGetUsers = $guzzleService->request('GET', 'sistema/usuarios', $tenant, null);
 
         // Realiza consulta para verificar se consegue se comunicar com o miCore
-        $apiGetStorage = $this->guzzle('get', 'sistema/armazenamento', $tenant);
+        $apiGetStorage = $guzzleService->request('GET', 'sistema/armazenamento', $tenant, null);
 
         dd($apiVerifyStatus);
 
