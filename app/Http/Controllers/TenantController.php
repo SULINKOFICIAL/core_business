@@ -254,10 +254,10 @@ class TenantController extends Controller
 
         // Se conseguir conectar ao miCore do cliente
         if(!isset($apiVerifyStatus['error'])){
-    
+
             // Transforma em uma coleção
-            $apiGetPermissions = $apiGetPermissions['permissions'];
-            $apiGetModules     = $apiGetModules['modules'];
+            $apiGetPermissions = json_decode($apiGetPermissions['data'], true)['permissions'];
+            $apiGetModules     = json_decode($apiGetModules['data'], true)['modules'];
     
             // Separa variáveis
             foreach ($apiGetPermissions as $value) {
@@ -269,15 +269,15 @@ class TenantController extends Controller
                 $allowModules[$value['name']] = $value['status'];
             }
 
-            $allowSubscription = $apiGetSubscription['subscription'];
+            $allowSubscription = json_decode($apiGetSubscription['data'], true)['subscription'];
 
-            $totalUsers = $apiGetUsers['users'] ?? 0;
+            $totalUsers = json_decode($apiGetUsers['data'], true)['users'];
 
-            $limitUsers = $apiGetUsers['limit'] ?? 0;
+            $limitUsers = json_decode($apiGetUsers['data'], true)['limit'];
 
-            $totalStorage = $apiGetStorage['used_storage'] ?? 0;
+            $totalStorage = json_decode($apiGetStorage['data'], true)['used_storage'];
 
-            $limitStorage = $apiGetStorage['allow_storage'] ?? 0;
+            $limitStorage = json_decode($apiGetStorage['data'], true)['allow_storage'];
 
             $totalStorageGB = round($totalStorage / (1024 * 1024 * 1024), 2);
             
