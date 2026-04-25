@@ -63,6 +63,7 @@ class PackageController extends Controller
         $data['value'] = toDecimal($data['value']);
         $data['duration_days'] = (int) ($data['duration_days'] ?? 30);
         $data['size_storage'] = (int) ($data['size_storage'] ?? 5368709120);
+        $data['resources_list'] = $this->normalizeResourcesList($data['resources_list'] ?? null);
 
         // Autor
         $data['created_by'] = Auth::id();
@@ -115,6 +116,7 @@ class PackageController extends Controller
         $data['value'] = toDecimal($data['value']);
         $data['duration_days'] = (int) ($data['duration_days'] ?? ($package->duration_days ?? 30));
         $data['size_storage'] = (int) ($data['size_storage'] ?? ($package->size_storage ?? 5368709120));
+        $data['resources_list'] = $this->normalizeResourcesList($data['resources_list'] ?? null);
 
         // Autor
         $data['updated_by'] = Auth::id();
@@ -230,5 +232,24 @@ class PackageController extends Controller
                 'created_by' => $createdBy,
             ]);
         }
+    }
+
+    private function normalizeResourcesList($value): ?string
+    {
+        $text = trim((string) ($value ?? ''));
+
+        if ($text === '') {
+            return null;
+        }
+
+        $lines = preg_split('/\r\n|\r|\n/', $text);
+        $lines = array_map(fn ($line) => trim((string) $line), $lines ?: []);
+        $lines = array_values(array_filter($lines, fn ($line) => $line !== ''));
+
+        if (empty($lines)) {
+            return null;
+        }
+
+        return implode(PHP_EOL, $lines);
     }
 }

@@ -23,14 +23,16 @@
         })->toArray();
     }
 
-    if (empty($benefits)) {
-        $benefits = [[
-            'icon' => 'shop',
-            'title' => 'Vendas e Pedidos',
-            'label' => 'Ilimitado',
-            'label_color' => 'primary',
-        ]];
-    }
+	    if (empty($benefits)) {
+	        $benefits = [[
+	            'icon' => 'shop',
+	            'title' => 'Vendas e Pedidos',
+	            'label' => 'Ilimitado',
+	            'label_color' => 'primary',
+	        ]];
+	    }
+
+    $resourcesList = old('resources_list', $package->resources_list ?? '');
 
     $initialSelectedModules = old('module_items');
 
@@ -173,6 +175,21 @@
         </div>
         <div id="selected-modules-empty" class="text-muted fs-7">Nenhum módulo selecionado.</div>
         <div id="module-items-inputs"></div>
+    </div>
+</div>
+
+<div class="card mb-6">
+    <div class="card-header">
+        <h3 class="card-title">Recursos do pacote</h3>
+    </div>
+    <div class="card-body">
+        <p class="text-gray-600 mb-3">Adicione 1 recurso por linha. Esses itens serão exibidos no card do pacote.</p>
+        <textarea
+            class="form-control form-control-solid"
+            name="resources_list"
+            rows="8"
+            placeholder="Ex:&#10;CRM - Negócios&#10;CRM - Funis de Venda&#10;CRM - Marcos de Progresso"
+        >{{ $resourcesList }}</textarea>
     </div>
 </div>
 
