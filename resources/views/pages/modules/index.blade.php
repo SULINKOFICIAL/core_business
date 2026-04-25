@@ -19,8 +19,14 @@
         <div class="card w-100 mb-6">
             <div class="card-header d-flex align-items-center justify-content-between min-h-60px px-6">
                 <div class="w-75">
-                    <a href="{{ route('modules.edit', $module->id) }}" class="mb-0 fw-bolder @if ($module->status == 0) text-danger @else text-gray-700 @endif text-hover-primary m-0 fs-5 text-uppercase lh-1">{{ Str::limit($module->name, 25) }}</a>
-                    <p class="text-gray-500 mb-0 fw-semibold fs-7 lh-1">Recursos <span class="text-success fs-8">{{ $pricingLabel }}</span></p>
+                    <a href="{{ route('modules.edit', $module->id) }}" class="mb-0 fw-bolder @if ($module->status == 0) text-danger @else text-gray-700 @endif text-hover-primary m-0 fs-5 text-uppercase lh-1">
+                        {{ Str::limit($module->name, 25) }}
+                    </a>
+                    @if ((bool) $module->is_native)
+                        <span class="badge badge-success">Nativo</span>
+                    @else
+                    <p class="text-gray-500 mb-0 fw-semibold fs-7 lh-1">Valor <span class="text-success fs-8">{{ $pricingLabel }}</span></p>
+                    @endif
                 </div>
                 <a href="{{ route('modules.edit', $module->id) }}" class="btn btn-sm btn-icon btn-light-primary">
                     <i class="fa-solid fa-gear"></i>
