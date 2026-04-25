@@ -93,7 +93,7 @@
     </div>
     <div class="card-body">
         <div class="row">
-            <div class="col-6 mb-4">
+            <div class="col-5 mb-4">
                 <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Nome</label>
                 <input type="text" class="form-control form-control-solid" placeholder="Nome" name="name" value="{{ $package->name ?? old('name') }}" required>
             </div>
@@ -101,14 +101,14 @@
                 <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Valor</label>
                 <input type="text" class="form-control form-control-solid input-money" name="value" value="R$ {{ number_format(($package->value ?? 0), 2, ',', '.') }}" required>
             </div>
-            <div class="col-3 mb-4">
+            <div class="col-2 mb-4">
                 <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">É popular?</label>
                 <select name="popular" class="form-select form-select-solid" data-control="select2" data-hide-search="true" data-placeholder="Selecione" required>
                     <option value="0" @selected((int) old('popular', $package->popular ?? 0) === 0)>Não</option>
                     <option value="1" @selected((int) old('popular', $package->popular ?? 0) === 1)>Sim</option>
                 </select>
             </div>
-            <div class="col-3 mb-4">
+            <div class="col-2 mb-4">
                 <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Ordem</label>
                 <input type="text" class="form-control form-control-solid" name="order" value="{{ $package->order ?? 1 }}" required>
             </div>
