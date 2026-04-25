@@ -169,8 +169,12 @@ class PackageController extends Controller
                 continue;
             }
 
-            if ($icon === '' || $title === '' || $label === '') {
+            if ($icon === '' || $title === '') {
                 continue;
+            }
+
+            if ($label === '') {
+                $label = 'Ilimitado';
             }
 
             if (!in_array($labelColor, $allowedColors, true)) {
