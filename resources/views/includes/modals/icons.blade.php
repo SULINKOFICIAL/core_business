@@ -1,5 +1,5 @@
 <div class="modal fade" tabindex="-1" id="modal_icon">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered mw-1000px">
         <div class="modal-content bg-gray-300">
             <div class="modal-header py-3 bg-dark">
                 <h5 class="modal-title text-white modal_confirmacao-titulo">Selecione um ícone</h5>
