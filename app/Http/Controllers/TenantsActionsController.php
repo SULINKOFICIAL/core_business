@@ -736,6 +736,9 @@ class TenantsActionsController extends Controller
             'status' => 0,
         ]);
 
+        // Armazena os IDs dos módulos retornados na sincronização atual.
+        $syncedModuleIds = [];
+
         /**
          * Faz looping pelas categorias
          */
@@ -774,8 +777,11 @@ class TenantsActionsController extends Controller
                 ], [
                     'name' => $module['name'],
                     'description' => $module['description'],
+                    'status' => true,
                     'created_by' => Auth::id()
                 ]);
+
+                $syncedModuleIds[] = $modelModule->id;
 
                 // Faz looping entre os recursos
                 foreach ($module['resources'] as $resource) {
@@ -801,6 +807,13 @@ class TenantsActionsController extends Controller
 
             }
         }
+
+        // Desativa módulos não nativos que não vieram no payload atual da sincronização.
+        Module::where('is_native', false)
+            ->whereNotIn('id', array_unique($syncedModuleIds))
+            ->update([
+                'status' => false,
+            ]);
         
         // Retorna a página
         return redirect()

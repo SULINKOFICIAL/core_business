@@ -267,7 +267,7 @@ if (! function_exists('header_menu_items')) {
                         'icon' => ['class' => 'fa-solid fa-toolbox fs-5'],
                     ],
                     [
-                        'label' => 'Atualizar Módulos',
+                        'label' => 'Sincronizar Módulos',
                         'route' => 'systems.get.resources',
                         'active_routes' => ['systems.get.resources'],
                         'icon' => ['class' => 'fa-solid fa-code-compare fs-5'],
