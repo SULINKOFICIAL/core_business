@@ -93,7 +93,7 @@
                 <div class="d-flex align-items-center gap-2 mb-2">
                     <label class="form-label fs-6 fw-bold text-gray-700 mb-0">Módulo Nativo</label>
                     <i
-                        class="fa-solid fa-circle-info text-info cursor-pointer"
+                        class="fa-solid fa-circle-info cursor-pointer"
                         data-bs-toggle="tooltip"
                         data-bs-placement="right"
                         title="Módulo incluso sem cobrança, usado para funcionamento do sistema."
