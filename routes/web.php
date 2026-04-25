@@ -172,6 +172,7 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/adicionar',       [PackageController::class, 'store'])->name('store');
             Route::get('/editar/{id}',      [PackageController::class, 'edit'])->name('edit');
             Route::put('/editar/{id}',      [PackageController::class, 'update'])->name('update');
+            Route::post('/ordem/{id}',      [PackageController::class, 'updateOrder'])->name('order.update');
             Route::get('/desabilitar/{id}', [PackageController::class, 'destroy'])->name('destroy');
             Route::post('/atribuir/{id}',   [PackageController::class, 'assign'])->name('assign');
             Route::post('/atualizar/{id}',  [PackageController::class, 'upgrade'])->name('upgrade');

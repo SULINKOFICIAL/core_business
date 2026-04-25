@@ -32,7 +32,11 @@ class PackageController extends Controller
     {
 
         // Obtém pacotes
-        $packages = $this->repository->all();
+        $packages = $this->repository
+            ->with('modules')
+            ->orderBy('order')
+            ->orderBy('name')
+            ->get();
 
         // Retorna a página
         return view('pages.packages.index')->with([
@@ -153,6 +157,26 @@ class PackageController extends Controller
         return redirect()
             ->route('packages.index')
             ->with('message', 'Pacote <b>' . $package->name . '</b> ' . $message . ' com sucesso.');
+    }
+
+    public function updateOrder(Request $request, $id)
+    {
+        // Verifica se existe
+        if (!$package = $this->repository->find($id)) return redirect()->back();
+
+        // Valida ordem mínima
+        $validated = $request->validate([
+            'order' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $package->update([
+            'order' => (int) $validated['order'],
+            'updated_by' => Auth::id(),
+        ]);
+
+        return redirect()
+            ->route('packages.index')
+            ->with('message', 'Ordem do pacote <b>' . $package->name . '</b> atualizada com sucesso.');
     }
 
     private function syncBenefits(Package $package, array $benefits): void

@@ -8,7 +8,7 @@
 </p>
 <div class="row">
     @foreach ($packages as $package)
-    <div class="col-3 d-flex">
+    <div class="col-12 col-md-6 col-lg-4 d-flex">
         <div class="card w-100 mb-6">
             <div class="card-header d-flex align-items-center justify-content-between min-h-60px px-6">
                 <div class="w-75">
@@ -28,6 +28,16 @@
                 </a>
             </div>
             <div class="card-body">
+                <div class="mb-4">
+                    <label class="form-label fs-8 fw-bolder text-gray-600 mb-1">Posição</label>
+                    <input
+                        type="number"
+                        min="1"
+                        class="form-control form-control-sm form-control-solid js-package-order-input"
+                        data-url="{{ route('packages.order.update', $package->id) }}"
+                        value="{{ (int) ($package->order ?? 1) }}"
+                    >
+                </div>
                 <p class="fw-bolder text-gray-700 text-uppercase mb-1">Módulos</p>
                 @if ($package->modules->count())
                     @foreach ($package->modules as $key => $group)
@@ -48,4 +58,62 @@
         Criar Pacote
     </a>
 </div>
+@endsection
+
+@section('custom-footer')
+    @parent
+    <script>
+        $(function () {
+            let packageOrderRequest = false;
+
+            $(document).on('focus', '.js-package-order-input', function () {
+                $(this).data('last-value', $(this).val());
+            });
+
+            $(document).on('change', '.js-package-order-input', function () {
+                if (packageOrderRequest) {
+                    return;
+                }
+
+                const input = $(this);
+                const url = input.data('url');
+                const order = Number(input.val() || 0);
+                const previousValue = input.data('last-value') || 1;
+
+                if (!url) {
+                    return;
+                }
+
+                if (!Number.isInteger(order) || order < 1) {
+                    input.val(previousValue);
+                    toastr.warning('Informe uma posição válida (mínimo 1).');
+                    return;
+                }
+
+                packageOrderRequest = true;
+                input.prop('disabled', true);
+
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        order: order
+                    },
+                    success: function () {
+                        input.data('last-value', order);
+                        toastr.success('Posição atualizada com sucesso.');
+                    },
+                    error: function () {
+                        input.val(previousValue);
+                        toastr.error('Não foi possível atualizar a posição.');
+                    },
+                    complete: function () {
+                        packageOrderRequest = false;
+                        input.prop('disabled', false);
+                    }
+                });
+            });
+        });
+    </script>
 @endsection
