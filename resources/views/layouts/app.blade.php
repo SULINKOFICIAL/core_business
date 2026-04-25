@@ -18,8 +18,9 @@
 				</div>
 			</div>
 		</div>
-        @yield('modals')
-        <div class="modal fade" tabindex="-1" id="modal_update_systems_actions" aria-hidden="true">
+	        @yield('modals')
+            @include('includes.modals.icons')
+	        <div class="modal fade" tabindex="-1" id="modal_update_systems_actions" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <form method="GET" action="{{ route('systems.update.all.systems') }}" id="form_update_systems_actions">

@@ -2,6 +2,8 @@
 use App\Models\Tenant;
 use App\Models\TenantDomain;
 
+require_once __DIR__ . '/Helpers/global/icons.php';
+
 /**
  * Verifica se o domínio está disponível e gera um novo se necessário.
  *

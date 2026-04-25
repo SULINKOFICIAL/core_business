@@ -191,7 +191,25 @@
             <div class="row align-items-end package-benefit-row mb-3 border border-gray-200 rounded p-4">
                 <div class="col-md-3 mb-3 mb-md-0">
                     <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Ícone</label>
-                    <input type="text" class="form-control form-control-solid" name="benefits[{{ $index }}][icon]" placeholder="Ex: shop ou fa-solid fa-shop" value="{{ $benefit['icon'] }}">
+                    <div class="input-group">
+                        <input
+                            type="text"
+                            class="form-control form-control-solid"
+                            id="package-benefit-icon-{{ $index }}"
+                            name="benefits[{{ $index }}][icon]"
+                            placeholder="Ex: shop ou fa-solid fa-shop"
+                            value="{{ $benefit['icon'] }}"
+                        >
+                        <button
+                            type="button"
+                            class="btn btn-light-primary mc-select-icon"
+                            data-icon-target="#package-benefit-icon-{{ $index }}"
+                            data-required-icon="false"
+                            title="Selecionar ícone"
+                        >
+                            <i class="{{ $benefit['icon'] ?: 'fa-solid fa-icons text-muted' }}"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="col-md-3 mb-3 mb-md-0">
                     <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Título</label>
@@ -382,12 +400,18 @@
             function addBenefitRow() {
                 if (!benefitsContainer.length) return;
                 const index = nextBenefitIndex();
+                const iconInputId = 'package-benefit-icon-new-' + Date.now() + '-' + index;
 
                 const rowHtml = [
                     '<div class="row align-items-end package-benefit-row mb-3 border border-gray-200 rounded p-4">',
                     '  <div class="col-md-3 mb-3 mb-md-0">',
                     '    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Ícone</label>',
-                    '    <input type="text" class="form-control form-control-solid" name="benefits[' + index + '][icon]" placeholder="Ex: shop ou fa-solid fa-shop" value="">',
+                    '    <div class="input-group">',
+                    '      <input type="text" class="form-control form-control-solid" id="' + iconInputId + '" name="benefits[' + index + '][icon]" placeholder="Ex: shop ou fa-solid fa-shop" value="">',
+                    '      <button type="button" class="btn btn-light-primary mc-select-icon" data-icon-target="#' + iconInputId + '" data-required-icon="false" title="Selecionar ícone">',
+                    '        <i class="fa-solid fa-icons text-muted"></i>',
+                    '      </button>',
+                    '    </div>',
                     '  </div>',
                     '  <div class="col-md-3 mb-3 mb-md-0">',
                     '    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Título</label>',
