@@ -6,6 +6,7 @@
 <p class="text-center fw-bold text-gray-700 fs-2 mb-4 text-uppercase">
     Módulos
 </p>
+
 <div class="row">
     @foreach ($modules as $module)
     @php
@@ -47,7 +48,10 @@
     </div>
     @endforeach
 </div>
-    <div class="d-flex mt-4">
+    <div class="d-flex mt-4 gap-2">
+        <a href="{{ route('modules.bulk.page') }}" class="btn btn-sm btn-light-primary">
+            Edição em massa com IA
+        </a>
         <a href="{{ route('modules.create') }}" class="btn btn-sm btn-primary btn-active-success">
             Criar Módulo
         </a>

@@ -15,6 +15,7 @@ use App\Http\Controllers\MetaApiOnboardingController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\ModuleController;
+use App\Http\Controllers\ModuleBulkController;
 use App\Http\Controllers\ModuleCategoryController;
 use App\Http\Controllers\NewsCategoryController;
 use App\Http\Controllers\NewsController;
@@ -186,6 +187,9 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('modulos')->group(function () {
         Route::name('modules.')->group(function () {
             Route::get('/',                 [ModuleController::class, 'index'])->name('index');
+            Route::get('/importacao-em-massa', [ModuleBulkController::class, 'bulkPage'])->name('bulk.page');
+            Route::get('/modelo-importacao-json', [ModuleBulkController::class, 'bulkTemplate'])->name('bulk.template');
+            Route::post('/importacao-json', [ModuleBulkController::class, 'bulkImport'])->name('bulk.import');
             Route::get('/atualizar-precos', [ModuleController::class, 'editPrices'])->name('prices.edit');
             Route::put('/atualizar-precos', [ModuleController::class, 'updatePrices'])->name('prices.update');
             Route::get('/adicionar',        [ModuleController::class, 'create'])->name('create');

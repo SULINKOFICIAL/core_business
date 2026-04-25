@@ -237,6 +237,9 @@ if (! function_exists('header_menu_items')) {
                 'active_routes' => [
                     'packages.index',
                     'modules.index',
+                    'modules.bulk.page',
+                    'modules.bulk.template',
+                    'modules.bulk.import',
                     'modules.prices.edit',
                     'modules.prices.update',
                     'modules.categories.index',
@@ -261,6 +264,12 @@ if (! function_exists('header_menu_items')) {
                         'route' => 'modules.prices.edit',
                         'active_routes' => ['modules.prices.edit', 'modules.prices.update'],
                         'icon' => ['class' => 'fa-solid fa-money-bill-transfer fs-5'],
+                    ],
+                    [
+                        'label' => 'Importação em Massa',
+                        'route' => 'modules.bulk.page',
+                        'active_routes' => ['modules.bulk.page', 'modules.bulk.template', 'modules.bulk.import'],
+                        'icon' => ['class' => 'fa-solid fa-file-import fs-5'],
                     ],
                     [
                         'label' => 'Recursos',

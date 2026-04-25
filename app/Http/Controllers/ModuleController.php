@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Group;
 use App\Models\Module;
 use App\Models\ModuleCategory;
 use App\Models\ModulePricingTier;
@@ -33,7 +32,7 @@ class ModuleController extends Controller
     public function index()
     {
         // Carrega módulos com grupos e faixas de preço para exibição na listagem
-        $modules = Module::with(['resources', 'pricingTiers', 'category'])
+        $modules = Module::with(['resources', 'pricingTiers', 'category', 'benefits'])
             ->orderByDesc('is_native')
             ->orderBy('name')
             ->get();
