@@ -33,7 +33,10 @@ class ModuleController extends Controller
     public function index()
     {
         // Carrega módulos com grupos e faixas de preço para exibição na listagem
-        $modules = Module::with(['resources', 'pricingTiers', 'category'])->get();
+        $modules = Module::with(['resources', 'pricingTiers', 'category'])
+            ->orderByDesc('is_native')
+            ->orderBy('name')
+            ->get();
 
         // Retorna a página
         return view('pages.modules.index')->with([
