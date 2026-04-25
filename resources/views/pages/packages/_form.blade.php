@@ -114,7 +114,14 @@
             </div>
             <div class="col-12 mb-4">
                 <label class="form-label fs-6 fw-bold text-gray-700 mb-2">Descrição</label>
-                <textarea class="form-control form-control-solid" rows="4" placeholder="Descrição do pacote" name="description">{{ old('description', $package->description ?? '') }}</textarea>
+                <textarea
+                    class="form-control form-control-solid"
+                    rows="4"
+                    maxlength="255"
+                    placeholder="Descrição do pacote"
+                    name="description"
+                >{{ old('description', $package->description ?? '') }}</textarea>
+                <div class="form-text">Máximo de 255 caracteres.</div>
             </div>
         </div>
 
@@ -208,25 +215,22 @@
             <div class="row align-items-end package-benefit-row mb-3 border border-gray-200 rounded p-4">
                 <div class="col-md-3 mb-3 mb-md-0">
                     <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Ícone</label>
-                    <div class="input-group">
-                        <input
-                            type="text"
-                            class="form-control form-control-solid"
-                            id="package-benefit-icon-{{ $index }}"
-                            name="benefits[{{ $index }}][icon]"
-                            placeholder="Ex: shop ou fa-solid fa-shop"
-                            value="{{ $benefit['icon'] }}"
-                        >
-                        <button
-                            type="button"
-                            class="btn btn-light-primary mc-select-icon"
-                            data-icon-target="#package-benefit-icon-{{ $index }}"
-                            data-required-icon="false"
-                            title="Selecionar ícone"
-                        >
-                            <i class="{{ $benefit['icon'] ?: 'fa-solid fa-icons text-muted' }}"></i>
-                        </button>
-                    </div>
+                    <input
+                        type="hidden"
+                        id="package-benefit-icon-{{ $index }}"
+                        name="benefits[{{ $index }}][icon]"
+                        value="{{ $benefit['icon'] }}"
+                    >
+                    <button
+                        type="button"
+                        class="btn btn-light-primary w-100 d-flex align-items-center justify-content-center gap-2 mc-select-icon"
+                        data-icon-target="#package-benefit-icon-{{ $index }}"
+                        data-required-icon="false"
+                        title="Selecionar ícone"
+                    >
+                        <i class="{{ $benefit['icon'] ?: 'fa-solid fa-icons text-muted' }}"></i>
+                        <span>Selecionar ícone</span>
+                    </button>
                 </div>
                 <div class="col-md-3 mb-3 mb-md-0">
                     <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Título</label>
@@ -423,12 +427,11 @@
                     '<div class="row align-items-end package-benefit-row mb-3 border border-gray-200 rounded p-4">',
                     '  <div class="col-md-3 mb-3 mb-md-0">',
                     '    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Ícone</label>',
-                    '    <div class="input-group">',
-                    '      <input type="text" class="form-control form-control-solid" id="' + iconInputId + '" name="benefits[' + index + '][icon]" placeholder="Ex: shop ou fa-solid fa-shop" value="">',
-                    '      <button type="button" class="btn btn-light-primary mc-select-icon" data-icon-target="#' + iconInputId + '" data-required-icon="false" title="Selecionar ícone">',
-                    '        <i class="fa-solid fa-icons text-muted"></i>',
-                    '      </button>',
-                    '    </div>',
+                    '    <input type="hidden" id="' + iconInputId + '" name="benefits[' + index + '][icon]" value="">',
+                    '    <button type="button" class="btn btn-light-primary w-100 d-flex align-items-center justify-content-center gap-2 mc-select-icon" data-icon-target="#' + iconInputId + '" data-required-icon="false" title="Selecionar ícone">',
+                    '      <i class="fa-solid fa-icons text-muted"></i>',
+                    '      <span>Selecionar ícone</span>',
+                    '    </button>',
                     '  </div>',
                     '  <div class="col-md-3 mb-3 mb-md-0">',
                     '    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Título</label>',
