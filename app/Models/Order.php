@@ -25,7 +25,7 @@ class Order extends Model
 
     protected $fillable = [
         'tenant_id',
-        'package_id',
+        'plan_id',
         'subscription_id',
         'status',
         'current_step',
@@ -65,9 +65,9 @@ class Order extends Model
         return $this->belongsTo(Coupon::class, 'coupon_id');
     }
 
-    public function package(): BelongsTo
+    public function plan(): BelongsTo
     {
-        return $this->belongsTo(TenantPackage::class, 'package_id', 'id');
+        return $this->belongsTo(TenantPlan::class, 'plan_id', 'id');
     }
 
     public function previousPackage(): BelongsTo

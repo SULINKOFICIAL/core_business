@@ -81,7 +81,7 @@ class OrderController extends Controller
         $order = Order::find($id);
 
         // Inicia serviço de reprocessamento
-        $this->orderService->processSubscriptionPayment($order, $order->subscription, $order->package);
+        $this->orderService->processSubscriptionPayment($order, $order->subscription, $order->plan);
 
         // Redireciona
         return redirect()

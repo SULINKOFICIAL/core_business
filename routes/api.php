@@ -10,7 +10,7 @@ use App\Http\Controllers\ApisNewsController;
 use App\Http\Controllers\ApisOnboardingController;
 use App\Http\Controllers\ApisTokensController;
 use App\Http\Controllers\ApisUtilityController;
-use App\Http\Controllers\TenantsPackagesController;
+use App\Http\Controllers\TenantsPlansController;
 use App\Http\Controllers\MetaApiController;
 use App\Http\Controllers\MetaApiOnboardingController;
 use App\Http\Controllers\TikTokApiController;
@@ -44,7 +44,8 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
         Route::get('/minhas-compras',     [ApisAccountController::class, 'orders']);
         Route::get('/compra/{id}',        [ApisAccountController::class, 'invoice']);
         Route::get('/cartoes',            [ApisAccountController::class, 'cards']);
-        Route::get('/meu-pacote',         [TenantsPackagesController::class, 'package']);
+        Route::get('/meu-plano',          [TenantsPlansController::class, 'plan']);
+        Route::get('/meu-pacote',         [TenantsPlansController::class, 'plan']);
         Route::get('/token/{id}',         [ApisAccountController::class, 'token']);
 
         /**

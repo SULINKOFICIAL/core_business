@@ -208,7 +208,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach ($order->package->items as $item)
+                @foreach ($order->plan->items as $item)
                 <tr>
                     <td>{{ $item->module_name }}</td>
                     <td>1</td>

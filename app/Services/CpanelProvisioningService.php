@@ -271,11 +271,11 @@ class CpanelProvisioningService
 
     private function configureModulesForTenant(Tenant $tenant): void
     {
-        $package = $tenant->package;
+        $plan = $tenant->plan;
 
         $this->moduleService->configureModules(
             $tenant,
-            $package ? $package->items()->pluck('item_id')->toArray() : [],
+            $plan ? $plan->items()->pluck('item_id')->toArray() : [],
             true
         );
 
