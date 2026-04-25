@@ -168,7 +168,9 @@
                             <input type="text" class="form-control form-control-solid input-money" name="tiers[{{ $index }}][price]" value="R$ {{ $tier['price'] }}">
                         </div>
                         <div class="col-2">
-                            <button type="button" class="btn btn-light-danger w-100 remove-tier">Remover</button>
+                            <button type="button" class="btn btn-light-danger w-100 remove-tier" title="Remover">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
                         </div>
                     </div>
                     @endforeach
@@ -229,7 +231,9 @@
                     </select>
                 </div>
                 <div class="col-md-1">
-                    <button type="button" class="btn btn-light-danger w-100 remove-benefit">Remover</button>
+                    <button type="button" class="btn btn-light-danger w-100 remove-benefit" title="Remover">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
                 </div>
             </div>
             @endforeach
@@ -298,7 +302,7 @@
                     '    <input type="text" class="form-control form-control-solid input-money" name="tiers[' + index + '][price]" value="">',
                     '  </div>',
                     '  <div class="col-2">',
-                    '    <button type="button" class="btn btn-light-danger w-100 remove-tier">Remover</button>',
+                    '    <button type="button" class="btn btn-light-danger w-100 remove-tier" title="Remover"><i class="fas fa-trash-alt"></i></button>',
                     '  </div>',
                     '</div>',
                 ].join('');
@@ -346,7 +350,7 @@
                     '    </select>',
                     '  </div>',
                     '  <div class="col-md-1">',
-                    '    <button type="button" class="btn btn-light-danger w-100 remove-benefit">Remover</button>',
+                    '    <button type="button" class="btn btn-light-danger w-100 remove-benefit" title="Remover"><i class="fas fa-trash-alt"></i></button>',
                     '  </div>',
                     '</div>',
                 ].join('');

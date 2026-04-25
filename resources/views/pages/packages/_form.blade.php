@@ -250,7 +250,9 @@
                     </select>
                 </div>
                 <div class="col-md-1">
-                    <button type="button" class="btn btn-light-danger w-100 remove-package-benefit">Remover</button>
+                    <button type="button" class="btn btn-light-danger w-100 remove-package-benefit" title="Remover">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
                 </div>
             </div>
             @endforeach
@@ -451,7 +453,7 @@
                     '    </select>',
                     '  </div>',
                     '  <div class="col-md-1">',
-                    '    <button type="button" class="btn btn-light-danger w-100 remove-package-benefit">Remover</button>',
+                    '    <button type="button" class="btn btn-light-danger w-100 remove-package-benefit" title="Remover"><i class="fas fa-trash-alt"></i></button>',
                     '  </div>',
                     '</div>'
                 ].join('');
