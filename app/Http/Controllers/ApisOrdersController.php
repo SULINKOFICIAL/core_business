@@ -41,14 +41,23 @@ class ApisOrdersController extends Controller
         // Busca o pedido em andamento
         $order = $this->orderService->getOrderInProgress($tenant, $plan);
 
-        // Monta os itens com os dados relevantes para o front
-        $items = $plan->modules->map(function ($module) {
-            return [
-                'id' => $module->id,
-                'name' => $module->name,
-                'billing_type' => $module->pricing_type,
-            ];
-        });
+        // Monta os itens com origem (pacote) para o resumo no front.
+        $items = $plan->items()
+            ->with(['item:id,name,pricing_type', 'sourcePackage:id,name'])
+            ->get()
+            ->map(function (TenantPlanItem $planItem) {
+                $moduleName = $planItem->item?->name ?? $planItem->module_name;
+                $moduleBillingType = $planItem->item?->pricing_type ?? $planItem->billing_type;
+
+                return [
+                    'id' => $planItem->item_id,
+                    'name' => $moduleName,
+                    'billing_type' => $moduleBillingType,
+                    'package_id' => $planItem->package_id,
+                    'package_name' => $planItem->sourcePackage?->name,
+                ];
+            })
+            ->values();
 
         // Calcula subtotal e desconto aplicado
         $subtotalAmount = (float) $plan->modules()->sum('value');
@@ -275,6 +284,7 @@ class ApisOrdersController extends Controller
 
             $createdItem = TenantPlanItem::create([
                 'plan_id'      => $draftPlan->id,
+                'package_id'   => $selectedPackage->id,
                 'item_id'      => $module->id,
                 'module_name'  => $module->name,
                 'module_value' => $moduleValue,
@@ -347,6 +357,7 @@ class ApisOrdersController extends Controller
         // Cria item de módulo no pedido
         TenantPlanItem::create([
             'plan_id'      => $plan->id,
+            'package_id'   => null,
             'item_id'      => $module->id,
             'module_name'  => $module->name,
             'module_value' => $module->value,

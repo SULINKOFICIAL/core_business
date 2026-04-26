@@ -125,6 +125,7 @@ class TenantController extends Controller
         $packageItems = $modules->map(function($module) use ($package) {
             return [
                 'plan_id' => $package->id,
+                'package_id' => null,
                 'item_id' => $module->id,
                 'module_name' => $module->name,
                 'module_value' => $module->value,

@@ -12,6 +12,7 @@ class TenantPlanItem extends Model
 
     protected $fillable = [
         'plan_id',
+        'package_id',
         'item_id',
         'module_name',
         'module_value',
@@ -29,6 +30,11 @@ class TenantPlanItem extends Model
     public function item(): BelongsTo
     {
         return $this->belongsTo(Module::class, 'item_id', 'id');
+    }
+
+    public function sourcePackage(): BelongsTo
+    {
+        return $this->belongsTo(Package::class, 'package_id', 'id');
     }
 
     public function configurations(): HasMany

@@ -83,6 +83,7 @@ class TenantsPlansController extends Controller
         // Cria item de módulo no pedido
         TenantPlanItem::create([
             'plan_id' => $plan->id,
+            'package_id' => null,
             'item_id' => $module->id,
             'module_name' => $module->name,
             'module_value' => $module->value,
