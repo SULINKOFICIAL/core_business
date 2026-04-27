@@ -291,6 +291,39 @@ class TenantController extends Controller
         // Obtém pacotes
         $packages = Package::where('status', true)->get();
 
+        /**
+         * Dados da sessão "Configuração":
+         * - Plano atual do tenant (ID do plano em tenants_plans)
+         * - Itens/módulos liberados para o tenant
+         */
+        $tenant->loadMissing(['plan.items.item']);
+
+        $currentPlanId = $tenant->plan?->id;
+        $enabledModules = [];
+
+        if (!$apiError && !empty($allowModules)) {
+            foreach ($allowModules as $moduleName => $status) {
+                if ((bool) $status) {
+                    $enabledModules[] = (string) $moduleName;
+                }
+            }
+        } elseif ($tenant->plan) {
+            foreach ($tenant->plan->items as $item) {
+                $moduleName = $item->item?->name ?: $item->module_name;
+                if (!empty($moduleName)) {
+                    $enabledModules[] = (string) $moduleName;
+                }
+            }
+        }
+
+        $enabledModules = collect($enabledModules)
+            ->map(fn ($name) => trim((string) $name))
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+
         // Retorna a página
         return view('pages.tenants.show')->with([
             'client'            => $tenant,
@@ -306,6 +339,8 @@ class TenantController extends Controller
             'limitUsers'        => $limitUsers,
             'totalStorage'      => $totalStorageGB,
             'limitStorage'      => $limitStorageGB,
+            'currentPlanId'     => $currentPlanId,
+            'enabledModules'    => $enabledModules,
         ]);
 
     }
