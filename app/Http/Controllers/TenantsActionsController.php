@@ -60,7 +60,9 @@ class TenantsActionsController extends Controller
         // Realiza solicitação
         $response = $moduleService->configureModules(
             $tenant,
-            [$data['module_id']],
+            [
+                $data['module_id']
+            ],
             $status
         );
 
@@ -73,7 +75,7 @@ class TenantsActionsController extends Controller
 
         // Obtém dados do formulário
         $data = $request->all();
-        
+
         // Encontra o cliente
         $tenant = $this->repository->find($data['tenant_id']);
 
@@ -736,6 +738,14 @@ class TenantsActionsController extends Controller
             'status' => 0,
         ]);
 
+        ModuleCategory::where('status', true)->update([
+            'status' => 0,
+        ]);
+
+        Module::where('status', true)->update([
+            'status' => 0,
+        ]);
+
         /**
          * Faz looping pelas categorias
          */
@@ -750,8 +760,9 @@ class TenantsActionsController extends Controller
                  * Cria a categoria no sistema
                  */
                 $moduleCategory = ModuleCategory::updateOrCreate([
-                    'name' => $category['name'],
+                    'slug' => $category['slug'],
                 ], [
+                    'name' => $category['name'],
                     'status' => true,
                     'created_by' => Auth::id()
                 ]);
@@ -770,10 +781,11 @@ class TenantsActionsController extends Controller
                  */
                 $modelModule = Module::updateOrCreate([
                     'slug' => $key,
-                    'module_category_id' => $categoryId,
                 ], [
                     'name' => $module['name'],
                     'description' => $module['description'],
+                    'module_category_id' => $categoryId,
+                    'status' => true,
                     'created_by' => Auth::id()
                 ]);
 

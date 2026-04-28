@@ -43,9 +43,11 @@ class ModuleService
 
             // Adiciona o módulo no payload
             $modulePayloads[] = [
-                'name'     => $module->name,
-                'category' => $module->category->name,
-                'status'   => $status
+                'name'          => $module->name,
+                'slug'          => $module->slug,
+                'category'      => $module->category->name,
+                'category_slug' => $module->category->slug,
+                'status'        => $status
             ];
 
             // Verifica se existe recursos
@@ -58,9 +60,10 @@ class ModuleService
 
                 // Adiciona o recurso no payload
                 $resourcePayloads[] = [
-                    'name'   => $resource->name,
-                    'module' => $module->name,
-                    'status' => $status
+                    'name'        => $resource->name,
+                    'module'      => $module->name,
+                    'module_slug' => $module->slug,
+                    'status'      => $status
                 ];
 
             }
