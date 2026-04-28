@@ -3,10 +3,10 @@
 namespace App\Services;
 
 use App\Models\TenantModule;
-use App\Models\TenantPackage;
+use App\Models\TenantPlan;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\TenantPackageItemConfiguration;
+use App\Models\TenantPlanItemConfiguration;
 use App\Models\TenantSubscription;
 use App\Models\Package;
 use App\Models\Module;
@@ -23,12 +23,12 @@ class OrderService
     /**
      * Cria um pedido em rascunho com base nos módulos e configurações.
      */
-    public function getOrderInProgress($tenant, $package): Order
+    public function getOrderInProgress($tenant, $plan): Order
     {
         return Order::firstOrCreate(
             [
                 'tenant_id'  => $tenant->id,
-                'package_id' => $package->id,
+                'plan_id'    => $plan->id,
                 'type'       => 'Pacote',
                 'status'     => 'draft',
             ],
@@ -38,9 +38,9 @@ class OrderService
     /**
      * Cria um pacote em rascunho com base nos módulos e configurações.
      */
-    public function getPackageInProgress($tenant): TenantPackage
+    public function getPlanInProgress($tenant): TenantPlan
     {
-        return TenantPackage::firstOrCreate(
+        return TenantPlan::firstOrCreate(
             [
                 'tenant_id' => $tenant->id,
                 'progress'  => 'draft',
@@ -55,7 +55,7 @@ class OrderService
     {
 
         // Soma o subtotal atual caso não seja informado
-        $modulesSubtotal = $subtotal ?? (float) (($order->package?->modules()->sum('value')) ?? 0);
+        $modulesSubtotal = $subtotal ?? (float) (($order->plan?->modules()->sum('value')) ?? 0);
         $configurationSubtotal = $this->calculatePackageConfigurationSubtotal($order);
         $itemsSubtotal = $modulesSubtotal + $configurationSubtotal;
 
@@ -79,26 +79,26 @@ class OrderService
      */
     private function calculatePackageConfigurationSubtotal(Order $order): float
     {
-        if (!$order->package) {
+        if (!$order->plan) {
             return 0.0;
         }
 
-        $itemIds = $order->package->items()->pluck('id');
+        $itemIds = $order->plan->items()->pluck('id');
 
         if ($itemIds->isEmpty()) {
             return 0.0;
         }
 
-        $configs = TenantPackageItemConfiguration::whereIn('item_id', $itemIds)
+        $configs = TenantPlanItemConfiguration::whereIn('item_id', $itemIds)
             ->get(['derived_pricing_effect']);
 
-        return (float) $configs->sum(function (TenantPackageItemConfiguration $config) {
+        return (float) $configs->sum(function (TenantPlanItemConfiguration $config) {
             $price = data_get($config->derived_pricing_effect, 'price');
             return is_numeric($price) ? (float) $price : 0.0;
         });
     }
 
-    public function createOrderPayment($package, $orderPayment, $tenant, $clientInfo, $card, $cvv = null, $intervalCycle, $address = null)
+    public function createOrderPayment($plan, $orderPayment, $tenant, $clientInfo, $card, $cvv = null, $intervalCycle, $address = null)
     {
 
         // Inicia o serviço da PagarMe
@@ -126,7 +126,7 @@ class OrderService
         /**
          * Retorna a assinatura na PagarMe 
          */
-        $subscription = $pagarMeService->createSubscription($customer['id'], $card['id'], $package, $orderPayment, $intervalCycle);
+        $subscription = $pagarMeService->createSubscription($customer['id'], $card['id'], $plan, $orderPayment, $intervalCycle);
 
         // Se retornar sucesso da requisição
         if (isset($subscription) && isset($subscription['id'])) {
@@ -167,12 +167,12 @@ class OrderService
             /**
              * Busca o pedido de assinatura, cria transação e ciclo. 
              */
-            return $this->processSubscriptionPayment($orderPayment, $subscription, $package);
+            return $this->processSubscriptionPayment($orderPayment, $subscription, $plan);
 
         }
     }
 
-    public function processSubscriptionPayment($orderPayment, $subscription, $package)
+    public function processSubscriptionPayment($orderPayment, $subscription, $plan)
     {
 
         // Inicia o serviço da PagarMe
@@ -209,7 +209,7 @@ class OrderService
                 'status'  => $charge['status'],
             ]);
 
-            $package->update([
+            $plan->update([
                 'progress' => $charge['status'] == 'paid' ? 'completed' : 'draft',
             ]);
 
@@ -289,8 +289,8 @@ class OrderService
                  * Envia os modulos com os itens para o Micore
                  */
                 $moduleService->configureModules(
-                    $package->tenant,
-                    $package->modules->pluck('id')->toArray(),
+                    $plan->tenant,
+                    $plan->modules->pluck('id')->toArray(),
                     true
                 );
 

@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TenantPackageItem;
+use App\Models\TenantPlanItem;
 use App\Models\Module;
 use App\Models\ModulePricingTier;
 use App\Models\Order;
 use App\Models\Package;
-use App\Models\TenantPackageItemConfiguration;
+use App\Models\TenantPlanItemConfiguration;
 use App\Services\OrderService;
 use App\Services\PagarMeService;
 use Illuminate\Http\Request;
@@ -36,22 +36,31 @@ class ApisOrdersController extends Controller
         $tenant = $data['tenant'];
 
         // Obtem o pacote do cliente
-        $package = $this->orderService->getPackageInProgress($tenant);
+        $plan = $this->orderService->getPlanInProgress($tenant);
 
         // Busca o pedido em andamento
-        $order = $this->orderService->getOrderInProgress($tenant, $package);
+        $order = $this->orderService->getOrderInProgress($tenant, $plan);
 
-        // Monta os itens com os dados relevantes para o front
-        $items = $package->modules->map(function ($module) {
-            return [
-                'id' => $module->id,
-                'name' => $module->name,
-                'billing_type' => $module->pricing_type,
-            ];
-        });
+        // Monta os itens com origem (pacote) para o resumo no front.
+        $items = $plan->items()
+            ->with(['item:id,name,pricing_type', 'sourcePackage:id,name'])
+            ->get()
+            ->map(function (TenantPlanItem $planItem) {
+                $moduleName = $planItem->item?->name ?? $planItem->module_name;
+                $moduleBillingType = $planItem->item?->pricing_type ?? $planItem->billing_type;
+
+                return [
+                    'id' => $planItem->item_id,
+                    'name' => $moduleName,
+                    'billing_type' => $moduleBillingType,
+                    'package_id' => $planItem->package_id,
+                    'package_name' => $planItem->sourcePackage?->name,
+                ];
+            })
+            ->values();
 
         // Calcula subtotal e desconto aplicado
-        $subtotalAmount = (float) $package->modules()->sum('value');
+        $subtotalAmount = (float) $plan->modules()->sum('value');
         $discountAmount = (float) ($order->coupon_discount_amount ?? 0);
 
         // Responde com o rascunho e os itens formatados
@@ -86,7 +95,7 @@ class ApisOrdersController extends Controller
         $usageModules = [];
 
         // Percorre itens do pedido e filtra apenas módulos com cobrança por uso
-        foreach ($order->package->items as $module) {
+        foreach ($order->plan->items as $module) {
 
             if ($module->item->pricing_type != 'Preço Por Uso') {
                 continue;
@@ -148,7 +157,7 @@ class ApisOrdersController extends Controller
         $orderJson['method'] = $order->method;
         $orderJson['description'] = $order->description;
         $orderJson['status'] = $order->status;
-        $orderJson['packageName'] = $order->package->name;
+        $orderJson['packageName'] = $order->plan->name;
 
         // Caso não encontre a conta do cliente
         if (!$tenant) {
@@ -191,10 +200,10 @@ class ApisOrdersController extends Controller
         $tenant = $data['tenant'];
 
         // Obtem o pacote do cliente
-        $package = $this->orderService->getPackageInProgress($tenant);
+        $plan = $this->orderService->getPlanInProgress($tenant);
 
         // Busca o pedido em andamento
-        $order = $this->orderService->getOrderInProgress($tenant, $package);
+        $order = $this->orderService->getOrderInProgress($tenant, $plan);
 
         // Realiza ação desejada
         $action = match ($data['action']) {
@@ -253,28 +262,29 @@ class ApisOrdersController extends Controller
             ];
         }
 
-        $draftPackage = $order->package;
+        $draftPlan = $order->plan;
 
-        if (!$draftPackage) {
+        if (!$draftPlan) {
             return [
                 'message' => 'Pacote em progresso não encontrado.',
                 'action' => 'draft_not_found',
             ];
         }
 
-        $existingItemIds = $draftPackage->items()->pluck('id');
+        $existingItemIds = $draftPlan->items()->pluck('id');
         if ($existingItemIds->isNotEmpty()) {
-            TenantPackageItemConfiguration::whereIn('item_id', $existingItemIds)->delete();
+            TenantPlanItemConfiguration::whereIn('item_id', $existingItemIds)->delete();
         }
 
-        $draftPackage->items()->delete();
+        $draftPlan->items()->delete();
 
         foreach ($selectedPackage->modules as $module) {
             $tierId = (int) ($module->pivot->module_pricing_tier_id ?? 0);
             $moduleValue = (float) $module->value;
 
-            $createdItem = TenantPackageItem::create([
-                'package_id'   => $draftPackage->id,
+            $createdItem = TenantPlanItem::create([
+                'plan_id'      => $draftPlan->id,
+                'package_id'   => $selectedPackage->id,
                 'item_id'      => $module->id,
                 'module_name'  => $module->name,
                 'module_value' => $moduleValue,
@@ -294,7 +304,7 @@ class ApisOrdersController extends Controller
                 continue;
             }
 
-            TenantPackageItemConfiguration::updateOrCreate(
+            TenantPlanItemConfiguration::updateOrCreate(
                 [
                     'item_id' => $createdItem->id,
                     'key' => 'usage',
@@ -327,9 +337,9 @@ class ApisOrdersController extends Controller
         $module = Module::find($moduleId);
 
         // Verifica se existe um pacote com esse item
-        $package = $order->package;
+        $plan = $order->plan;
 
-        $existingItem = $package?->items()->where('item_id', $moduleId)->first();
+        $existingItem = $plan?->items()->where('item_id', $moduleId)->first();
 
         // Se o módulo já existe, remove
         if ($existingItem) {
@@ -345,8 +355,9 @@ class ApisOrdersController extends Controller
         }
 
         // Cria item de módulo no pedido
-        TenantPackageItem::create([
-            'package_id'   => $package->id,
+        TenantPlanItem::create([
+            'plan_id'      => $plan->id,
+            'package_id'   => null,
             'item_id'      => $module->id,
             'module_name'  => $module->name,
             'module_value' => $module->value,
@@ -380,7 +391,7 @@ class ApisOrdersController extends Controller
             ];
         }
 
-        $orderItem = $order->package->items()->where('item_id', $moduleId)->first();
+        $orderItem = $order->plan->items()->where('item_id', $moduleId)->first();
 
         // Interrompe quando o módulo não existe no pedido atual.
         if (!$orderItem) {
@@ -404,7 +415,7 @@ class ApisOrdersController extends Controller
         }
 
         // Persiste a configuração de uso para auditoria e retomada do fluxo.
-        TenantPackageItemConfiguration::updateOrCreate(
+        TenantPlanItemConfiguration::updateOrCreate(
             [
                 'item_id' => $orderItem->id,
                 'key' => 'usage',

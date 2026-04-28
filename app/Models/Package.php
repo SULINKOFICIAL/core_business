@@ -11,6 +11,7 @@ class Package extends Model
     protected $fillable = [
         'name',
         'description',
+        'resources_list',
         'free',
         'popular',
         'size_storage',
@@ -25,7 +26,7 @@ class Package extends Model
 
     public function clients()
     {
-        return $this->belongsToMany(Tenant::class, 'tenants_packages')
+        return $this->belongsToMany(Tenant::class, 'tenants_plans')
                     ->withPivot('start_date', 'end_date', 'status')
                     ->withTimestamps();
     }

@@ -5,9 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class TenantPackageItemConfiguration extends Model
+class TenantPlanItemConfiguration extends Model
 {
-    protected $table = 'tenants_packages_items_configurations';
+    protected $table = 'tenants_plans_items_configurations';
 
     protected $casts = [
         'derived_pricing_effect' => 'array',
@@ -23,6 +23,6 @@ class TenantPackageItemConfiguration extends Model
 
     public function item(): BelongsTo
     {
-        return $this->belongsTo(TenantPackageItem::class, 'item_id', 'id');
+        return $this->belongsTo(TenantPlanItem::class, 'item_id', 'id');
     }
 }

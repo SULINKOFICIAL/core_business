@@ -6,11 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class TenantPackageItem extends Model
+class TenantPlanItem extends Model
 {
-    protected $table = 'tenants_packages_items';
+    protected $table = 'tenants_plans_items';
 
     protected $fillable = [
+        'plan_id',
         'package_id',
         'item_id',
         'module_name',
@@ -21,9 +22,9 @@ class TenantPackageItem extends Model
         'updated_at',
     ];
 
-    public function package(): BelongsTo
+    public function plan(): BelongsTo
     {
-        return $this->belongsTo(TenantPackage::class, 'package_id', 'id');
+        return $this->belongsTo(TenantPlan::class, 'plan_id', 'id');
     }
 
     public function item(): BelongsTo
@@ -31,8 +32,13 @@ class TenantPackageItem extends Model
         return $this->belongsTo(Module::class, 'item_id', 'id');
     }
 
+    public function sourcePackage(): BelongsTo
+    {
+        return $this->belongsTo(Package::class, 'package_id', 'id');
+    }
+
     public function configurations(): HasMany
     {
-        return $this->hasMany(TenantPackageItemConfiguration::class, 'item_id', 'id');
+        return $this->hasMany(TenantPlanItemConfiguration::class, 'item_id', 'id');
     }
 }

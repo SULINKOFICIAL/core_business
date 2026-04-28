@@ -19,6 +19,7 @@ class Module extends Model
         'value',
         'pricing_type',
         'usage_label',
+        'is_native',
         'status',
         'filed_by',
         'created_by',

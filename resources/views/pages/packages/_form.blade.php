@@ -23,14 +23,16 @@
         })->toArray();
     }
 
-    if (empty($benefits)) {
-        $benefits = [[
-            'icon' => 'shop',
-            'title' => 'Vendas e Pedidos',
-            'label' => 'Ilimitado',
-            'label_color' => 'primary',
-        ]];
-    }
+	    if (empty($benefits)) {
+	        $benefits = [[
+	            'icon' => 'shop',
+	            'title' => 'Vendas e Pedidos',
+	            'label' => 'Ilimitado',
+	            'label_color' => 'primary',
+	        ]];
+	    }
+
+    $resourcesList = old('resources_list', $package->resources_list ?? '');
 
     $initialSelectedModules = old('module_items');
 
@@ -91,7 +93,7 @@
     </div>
     <div class="card-body">
         <div class="row">
-            <div class="col-6 mb-4">
+            <div class="col-5 mb-4">
                 <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Nome</label>
                 <input type="text" class="form-control form-control-solid" placeholder="Nome" name="name" value="{{ $package->name ?? old('name') }}" required>
             </div>
@@ -99,20 +101,27 @@
                 <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Valor</label>
                 <input type="text" class="form-control form-control-solid input-money" name="value" value="R$ {{ number_format(($package->value ?? 0), 2, ',', '.') }}" required>
             </div>
-            <div class="col-3 mb-4">
+            <div class="col-2 mb-4">
                 <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">É popular?</label>
                 <select name="popular" class="form-select form-select-solid" data-control="select2" data-hide-search="true" data-placeholder="Selecione" required>
                     <option value="0" @selected((int) old('popular', $package->popular ?? 0) === 0)>Não</option>
                     <option value="1" @selected((int) old('popular', $package->popular ?? 0) === 1)>Sim</option>
                 </select>
             </div>
-            <div class="col-3 mb-4">
+            <div class="col-2 mb-4">
                 <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Ordem</label>
                 <input type="text" class="form-control form-control-solid" name="order" value="{{ $package->order ?? 1 }}" required>
             </div>
             <div class="col-12 mb-4">
                 <label class="form-label fs-6 fw-bold text-gray-700 mb-2">Descrição</label>
-                <textarea class="form-control form-control-solid" rows="4" placeholder="Descrição do pacote" name="description">{{ old('description', $package->description ?? '') }}</textarea>
+                <textarea
+                    class="form-control form-control-solid"
+                    rows="4"
+                    maxlength="255"
+                    placeholder="Descrição do pacote"
+                    name="description"
+                >{{ old('description', $package->description ?? '') }}</textarea>
+                <div class="form-text">Máximo de 255 caracteres.</div>
             </div>
         </div>
 
@@ -178,6 +187,21 @@
 
 <div class="card mb-6">
     <div class="card-header">
+        <h3 class="card-title">Recursos do pacote</h3>
+    </div>
+    <div class="card-body">
+        <p class="text-gray-600 mb-3">Adicione 1 recurso por linha. Esses itens serão exibidos no card do pacote.</p>
+        <textarea
+            class="form-control form-control-solid"
+            name="resources_list"
+            rows="8"
+            placeholder="Ex:&#10;CRM - Negócios&#10;CRM - Funis de Venda&#10;CRM - Marcos de Progresso"
+        >{{ $resourcesList }}</textarea>
+    </div>
+</div>
+
+<div class="card mb-6">
+    <div class="card-header">
         <h3 class="card-title">Benefícios</h3>
     </div>
     <div class="card-body">
@@ -191,7 +215,22 @@
             <div class="row align-items-end package-benefit-row mb-3 border border-gray-200 rounded p-4">
                 <div class="col-md-3 mb-3 mb-md-0">
                     <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Ícone</label>
-                    <input type="text" class="form-control form-control-solid" name="benefits[{{ $index }}][icon]" placeholder="Ex: shop ou fa-solid fa-shop" value="{{ $benefit['icon'] }}">
+                    <input
+                        type="hidden"
+                        id="package-benefit-icon-{{ $index }}"
+                        name="benefits[{{ $index }}][icon]"
+                        value="{{ $benefit['icon'] }}"
+                    >
+                    <button
+                        type="button"
+                        class="btn btn-light-primary w-100 d-flex align-items-center justify-content-center gap-2 mc-select-icon"
+                        data-icon-target="#package-benefit-icon-{{ $index }}"
+                        data-required-icon="false"
+                        title="Selecionar ícone"
+                    >
+                        <i class="{{ $benefit['icon'] ?: 'fa-solid fa-icons text-muted' }}"></i>
+                        <span>Selecionar ícone</span>
+                    </button>
                 </div>
                 <div class="col-md-3 mb-3 mb-md-0">
                     <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Título</label>
@@ -211,7 +250,9 @@
                     </select>
                 </div>
                 <div class="col-md-1">
-                    <button type="button" class="btn btn-light-danger w-100 remove-package-benefit">Remover</button>
+                    <button type="button" class="btn btn-light-danger w-100 remove-package-benefit" title="Remover">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
                 </div>
             </div>
             @endforeach
@@ -382,12 +423,17 @@
             function addBenefitRow() {
                 if (!benefitsContainer.length) return;
                 const index = nextBenefitIndex();
+                const iconInputId = 'package-benefit-icon-new-' + Date.now() + '-' + index;
 
                 const rowHtml = [
                     '<div class="row align-items-end package-benefit-row mb-3 border border-gray-200 rounded p-4">',
                     '  <div class="col-md-3 mb-3 mb-md-0">',
                     '    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Ícone</label>',
-                    '    <input type="text" class="form-control form-control-solid" name="benefits[' + index + '][icon]" placeholder="Ex: shop ou fa-solid fa-shop" value="">',
+                    '    <input type="hidden" id="' + iconInputId + '" name="benefits[' + index + '][icon]" value="">',
+                    '    <button type="button" class="btn btn-light-primary w-100 d-flex align-items-center justify-content-center gap-2 mc-select-icon" data-icon-target="#' + iconInputId + '" data-required-icon="false" title="Selecionar ícone">',
+                    '      <i class="fa-solid fa-icons text-muted"></i>',
+                    '      <span>Selecionar ícone</span>',
+                    '    </button>',
                     '  </div>',
                     '  <div class="col-md-3 mb-3 mb-md-0">',
                     '    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Título</label>',
@@ -407,7 +453,7 @@
                     '    </select>',
                     '  </div>',
                     '  <div class="col-md-1">',
-                    '    <button type="button" class="btn btn-light-danger w-100 remove-package-benefit">Remover</button>',
+                    '    <button type="button" class="btn btn-light-danger w-100 remove-package-benefit" title="Remover"><i class="fas fa-trash-alt"></i></button>',
                     '  </div>',
                     '</div>'
                 ].join('');

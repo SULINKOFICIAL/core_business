@@ -149,16 +149,19 @@
             <div class="card mb-4">
                 <div class="card-body p-6">
                     <p class="fw-bolder text-gray-700 fs-3 text-uppercase">Configuração</p>
-                    @foreach ($modules as $module)
-                    <div class="mb-1 d-flex align-items-center justify-content-between">
-                        <p class="text-gray-700 mb-0">{{ Str::limit($module->name, 25) }}</p>
-                        @if (($allowModules[$module->name] ?? 0) == 1)
-                            <i class="fa-solid fa-circle-check text-success"></i>
-                        @else
-                            <i class="fa-solid fa-circle-check text-danger"></i>
-                        @endif
-                    </div>
-                    @endforeach
+                    <p class="text-gray-700 fw-bolder mb-2">
+                        Plano atual do tenant #{{ $currentPlanId ?? 'Sem plano' }}
+                    </p>
+                    @if (count($enabledModules) > 0)
+                        @foreach ($enabledModules as $moduleName)
+                            <div class="mb-1 d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-circle-check text-success"></i>
+                                <p class="text-gray-700 mb-0">{{ $moduleName }}</p>
+                            </div>
+                        @endforeach
+                    @else
+                        <p class="text-muted mb-0">Nenhum item liberado no momento.</p>
+                    @endif
                 </div>
             </div>
         </div>

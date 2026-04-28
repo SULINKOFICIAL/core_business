@@ -20,7 +20,7 @@ class ApisPaymentsController extends Controller
         $data = $request->all();
 
         // Obtem o pacote do cliente
-        $package = $service->getPackageInProgress($data['tenant']);
+        $package = $service->getPlanInProgress($data['tenant']);
 
         // Busca o pedido em andamento
         $order = $service->getOrderInProgress($data['tenant'], $package);

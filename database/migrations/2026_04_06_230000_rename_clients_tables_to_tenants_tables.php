@@ -18,9 +18,9 @@ return new class extends Migration
         $this->renameIfExists('clients_main_goals', 'tenants_main_goals');
         $this->renameIfExists('clients_metas', 'tenants_metas');
         $this->renameIfExists('clients_modules', 'tenants_modules');
-        $this->renameIfExists('clients_packages', 'tenants_packages');
-        $this->renameIfExists('clients_packages_items', 'tenants_packages_items');
-        $this->renameIfExists('clients_packages_items_configurations', 'tenants_packages_items_configurations');
+        $this->renameIfExists('clients_packages', 'tenants_plans');
+        $this->renameIfExists('clients_packages_items', 'tenants_plans_items');
+        $this->renameIfExists('clients_packages_items_configurations', 'tenants_plans_items_configurations');
         $this->renameIfExists('client_provisionings', 'tenant_provisionings');
         $this->renameIfExists('client_runtime_statuses', 'tenant_runtime_statuses');
         $this->renameIfExists('clients_subscriptions', 'tenants_subscriptions');
@@ -36,9 +36,9 @@ return new class extends Migration
         $this->renameIfExists('tenants_subscriptions', 'clients_subscriptions');
         $this->renameIfExists('tenant_runtime_statuses', 'client_runtime_statuses');
         $this->renameIfExists('tenant_provisionings', 'client_provisionings');
-        $this->renameIfExists('tenants_packages_items_configurations', 'clients_packages_items_configurations');
-        $this->renameIfExists('tenants_packages_items', 'clients_packages_items');
-        $this->renameIfExists('tenants_packages', 'clients_packages');
+        $this->renameIfExists('tenants_plans_items_configurations', 'clients_packages_items_configurations');
+        $this->renameIfExists('tenants_plans_items', 'clients_packages_items');
+        $this->renameIfExists('tenants_plans', 'clients_packages');
         $this->renameIfExists('tenants_modules', 'clients_modules');
         $this->renameIfExists('tenants_metas', 'clients_metas');
         $this->renameIfExists('tenants_main_goals', 'clients_main_goals');

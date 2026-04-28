@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Tenant;
-use App\Models\TenantPackage;
+use App\Models\TenantPlan;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Models\LogsApi;
@@ -133,13 +133,13 @@ class PagarMeDispatchRequest implements ShouldQueue
             $subscription = Subscription::where('pagarme_subscription_id', $data->subscription->id)->first();
 
             // Obtem o ultimo pacote do cliente
-            $lastPackage = TenantPackage::where('tenant_id', $tenant->id)->orderBy('id', 'desc')->first();
+            $lastPackage = TenantPlan::where('tenant_id', $tenant->id)->orderBy('id', 'desc')->first();
 
             // Cria um pedido
             $order = Order::create([
                 'tenant_id'       => $tenant->id,
                 'subscription_id' => $subscription->id,
-                'package_id'      => $lastPackage->id ?? null,
+                'plan_id'         => $lastPackage->id ?? null,
                 'status'          => $data->charge->status,
                 'currency'        => $data->charge->currency,
                 'pagarme_message' => isset($data->transaction->acquirer->message) ? $data->transaction->acquirer->message : null,
@@ -242,7 +242,7 @@ class PagarMeDispatchRequest implements ShouldQueue
                     /**
                      * Parte responsável por liberar o MiCore
                      */
-                    $this->releaseModule($transaction->order->tenant, $transaction->order->package, $data->cycle);
+                    $this->releaseModule($transaction->order->tenant, $transaction->order->plan, $data->cycle);
                 }
 
             }
@@ -255,7 +255,7 @@ class PagarMeDispatchRequest implements ShouldQueue
     /**
      * Libera os módulos para o cliente
      */
-    private function releaseModule($tenant, $package, $cycle)
+    private function releaseModule($tenant, $plan, $cycle)
     {
         // Inicia o serviço de módulos
         $moduleService = app(ModuleService::class);
@@ -263,7 +263,7 @@ class PagarMeDispatchRequest implements ShouldQueue
         // Realiza solicitação
         $moduleService->configureModules(
             $tenant,
-            $package->modules->pluck('id')->toArray(),
+            $plan->modules->pluck('id')->toArray(),
             true
         );
 

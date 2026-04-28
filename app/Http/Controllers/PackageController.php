@@ -32,7 +32,11 @@ class PackageController extends Controller
     {
 
         // Obtém pacotes
-        $packages = $this->repository->all();
+        $packages = $this->repository
+            ->with('modules')
+            ->orderBy('order')
+            ->orderBy('name')
+            ->get();
 
         // Retorna a página
         return view('pages.packages.index')->with([
@@ -63,6 +67,7 @@ class PackageController extends Controller
         $data['value'] = toDecimal($data['value']);
         $data['duration_days'] = (int) ($data['duration_days'] ?? 30);
         $data['size_storage'] = (int) ($data['size_storage'] ?? 5368709120);
+        $data['resources_list'] = $this->normalizeResourcesList($data['resources_list'] ?? null);
 
         // Autor
         $data['created_by'] = Auth::id();
@@ -115,6 +120,7 @@ class PackageController extends Controller
         $data['value'] = toDecimal($data['value']);
         $data['duration_days'] = (int) ($data['duration_days'] ?? ($package->duration_days ?? 30));
         $data['size_storage'] = (int) ($data['size_storage'] ?? ($package->size_storage ?? 5368709120));
+        $data['resources_list'] = $this->normalizeResourcesList($data['resources_list'] ?? null);
 
         // Autor
         $data['updated_by'] = Auth::id();
@@ -153,6 +159,26 @@ class PackageController extends Controller
             ->with('message', 'Pacote <b>' . $package->name . '</b> ' . $message . ' com sucesso.');
     }
 
+    public function updateOrder(Request $request, $id)
+    {
+        // Verifica se existe
+        if (!$package = $this->repository->find($id)) return redirect()->back();
+
+        // Valida ordem mínima
+        $validated = $request->validate([
+            'order' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $package->update([
+            'order' => (int) $validated['order'],
+            'updated_by' => Auth::id(),
+        ]);
+
+        return redirect()
+            ->route('packages.index')
+            ->with('message', 'Ordem do pacote <b>' . $package->name . '</b> atualizada com sucesso.');
+    }
+
     private function syncBenefits(Package $package, array $benefits): void
     {
         $allowedColors = ['success', 'primary', 'info', 'warning'];
@@ -169,8 +195,12 @@ class PackageController extends Controller
                 continue;
             }
 
-            if ($icon === '' || $title === '' || $label === '') {
+            if ($icon === '' || $title === '') {
                 continue;
+            }
+
+            if ($label === '') {
+                $label = 'Ilimitado';
             }
 
             if (!in_array($labelColor, $allowedColors, true)) {
@@ -226,5 +256,24 @@ class PackageController extends Controller
                 'created_by' => $createdBy,
             ]);
         }
+    }
+
+    private function normalizeResourcesList($value): ?string
+    {
+        $text = trim((string) ($value ?? ''));
+
+        if ($text === '') {
+            return null;
+        }
+
+        $lines = preg_split('/\r\n|\r|\n/', $text);
+        $lines = array_map(fn ($line) => trim((string) $line), $lines ?: []);
+        $lines = array_values(array_filter($lines, fn ($line) => $line !== ''));
+
+        if (empty($lines)) {
+            return null;
+        }
+
+        return implode(PHP_EOL, $lines);
     }
 }

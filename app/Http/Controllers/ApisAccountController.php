@@ -18,10 +18,10 @@ class ApisAccountController extends Controller
         $tenant = $request->all()['tenant'];
 
         // Carrega o pacote atual do cliente.
-        $package = $tenant->packages()->where('status', true)->first();
+        $plan = $tenant->plans()->where('status', true)->first();
 
         // Resposta padrão quando não há pacote ativo.
-        if (!$package) {
+        if (!$plan) {
             return response()->json([
                 'package' => null,
                 'renovation' => 0,
@@ -29,8 +29,8 @@ class ApisAccountController extends Controller
         }
 
         // Inclui módulos e benefícios no payload do pacote.
-        $package['modules'] = $package->modules;
-        $package['benefits'] = $package->benefits;
+        $plan['modules'] = $plan->modules;
+        $plan['benefits'] = $plan->benefits;
 
         // Verifica se já existe renovação pendente.
         $existsRenovation = $tenant->orders()
@@ -39,9 +39,9 @@ class ApisAccountController extends Controller
             ->exists();
 
         return response()->json([
-            'package' => $package,
-            'order' => $tenant->package?->orders()->orderBy('created_at', 'DESC')->first(),
-            'cycle'   => $tenant->package?->orders()->orderBy('created_at', 'DESC')->first()->subscription->cycles()->orderBy('created_at', 'DESC')->first(),
+            'package' => $plan,
+            'order' => $tenant->plan?->orders()->orderBy('created_at', 'DESC')->first(),
+            'cycle'   => $tenant->plan?->orders()->orderBy('created_at', 'DESC')->first()->subscription->cycles()->orderBy('created_at', 'DESC')->first(),
             'renovation' => $tenant->renovation(),
             'existsOrder' => $existsRenovation,
         ], 200);
@@ -92,7 +92,7 @@ class ApisAccountController extends Controller
             $orderData['currency'] = $order->currency;
             $orderData['method'] = $order->method;
             $orderData['status'] = $order->status;
-            $orderData['packageName'] = $order->package->name;
+            $orderData['packageName'] = $order->plan->name;
             $orderData['transactions'] = $order->transactions->count();
 
             $ordersJson[] = $orderData;
@@ -117,7 +117,7 @@ class ApisAccountController extends Controller
 
         $subscription = $order->subscription;
 
-        $package = $order->package;
+        $plan = $order->plan;
 
         $transactions = $order->transactions;
 
@@ -130,7 +130,7 @@ class ApisAccountController extends Controller
 
         return response()->json([
             'order'        => $order,
-            'package'      => $package,
+            'package'      => $plan,
             'subscription' => $subscription,
             'transactions' => $transactions,
         ], 200);

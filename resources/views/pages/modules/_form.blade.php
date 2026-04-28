@@ -34,6 +34,7 @@
     }
 
     $benefits = old('benefits');
+    $isNative = (bool) old('is_native', $modules->is_native ?? false);
 
     if (is_array($benefits)) {
         $benefits = array_map(function ($benefit) {
@@ -89,6 +90,21 @@
                 </select>
             </div>
             <div class="col-12 mb-4">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <label class="form-label fs-6 fw-bold text-gray-700 mb-0">Módulo Nativo</label>
+                    <i
+                        class="fa-solid fa-circle-info cursor-pointer"
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="right"
+                        title="Módulo incluso sem cobrança, usado para funcionamento do sistema."
+                    ></i>
+                </div>
+                <select name="is_native" class="form-select form-select-solid" id="is_native">
+                    <option value="0" @selected(!$isNative)>Não</option>
+                    <option value="1" @selected($isNative)>Sim</option>
+                </select>
+            </div>
+            <div class="col-12 mb-4">
                 <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Descrição</label>
                 <textarea maxlength="170" class="form-control form-control-solid" name="description" required>{{ $modules->description ?? old('description') }}</textarea>
             </div>
@@ -114,7 +130,7 @@
     </div>
 </div>
 
-<div class="card">
+<div class="card" id="module-pricing-card">
     <div class="card-header">
         <h3 class="card-title">Precificação</h3>
     </div>
@@ -152,7 +168,9 @@
                             <input type="text" class="form-control form-control-solid input-money" name="tiers[{{ $index }}][price]" value="R$ {{ $tier['price'] }}">
                         </div>
                         <div class="col-2">
-                            <button type="button" class="btn btn-light-danger w-100 remove-tier">Remover</button>
+                            <button type="button" class="btn btn-light-danger w-100 remove-tier" title="Remover">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
                         </div>
                     </div>
                     @endforeach
@@ -178,7 +196,22 @@
             <div class="row align-items-end module-benefit-row mb-3 border border-gray-200 rounded p-4">
                 <div class="col-md-3 mb-3 mb-md-0">
                     <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Ícone</label>
-                    <input type="text" class="form-control form-control-solid" name="benefits[{{ $index }}][icon]" placeholder="Ex: shop ou fa-solid fa-shop" value="{{ $benefit['icon'] }}">
+                    <input
+                        type="hidden"
+                        id="module-benefit-icon-{{ $index }}"
+                        name="benefits[{{ $index }}][icon]"
+                        value="{{ $benefit['icon'] }}"
+                    >
+                    <button
+                        type="button"
+                        class="btn btn-light-primary w-100 d-flex align-items-center justify-content-center gap-2 mc-select-icon"
+                        data-icon-target="#module-benefit-icon-{{ $index }}"
+                        data-required-icon="false"
+                        title="Selecionar ícone"
+                    >
+                        <i class="{{ $benefit['icon'] ?: 'fa-solid fa-icons text-muted' }}"></i>
+                        <span>Selecionar ícone</span>
+                    </button>
                 </div>
                 <div class="col-md-3 mb-3 mb-md-0">
                     <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Título</label>
@@ -198,7 +231,9 @@
                     </select>
                 </div>
                 <div class="col-md-1">
-                    <button type="button" class="btn btn-light-danger w-100 remove-benefit">Remover</button>
+                    <button type="button" class="btn btn-light-danger w-100 remove-benefit" title="Remover">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
                 </div>
             </div>
             @endforeach
@@ -212,6 +247,8 @@
         $(function () {
             // Cacheia elementos principais do formulário
             var pricingTypeSelect = $('#pricing_type');
+            var nativeSelect = $('#is_native');
+            var pricingCard = $('#module-pricing-card');
             if (!pricingTypeSelect.length) return;
 
             var fixedBlocks = $('.pricing-fixed');
@@ -230,6 +267,18 @@
                 // Ajusta required do valor fixo
                 if (valueInput.length) {
                     valueInput.prop('required', !isUsage);
+                }
+            }
+
+            function togglePricingCard() {
+                // Módulo nativo não exibe bloco de precificação.
+                var isNative = nativeSelect.val() === '1';
+                pricingCard.toggle(!isNative);
+
+                if (isNative && valueInput.length) {
+                    valueInput.prop('required', false);
+                } else {
+                    togglePricingBlocks();
                 }
             }
 
@@ -253,7 +302,7 @@
                     '    <input type="text" class="form-control form-control-solid input-money" name="tiers[' + index + '][price]" value="">',
                     '  </div>',
                     '  <div class="col-2">',
-                    '    <button type="button" class="btn btn-light-danger w-100 remove-tier">Remover</button>',
+                    '    <button type="button" class="btn btn-light-danger w-100 remove-tier" title="Remover"><i class="fas fa-trash-alt"></i></button>',
                     '  </div>',
                     '</div>',
                 ].join('');
@@ -272,11 +321,16 @@
             function addBenefitRow() {
                 if (!benefitsContainer.length) return;
                 var index = nextBenefitIndex();
+                var iconInputId = 'module-benefit-icon-new-' + Date.now() + '-' + index;
                 var rowHtml = [
                     '<div class="row align-items-end module-benefit-row mb-3 border border-gray-200 rounded p-4">',
                     '  <div class="col-md-3 mb-3 mb-md-0">',
                     '    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Ícone</label>',
-                    '    <input type="text" class="form-control form-control-solid" name="benefits[' + index + '][icon]" placeholder="Ex: shop ou fa-solid fa-shop" value="">',
+                    '    <input type="hidden" id="' + iconInputId + '" name="benefits[' + index + '][icon]" value="">',
+                    '    <button type="button" class="btn btn-light-primary w-100 d-flex align-items-center justify-content-center gap-2 mc-select-icon" data-icon-target="#' + iconInputId + '" data-required-icon="false" title="Selecionar ícone">',
+                    '      <i class="fa-solid fa-icons text-muted"></i>',
+                    '      <span>Selecionar ícone</span>',
+                    '    </button>',
                     '  </div>',
                     '  <div class="col-md-3 mb-3 mb-md-0">',
                     '    <label class="form-label fs-7 fw-bold text-gray-600 mb-1">Título</label>',
@@ -296,7 +350,7 @@
                     '    </select>',
                     '  </div>',
                     '  <div class="col-md-1">',
-                    '    <button type="button" class="btn btn-light-danger w-100 remove-benefit">Remover</button>',
+                    '    <button type="button" class="btn btn-light-danger w-100 remove-benefit" title="Remover"><i class="fas fa-trash-alt"></i></button>',
                     '  </div>',
                     '</div>',
                 ].join('');
@@ -322,7 +376,8 @@
 
             // Atualiza a UI quando muda o tipo de cobrança
             pricingTypeSelect.on('change', togglePricingBlocks);
-            togglePricingBlocks();
+            nativeSelect.on('change', togglePricingCard);
+            togglePricingCard();
         });
     </script>
 @endsection

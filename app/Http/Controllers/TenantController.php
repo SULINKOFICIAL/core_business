@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Tenant;
 use App\Models\TenantDomain;
-use App\Models\TenantPackage;
-use App\Models\TenantPackageItem;
+use App\Models\TenantPlan;
+use App\Models\TenantPlanItem;
 use App\Models\TenantProvisioning;
 use App\Models\Module;
 use App\Models\Order;
@@ -110,7 +110,7 @@ class TenantController extends Controller
         $created->runtimeStatus()->create();
 
         // Cria o pacote do cliente
-        $package = TenantPackage::create([
+        $package = TenantPlan::create([
             'tenant_id' => $created->id,
             'name' => 'DEMO 30 DIAS',
             'price' => 0,
@@ -124,7 +124,8 @@ class TenantController extends Controller
 
         $packageItems = $modules->map(function($module) use ($package) {
             return [
-                'package_id' => $package->id,
+                'plan_id' => $package->id,
+                'package_id' => null,
                 'item_id' => $module->id,
                 'module_name' => $module->name,
                 'module_value' => $module->value,
@@ -136,7 +137,7 @@ class TenantController extends Controller
         })->toArray();
 
         // Cria os itens do pacote
-        TenantPackageItem::insert($packageItems);
+        TenantPlanItem::insert($packageItems);
 
         // Cria uma assinatura fictícia
         $subscription = Subscription::create([
@@ -153,7 +154,7 @@ class TenantController extends Controller
         // Cria um pedido fictício
         $order = Order::create([
             'tenant_id' => $created->id,
-            'package_id' => $package->id,
+            'plan_id' => $package->id,
             'subscription_id' => $subscription->id,
             'total_amount' => 0,
             'status' => 'Liberado',
@@ -290,6 +291,39 @@ class TenantController extends Controller
         // Obtém pacotes
         $packages = Package::where('status', true)->get();
 
+        /**
+         * Dados da sessão "Configuração":
+         * - Plano atual do tenant (ID do plano em tenants_plans)
+         * - Itens/módulos liberados para o tenant
+         */
+        $tenant->loadMissing(['plan.items.item']);
+
+        $currentPlanId = $tenant->plan?->id;
+        $enabledModules = [];
+
+        if (!$apiError && !empty($allowModules)) {
+            foreach ($allowModules as $moduleName => $status) {
+                if ((bool) $status) {
+                    $enabledModules[] = (string) $moduleName;
+                }
+            }
+        } elseif ($tenant->plan) {
+            foreach ($tenant->plan->items as $item) {
+                $moduleName = $item->item?->name ?: $item->module_name;
+                if (!empty($moduleName)) {
+                    $enabledModules[] = (string) $moduleName;
+                }
+            }
+        }
+
+        $enabledModules = collect($enabledModules)
+            ->map(fn ($name) => trim((string) $name))
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+
         // Retorna a página
         return view('pages.tenants.show')->with([
             'client'            => $tenant,
@@ -305,6 +339,8 @@ class TenantController extends Controller
             'limitUsers'        => $limitUsers,
             'totalStorage'      => $totalStorageGB,
             'limitStorage'      => $limitStorageGB,
+            'currentPlanId'     => $currentPlanId,
+            'enabledModules'    => $enabledModules,
         ]);
 
     }

@@ -65,16 +65,16 @@ class Tenant extends Model
         return $this->hasOne(TenantRuntimeStatus::class, 'tenant_id', 'id');
     }
 
-    // Pacote atual do cliente
-    public function packages(): HasMany
+    // Planos do cliente
+    public function plans(): HasMany
     {
-        return $this->hasMany(TenantPackage::class, 'tenant_id', 'id');
+        return $this->hasMany(TenantPlan::class, 'tenant_id', 'id');
     }
 
-    // Pacote atual do cliente
-    public function package(): HasOne
+    // Plano atual do cliente
+    public function plan(): HasOne
     {
-        return $this->hasOne(TenantPackage::class, 'tenant_id', 'id')->where('status', true);
+        return $this->hasOne(TenantPlan::class, 'tenant_id', 'id')->where('status', true);
     }
 
     // Domínios do cliente

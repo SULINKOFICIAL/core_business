@@ -2,6 +2,8 @@
 use App\Models\Tenant;
 use App\Models\TenantDomain;
 
+require_once __DIR__ . '/Helpers/global/icons.php';
+
 /**
  * Verifica se o domínio está disponível e gera um novo se necessário.
  *
@@ -235,6 +237,9 @@ if (! function_exists('header_menu_items')) {
                 'active_routes' => [
                     'packages.index',
                     'modules.index',
+                    'modules.bulk.page',
+                    'modules.bulk.template',
+                    'modules.bulk.import',
                     'modules.prices.edit',
                     'modules.prices.update',
                     'modules.categories.index',
@@ -261,13 +266,19 @@ if (! function_exists('header_menu_items')) {
                         'icon' => ['class' => 'fa-solid fa-money-bill-transfer fs-5'],
                     ],
                     [
+                        'label' => 'Importação em Massa',
+                        'route' => 'modules.bulk.page',
+                        'active_routes' => ['modules.bulk.page', 'modules.bulk.template', 'modules.bulk.import'],
+                        'icon' => ['class' => 'fa-solid fa-file-import fs-5'],
+                    ],
+                    [
                         'label' => 'Recursos',
                         'route' => 'resources.index',
                         'active_routes' => ['resources.index'],
                         'icon' => ['class' => 'fa-solid fa-toolbox fs-5'],
                     ],
                     [
-                        'label' => 'Atualizar Módulos',
+                        'label' => 'Sincronizar Módulos',
                         'route' => 'systems.get.resources',
                         'active_routes' => ['systems.get.resources'],
                         'icon' => ['class' => 'fa-solid fa-code-compare fs-5'],
