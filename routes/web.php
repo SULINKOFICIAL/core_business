@@ -103,6 +103,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/adicionar',        [TenantController::class, 'create'])->name('create');
             Route::post('/adicionar',       [TenantController::class, 'store'])->name('store');
             Route::get('/visualizar/{id}',  [TenantController::class, 'show'])->name('show');
+            Route::get('/visualizar/dados-api/{id}',  [TenantController::class, 'apiData'])->name('api.data');
             Route::get('/editar/{id}',      [TenantController::class, 'edit'])->name('edit');
             Route::put('/editar/{id}',      [TenantController::class, 'update'])->name('update');
             Route::get('/desabilitar/{id}', [TenantController::class, 'destroy'])->name('destroy');       
@@ -255,6 +256,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/processar',        [OrderProcessingController::class, 'process'])->name('process');
             Route::get('/visualizar/{id}',  [OrderController::class, 'show'])->name('show');
             Route::get('/reprocessar-assinatura-pagarme/{id}',  [OrderController::class, 'reprocessSubscription'])->name('reprocess.subscription');
+            Route::get('/cancelar-em-andamento', [OrderController::class, 'cancelDrafts'])->name('cancel.drafts');
         });
     });
 

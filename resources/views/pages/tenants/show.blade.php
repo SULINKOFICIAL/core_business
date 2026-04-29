@@ -75,78 +75,6 @@
     <div class="row">
         <div class="col-12 col-xl-2">
             <div class="card mb-4">
-                <div class="card-body p-6 pb-4">
-                    <p class="fw-bolder text-gray-700 fs-3 text-uppercase">Assinatura</p>
-                    <div class="d-flex flex-column align-items-start mb-1">
-                        <p class="text-gray-700 fw-bolder mb-1 fs-5">Início</p>
-                        <p class="text-gray-600 mb-0 fw-bold fs-7 start-date" data-start-date="{{ isset($allowSubscription['start_date']) ? date('d/m/Y', strtotime($allowSubscription['start_date'])) : '' }}">
-                            {{ isset($allowSubscription['start_date']) ? date('d/m/Y', strtotime($allowSubscription['start_date'])) : 'Sem data' }}
-                        </p>
-                    </div>
-                    <div class="d-flex flex-column align-items-start">
-                        <p class="text-gray-700 fw-bolder mb-1 fs-5">Fim</p>
-                        <div class="d-flex align-items-center gap-1">
-                            <p class="text-gray-600 mb-0 fw-bold fs-7 mb-0 text-hover-primary end-date cursor-pointer">
-                                {{ isset($allowSubscription['end_date']) ? date('d/m/Y', strtotime($allowSubscription['end_date'])) : 'Sem data' }}
-                                <i class="fa-solid fa-pen text-gray-500"></i>
-                            </p>
-                            <input type="text" class="form-control form-control-sm end-date-input" style="width:150px; display:none;" value="{{ isset($allowSubscription['end_date']) ? date('d/m/Y', strtotime($allowSubscription['end_date'])) : '' }}">
-                        </div>
-                    </div>
-                    <button class="btn btn-sm w-100 h-25px btn-success d-flex align-items-center justify-content-center mt-1" id="update-subscription">
-                        Atualizar
-                    </button>
-                </div>
-            </div>
-            <div class="card mb-4">
-                <div class="card-body p-6 px-5 pb-4">
-                    <p class="fw-bolder text-gray-700 fs-3 text-uppercase">Armazenamento</p>
-                    <div class="d-flex flex-column align-items-start mb-1">
-                        <p class="text-gray-700 fw-bolder mb-1 fs-5">Usado</p>
-                        <p class="text-gray-600 mb-0 fw-bold fs-7">
-                            {{ $totalStorage ?? 0 }} GB
-                        </p>
-                    </div>
-                    <div class="d-flex flex-column align-items-start">
-                        <p class="text-gray-700 fw-bolder mb-1 fs-5">Limite</p>
-                        <div class="d-flex align-items-center gap-1">
-                            <p class="text-gray-600 mb-0 fw-bold fs-7 mb-0 text-hover-primary storage-limit cursor-pointer">
-                                {{ $limitStorage ?? 0 }} GB
-                                <i class="fa-solid fa-pen text-gray-500"></i>
-                            </p>
-                            <input type="text" class="form-control form-control-sm storage-limit-input" style="width:150px; display:none;" value="{{ $limitStorage ?? 0 }}">
-                        </div>
-                    </div>
-                    <button class="btn btn-sm w-100 h-25px btn-success d-flex align-items-center justify-content-center mt-1" id="update-storage">
-                        Atualizar
-                    </button>
-                </div>
-            </div>
-            <div class="card mb-4">
-                <div class="card-body p-6 pb-4">
-                    <p class="fw-bolder text-gray-700 fs-3 text-uppercase">Usuários</p>
-                    <div class="d-flex flex-column align-items-start mb-1">
-                        <p class="text-gray-700 fw-bolder mb-1 fs-5">Total</p>
-                        <p class="text-gray-600 mb-0 fw-bold fs-7">
-                            {{ $totalUsers }}
-                        </p>
-                    </div>
-                    <div class="d-flex flex-column align-items-start">
-                        <p class="text-gray-700 fw-bolder mb-1 fs-5">Limite</p>
-                        <div class="d-flex align-items-center gap-1">
-                            <p class="text-gray-600 mb-0 fw-bold fs-7 mb-0 text-hover-primary users-limits cursor-pointer">
-                                {{ $limitUsers }}
-                                <i class="fa-solid fa-pen text-gray-500"></i>
-                            </p>
-                            <input type="text" class="form-control form-control-sm users-limits-input" style="width:150px; display:none;" value="{{ $limitUsers }}">
-                        </div>
-                    </div>
-                    <button class="btn btn-sm w-100 h-25px btn-success d-flex align-items-center justify-content-center mt-1" id="update-users-limits">
-                        Atualizar
-                    </button>
-                </div>
-            </div>
-            <div class="card mb-4">
                 <div class="card-body p-6">
                     <p class="fw-bolder text-gray-700 fs-3 text-uppercase">Configuração</p>
                     <p class="text-gray-700 fw-bolder mb-2">
@@ -177,7 +105,10 @@
                     Histórico de Compras
                 </button>
                 <button class="btn btn-sm w-200px mb-2 btn-danger btn-sections" data-show="resources">
-                    Ver Recursos
+                    Ver Plano Atual
+                </button>
+                <button class="btn btn-sm w-200px mb-2 btn-info btn-sections" data-show="api-data" id="btn-api-data">
+                    Ver dados em tempo real
                 </button>
             </div>
             <div class="divs-sections div-cards" style="display: none;">
@@ -192,35 +123,29 @@
             <div class="divs-sections div-signatures" style="display: none;">
                 {{-- @include('pages.tenants._signatures') --}}
             </div>
-        </div>
-    </div>
-    @if ($apiError)
-        <div class="alert alert-danger d-flex align-items-center p-5 mb-5">
-            <i class="ki-duotone ki-shield-tick fs-2hx text-danger me-4">
-                <span class="path1"></span>
-                <span class="path2"></span>
-            </i>
-            <div class="d-flex flex-column">
-                <h4 class="mb-1 text-danger">Erro na API</h4>
-                <span>Aconteceu um erro ao buscar as permissões já habilitadas para esse cliente, verifique se o token esta configurado corretamente e o domínio.</span>
-                <br>
-                {{ $apiGetPermissions['message'] ?? 'Erro desconhecido verifique a URL do cliente.' }}
+            <div class="divs-sections div-api-data" style="display: none;">
+                <div class="card">
+                    <div class="card-body" id="api-data-container">
+                        <div class="d-flex align-items-center gap-3 text-muted">
+                            <span class="spinner-border spinner-border-sm d-none" id="api-data-loading" role="status" aria-hidden="true"></span>
+                            <span>Clique em <b>Ver dados em tempo real</b> para consultar a API desta instalação.</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    @endif
-    @if (!$client->package_id)
-    @include('pages.tenants._add_package')
-    @else
-    @include('pages.tenants._change_package')
-    @endif
-    @include('pages.tenants._upgrade')
+    </div>
     @include('pages.tenants._add_free')
 @endsection
 
 @section('custom-footer')
 <script>
     $(document).ready(function(){
-        
+        /**
+         * Define se os dados via API já foram carregados uma vez.
+         */
+        let hasLoadedApiData = false;
+
         $(document).on('click', '.btn-sections', function(){
 
             var section = $(this).data('show');
@@ -230,197 +155,36 @@
             $('.div-' + section).show();
 
         });
-        
-        $(document).on('change', '.input-modules', function(){
 
-            // Obtém se esta checado ou não
-            var checked = $(this).is(':checked');
-
-            var moduleId = $(this).val();
-
-            // Busca OS
-            $.ajax({
-                type:'GET',
-                url: "{{ route('systems.module') }}",
-                data: {
-                    status: checked,
-                    tenant_id: "{{ $client->id }}",
-                    module_id: moduleId,
-                },
-                success: function(response) {
-                    toastr.success('Sucesso');
-                },
-            });
-        });
-
-        // Obtem o input
-        const inputDate = $('.end-date-input');
-
-        // Inicializa o flatpickr
-        flatpickr(inputDate[0], {
-            dateFormat: "d/m/Y",
-            defaultDate: inputDate.val(),
-            onClose: function(selectedDates, dateStr) {
-                $('.end-date').html(dateStr + ' <i class="fa-solid fa-pen text-gray-500"></i>');
-                inputDate.hide();
-                $('.end-date').show();
+        /**
+         * Carrega os dados em tempo real da instalação via API apenas sob demanda.
+         * Após o primeiro carregamento com sucesso, reutiliza o HTML já renderizado.
+         */
+        $(document).on('click', '#btn-api-data', function() {
+            if (hasLoadedApiData) {
+                return;
             }
-        });
 
-        /**
-         * Função responsável por alterar a data final da assinatura
-         */
-        $(document).on('click', '.end-date', function() {
+            const $loading = $('#api-data-loading');
+            const $container = $('#api-data-container');
 
-            // Esconde o botão
-            $(this).hide();
+            $loading.removeClass('d-none');
 
-            // Mostra o input e da foco
-            inputDate.show().focus();
-
-            // Abre o flatpickr
-            inputDate[0]._flatpickr.open();
-            
-        });
-
-        /**
-         * Função responsável por alterar o limite de usuários  
-         */
-        $(document).on('click', '.users-limits', function(e) {
-
-            e.stopPropagation();
-
-            // Esconde o botão
-            $(this).hide();
-
-            // Mostra o input e da foco
-            $('.users-limits-input').show().focus();
-
-        });
-
-        /**
-         * Função responsável por atualizar o limite de usuários  
-         */
-        $(document).on('click', '.users-limits-input, .storage-limit-input', function(e) {
-
-            e.stopPropagation();
-
-        });
-
-        // Clique fora
-        $(document).on('click', function() {
-            $('.users-limits-input').hide();
-            $('.users-limits').show();
-
-            $('.storage-limit-input').hide();
-            $('.storage-limit').show();
-        });
-
-        /**
-         * Função responsável por alterar o limite de armazenamento
-         */
-        $(document).on('click', '.storage-limit', function(e) {
-
-            e.stopPropagation();
-
-            // Esconde o botão
-            $(this).hide();
-
-            // Mostra o input e da foco
-            $('.storage-limit-input').show().focus();
-
-        });
-
-        /**
-         * Função responsável por atualizar o limite de armazenamento
-         */
-        $(document).on('click', '#update-storage', function(e) {
-
-            e.stopPropagation();
-
-            // Pega o valor do input
-            let storageLimit = $('.storage-limit-input').val();
-
-            // Faz a requisição
             $.ajax({
-                type:'GET',
-                url: "{{ route('systems.update.size.storage') }}",
-                data: {
-                    tenant_id: "{{ $client->id }}",
-                    storage_limit: storageLimit,
-                },
+                type: 'GET',
+                url: "{{ route('tenants.api.data', $client->id) }}",
                 success: function(response) {
-                    if(response.success){
-                        toastr.success(response.message);
-                        $('.storage-limit').html(storageLimit + ' GB <i class="fa-solid fa-pen text-gray-500"></i>');
-                        $('.storage-limit-input').hide();
-                        $('.storage-limit').show();
-                    }else{
-                        toastr.error(response.message);
-                    }
+                    $container.html(response.html);
+                    hasLoadedApiData = true;
                 },
-            });
-
-        });
-
-        /**
-         * Função responsável por atualizar o limite de usuários
-         */
-        $(document).on('click', '#update-users-limits', function(e) {
-
-            e.stopPropagation();
-
-            // Pega o valor do input
-            let usersLimit = $('.users-limits-input').val();
-
-            // Faz a requisição
-            $.ajax({
-                type:'GET',
-                url: "{{ route('systems.users-limits') }}",
-                data: {
-                    tenant_id: "{{ $client->id }}",
-                    users_limit: usersLimit,
+                error: function() {
+                    $container.html(
+                        '<div class="alert alert-danger mb-0">Não foi possível consultar a API desta instalação agora.</div>'
+                    );
                 },
-                success: function(response) {
-                    if(response.success){
-                        toastr.success(response.message);
-                        $('.users-limits').html(usersLimit + ' <i class="fa-solid fa-pen text-gray-500"></i>');
-                        $('.users-limits-input').hide();
-                        $('.users-limits').show();
-                    }else{
-                        toastr.error(response.message);
-                    }
-                },
-            });
-        });
-
-        /**
-         * Função responsável por atualizar a data final para o cliente no micore
-         */
-        $(document).on('click', '#update-subscription', function() {
-            
-            // Pega a data final
-            let endDate = $('.end-date-input').val();
-
-            // Pega a data inicial
-            let startDate = $('.start-date').data('start-date');
-
-            // Faz a requisição
-            $.ajax({
-                type:'GET',
-                url: "{{ route('systems.subscription') }}",
-                data: {
-                    tenant_id: "{{ $client->id }}",
-                    start_date: startDate ? startDate : "",
-                    end_date: endDate ? endDate : "",
-                },
-                success: function(response) {
-                    if(response.success){
-                        toastr.success(response.message);
-                    }else{
-                        toastr.error(response.message);
-                    }
-                },
+                complete: function() {
+                    $loading.addClass('d-none');
+                }
             });
         });
     });

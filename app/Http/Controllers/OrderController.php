@@ -3,8 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\TenantPlan;
+use App\Models\TenantPlanItem;
+use App\Models\TenantPlanItemConfiguration;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -88,6 +92,67 @@ class OrderController extends Controller
             ->back()
             ->with('success', 'Assinatura reprocessada com sucesso');
 
+    }
+
+    /**
+     * Cancela todos os pedidos em andamento e limpa os itens dos planos em rascunho.
+     */
+    public function cancelDrafts()
+    {
+        $canceledOrders = 0;
+        $clearedPlans = 0;
+        $clearedItems = 0;
+
+        DB::transaction(function () use (&$canceledOrders, &$clearedPlans, &$clearedItems) {
+            $draftOrders = Order::query()
+                ->where('status', 'draft')
+                ->get(['id', 'plan_id']);
+
+            if ($draftOrders->isEmpty()) {
+                return;
+            }
+
+            $orderIds = $draftOrders->pluck('id')->all();
+            $planIds = $draftOrders->pluck('plan_id')->filter()->unique()->values()->all();
+
+            $canceledOrders = Order::query()
+                ->whereIn('id', $orderIds)
+                ->update([
+                    'status' => 'canceled',
+                    'canceled_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+            if (empty($planIds)) {
+                return;
+            }
+
+            $itemIds = TenantPlanItem::query()
+                ->whereIn('plan_id', $planIds)
+                ->pluck('id')
+                ->all();
+
+            if (!empty($itemIds)) {
+                TenantPlanItemConfiguration::query()
+                    ->whereIn('item_id', $itemIds)
+                    ->delete();
+            }
+
+            $clearedItems = TenantPlanItem::query()
+                ->whereIn('plan_id', $planIds)
+                ->delete();
+
+            $clearedPlans = TenantPlan::query()
+                ->whereIn('id', $planIds)
+                ->update([
+                    'progress' => 'canceled',
+                    'updated_at' => now(),
+                ]);
+        });
+
+        return redirect()
+            ->route('orders.index')
+            ->with('success', "Fluxo limpo: {$canceledOrders} pedido(s) cancelado(s), {$clearedPlans} plano(s) ajustado(s), {$clearedItems} item(ns) removido(s).");
     }
     
 }

@@ -242,6 +242,13 @@ if (! function_exists('header_menu_items')) {
                         'active_routes' => ['additional.storages.index', 'additional.storages.create', 'additional.storages.edit'],
                         'icon' => ['class' => 'fa-solid fa-hard-drive fs-5'],
                     ],
+                    [
+                        'label' => 'Cancelar em andamento',
+                        'route' => 'orders.cancel.drafts',
+                        'active_routes' => ['orders.index', 'orders.show'],
+                        'icon' => ['class' => 'fa-solid fa-broom fs-5'],
+                        'confirm_message' => 'Deseja cancelar todos os pedidos em andamento e limpar os itens do fluxo?',
+                    ],
                 ],
             ],
             [

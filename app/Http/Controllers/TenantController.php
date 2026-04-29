@@ -212,84 +212,29 @@ class TenantController extends Controller
      */
     public function show($id)
     {
-        // Obtém dados dos Modulos ativos
-        $modules = Module::with(['category', 'resources'])
-            ->where('status', true)
-            ->get();
-
-        $modulesByCategory = $modules->groupBy(function ($module) {
-            return optional($module->category)->name ?: 'Sem Categoria';
-        });
-
-        $guzzleService = new GuzzleService();
-
         // Obtém dados do Tenante
         $tenant = $this->repository->find($id);
-
-        // Valida se não aconteceu algum erro com a API
-        $apiError = false;
-
-        // Inicia Array para receber as permissões liberadas do cliente
-        $allowFeatures = [];
-
-        // Inicia Array para receber os modulos liberados do cliente
-        $allowModules = [];
-
-        // Realiza consulta para verificar se consegue se comunicar com o miCore
-        $apiVerifyStatus = $guzzleService->request('GET', 'sistema/status', $tenant);
-
-        // Realiza consulta para verificar se consegue se comunicar com o miCore
-        $apiGetPermissions = $guzzleService->request('GET', 'sistema/permissoes', $tenant);
-
-        // Realiza consulta para verificar se consegue se comunicar com o miCore
-        $apiGetModules = $guzzleService->request('GET', 'sistema/modulos', $tenant);
-
-        // Realiza consulta para verificar se consegue se comunicar com o miCore
-        $apiGetSubscription = $guzzleService->request('GET', 'sistema/assinatura', $tenant);
-
-        // Realiza consulta para verificar se consegue se comunicar com o miCore
-        $apiGetUsers = $guzzleService->request('GET', 'sistema/usuarios', $tenant);
-
-        // Realiza consulta para verificar se consegue se comunicar com o miCore
-        $apiGetStorage = $guzzleService->request('GET', 'sistema/armazenamento', $tenant);
-
-        // Se conseguir conectar ao miCore do cliente
-        if(!isset($apiVerifyStatus['error'])){
-
-            // Transforma em uma coleção
-            $apiGetPermissions = json_decode($apiGetPermissions['data'], true)['permissions'];
-            $apiGetModules     = json_decode($apiGetModules['data'], true)['modules'];
-    
-            // Separa variáveis
-            foreach ($apiGetPermissions as $value) {
-                $allowFeatures[$value['name']] = $value['status'];
-            }
-    
-            // Separa variáveis
-            foreach ($apiGetModules as $value) {
-                $allowModules[$value['name']] = $value['status'];
-            }
-
-            $allowSubscription = json_decode($apiGetSubscription['data'], true)['subscription'];
-
-            $totalUsers = json_decode($apiGetUsers['data'], true)['users'];
-
-            $limitUsers = json_decode($apiGetUsers['data'], true)['limit'];
-
-            $totalStorage = json_decode($apiGetStorage['data'], true)['used_storage'];
-
-            $limitStorage = json_decode($apiGetStorage['data'], true)['allow_storage'];
-
-            $totalStorageGB = round($totalStorage / (1024 * 1024 * 1024), 2);
-            
-            $limitStorageGB = round($limitStorage / (1024 * 1024 * 1024), 2);
-
-        } else {
-            $apiError = true;
-        }
+        $tenant->loadMissing(['plan.items.item.category', 'plan.items.item.resources']);
 
         // Obtém pacotes
         $packages = Package::where('status', true)->get();
+
+        /**
+         * Fonte da seção de recursos:
+         * apenas módulos vinculados ao plano atual do tenant.
+         */
+        $planModules = collect(optional($tenant->plan)->items ?? [])
+            ->map(fn ($planItem) => $planItem->item)
+            ->filter()
+            ->unique('id')
+            ->values();
+
+        $modulesByCategory = $planModules->groupBy(function ($module) {
+            return optional($module->category)->name ?: 'Sem Categoria';
+        });
+
+        // Mantido por compatibilidade da view, agora limitado ao plano atual.
+        $modules = $planModules;
 
         /**
          * Dados da sessão "Configuração":
@@ -301,13 +246,7 @@ class TenantController extends Controller
         $currentPlanId = $tenant->plan?->id;
         $enabledModules = [];
 
-        if (!$apiError && !empty($allowModules)) {
-            foreach ($allowModules as $moduleName => $status) {
-                if ((bool) $status) {
-                    $enabledModules[] = (string) $moduleName;
-                }
-            }
-        } elseif ($tenant->plan) {
+        if ($tenant->plan) {
             foreach ($tenant->plan->items as $item) {
                 $moduleName = $item->item?->name ?: $item->module_name;
                 if (!empty($moduleName)) {
@@ -330,19 +269,62 @@ class TenantController extends Controller
             'modules'           => $modules,
             'modulesByCategory' => $modulesByCategory,
             'packages'          => $packages,
-            'allowFeatures'     => $allowFeatures,
-            'allowModules'      => $allowModules,
-            'allowSubscription' => $allowSubscription,
-            'apiError'          => $apiError,
-            'apiGetPermissions' => $apiGetPermissions,
-            'totalUsers'        => $totalUsers,
-            'limitUsers'        => $limitUsers,
-            'totalStorage'      => $totalStorageGB,
-            'limitStorage'      => $limitStorageGB,
             'currentPlanId'     => $currentPlanId,
             'enabledModules'    => $enabledModules,
         ]);
 
+    }
+
+    /**
+     * Busca dados em tempo real via API do tenant para renderização on-demand na tela.
+     */
+    public function apiData($id)
+    {
+        $tenant = $this->repository->findOrFail($id);
+        $guzzleService = new GuzzleService();
+
+        $apiVerifyStatus = $guzzleService->request('GET', 'sistema/status', $tenant);
+        if (isset($apiVerifyStatus['error'])) {
+            $html = view('pages.tenants._api_data', [
+                'apiError' => true,
+                'errorMessage' => $apiVerifyStatus['message'] ?? 'Falha ao consultar a API da instalação.',
+                'allowSubscription' => [],
+                'totalUsers' => 0,
+                'limitUsers' => 0,
+                'totalStorageGB' => 0,
+                'limitStorageGB' => 0,
+            ])->render();
+
+            return response()->json([
+                'success' => false,
+                'html' => $html,
+            ]);
+        }
+
+        $apiGetSubscription = $guzzleService->request('GET', 'sistema/assinatura', $tenant);
+        $apiGetUsers = $guzzleService->request('GET', 'sistema/usuarios', $tenant);
+        $apiGetStorage = $guzzleService->request('GET', 'sistema/armazenamento', $tenant);
+
+        $allowSubscription = json_decode($apiGetSubscription['data'] ?? '{}', true)['subscription'] ?? [];
+        $totalUsers = (int) (json_decode($apiGetUsers['data'] ?? '{}', true)['users'] ?? 0);
+        $limitUsers = (int) (json_decode($apiGetUsers['data'] ?? '{}', true)['limit'] ?? 0);
+        $totalStorage = (float) (json_decode($apiGetStorage['data'] ?? '{}', true)['used_storage'] ?? 0);
+        $limitStorage = (float) (json_decode($apiGetStorage['data'] ?? '{}', true)['allow_storage'] ?? 0);
+
+        $html = view('pages.tenants._api_data', [
+            'apiError' => false,
+            'errorMessage' => null,
+            'allowSubscription' => $allowSubscription,
+            'totalUsers' => $totalUsers,
+            'limitUsers' => $limitUsers,
+            'totalStorageGB' => round($totalStorage / (1024 * 1024 * 1024), 2),
+            'limitStorageGB' => round($limitStorage / (1024 * 1024 * 1024), 2),
+        ])->render();
+
+        return response()->json([
+            'success' => true,
+            'html' => $html,
+        ]);
     }
 
     /**
