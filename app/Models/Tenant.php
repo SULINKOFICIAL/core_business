@@ -148,53 +148,83 @@ class Tenant extends Model
      */
     public function actualSubscription(): array
     {
-        $tenantPlan = TenantPlan::where('tenant_id', $this->id)
-            ->where('progress', 'completed')
-            ->orderByDesc('id')
-            ->with(['subscription.cycles', 'items.item'])
-            ->first();
 
-        if (!$tenantPlan) {
-            return [
-                'name' => null,
-                'users' => 0,
-                'storage' => 0,
-                'cicle' => [
-                    'hasActiveCycle' => false,
-                    'cycleStart' => null,
-                    'cycleEnd' => null,
-                ],
-                'modules' => [],
+        /**
+         * Carrega o contexto da assinatura
+         */
+        $this->loadMissing([
+            'plan.items.item',
+            'subscriptions.cycles',
+        ]);
+
+        /**
+         * Obtém o último ciclo registrado do cliente
+         */
+        $tenantPlan = TenantPlan::where('tenant_id', $this->id)
+                                    ->where('progress', 'completed')
+                                    ->orderByDesc('id')
+                                    ->with(['subscription.cycles', 'items.item'])
+                                    ->first();
+
+        /**
+         * Obtém o último ciclo registrado do cliente
+         */
+        $activeCycle = $tenantPlan->subscription->cycles()
+                                ->where('start_date', '<=', now())
+                                ->where('end_date', '>=', now())
+                                ->orderByDesc('end_date')
+                                ->first();
+
+        /**
+         * Se encontrou o ciclo
+         */
+        if($activeCycle){
+            $cycle = [
+                'hasActiveCycle'    => true,
+                'cycleStart'        => $activeCycle->start_date->format('d/m/Y H:i:s'),
+                'cycleEnd'          => $activeCycle->end_date->format('d/m/Y H:i:s'),
+            ];
+        } else {
+            $cycle = [
+                'hasActiveCycle'    => false,
+                'cycleStart'        => null,
+                'cycleEnd'          => null,
             ];
         }
 
-        $activeCycle = $tenantPlan->subscription?->cycles()
-            ->where('start_date', '<=', now())
-            ->where('end_date', '>=', now())
-            ->orderByDesc('end_date')
-            ->first();
+        /**
+         * Se encontrou itens, formata os módulos.
+         */
+        if ($tenantPlan->items->count()) {
 
-        $cicle = [
-            'hasActiveCycle' => (bool) $activeCycle,
-            'cycleStart' => $activeCycle?->start_date?->format('d/m/Y H:i:s'),
-            'cycleEnd' => $activeCycle?->end_date?->format('d/m/Y H:i:s'),
-        ];
+            /**
+             * Formata os módulos
+             */
+            $modules = [];
+            foreach ($tenantPlan->items as $item) {
+                if (!$item->item) {
+                    continue;
+                }
 
-        $modules = $tenantPlan->items
-            ->map(fn ($item) => $item->item)
-            ->filter()
-            ->map(fn ($module) => [
-                'name' => $module->name,
-                'slug' => $module->slug,
-            ])
-            ->values()
-            ->all();
+                $modules[] = [
+                    'name' => $item->item->name,
+                    'slug' => $item->item->slug,
+                ];
+            }
+        } else {
+
+            /**
+             * Caso não tenha itens, retorna array vazio.
+             */
+            $modules = [];
+
+        }
 
         return [
             'name'              => $tenantPlan->name,
             'users'             => $tenantPlan->users_limit,
             'storage'           => $tenantPlan->size_storage,
-            'cicle'             => $cicle,
+            'cycle'             => $cycle,
             'modules'           => $modules,
         ];
     }
