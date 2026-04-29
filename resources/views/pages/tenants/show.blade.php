@@ -29,7 +29,12 @@
                             </a>
                         </div>
                     </div>
-                    @if ($client->package)
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                        <span class="badge badge-light-info fs-8">Período: {{ $periodStart }} até {{ $periodEnd }}</span>
+                        <span class="badge badge-light-primary fs-8">Usuários: {{ $usersLimit }}</span>
+                        <span class="badge badge-light-success fs-8">Limite: {{ $storageLimitGb }} GB</span>
+                    </div>
+                    @if ($actualPlan['name'])
                     <p class="fs-6 text-gray-700 fw-bold mb-1">
                         Valor atual do pacote: <span class="text-success fw-bolder">R$ {{ number_format($client->current_value, 2, ',', '.') }}</span>
                     </p>
@@ -59,7 +64,7 @@
                             </i>
                             <h6 class="mb-0 text-primary fw-normal me-2">
                                 Armazenamento:
-                                <span class="fw-bolder">{{ number_format($client->package->size_storage / 1073741824, 2) }} GB</span></span>
+                                <span class="fw-bolder">{{ $storageLimitGb }} GB</span></span>
                             </h6>
                         </div>
                     </div>
@@ -76,7 +81,7 @@
         <div class="col-12 col-xl-2">
             <div class="card mb-4">
                 <div class="card-body p-6">
-                    <p class="fw-bolder text-gray-700 fs-3 text-uppercase">Configuração</p>
+                    <p class="fw-bolder text-gray-700 fs-3 text-uppercase">Módulos Habilitados</p>
                     <p class="text-gray-700 fw-bolder mb-2">
                         Plano atual do tenant #{{ $currentPlanId ?? 'Sem plano' }}
                     </p>
@@ -95,6 +100,9 @@
         </div>
         <div class="col-12 col-xl-10">
             <div class="d-flex gap-2">
+                <button class="btn btn-sm w-200px mb-2 btn-danger btn-sections" data-show="resources">
+                    Ver Plano Atual
+                </button>
                 <button class="btn btn-sm w-200px mb-2 btn-warning btn-sections" data-show="cards">
                     Cartões
                 </button>
@@ -104,9 +112,6 @@
                 <button class="btn btn-sm w-200px mb-2 btn-primary btn-sections" data-show="orders">
                     Histórico de Compras
                 </button>
-                <button class="btn btn-sm w-200px mb-2 btn-danger btn-sections" data-show="resources">
-                    Ver Plano Atual
-                </button>
                 <button class="btn btn-sm w-200px mb-2 btn-info btn-sections" data-show="api-data" id="btn-api-data">
                     Ver dados em tempo real
                 </button>
@@ -114,10 +119,10 @@
             <div class="divs-sections div-cards" style="display: none;">
                 @include('pages.tenants._cards')
             </div>
-            <div class="divs-sections div-resources" style="display: none;">
+            <div class="divs-sections div-resources">
                 @include('pages.tenants._resources')
             </div>
-            <div class="divs-sections div-orders">
+            <div class="divs-sections div-orders" style="display: none;">
                 @include('pages.tenants._orders')
             </div>
             <div class="divs-sections div-signatures" style="display: none;">

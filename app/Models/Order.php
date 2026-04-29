@@ -18,8 +18,6 @@ class Order extends Model
         'locked_at' => 'datetime',
         'paid_at' => 'datetime',
         'canceled_at' => 'datetime',
-        'start_date' => 'datetime',
-        'end_date' => 'datetime',
         'expired_at' => 'datetime',
     ];
 
@@ -40,8 +38,6 @@ class Order extends Model
         'locked_at',
         'paid_at',
         'canceled_at',
-        'start_date',
-        'end_date',
         'expired_at',
     ];
 

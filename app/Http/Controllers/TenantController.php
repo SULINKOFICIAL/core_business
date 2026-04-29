@@ -14,6 +14,7 @@ use App\Models\Package;
 use App\Models\Subscription;
 use App\Models\SubscriptionCycle;
 use App\Services\GuzzleService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use GuzzleHttp\Client as Guzzle;
@@ -141,6 +142,8 @@ class TenantController extends Controller
 
         // Cria uma assinatura fictícia
         $subscription = Subscription::create([
+            'tenant_id' => $created->id,
+            'plan_id' => $package->id,
             'pagarme_subscription_id' => '1',
             'pagarme_card_id' => '1',
             'interval' => 'year',
@@ -161,6 +164,10 @@ class TenantController extends Controller
             'type' => 'MIGRAÇÃO',
             'current_step' => 'Pagamento',
             'created_at' => now(),
+        ]);
+
+        $subscription->update([
+            'order_id' => $order->id,
         ]);
 
         // Cria um ciclo de assinatura fictício
@@ -236,41 +243,32 @@ class TenantController extends Controller
         // Mantido por compatibilidade da view, agora limitado ao plano atual.
         $modules = $planModules;
 
-        /**
-         * Dados da sessão "Configuração":
-         * - Plano atual do tenant (ID do plano em tenants_plans)
-         * - Itens/módulos liberados para o tenant
-         */
-        $tenant->loadMissing(['plan.items.item']);
-
-        $currentPlanId = $tenant->plan?->id;
-        $enabledModules = [];
-
-        if ($tenant->plan) {
-            foreach ($tenant->plan->items as $item) {
-                $moduleName = $item->item?->name ?: $item->module_name;
-                if (!empty($moduleName)) {
-                    $enabledModules[] = (string) $moduleName;
-                }
-            }
-        }
-
-        $enabledModules = collect($enabledModules)
-            ->map(fn ($name) => trim((string) $name))
+        // Busca assinatura atual
+        $actualPlan = $tenant->actualSubscription();
+        $usersLimit = (int) ($actualPlan['users'] ?? 0);
+        $storageLimitGb = number_format(((int) ($actualPlan['storage'] ?? 0)) / 1073741824, 2, ',', '.');
+        $periodStart = $actualPlan['cicle']['cycleStart'] ?? 'Não informado';
+        $periodEnd = $actualPlan['cicle']['cycleEnd'] ?? 'Não informado';
+        $enabledModules = collect($actualPlan['modules'] ?? [])
+            ->map(fn ($module) => $module['name'] ?? null)
             ->filter()
-            ->unique()
-            ->sort()
             ->values()
             ->all();
+        $currentPlanId = $tenant->plan?->id;
 
         // Retorna a página
         return view('pages.tenants.show')->with([
-            'client'            => $tenant,
-            'modules'           => $modules,
-            'modulesByCategory' => $modulesByCategory,
-            'packages'          => $packages,
-            'currentPlanId'     => $currentPlanId,
-            'enabledModules'    => $enabledModules,
+            'client'             => $tenant,
+            'modules'            => $modules,
+            'modulesByCategory'  => $modulesByCategory,
+            'packages'           => $packages,
+            'actualPlan'         => $actualPlan,
+            'usersLimit'         => $usersLimit,
+            'storageLimitGb'     => $storageLimitGb,
+            'periodStart'        => $periodStart,
+            'periodEnd'          => $periodEnd,
+            'enabledModules'     => $enabledModules,
+            'currentPlanId'      => $currentPlanId,
         ]);
 
     }
@@ -282,12 +280,15 @@ class TenantController extends Controller
     {
         $tenant = $this->repository->findOrFail($id);
         $guzzleService = new GuzzleService();
+        $actualPlan = $tenant->actualSubscription();
+        $enabledModules = $actualPlan['modules'] ?? [];
 
         $apiVerifyStatus = $guzzleService->request('GET', 'sistema/status', $tenant);
         if (isset($apiVerifyStatus['error'])) {
             $html = view('pages.tenants._api_data', [
                 'apiError' => true,
                 'errorMessage' => $apiVerifyStatus['message'] ?? 'Falha ao consultar a API da instalação.',
+                'enabledModules' => $enabledModules,
                 'allowSubscription' => [],
                 'totalUsers' => 0,
                 'limitUsers' => 0,
@@ -314,6 +315,7 @@ class TenantController extends Controller
         $html = view('pages.tenants._api_data', [
             'apiError' => false,
             'errorMessage' => null,
+            'enabledModules' => $enabledModules,
             'allowSubscription' => $allowSubscription,
             'totalUsers' => $totalUsers,
             'limitUsers' => $limitUsers,
@@ -353,8 +355,6 @@ class TenantController extends Controller
             if ($data !== null) {
                 $options['json'] = $data;
             }
-
-            dd("{$tenant->domains[0]->domain}/api/$url", $options);
 
             // Realiza a solicitação
             $response = $guzzle->$method("{$tenant->domains[0]->domain}/api/$url", $options);

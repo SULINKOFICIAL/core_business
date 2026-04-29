@@ -151,10 +151,12 @@ class TenantsActionsController extends Controller
         // Encontra o cliente
         $tenant = $this->repository->find($data['tenant_id']);
 
-        // Atualiza o limite de usuários
-        $tenant->update([
-            'users_limit' => $data['users_limit']
-        ]);
+        // Atualiza o limite de usuários no plano atual
+        if ($tenant->plan) {
+            $tenant->plan->update([
+                'users_limit' => $data['users_limit']
+            ]);
+        }
 
         // Inicia serviço de módulos
         $moduleService = app(ModuleService::class);
@@ -182,6 +184,13 @@ class TenantsActionsController extends Controller
 
         // Converte para bytes
         $sizeStorage = $data['storage_limit'] * 1024 * 1024 * 1024;
+
+        // Atualiza limite no plano atual
+        if ($tenant->plan) {
+            $tenant->plan->update([
+                'size_storage' => (int) $sizeStorage,
+            ]);
+        }
 
         // Inicia serviço de módulos
         $moduleService = app(ModuleService::class);

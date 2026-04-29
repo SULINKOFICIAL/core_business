@@ -83,10 +83,12 @@ class ApisAccountController extends Controller
 
         // Formata cada pedido para o front.
         foreach ($orders as $order) {
+            $lastCycle = $order->subscription?->cycles()->orderByDesc('end_date')->first();
+
             $orderData['id'] = $order->id;
             $orderData['date_created'] = $order->created_at;
             $orderData['date_paid'] = $order->paid_at;
-            $orderData['date_end'] = $order->end_date;
+            $orderData['date_end'] = $lastCycle?->end_date;
             $orderData['type'] = $order->type;
             $orderData['amount'] = $order->total_amount;
             $orderData['currency'] = $order->currency;

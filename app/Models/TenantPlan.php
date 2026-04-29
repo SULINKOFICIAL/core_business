@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class TenantPlan extends Model
 {
@@ -15,6 +16,8 @@ class TenantPlan extends Model
         'tenant_id',
         'name',
         'value',
+        'users_limit',
+        'size_storage',
         'progress',
         'status',
         'created_by',
@@ -22,6 +25,11 @@ class TenantPlan extends Model
         'created_at',
         'updated_at',
     ];
+
+    public function subscription(): HasOne
+    {
+        return $this->hasOne(Subscription::class, 'plan_id', 'id');
+    }
 
     public function tenant(): BelongsTo
     {

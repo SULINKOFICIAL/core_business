@@ -48,7 +48,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="d-flex align-items-center fs-5 text-gray-600 mb-0 gap-2">
-                            Módulos <span class="fw-bolder text-gray-700" id="base-price">R$ 0,00</span> x <input type="number" class="form-control p-0 form-control-solid w-30px text-center h-30px border shadow" name="users_limit" id="qnt-users" value="{{ $client->users_limit }}" min="3" required> usuários
+                            Módulos <span class="fw-bolder text-gray-700" id="base-price">R$ 0,00</span> x <input type="number" class="form-control p-0 form-control-solid w-30px text-center h-30px border shadow" name="users_limit" id="qnt-users" value="{{ optional($client->plan)->users_limit ?? 0 }}" min="3" required> usuários
                         </div>
                         <p class="m-0 text-primary fs-8">A partir de 3 usuários R$ 29,90 por usuário</p>
                     </div>

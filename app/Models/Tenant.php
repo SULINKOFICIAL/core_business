@@ -6,7 +6,6 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Http;
 
@@ -43,8 +42,6 @@ class Tenant extends Model
         'onboarding_current_step',
         'onboarding_started_at',
         'onboarding_completed_at',
-        'package_id',
-        'users_limit',
         'logo',
         'token',
         'status',
@@ -108,16 +105,9 @@ class Tenant extends Model
     }
 
     // Assinaturas realizadas pelo cliente
-    public function subscriptions(): HasManyThrough
+    public function subscriptions(): HasMany
     {
-        return $this->hasManyThrough(
-            Subscription::class,
-            Order::class,
-            'tenant_id',
-            'order_id',
-            'id',
-            'id'
-        );
+        return $this->hasMany(Subscription::class, 'tenant_id', 'id');
     }
 
     // Retorna a última compra realizada pelo cliente
@@ -129,23 +119,29 @@ class Tenant extends Model
     // Retorna em quantos dias deve ser feita a próxima renovação
     public function renovation()
     {
-        // Obtém assinatura do cliente
-        $latestOrder = $this->lastOrder();
+        // Obtém o último ciclo de assinatura do cliente
+        $latestCycle = SubscriptionCycle::query()
+            ->whereHas('subscription', function ($query) {
+                $query->where('tenant_id', $this->id);
+            })
+            ->whereNotNull('end_date')
+            ->orderByDesc('end_date')
+            ->first();
 
         // Caso não encontre
-        if (!$latestOrder) {
+        if (!$latestCycle) {
             return null;
         }
 
         // Obtém data de expiração
         $now = Carbon::now();
-        return round($now->diffInDays($latestOrder->end_date));
+        return round($now->diffInDays($latestCycle->end_date, false));
     }
 
     // Retorna em quantos dias deve ser feita a próxima renovação
     public function lastSubscription()
     {
-        return $this->subscriptions()->latest('end_date')->first();
+        return $this->subscriptions()->latest('id')->first();
     }
 
     public function systemStatus()
@@ -174,5 +170,61 @@ class Tenant extends Model
             // Erro encontrado
             return 'Error';
         }
+    }
+
+    /**
+     * Centraliza a visão atual da assinatura do tenant.
+     */
+    public function actualSubscription(): array
+    {
+        $tenantPlan = TenantPlan::where('tenant_id', $this->id)
+            ->where('progress', 'completed')
+            ->orderByDesc('id')
+            ->with(['subscription.cycles', 'items.item'])
+            ->first();
+
+        if (!$tenantPlan) {
+            return [
+                'name' => null,
+                'users' => 0,
+                'storage' => 0,
+                'cicle' => [
+                    'hasActiveCycle' => false,
+                    'cycleStart' => null,
+                    'cycleEnd' => null,
+                ],
+                'modules' => [],
+            ];
+        }
+
+        $activeCycle = $tenantPlan->subscription?->cycles()
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->orderByDesc('end_date')
+            ->first();
+
+        $cicle = [
+            'hasActiveCycle' => (bool) $activeCycle,
+            'cycleStart' => $activeCycle?->start_date?->format('d/m/Y H:i:s'),
+            'cycleEnd' => $activeCycle?->end_date?->format('d/m/Y H:i:s'),
+        ];
+
+        $modules = $tenantPlan->items
+            ->map(fn ($item) => $item->item)
+            ->filter()
+            ->map(fn ($module) => [
+                'name' => $module->name,
+                'slug' => $module->slug,
+            ])
+            ->values()
+            ->all();
+
+        return [
+            'name'              => $tenantPlan->name,
+            'users'             => $tenantPlan->users_limit,
+            'storage'           => $tenantPlan->size_storage,
+            'cicle'             => $cicle,
+            'modules'           => $modules,
+        ];
     }
 }

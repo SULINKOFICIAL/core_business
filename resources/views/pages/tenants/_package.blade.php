@@ -1,4 +1,4 @@
-@if (!$client->package_id || $client->package && $package->value > $client->package->value && !$package->free)
+@if (!$client->plan || (($package->value > ($client->plan->value ?? 0)) && !$package->free))
 <label class="border-bottom border-bottom-dashed border-600 w-100 cursor-pointer p-5 bg-hover-light" for="package-{{ $package->id }}">
     <div class="d-flex justify-content-between">
         <div class="text-gray-500">
@@ -11,7 +11,7 @@
             <span class="fw-bolder text-primary">{{ $package->duration_days }}</span> dias - <span class="text-success value-module">R$ {{ number_format($package->value, 2, ',', '.') }}</span>
         </div>
         <div class="form-check form-check-custom form-check-success form-check-solid">
-            <input class="form-check-input" name="package_id" value="{{ $package->id }}" type="radio" @if($package->id == $client->package_id) checked @endif id="package-{{ $package->id }}" required/>
+            <input class="form-check-input" name="package_id" value="{{ $package->id }}" type="radio" id="package-{{ $package->id }}" required/>
         </div>
     </div>
     @if ($package->modules->count())

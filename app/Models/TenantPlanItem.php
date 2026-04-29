@@ -32,6 +32,11 @@ class TenantPlanItem extends Model
         return $this->belongsTo(Module::class, 'item_id', 'id');
     }
 
+    public function module(): BelongsTo
+    {
+        return $this->belongsTo(Module::class, 'item_id', 'id');
+    }
+
     public function sourcePackage(): BelongsTo
     {
         return $this->belongsTo(Package::class, 'package_id', 'id');
