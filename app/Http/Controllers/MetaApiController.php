@@ -262,6 +262,8 @@ class MetaApiController extends Controller
                 "?client_id={$this->metaAppId}" .
                 "&redirect_uri={$redirectUri}" .
                 "&scope={$scope}" .
+                "&response_type=code" .
+                "&auth_type=rerequest" .
                 "&state={$state}";
             
         } elseif ($type == 'instagram') {
@@ -271,6 +273,8 @@ class MetaApiController extends Controller
                 "?client_id={$this->metaAppId}" .
                 "&redirect_uri={$redirectUri}" .
                 "&scope={$scope}" .
+                "&response_type=code" .
+                "&auth_type=rerequest" .
                 "&state={$state}";
 
         }
