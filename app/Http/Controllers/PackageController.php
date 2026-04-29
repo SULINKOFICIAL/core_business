@@ -75,7 +75,12 @@ class PackageController extends Controller
         // Insere no banco de dados
         $created = $this->repository->create($data);
 
-        $this->syncModules($created, $request->input('module_items', []));
+        $this->syncModules(
+            $created,
+            $request->input('module_items', []),
+            (array) $request->input('prices', []),
+            (array) $request->input('tier_prices', [])
+        );
 
         $this->syncBenefits($created, $request->input('benefits', []));
 
@@ -99,9 +104,7 @@ class PackageController extends Controller
             'package' => $package,
             'modules' => $modules,
             'packageModuleConfigs' => PackageModule::where('package_id', $id)
-                ->get()
-                ->keyBy('module_id')
-                ->all(),
+                ->get(),
         ]);
     }
 
@@ -128,7 +131,12 @@ class PackageController extends Controller
         // Atualiza dados
         $package->update($data);
 
-        $this->syncModules($package, $request->input('module_items', []));
+        $this->syncModules(
+            $package,
+            $request->input('module_items', []),
+            (array) $request->input('prices', []),
+            (array) $request->input('tier_prices', [])
+        );
 
         $this->syncBenefits($package, $request->input('benefits', []));
 
@@ -217,7 +225,7 @@ class PackageController extends Controller
         }
     }
 
-    private function syncModules(Package $package, array $moduleItems): void
+    private function syncModules(Package $package, array $moduleItems, array $prices = [], array $tierPrices = []): void
     {
         $packageId = $package->id;
         $createdBy = Auth::id();
@@ -226,7 +234,6 @@ class PackageController extends Controller
 
         foreach ($moduleItems as $row) {
             $moduleId = (int) ($row['module_id'] ?? 0);
-            $tierId = (int) ($row['module_pricing_tier_id'] ?? 0);
 
             if ($moduleId <= 0) {
                 continue;
@@ -237,22 +244,39 @@ class PackageController extends Controller
                 continue;
             }
 
-            $modulePricingTierId = null;
+            $isUsagePricing = ($module->pricing_type ?? 'Preço Fixo') === 'Preço Por Uso';
 
-            if (($module->pricing_type ?? 'Preço Fixo') === 'Preço Por Uso' && $tierId > 0) {
-                $tier = ModulePricingTier::where('id', $tierId)
-                    ->where('module_id', $moduleId)
-                    ->first();
+            if ($isUsagePricing) {
+                $moduleTiers = ModulePricingTier::where('module_id', $moduleId)->get();
 
-                if ($tier) {
-                    $modulePricingTierId = $tier->id;
+                foreach ($moduleTiers as $tier) {
+                    $tierRawPrice = $tierPrices[$tier->id] ?? null;
+                    $tierPrice = $tierRawPrice !== null && $tierRawPrice !== ''
+                        ? (float) toDecimal((string) $tierRawPrice)
+                        : (float) $tier->price;
+
+                    PackageModule::create([
+                        'module_id' => $moduleId,
+                        'package_id' => $packageId,
+                        'module_pricing_tier_id' => (int) $tier->id,
+                        'price' => $tierPrice,
+                        'created_by' => $createdBy,
+                    ]);
                 }
+
+                continue;
             }
+
+            $moduleRawPrice = $prices[$moduleId] ?? null;
+            $modulePrice = $moduleRawPrice !== null && $moduleRawPrice !== ''
+                ? (float) toDecimal((string) $moduleRawPrice)
+                : (float) $module->value;
 
             PackageModule::create([
                 'module_id' => $moduleId,
                 'package_id' => $packageId,
-                'module_pricing_tier_id' => $modulePricingTierId,
+                'module_pricing_tier_id' => null,
+                'price' => $modulePrice,
                 'created_by' => $createdBy,
             ]);
         }

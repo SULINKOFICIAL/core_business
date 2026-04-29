@@ -33,28 +33,22 @@
 	    }
 
     $resourcesList = old('resources_list', $package->resources_list ?? '');
+    $packageModuleConfigsCollection = collect($packageModuleConfigs ?? []);
 
     $initialSelectedModules = old('module_items');
 
     if (!is_array($initialSelectedModules)) {
-        $initialSelectedModules = [];
-
-        if (isset($package)) {
-            foreach ($package->modules as $module) {
-                $moduleId = (int) $module->id;
-                $config = $packageModuleConfigs[$moduleId] ?? null;
-
-                $initialSelectedModules[] = [
-                    'module_id' => $moduleId,
-                    'module_pricing_tier_id' => $config ? (int) ($config->module_pricing_tier_id ?? 0) : 0,
-                ];
-            }
-        }
+        $initialSelectedModules = $packageModuleConfigsCollection
+            ->pluck('module_id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->map(fn ($id) => ['module_id' => $id])
+            ->all();
     } else {
         $initialSelectedModules = array_map(function ($row) {
             return [
                 'module_id' => (int) ($row['module_id'] ?? 0),
-                'module_pricing_tier_id' => (int) ($row['module_pricing_tier_id'] ?? 0),
             ];
         }, $initialSelectedModules);
     }
@@ -65,6 +59,22 @@
         ->map(fn ($id) => (int) $id)
         ->values()
         ->all();
+
+    $initialFixedPrices = old('prices');
+    if (!is_array($initialFixedPrices)) {
+        $initialFixedPrices = $packageModuleConfigsCollection
+            ->filter(fn ($row) => empty($row->module_pricing_tier_id))
+            ->mapWithKeys(fn ($row) => [(int) $row->module_id => number_format((float) ($row->price ?? 0), 2, ',', '.')])
+            ->all();
+    }
+
+    $initialTierPrices = old('tier_prices');
+    if (!is_array($initialTierPrices)) {
+        $initialTierPrices = $packageModuleConfigsCollection
+            ->filter(fn ($row) => !empty($row->module_pricing_tier_id))
+            ->mapWithKeys(fn ($row) => [(int) $row->module_pricing_tier_id => number_format((float) ($row->price ?? 0), 2, ',', '.')])
+            ->all();
+    }
 
     $moduleCatalog = collect($modules)->map(function ($module) {
         return [
@@ -272,6 +282,8 @@
             const packagePriceInput = $('#selected-modules-package-price-input');
             const moduleItemsInputs = $('#module-items-inputs');
             const moduleSelect = $('#package-modules-select');
+            const initialFixedPrices = @json($initialFixedPrices);
+            const initialTierPrices = @json($initialTierPrices);
 
             function normalizeSelectedModules() {
                 const validIds = moduleCatalog.map((module) => Number(module.id));
@@ -279,7 +291,6 @@
                 selectedModules = selectedModules
                     .map((row) => ({
                         module_id: Number(row.module_id || 0),
-                        module_pricing_tier_id: Number(row.module_pricing_tier_id || 0),
                     }))
                     .filter((row, index, list) => row.module_id > 0 && validIds.includes(row.module_id) && list.findIndex((item) => item.module_id === row.module_id) === index);
             }
@@ -383,20 +394,14 @@
                             '  <td class="text-gray-700"><span class="badge badge-light-primary">Preço fixo</span></td>',
                             '  <td class="text-end text-gray-700">' + module.value_formatted + '</td>',
                             '  <td class="text-end">',
-                            '    <input type="text" name="prices[' + module.id + ']" value="" class="form-control form-control-solid input-money text-end" placeholder="' + module.value_formatted + '">',
+                            '    <input type="text" name="prices[' + module.id + ']" value="' + (initialFixedPrices[module.id] ? ('R$ ' + initialFixedPrices[module.id]) : '') + '" class="form-control form-control-solid input-money text-end" placeholder="' + module.value_formatted + '">',
                             '  </td>',
                             '</tr>'
                         ].join('');
 
                         summaryBody.append(fixedRowHtml);
-                        item.module_pricing_tier_id = 0;
                     } else {
                         const tiers = Array.isArray(module.tiers) ? module.tiers : [];
-                        const fallbackTierId = tiers.length ? Number(tiers[0].id) : 0;
-                        const selectedTierId = tiers.some((tier) => Number(tier.id) === Number(item.module_pricing_tier_id))
-                            ? Number(item.module_pricing_tier_id)
-                            : fallbackTierId;
-                        item.module_pricing_tier_id = selectedTierId;
 
                         if (!tiers.length) {
                             const noTierRowHtml = [
@@ -417,7 +422,7 @@
                                     '  <td class="text-gray-700"><span class="badge badge-light-success">Até ' + tier.usage_limit + '</span></td>',
                                     '  <td class="text-end text-gray-700">' + tier.price_formatted + '</td>',
                                     '  <td class="text-end">',
-                                    '    <input type="text" name="tier_prices[' + tier.id + ']" value="" class="form-control form-control-solid input-money text-end" placeholder="' + tier.price_formatted + '">',
+                                    '    <input type="text" name="tier_prices[' + tier.id + ']" value="' + (initialTierPrices[tier.id] ? ('R$ ' + initialTierPrices[tier.id]) : '') + '" class="form-control form-control-solid input-money text-end" placeholder="' + tier.price_formatted + '">',
                                     '  </td>',
                                     '</tr>'
                                 ].join('');
@@ -428,7 +433,6 @@
                     }
 
                     moduleItemsInputs.append('<input type="hidden" name="module_items[' + index + '][module_id]" value="' + module.id + '">');
-                    moduleItemsInputs.append('<input type="hidden" name="module_items[' + index + '][module_pricing_tier_id]" value="' + (item.module_pricing_tier_id || 0) + '">');
                 });
 
                 applyMoneyMaskToPackageInputs();
@@ -500,7 +504,6 @@
 
                     return {
                         module_id: moduleId,
-                        module_pricing_tier_id: defaultTierId,
                     };
                 });
 
