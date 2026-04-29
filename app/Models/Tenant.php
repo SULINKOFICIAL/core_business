@@ -181,14 +181,14 @@ class Tenant extends Model
         if($activeCycle){
             $cycle = [
                 'hasActiveCycle'    => true,
-                'cycleStart'        => $activeCycle->start_date->format('d/m/Y H:i:s'),
-                'cycleEnd'          => $activeCycle->end_date->format('d/m/Y H:i:s'),
+                'start'             => $activeCycle->start_date->format('d/m/Y H:i:s'),
+                'end'               => $activeCycle->end_date->format('d/m/Y H:i:s'),
             ];
         } else {
             $cycle = [
                 'hasActiveCycle'    => false,
-                'cycleStart'        => null,
-                'cycleEnd'          => null,
+                'start'             => null,
+                'end'               => null,
             ];
         }
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SubscriptionCycle;
 use App\Models\TenantDomain;
 use App\Models\TenantIntegration;
 use Illuminate\Http\Request;
@@ -38,10 +39,34 @@ class ApisAccountController extends Controller
             ->where('status', 'pending')
             ->exists();
 
+        // Obtém assinatura mais recente vinculada ao plano ativo.
+        $subscription = $tenant->subscriptions()
+            ->where('plan_id', $plan->id)
+            ->orderByDesc('id')
+            ->first();
+
+        // Obtém ciclo ativo da assinatura atual.
+        $cycle = null;
+        if ($subscription) {
+            $cycle = SubscriptionCycle::query()
+                ->where('subscription_id', $subscription->id)
+                ->where('start_date', '<=', now())
+                ->where('end_date', '>=', now())
+                ->orderByDesc('end_date')
+                ->first();
+
+            if (!$cycle) {
+                $cycle = SubscriptionCycle::query()
+                    ->where('subscription_id', $subscription->id)
+                    ->orderByDesc('end_date')
+                    ->first();
+            }
+        }
+
         return response()->json([
             'package' => $plan,
-            'order' => $tenant->plan?->orders()->orderBy('created_at', 'DESC')->first(),
-            'cycle'   => $tenant->plan?->orders()->orderBy('created_at', 'DESC')->first()->subscription->cycles()->orderBy('created_at', 'DESC')->first(),
+            'order' => $tenant->plan->orders()->orderBy('created_at', 'DESC')->first(),
+            'cycle'   => $cycle,
             'renovation' => $tenant->renovation(),
             'existsOrder' => $existsRenovation,
         ], 200);

@@ -220,7 +220,7 @@ class TenantController extends Controller
     public function show($id)
     {
         // Obtém dados do Tenante
-        $tenant = $this->repository->find($id);
+        $tenant   = $this->repository->find($id);
         $tenant->loadMissing(['plan.items.item.category', 'plan.items.item.resources']);
 
         // Obtém pacotes
@@ -230,31 +230,30 @@ class TenantController extends Controller
          * Fonte da seção de recursos:
          * apenas módulos vinculados ao plano atual do tenant.
          */
-        $planModules = collect(optional($tenant->plan)->items ?? [])
+        $planModules = collect($tenant->plan->items)
             ->map(fn ($planItem) => $planItem->item)
             ->filter()
             ->unique('id')
             ->values();
 
         $modulesByCategory = $planModules->groupBy(function ($module) {
-            return optional($module->category)->name ?: 'Sem Categoria';
+            return $module->category->name;
         });
 
         // Mantido por compatibilidade da view, agora limitado ao plano atual.
-        $modules = $planModules;
+        $modules       = $planModules;
 
         // Busca assinatura atual
-        $actualPlan = $tenant->actualSubscription();
-        $usersLimit = (int) ($actualPlan['users'] ?? 0);
-        $storageLimitGb = number_format(((int) ($actualPlan['storage'] ?? 0)) / 1073741824, 2, ',', '.');
-        $periodStart = $actualPlan['cicle']['cycleStart'] ?? 'Não informado';
-        $periodEnd = $actualPlan['cicle']['cycleEnd'] ?? 'Não informado';
-        $enabledModules = collect($actualPlan['modules'] ?? [])
-            ->map(fn ($module) => $module['name'] ?? null)
-            ->filter()
+        $actualPlan    = $tenant->actualSubscription();
+        $usersLimit    = (int) $actualPlan['users'];
+        $storageLimitGb = number_format(((int) $actualPlan['storage']) / 1073741824, 2, ',', '.');
+        $periodStart   = $actualPlan['cycle']['start'];
+        $periodEnd     = $actualPlan['cycle']['end'];
+        $enabledModules = collect($actualPlan['modules'])
+            ->map(fn ($module) => $module['name'])
             ->values()
             ->all();
-        $currentPlanId = $tenant->plan?->id;
+        $currentPlanId = $tenant->plan->id;
 
         // Retorna a página
         return view('pages.tenants.show')->with([
@@ -278,27 +277,27 @@ class TenantController extends Controller
      */
     public function apiData($id)
     {
-        $tenant = $this->repository->findOrFail($id);
+        $tenant        = $this->repository->findOrFail($id);
         $guzzleService = new GuzzleService();
-        $actualPlan = $tenant->actualSubscription();
-        $enabledModules = $actualPlan['modules'] ?? [];
+        $actualPlan    = $tenant->actualSubscription();
+        $enabledModules = $actualPlan['modules'];
 
         $apiVerifyStatus = $guzzleService->request('GET', 'sistema/status', $tenant);
         if (isset($apiVerifyStatus['error'])) {
             $html = view('pages.tenants._api_data', [
-                'apiError' => true,
-                'errorMessage' => $apiVerifyStatus['message'] ?? 'Falha ao consultar a API da instalação.',
+                'apiError'       => true,
+                'errorMessage'   => $apiVerifyStatus['message'],
                 'enabledModules' => $enabledModules,
                 'allowSubscription' => [],
-                'totalUsers' => 0,
-                'limitUsers' => 0,
+                'totalUsers'     => 0,
+                'limitUsers'     => 0,
                 'totalStorageGB' => 0,
                 'limitStorageGB' => 0,
             ])->render();
 
             return response()->json([
                 'success' => false,
-                'html' => $html,
+                'html'    => $html,
             ]);
         }
 
@@ -306,26 +305,26 @@ class TenantController extends Controller
         $apiGetUsers = $guzzleService->request('GET', 'sistema/usuarios', $tenant);
         $apiGetStorage = $guzzleService->request('GET', 'sistema/armazenamento', $tenant);
 
-        $allowSubscription = json_decode($apiGetSubscription['data'] ?? '{}', true)['subscription'] ?? [];
-        $totalUsers = (int) (json_decode($apiGetUsers['data'] ?? '{}', true)['users'] ?? 0);
-        $limitUsers = (int) (json_decode($apiGetUsers['data'] ?? '{}', true)['limit'] ?? 0);
-        $totalStorage = (float) (json_decode($apiGetStorage['data'] ?? '{}', true)['used_storage'] ?? 0);
-        $limitStorage = (float) (json_decode($apiGetStorage['data'] ?? '{}', true)['allow_storage'] ?? 0);
+        $allowSubscription = json_decode($apiGetSubscription['data'], true)['subscription'];
+        $totalUsers        = (int) json_decode($apiGetUsers['data'], true)['users'];
+        $limitUsers        = (int) json_decode($apiGetUsers['data'], true)['limit'];
+        $totalStorage      = (float) json_decode($apiGetStorage['data'], true)['used_storage'];
+        $limitStorage      = (float) json_decode($apiGetStorage['data'], true)['allow_storage'];
 
         $html = view('pages.tenants._api_data', [
-            'apiError' => false,
-            'errorMessage' => null,
-            'enabledModules' => $enabledModules,
+            'apiError'          => false,
+            'errorMessage'      => null,
+            'enabledModules'    => $enabledModules,
             'allowSubscription' => $allowSubscription,
-            'totalUsers' => $totalUsers,
-            'limitUsers' => $limitUsers,
-            'totalStorageGB' => round($totalStorage / (1024 * 1024 * 1024), 2),
-            'limitStorageGB' => round($limitStorage / (1024 * 1024 * 1024), 2),
+            'totalUsers'        => $totalUsers,
+            'limitUsers'        => $limitUsers,
+            'totalStorageGB'    => round($totalStorage / (1024 * 1024 * 1024), 2),
+            'limitStorageGB'    => round($limitStorage / (1024 * 1024 * 1024), 2),
         ])->render();
 
         return response()->json([
             'success' => true,
-            'html' => $html,
+            'html'    => $html,
         ]);
     }
 

@@ -179,6 +179,16 @@ class TenantProcessingController extends Controller
             'domains_count'
         );
 
+        $query->selectSub(
+            DB::table('subscriptions_cycles as cycles')
+                ->join('subscriptions', 'subscriptions.id', '=', 'cycles.subscription_id')
+                ->select('cycles.end_date')
+                ->whereColumn('subscriptions.tenant_id', 'tenants.id')
+                ->orderByDesc('cycles.end_date')
+                ->limit(1),
+            'subscription_end_date'
+        );
+
         return DataTables::query($query)
             ->addColumn('name', function ($row) {
                 $html = '<a href="' . route('tenants.show', $row->id) . '" class="text-gray-700 text-hover-primary fw-bold">'
@@ -209,7 +219,11 @@ class TenantProcessingController extends Controller
             })
 
             ->addColumn('expires_at', function ($row) {
-                return '<span class="text-gray-600">' . date('d/m/Y', strtotime($row->created_at)) . '</span>';
+                if (empty($row->subscription_end_date)) {
+                    return '<span class="text-gray-600">Sem ciclo</span>';
+                }
+
+                return '<span class="text-gray-600">' . date('d/m/Y', strtotime($row->subscription_end_date)) . '</span>';
             })
 
             ->addColumn('bank', function ($row) {
