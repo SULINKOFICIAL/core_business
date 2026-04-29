@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\TenantModule;
 use App\Models\TenantPlan;
 use App\Models\Order;
-use App\Models\OrderItem;
 use App\Models\TenantPlanItemConfiguration;
 use App\Models\TenantSubscription;
 use App\Models\Package;

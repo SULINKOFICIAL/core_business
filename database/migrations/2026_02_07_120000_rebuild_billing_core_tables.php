@@ -12,9 +12,6 @@ return new class extends Migration
     public function up(): void
     {
         // Drop legacy or inconsistent tables first (children -> parents)
-        Schema::dropIfExists('order_item_configurations');
-        Schema::dropIfExists('order_items');
-        Schema::dropIfExists('orders_items');
         Schema::dropIfExists('order_transactions');
         Schema::dropIfExists('orders_transactions');
         Schema::dropIfExists('client_subscription_items');
@@ -46,45 +43,6 @@ return new class extends Migration
             $table->dateTime('canceled_at')->nullable();
             $table->dateTime('expired_at')->nullable();
 
-            $table->timestamps();
-        });
-
-        Schema::create('order_items', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
-
-            // Canonical snapshot fields
-            $table->string('item_type'); // module, package, credit, etc
-            $table->string('action')->nullable(); // add, remove, upgrade, downgrade, etc
-            $table->string('item_code')->nullable();
-            $table->string('item_name_snapshot');
-            $table->string('item_reference_type')->nullable();
-            $table->unsignedBigInteger('item_reference_id')->nullable();
-            $table->integer('quantity')->default(1);
-            $table->decimal('unit_price_snapshot', 12, 2)->default(0);
-            $table->decimal('subtotal_amount', 12, 2)->default(0);
-            $table->json('pricing_model_snapshot')->nullable();
-            $table->json('rules_snapshot')->nullable();
-
-            // Legacy compatibility
-            $table->string('type')->nullable();
-            $table->string('item_name')->nullable();
-            $table->string('item_key')->nullable();
-            $table->decimal('item_value', 12, 2)->nullable();
-            $table->decimal('amount', 12, 2)->nullable();
-            $table->date('start_date')->nullable();
-            $table->date('end_date')->nullable();
-
-            $table->timestamps();
-        });
-
-        Schema::create('order_item_configurations', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('order_item_id')->constrained('order_items')->onDelete('cascade');
-            $table->string('key');
-            $table->text('value')->nullable();
-            $table->string('value_type')->nullable();
-            $table->json('derived_pricing_effect')->nullable();
             $table->timestamps();
         });
 
@@ -154,8 +112,6 @@ return new class extends Migration
         Schema::dropIfExists('client_subscription_items');
         Schema::dropIfExists('clients_subscriptions');
         Schema::dropIfExists('order_transactions');
-        Schema::dropIfExists('order_item_configurations');
-        Schema::dropIfExists('order_items');
         Schema::dropIfExists('orders');
     }
 };
