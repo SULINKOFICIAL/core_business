@@ -97,7 +97,6 @@
                 <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Nome</label>
                 <input type="text" class="form-control form-control-solid" placeholder="Nome" name="name" value="{{ $package->name ?? old('name') }}" required>
             </div>
-            <input type="hidden" name="value" value="{{ old('value', $package->value ?? 0) }}">
             <div class="col-3 mb-4">
                 <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">É popular?</label>
                 <select name="popular" class="form-select form-select-solid" data-control="select2" data-hide-search="true" data-placeholder="Selecione" required>
@@ -154,13 +153,28 @@
         <div class="table-responsive">
             <table class="table table-row-dashed align-middle gs-0 gy-2" id="selected-modules-table">
                 <thead>
-                    <tr class="fw-bolder text-muted">
-                        <th>Módulo</th>
-                        <th class="text-end">Preço</th>
-                        <th class="text-end">Limite do pacote</th>
+                    <tr class="fw-bold text-muted text-uppercase fs-7">
+                        <th class="min-w-250px">Módulo</th>
+                        <th class="min-w-180px">Tier/Faixa</th>
+                        <th class="text-end min-w-150px">Preço do módulo</th>
+                        <th class="text-end min-w-200px">Preço no pacote</th>
                     </tr>
                 </thead>
                 <tbody id="selected-modules-summary"></tbody>
+                <tfoot>
+                    <tr class="fw-bolder">
+                        <td colspan="2" class="text-end text-gray-700">Total</td>
+                        <td class="text-end">
+                            <span class="text-muted me-2">Preço total</span>
+                            <span class="text-success" id="selected-modules-total">R$ 0,00</span>
+                        </td>
+                        <td class="text-end">
+                            <label class="form-label fs-8 fw-bold text-gray-700 mb-1 d-block">Preço do pacote</label>
+                            <span class="text-primary fw-bolder" id="selected-modules-package-price">R$ 0,00</span>
+                            <input type="hidden" name="value" id="selected-modules-package-price-input" value="{{ old('value', $package->value ?? 0) }}">
+                        </td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
         <div id="selected-modules-empty" class="text-muted fs-7">Nenhum módulo selecionado.</div>
@@ -253,6 +267,9 @@
             const addBenefitButton = $('#add-package-benefit');
             const summaryBody = $('#selected-modules-summary');
             const emptySummary = $('#selected-modules-empty');
+            const totalCell = $('#selected-modules-total');
+            const packagePriceCell = $('#selected-modules-package-price');
+            const packagePriceInput = $('#selected-modules-package-price-input');
             const moduleItemsInputs = $('#module-items-inputs');
             const moduleSelect = $('#package-modules-select');
 
@@ -278,6 +295,57 @@
                 });
             }
 
+            function parseMoneyValue(rawValue) {
+                if (rawValue && typeof rawValue === 'object' && rawValue.inputmask && typeof rawValue.inputmask.unmaskedvalue === 'function') {
+                    const unmasked = String(rawValue.inputmask.unmaskedvalue() || '');
+                    if (unmasked === '') return 0;
+
+                    const cents = Number(unmasked);
+                    return Number.isFinite(cents) ? (cents / 100) : 0;
+                }
+
+                const value = String(rawValue || '').trim();
+                if (value === '') return 0;
+
+                const normalized = value
+                    .replace(/\s/g, '')
+                    .replace(/[R$r$]/g, '')
+                    .replace(/\./g, '')
+                    .replace(',', '.')
+                    .replace(/[^0-9.-]/g, '');
+
+                const parsed = Number(normalized);
+                return Number.isFinite(parsed) ? parsed : 0;
+            }
+
+            function applyMoneyMaskToPackageInputs() {
+                const selector = '#selected-modules-summary input[name^="prices["], #selected-modules-summary input[name^="tier_prices["]';
+                if (typeof Inputmask === 'undefined') return;
+
+                Inputmask(["R$ 9", "R$ 99", "R$ 9,99", "R$ 99,99", "R$ 999,99", "R$ 9.999,99", "R$ 99.999,99", "R$ 999.999,99", "R$ 9.999.999,99"], {
+                    numericInput: true,
+                    clearIncomplete: true,
+                }).mask($(selector));
+            }
+
+            function updateSelectedModulesTotal() {
+                let moduleTotal = 0;
+                let packageTotal = 0;
+
+                summaryBody.find('tr').each(function () {
+                    const row = $(this);
+                    const modulePrice = Number(row.data('current-price') || 0);
+                    const packageInput = row.find('input[name^="prices["], input[name^="tier_prices["]').first();
+                    const packagePrice = parseMoneyValue(packageInput.get(0) || packageInput.val());
+                    moduleTotal += modulePrice;
+                    packageTotal += packagePrice > 0 ? packagePrice : modulePrice;
+                });
+
+                totalCell.text(formatCurrency(moduleTotal));
+                packagePriceCell.text(formatCurrency(packageTotal));
+                packagePriceInput.val(packageTotal.toFixed(2));
+            }
+
             function selectedMap() {
                 const map = {};
                 selectedModules.forEach((item) => {
@@ -289,44 +357,6 @@
             function syncModuleSelectVisual() {
                 const selectedIds = selectedModules.map((item) => String(Number(item.module_id)));
                 moduleSelect.val(selectedIds).trigger('change.select2');
-            }
-
-            function buildTierSelect(module, selectedTierId) {
-                if (!module.is_usage) {
-                    return {
-                        html: '<span class="text-muted">-</span>',
-                        selectedTierId: 0,
-                        selectedTier: null,
-                    };
-                }
-
-                const tiers = Array.isArray(module.tiers) ? module.tiers : [];
-                const fallbackTierId = tiers.length ? Number(tiers[0].id) : 0;
-                const finalTierId = tiers.some((tier) => Number(tier.id) === Number(selectedTierId))
-                    ? Number(selectedTierId)
-                    : fallbackTierId;
-
-                const selectedTier = tiers.find((tier) => Number(tier.id) === finalTierId) || null;
-
-                if (!tiers.length) {
-                    return {
-                        html: '<span class="text-muted">Sem tiers</span>',
-                        selectedTierId: 0,
-                        selectedTier: null,
-                    };
-                }
-
-                const options = tiers.map((tier) => {
-                    const tierId = Number(tier.id);
-                    const selected = tierId === finalTierId ? 'selected' : '';
-                    return '<option value="' + tierId + '" ' + selected + '>Até ' + tier.usage_limit + ' - ' + tier.price_formatted + '</option>';
-                }).join('');
-
-                return {
-                    html: '<select class="form-select form-select-sm form-select-solid package-module-tier-select" data-module-id="' + module.id + '">' + options + '</select>',
-                    selectedTierId: finalTierId,
-                    selectedTier,
-                };
             }
 
             function renderSelectedModules() {
@@ -346,26 +376,63 @@
                     const module = findModule(item.module_id);
                     if (!module) return;
 
-                    const tierState = buildTierSelect(module, item.module_pricing_tier_id);
-                    item.module_pricing_tier_id = tierState.selectedTierId;
+                    if (!module.is_usage) {
+                        const fixedRowHtml = [
+                            '<tr data-current-price="' + Number(module.value || 0) + '">',
+                            '  <td class="fw-semibold text-gray-800">' + module.name + '</td>',
+                            '  <td class="text-gray-700"><span class="badge badge-light-primary">Preço fixo</span></td>',
+                            '  <td class="text-end text-gray-700">' + module.value_formatted + '</td>',
+                            '  <td class="text-end">',
+                            '    <input type="text" name="prices[' + module.id + ']" value="" class="form-control form-control-solid input-money text-end" placeholder="' + module.value_formatted + '">',
+                            '  </td>',
+                            '</tr>'
+                        ].join('');
 
-                    const priceText = module.is_usage
-                        ? (tierState.selectedTier ? tierState.selectedTier.price_formatted : formatCurrency(0))
-                        : module.value_formatted;
+                        summaryBody.append(fixedRowHtml);
+                        item.module_pricing_tier_id = 0;
+                    } else {
+                        const tiers = Array.isArray(module.tiers) ? module.tiers : [];
+                        const fallbackTierId = tiers.length ? Number(tiers[0].id) : 0;
+                        const selectedTierId = tiers.some((tier) => Number(tier.id) === Number(item.module_pricing_tier_id))
+                            ? Number(item.module_pricing_tier_id)
+                            : fallbackTierId;
+                        item.module_pricing_tier_id = selectedTierId;
 
-                    const rowHtml = [
-                        '<tr>',
-                        '  <td class="text-gray-800 fw-bold">' + module.name + '</td>',
-                        '  <td class="text-end text-gray-700 fw-bold">' + priceText + '</td>',
-                        '  <td class="text-end">' + tierState.html + '</td>',
-                        '</tr>'
-                    ].join('');
+                        if (!tiers.length) {
+                            const noTierRowHtml = [
+                                '<tr data-current-price="0">',
+                                '  <td class="fw-semibold text-gray-800">' + module.name + '</td>',
+                                '  <td class="text-gray-700"><span class="badge badge-light-warning">Sem faixas</span></td>',
+                                '  <td class="text-end text-gray-700"><span class="badge badge-light-warning">Sem faixas cadastradas</span></td>',
+                                '  <td class="text-end"><input type="text" value="" class="form-control form-control-solid text-end" placeholder="Sem faixas para atualizar" disabled></td>',
+                                '</tr>'
+                            ].join('');
 
-                    summaryBody.append(rowHtml);
+                            summaryBody.append(noTierRowHtml);
+                        } else {
+                            tiers.forEach((tier) => {
+                                const usageRowHtml = [
+                                    '<tr data-current-price="' + Number(tier.price || 0) + '">',
+                                    '  <td class="fw-semibold text-gray-800">' + module.name + '</td>',
+                                    '  <td class="text-gray-700"><span class="badge badge-light-success">Até ' + tier.usage_limit + '</span></td>',
+                                    '  <td class="text-end text-gray-700">' + tier.price_formatted + '</td>',
+                                    '  <td class="text-end">',
+                                    '    <input type="text" name="tier_prices[' + tier.id + ']" value="" class="form-control form-control-solid input-money text-end" placeholder="' + tier.price_formatted + '">',
+                                    '  </td>',
+                                    '</tr>'
+                                ].join('');
+
+                                summaryBody.append(usageRowHtml);
+                            });
+                        }
+                    }
 
                     moduleItemsInputs.append('<input type="hidden" name="module_items[' + index + '][module_id]" value="' + module.id + '">');
                     moduleItemsInputs.append('<input type="hidden" name="module_items[' + index + '][module_pricing_tier_id]" value="' + (item.module_pricing_tier_id || 0) + '">');
                 });
+
+                applyMoneyMaskToPackageInputs();
+                updateSelectedModulesTotal();
             }
 
             function nextBenefitIndex() {
@@ -440,27 +507,16 @@
                 renderSelectedModules();
             });
 
-            $(document).on('change', '.package-module-tier-select', function () {
-                const moduleId = Number($(this).data('module-id'));
-                const tierId = Number($(this).val() || 0);
-
-                selectedModules = selectedModules.map((item) => {
-                    if (Number(item.module_id) !== moduleId) return item;
-                    return {
-                        ...item,
-                        module_pricing_tier_id: tierId,
-                    };
-                });
-
-                renderSelectedModules();
-            });
-
             addBenefitButton.on('click', function () {
                 addBenefitRow();
             });
 
             $(document).on('click', '.remove-package-benefit', function () {
                 $(this).closest('.package-benefit-row').remove();
+            });
+
+            $(document).on('input change keyup', '#selected-modules-summary input[name^="prices["], #selected-modules-summary input[name^="tier_prices["]', function () {
+                updateSelectedModulesTotal();
             });
 
             renderSelectedModules();
