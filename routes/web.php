@@ -21,6 +21,8 @@ use App\Http\Controllers\NewsCategoryController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\CouponController;
+use App\Http\Controllers\AdditionalUserController;
+use App\Http\Controllers\AdditionalStorageController;
 use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PagarMeController;
@@ -268,6 +270,34 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/editar/{id}', [CouponController::class, 'edit'])->name('edit');
             Route::put('/editar/{id}', [CouponController::class, 'update'])->name('update');
             Route::get('/desabilitar/{id}', [CouponController::class, 'destroy'])->name('destroy');
+        });
+    });
+
+    /**
+     * Rotas para gerenciamento de usuário adicional.
+     */
+    Route::prefix('usuarios-adicionais')->group(function () {
+        Route::name('additional.users.')->group(function () {
+            Route::get('/', [AdditionalUserController::class, 'index'])->name('index');
+            Route::get('/adicionar', [AdditionalUserController::class, 'create'])->name('create');
+            Route::post('/adicionar', [AdditionalUserController::class, 'store'])->name('store');
+            Route::get('/editar/{id}', [AdditionalUserController::class, 'edit'])->name('edit');
+            Route::put('/editar/{id}', [AdditionalUserController::class, 'update'])->name('update');
+            Route::get('/desabilitar/{id}', [AdditionalUserController::class, 'destroy'])->name('destroy');
+        });
+    });
+
+    /**
+     * Rotas para gerenciamento de armazenamento adicional.
+     */
+    Route::prefix('armazenamentos-adicionais')->group(function () {
+        Route::name('additional.storages.')->group(function () {
+            Route::get('/', [AdditionalStorageController::class, 'index'])->name('index');
+            Route::get('/adicionar', [AdditionalStorageController::class, 'create'])->name('create');
+            Route::post('/adicionar', [AdditionalStorageController::class, 'store'])->name('store');
+            Route::get('/editar/{id}', [AdditionalStorageController::class, 'edit'])->name('edit');
+            Route::put('/editar/{id}', [AdditionalStorageController::class, 'update'])->name('update');
+            Route::get('/desabilitar/{id}', [AdditionalStorageController::class, 'destroy'])->name('destroy');
         });
     });
 
