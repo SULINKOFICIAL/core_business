@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Support\Facades\Http;
 
 class Tenant extends Model
 {
@@ -142,34 +141,6 @@ class Tenant extends Model
     public function lastSubscription()
     {
         return $this->subscriptions()->latest('id')->first();
-    }
-
-    public function systemStatus()
-    {
-
-        return 'OK';
-
-        // Verifica se possui Token
-        if (!$this->token) {
-            return 'Token Empty';
-        }
-
-        // Tenta
-        try {
-            // Tenta realiza a requisição
-            $response = Http::withToken($this->token)->get("https://$this->domain/api/sistema/status");
-
-            // Se for bem sucedido e o sistema estiver ativo
-            if ($response->successful() && $response->json()['status'] === 'ok') {
-                return 'OK';
-            }
-
-            // Não esta funcionando
-            return 'Error';
-        } catch (\Exception $e) {
-            // Erro encontrado
-            return 'Error';
-        }
     }
 
     /**
