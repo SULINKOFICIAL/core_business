@@ -249,16 +249,15 @@ class TenantProcessingController extends Controller
 
                 $html = '<div class="d-flex gap-4 align-items-center">';
                 $html .= '<a href="' . route('tenants.show', $row->id) . '" class="btn btn-sm btn-primary btn-active-success fw-bolder text-uppercase py-2">Visualizar</a>';
+                if ((int) $row->domains_count > 0 && !empty($row->first_domain) && !empty($row->token)) {
+                    $html .= '<a href="https://' . e($row->first_domain) . '/acessar/' . e($row->token) . '" target="_blank" class="btn btn-icon btn-sm btn-light-primary btn-active-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Acessar tenant">';
+                    $html .= '<i class="fa-solid fa-globe"></i>';
+                    $html .= '</a>';
+                }
                 $html .= '<a href="#" class="btn btn-light-primary btn-active-light-primary btn-sm" data-kt-menu-trigger="hover" data-kt-menu-placement="bottom-end" data-kt-menu-flip="top-end">';
                 $html .= '<i class="fa-solid fa-ellipsis-vertical p-0"></i>';
                 $html .= '</a>';
                 $html .= '<div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-bold fs-7 w-200px py-4" data-kt-menu="true">';
-                if ((int) $row->domains_count > 0 && !empty($row->first_domain) && !empty($row->token)) {
-                    $html .= '<div class="menu-item px-3">';
-                    $html .= '<a href="https://' . e($row->first_domain) . '/acessar/' . e($row->token) . '" target="_blank" class="menu-link px-3" data-kt-docs-table-filter="delete_row">';
-                    $html .= '<i class="fa-solid fa-globe me-2"></i>Acessar como sistema</a>';
-                    $html .= '</div>';
-                }
                 $html .= '<div class="menu-item px-3"><a href="' . route('systems.run.scheduled.now.tenant', $row->id) . '" class="menu-link px-3 js-tenant-run-task-modal" data-tenant-name="' . e($row->name) . '" data-tenant-id="' . e($row->id) . '"><i class="fa-solid fa-list-check me-2"></i>Executar Tarefas</a></div>';
                 $html .= '<div class="menu-item px-3"><a href="' . route('systems.update.database', $row->id) . '" class="menu-link px-3 js-tenant-action-confirm" data-action-label="atualizar banco de dados" data-tenant-name="' . e($row->name) . '"><i class="fa-solid fa-database me-2"></i>Atualiza banco de dados</a></div>';
                 $html .= '<div class="menu-item px-3"><a href="' . route('systems.update.git', $row->id) . '" class="menu-link px-3 js-tenant-action-confirm" data-action-label="atualizar git" data-tenant-name="' . e($row->name) . '"><i class="fa-solid fa-code me-2"></i>Atualiza git</a></div>';

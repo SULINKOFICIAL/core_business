@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -20,16 +19,6 @@ return new class extends Migration
             ->whereIn('pricing_type', ['fixed', 'Fixed', 'FIXED'])
             ->update(['pricing_type' => 'Preço Fixo']);
 
-        // Normaliza snapshots legados em itens de pedido quando a coluna existir
-        if (Schema::hasColumn('order_items', 'item_billing_type')) {
-            DB::table('order_items')
-                ->whereIn('item_billing_type', ['Por Uso', 'usage', 'Usage', 'USAGE'])
-                ->update(['item_billing_type' => 'Preço Por Uso']);
-
-            DB::table('order_items')
-                ->whereIn('item_billing_type', ['fixed', 'Fixed', 'FIXED'])
-                ->update(['item_billing_type' => 'Preço Fixo']);
-        }
     }
 
     /**

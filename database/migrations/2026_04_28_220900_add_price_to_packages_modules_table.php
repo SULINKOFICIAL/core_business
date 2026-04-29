@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('order_items', function (Blueprint $table) {
-            $table->enum('type', ['Pacote', 'Módulo', 'Crédito'])->change();
+        Schema::table('packages_modules', function (Blueprint $table) {
+            $table->decimal('price', 10, 2)->default(0)->after('module_pricing_tier_id');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('order_items', function (Blueprint $table) {
-            //
+        Schema::table('packages_modules', function (Blueprint $table) {
+            $table->dropColumn('price');
         });
     }
 };

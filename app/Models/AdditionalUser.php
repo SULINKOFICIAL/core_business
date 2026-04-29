@@ -4,14 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class PackageModule extends Model
+class AdditionalUser extends Model
 {
-    protected $table = 'packages_modules';
     protected $fillable = [
-        'module_id',
-        'package_id',
-        'module_pricing_tier_id',
+        'quantity',
         'price',
+        'status',
         'filed_by',
         'created_by',
         'updated_by',

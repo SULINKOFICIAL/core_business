@@ -135,7 +135,6 @@ return new class extends Migration
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
         DB::table('orders')->truncate();
-        DB::table('order_items')->truncate();
         DB::table('order_transactions')->truncate();
         DB::table('subscriptions_cycles')->truncate();
         DB::table('subscriptions')->truncate();

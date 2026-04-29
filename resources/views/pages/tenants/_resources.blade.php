@@ -13,14 +13,9 @@
                             <span class="card-icon">
                                 <i class="flaticon2-line-chart text-primary"></i>
                             </span>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input cursor-pointer input-modules" type="checkbox" value="{{ $module->id }}" id="module_{{ $module->name }}" @if(isset($allowModules[$module->name]) && $allowModules[$module->name] == true) checked @endif>
-                                <label class="form-check-label d-flex align-items-center" for="module_{{ $module->name }}">
-                                    <h4 class="card-label text-gray-800 mb-0">
-                                        {{ $module->name }}
-                                    </h4>
-                                </label>
-                            </div>
+                            <h4 class="card-label text-gray-800 mb-0">
+                                {{ $module->name }}
+                            </h4>
                         </div>
                     </div>
                     <div class="card-body px-4 py-2">

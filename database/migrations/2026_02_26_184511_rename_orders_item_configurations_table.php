@@ -11,24 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::rename('orders_item_configurations', 'clients_packages_items_configurations');
-
-        Schema::table('clients_packages_items_configurations', function (Blueprint $table) {
-
-            // Dropa pelo nome real da constraint
-            $table->dropForeign('order_item_configurations_order_item_id_foreign');
-
-            // Renomeia coluna
-            $table->renameColumn('order_item_id', 'item_id');
-        });
-
-        // Cria a nova FK depois
-        Schema::table('clients_packages_items_configurations', function (Blueprint $table) {
-            $table->foreign('item_id')
-                ->references('id')
-                ->on('clients_packages_items')
-                ->cascadeOnDelete();
-        });
+        if (!Schema::hasTable('clients_packages_items_configurations')) {
+            Schema::create('clients_packages_items_configurations', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('item_id')->constrained('clients_packages_items')->cascadeOnDelete();
+                $table->string('key');
+                $table->text('value')->nullable();
+                $table->string('value_type')->nullable();
+                $table->json('derived_pricing_effect')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     /**
@@ -36,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        Schema::dropIfExists('clients_packages_items_configurations');
     }
 };

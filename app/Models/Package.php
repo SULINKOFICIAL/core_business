@@ -34,7 +34,7 @@ class Package extends Model
     public function modules(): BelongsToMany
     {
         return $this->belongsToMany(Module::class, 'packages_modules', 'package_id', 'module_id')
-            ->withPivot('module_pricing_tier_id');
+            ->withPivot('module_pricing_tier_id', 'price');
     }
 
     public function benefits(): HasMany
