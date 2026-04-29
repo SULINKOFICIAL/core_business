@@ -93,24 +93,37 @@
     </div>
     <div class="card-body">
         <div class="row">
-            <div class="col-5 mb-4">
+            <div class="col-6 mb-4">
                 <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Nome</label>
                 <input type="text" class="form-control form-control-solid" placeholder="Nome" name="name" value="{{ $package->name ?? old('name') }}" required>
             </div>
+            <input type="hidden" name="value" value="{{ old('value', $package->value ?? 0) }}">
             <div class="col-3 mb-4">
-                <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Valor</label>
-                <input type="text" class="form-control form-control-solid input-money" name="value" value="R$ {{ number_format(($package->value ?? 0), 2, ',', '.') }}" required>
-            </div>
-            <div class="col-2 mb-4">
                 <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">É popular?</label>
                 <select name="popular" class="form-select form-select-solid" data-control="select2" data-hide-search="true" data-placeholder="Selecione" required>
                     <option value="0" @selected((int) old('popular', $package->popular ?? 0) === 0)>Não</option>
                     <option value="1" @selected((int) old('popular', $package->popular ?? 0) === 1)>Sim</option>
                 </select>
             </div>
-            <div class="col-2 mb-4">
+            <div class="col-3 mb-4">
                 <label class="form-label fs-6 fw-bold text-gray-700 mb-2 required">Ordem</label>
                 <input type="text" class="form-control form-control-solid" name="order" value="{{ $package->order ?? 1 }}" required>
+            </div>
+            <div class="col-12 mb-4">
+                <label class="form-label fs-6 fw-bold text-gray-700 mb-2">Módulos Inclusos</label>
+                <select
+                    class="form-select form-select-solid"
+                    id="package-modules-select"
+                    data-control="select2"
+                    data-placeholder="Selecionar"
+                    multiple
+                >
+                    @foreach ($modules as $module)
+                        <option value="{{ (int) $module->id }}" @selected(in_array((int) $module->id, $selectedModuleIds, true))>
+                            {{ $module->name }}
+                        </option>
+                    @endforeach
+                </select>
             </div>
             <div class="col-12 mb-4">
                 <label class="form-label fs-6 fw-bold text-gray-700 mb-2">Descrição</label>
@@ -131,43 +144,13 @@
     </div>
 </div>
 
+<div id="module-items-inputs"></div>
+
 <div class="card mb-6">
     <div class="card-header">
-        <h3 class="card-title">Módulos do pacote</h3>
+        <h3 class="card-title">Preços dos módulos no pacote</h3>
     </div>
     <div class="card-body">
-        <div class="row" id="package-modules-grid">
-            @foreach ($modules as $module)
-                @php
-                    $isSelected = in_array((int) $module->id, $selectedModuleIds, true);
-                    $isUsage = ($module->pricing_type === 'Preço Por Uso');
-                    $priceLabel = $isUsage
-                        ? 'Preço por uso'
-                        : 'R$ ' . number_format((float) $module->value, 2, ',', '.');
-                @endphp
-                <div class="col-md-4 mb-4">
-                    <div class="card border border-gray-300 h-100 cursor-pointer package-module-card {{ $isSelected ? 'border-primary' : '' }}" data-module-id="{{ $module->id }}">
-                        <div class="card-body p-4">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <p class="text-gray-800 fw-bolder mb-0">{{ $module->name }}</p>
-                                <span class="badge badge-light-primary package-module-selected-badge" @if (!$isSelected) style="display:none" @endif>Selecionado</span>
-                            </div>
-                            @if (!empty($module->description))
-                                <p class="text-gray-600 fs-8 mb-2">{{ $module->description }}</p>
-                            @endif
-                            <p class="text-gray-700 fw-bolder fs-6 mb-0">{{ $priceLabel }}</p>
-                            @if ($isUsage)
-                                <span class="badge badge-light-warning mt-2">Requer limite (tiers)</span>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            @endforeach
-        </div>
-
-        <div class="separator my-6"></div>
-
-        <h4 class="mb-3">Módulos inclusos</h4>
         <div class="table-responsive">
             <table class="table table-row-dashed align-middle gs-0 gy-2" id="selected-modules-table">
                 <thead>
@@ -181,7 +164,6 @@
             </table>
         </div>
         <div id="selected-modules-empty" class="text-muted fs-7">Nenhum módulo selecionado.</div>
-        <div id="module-items-inputs"></div>
     </div>
 </div>
 
@@ -272,6 +254,7 @@
             const summaryBody = $('#selected-modules-summary');
             const emptySummary = $('#selected-modules-empty');
             const moduleItemsInputs = $('#module-items-inputs');
+            const moduleSelect = $('#package-modules-select');
 
             function normalizeSelectedModules() {
                 const validIds = moduleCatalog.map((module) => Number(module.id));
@@ -303,17 +286,9 @@
                 return map;
             }
 
-            function syncCardsVisual() {
-                const map = selectedMap();
-
-                $('.package-module-card').each(function () {
-                    const card = $(this);
-                    const moduleId = Number(card.data('module-id'));
-                    const selected = !!map[moduleId];
-
-                    card.toggleClass('border-primary', selected);
-                    card.find('.package-module-selected-badge').toggle(selected);
-                });
+            function syncModuleSelectVisual() {
+                const selectedIds = selectedModules.map((item) => String(Number(item.module_id)));
+                moduleSelect.val(selectedIds).trigger('change.select2');
             }
 
             function buildTierSelect(module, selectedTierId) {
@@ -393,29 +368,6 @@
                 });
             }
 
-            function toggleModule(moduleId) {
-                const module = findModule(moduleId);
-                if (!module) return;
-
-                const existingIndex = selectedModules.findIndex((item) => Number(item.module_id) === Number(moduleId));
-
-                if (existingIndex >= 0) {
-                    selectedModules.splice(existingIndex, 1);
-                } else {
-                    const defaultTierId = module.is_usage && module.tiers.length
-                        ? Number(module.tiers[0].id)
-                        : 0;
-
-                    selectedModules.push({
-                        module_id: Number(module.id),
-                        module_pricing_tier_id: defaultTierId,
-                    });
-                }
-
-                syncCardsVisual();
-                renderSelectedModules();
-            }
-
             function nextBenefitIndex() {
                 return benefitsContainer.length ? benefitsContainer.find('.package-benefit-row').length : 0;
             }
@@ -461,9 +413,31 @@
                 benefitsContainer.append(rowHtml);
             }
 
-            $(document).on('click', '.package-module-card', function () {
-                const moduleId = Number($(this).data('module-id'));
-                toggleModule(moduleId);
+            moduleSelect.on('change', function () {
+                const selectedIds = ($(this).val() || []).map((id) => Number(id)).filter((id) => id > 0);
+                const currentMap = {};
+                selectedModules.forEach((item) => {
+                    currentMap[Number(item.module_id)] = item;
+                });
+
+                selectedModules = selectedIds.map((moduleId) => {
+                    const existing = currentMap[moduleId];
+                    if (existing) {
+                        return existing;
+                    }
+
+                    const module = findModule(moduleId);
+                    const defaultTierId = module && module.is_usage && module.tiers.length
+                        ? Number(module.tiers[0].id)
+                        : 0;
+
+                    return {
+                        module_id: moduleId,
+                        module_pricing_tier_id: defaultTierId,
+                    };
+                });
+
+                renderSelectedModules();
             });
 
             $(document).on('change', '.package-module-tier-select', function () {
@@ -489,8 +463,8 @@
                 $(this).closest('.package-benefit-row').remove();
             });
 
-            syncCardsVisual();
             renderSelectedModules();
+            syncModuleSelectVisual();
         });
     </script>
 @endsection
