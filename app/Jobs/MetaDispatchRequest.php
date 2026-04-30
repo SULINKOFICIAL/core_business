@@ -112,13 +112,6 @@ class MetaDispatchRequest implements ShouldQueue
         // O tenant sempre responde apenas com o aceite do disparo.
         $response = $guzzleService->request('POST', $url, $tenant, $this->data, [], 'webhooks');
 
-        // // Realiza a requisição
-        // $response = $requestService->request('POST', $url, [
-        //                 'json' => $this->data
-        //             ]);
-
-        Log::info($response);
-
         // Se a requisição foi processada atualiza o logs para concluido
         if($response['success'] && isset($response['data']['status']) && $response['data']['status'] == 'Accepted'){
             $this->logApi->update([
