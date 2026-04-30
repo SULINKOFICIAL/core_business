@@ -9,6 +9,12 @@ class TenantIntegration extends Model
 {
     protected $table = 'tenants_integrations';
 
+    protected $casts = [
+        'token_expires_at' => 'datetime',
+        'refresh_expires_at' => 'datetime',
+        'last_renewed_at' => 'datetime',
+    ];
+
     protected $fillable = [
         'tenant_id',
         'provider',
@@ -21,6 +27,7 @@ class TenantIntegration extends Model
         'scopes',
         'token_expires_at',
         'refresh_expires_at',
+        'last_renewed_at',
         'status',
     ];
 

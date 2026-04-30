@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\ScheduleDispatcher;
+use App\Jobs\RefreshTokenIntegrationsJob;
 use Illuminate\Support\Facades\Schedule;
 
 /**
@@ -31,4 +32,8 @@ Schedule::job(new ScheduleDispatcher('notify_commitments_10m', [
             'minutes_before' => 10,
         ]))
         ->everyMinute()
+        ->onOneServer();
+
+Schedule::job(new RefreshTokenIntegrationsJob())
+        ->dailyAt('01:00')
         ->onOneServer();

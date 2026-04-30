@@ -425,6 +425,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/atualizar-sistemas',           [TenantsActionsController::class, 'updateAllSystems'])->name('update.all.systems');
             Route::get('/disparar-jobs-agendados',      [TenantsActionsController::class, 'runScheduledNow'])->name('run.scheduled.now');
             Route::get('/disparar-jobs-agendados/{id}', [TenantsActionsController::class, 'runScheduledNow'])->name('run.scheduled.now.tenant');
+            Route::get('/atualizar-tokens-integracoes/{id}', [TenantsActionsController::class, 'runIntegrationsNow'])->name('run.integrations.now');
             Route::post('/liberar-sistema/{id}',        [TenantsActionsController::class, 'addFree'])->name('add.free');
             Route::get('/liberar-data/{id}',            [TenantsActionsController::class, 'addDate'])->name('add.date');
         });

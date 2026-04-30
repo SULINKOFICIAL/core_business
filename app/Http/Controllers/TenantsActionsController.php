@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use RuntimeException;
+use App\Jobs\RefreshTokenIntegrationsJob;
 
 class TenantsActionsController extends Controller
 {
@@ -698,6 +699,27 @@ class TenantsActionsController extends Controller
     }
 
     /**
+     * Função responsável por atualizar os tokens das integrações cadastradas na central.
+     */
+    public function runIntegrationsNow($id = null)
+    {
+        if(empty($id)) {
+            return redirect()
+                ->back()
+                ->with('type', 'error')
+                ->with('message', 'Identificador da integração não informado.'); 
+        }
+
+        // Dispara o job de atualizaçao dos tokens de integracao
+        RefreshTokenIntegrationsJob::dispatch($id);
+
+        // Retorna para a tela anterior informando o identificador do lote criado.
+        return redirect()
+                ->back()
+                ->with('message', 'Job de atualizaçao dos tokens de integracao disparado com sucesso.'); 
+    }
+
+    /**
      * Retorna os jobs liberados para disparo manual na tela de clientes.
      * A lista fica centralizada aqui para a validação do controller usar a mesma base.
      * Isso evita aceitar na URL um job que não foi previsto pela central.
@@ -714,7 +736,6 @@ class TenantsActionsController extends Controller
             'notify_commitments_10m',
             'import_cfop_table',
             'import_ncm_table',
-            'test_log',
         ];
     }
 
