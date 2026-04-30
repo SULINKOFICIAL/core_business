@@ -6,9 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Support\Facades\Http;
 
 class Tenant extends Model
 {
@@ -43,8 +41,6 @@ class Tenant extends Model
         'onboarding_current_step',
         'onboarding_started_at',
         'onboarding_completed_at',
-        'package_id',
-        'users_limit',
         'logo',
         'token',
         'status',
@@ -108,16 +104,9 @@ class Tenant extends Model
     }
 
     // Assinaturas realizadas pelo cliente
-    public function subscriptions(): HasManyThrough
+    public function subscriptions(): HasMany
     {
-        return $this->hasManyThrough(
-            Subscription::class,
-            Order::class,
-            'tenant_id',
-            'order_id',
-            'id',
-            'id'
-        );
+        return $this->hasMany(Subscription::class, 'tenant_id', 'id');
     }
 
     // Retorna a última compra realizada pelo cliente
@@ -129,50 +118,114 @@ class Tenant extends Model
     // Retorna em quantos dias deve ser feita a próxima renovação
     public function renovation()
     {
-        // Obtém assinatura do cliente
-        $latestOrder = $this->lastOrder();
+        // Obtém o último ciclo de assinatura do cliente
+        $latestCycle = SubscriptionCycle::query()
+            ->whereHas('subscription', function ($query) {
+                $query->where('tenant_id', $this->id);
+            })
+            ->whereNotNull('end_date')
+            ->orderByDesc('end_date')
+            ->first();
 
         // Caso não encontre
-        if (!$latestOrder) {
+        if (!$latestCycle) {
             return null;
         }
 
         // Obtém data de expiração
         $now = Carbon::now();
-        return round($now->diffInDays($latestOrder->end_date));
+        return round($now->diffInDays($latestCycle->end_date, false));
     }
 
     // Retorna em quantos dias deve ser feita a próxima renovação
     public function lastSubscription()
     {
-        return $this->subscriptions()->latest('end_date')->first();
+        return $this->subscriptions()->latest('id')->first();
     }
 
-    public function systemStatus()
+    /**
+     * Centraliza a visão atual da assinatura do tenant.
+     */
+    public function actualSubscription(): array
     {
 
-        return 'OK';
+        /**
+         * Carrega o contexto da assinatura
+         */
+        $this->loadMissing([
+            'plan.items.item',
+            'subscriptions.cycles',
+        ]);
 
-        // Verifica se possui Token
-        if (!$this->token) {
-            return 'Token Empty';
+        /**
+         * Obtém o último ciclo registrado do cliente
+         */
+        $tenantPlan = TenantPlan::where('tenant_id', $this->id)
+                                    ->where('progress', 'completed')
+                                    ->orderByDesc('id')
+                                    ->with(['subscription.cycles', 'items.item'])
+                                    ->first();
+
+        /**
+         * Obtém o último ciclo registrado do cliente
+         */
+        $activeCycle = $tenantPlan->subscription->cycles()
+                                ->where('start_date', '<=', now())
+                                ->where('end_date', '>=', now())
+                                ->orderByDesc('end_date')
+                                ->first();
+
+        /**
+         * Se encontrou o ciclo
+         */
+        if($activeCycle){
+            $cycle = [
+                'hasActiveCycle'    => true,
+                'start'             => $activeCycle->start_date->format('d/m/Y H:i:s'),
+                'end'               => $activeCycle->end_date->format('d/m/Y H:i:s'),
+            ];
+        } else {
+            $cycle = [
+                'hasActiveCycle'    => false,
+                'start'             => null,
+                'end'               => null,
+            ];
         }
 
-        // Tenta
-        try {
-            // Tenta realiza a requisição
-            $response = Http::withToken($this->token)->get("https://$this->domain/api/sistema/status");
+        /**
+         * Se encontrou itens, formata os módulos.
+         */
+        if ($tenantPlan->items->count()) {
 
-            // Se for bem sucedido e o sistema estiver ativo
-            if ($response->successful() && $response->json()['status'] === 'ok') {
-                return 'OK';
+            /**
+             * Formata os módulos
+             */
+            $modules = [];
+            foreach ($tenantPlan->items as $item) {
+                if (!$item->item) {
+                    continue;
+                }
+
+                $modules[] = [
+                    'name' => $item->item->name,
+                    'slug' => $item->item->slug,
+                ];
             }
+        } else {
 
-            // Não esta funcionando
-            return 'Error';
-        } catch (\Exception $e) {
-            // Erro encontrado
-            return 'Error';
+            /**
+             * Caso não tenha itens, retorna array vazio.
+             */
+            $modules = [];
+
         }
+
+        return [
+            'name'              => $tenantPlan->name,
+            'users'             => $tenantPlan->users_limit,
+            'storage'           => $tenantPlan->size_storage,
+            'cycle'             => $cycle,
+            'modules'           => $modules,
+        ];
     }
 }

@@ -370,11 +370,6 @@ class OrderService
             'status'     => 'Ativo',
         ]);
 
-        // Atualizar cliente com novo pacote
-        $tenant->update([
-            'package_id' => $package->id,
-        ]);
-
         // Atualiza o pedido
         $order->status = 'Pago';
         $order->paid_at = now();

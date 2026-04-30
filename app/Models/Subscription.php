@@ -17,6 +17,9 @@ class Subscription extends Model
     ];
 
     protected $fillable = [
+        'tenant_id',
+        'plan_id',
+        'order_id',
         'pagarme_subscription_id',
         'pagarme_card_id',
         'interval',
@@ -29,6 +32,16 @@ class Subscription extends Model
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class, 'order_id', 'id');
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id', 'id');
+    }
+
+    public function plan(): BelongsTo
+    {
+        return $this->belongsTo(TenantPlan::class, 'plan_id', 'id');
     }
 
     public function transactions(): HasMany
