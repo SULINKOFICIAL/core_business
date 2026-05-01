@@ -70,12 +70,40 @@
                     <th class="text-center">Expira Em</th>
                     <th class="text-center">Status</th>
                     <th class="text-center">Criado Em</th>
+                    <th class="text-center">Ações</th>
                 </tr>
             </thead>
             <tbody></tbody>
         </table>
     </div>
 </div>
+@endsection
+
+@section('modals')
+<div class="modal fade" id="debugTokenModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered mw-1000px">
+        <div class="modal-content">
+            <div class="modal-header py-3 bg-dark border-0">
+                <h2 class="fw-bold text-white">Visualizando Depuração</h2>
+                <div class="btn btn-icon btn-sm btn-active-icon-primary" data-bs-dismiss="modal">
+                    <i class="ki-duotone ki-cross fs-1"><span class="path1"></span><span class="path2"></span></i>
+                </div>
+            </div>
+            <div class="modal-body p-0" style="height: 800px; overflow: auto">
+                <pre class="language-json">
+                    
+                </pre>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
+@section('custom-head')
+    @parent
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" integrity="sha512-7Z9J3l1+EYfeaPKcGXu3MS/7T+w19WtKQY/n+xzmw4hZhJ9tyYmcUS+4QqAlzhicE5LAfMQSF3iFTK9bQdTxXg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js" integrity="sha512-SkmBfuA2hqjzEVpmnMt/LINrjop3GKWqsuLSSB3e7iBmYK7JuWw4ldmmxwD9mdm2IRTTi0OxSAfEGvgEi0i2Kw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 @endsection
 
 @section('custom-footer')
@@ -105,6 +133,7 @@
                 { data: 'token_expires_at', name: 'token_expires_at', className: 'text-center' },
                 { data: 'status_badge', name: 'status', orderable: false, searchable: false, className: 'text-center' },
                 { data: 'created_at', name: 'created_at', className: 'text-center' },
+                { data: 'action', name: 'action', className: 'text-center'},
             ],
             pagingType: 'simple_numbers',
         });
@@ -120,6 +149,39 @@
 
         $('#tenants-integrations-filters').on('reset', function() {
             setTimeout(() => dataTable.ajax.reload(), 0);
+        });
+    });
+
+    $(document).on('click', '.debug-button', function(e) {
+        e.preventDefault();
+
+        const id = $(this).data('integration-id');
+
+        $.ajax({
+            url: "{{ route('tenants.integrations.debug.token', '') }}/" + id,
+            type: 'GET',
+            dataType: 'json',
+
+            success: function(response) {
+
+                const formattedJson = JSON.stringify(response, null, 4);
+
+                const html = `
+                    <pre class="rounded-0 border-0 m-0"><code class="language-json">${formattedJson}</code></pre>
+                `;
+
+                $('#debugTokenModal .modal-body').html(html);
+                $('#debugTokenModal').modal('show');
+
+                Prism.highlightAll();
+            },
+
+            error: function(xhr) {
+                $('#debugTokenModal .modal-body').html(
+                    '<p class="text-danger">Erro ao carregar JSON.</p>'
+                );
+                $('#debugTokenModal').modal('show');
+            }
         });
     });
 </script>

@@ -333,8 +333,9 @@ Route::middleware(['auth'])->group(function () {
      */
     Route::prefix('integracoes-tenants')->group(function () {
         Route::name('tenants.integrations.')->group(function () {
-            Route::get('/',                 [TenantIntegrationController::class, 'index'])->name('index');
-            Route::get('/processar',        [TenantIntegrationProcessingController::class, 'process'])->name('process');
+            Route::get('/',                    [TenantIntegrationController::class, 'index'])->name('index');
+            Route::get('/processar',           [TenantIntegrationProcessingController::class, 'process'])->name('process');
+            Route::get('/debugar-token/{id?}', [TenantIntegrationController::class, 'debugToken'])->name('debug.token');
         });
     });
 

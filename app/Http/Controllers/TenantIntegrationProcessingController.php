@@ -98,7 +98,8 @@ class TenantIntegrationProcessingController extends Controller
             'tenants_integrations.external_account_id',
             'tenants_integrations.token_expires_at',
             'tenants_integrations.status',
-            'tenants_integrations.created_at'
+            'tenants_integrations.created_at',
+            'tenants_integrations.access_token'
         );
 
         return DataTables::query($query)
@@ -161,7 +162,16 @@ class TenantIntegrationProcessingController extends Controller
                     ? date('d/m/Y H:i', strtotime($row->created_at))
                     : '-';
             })
-            ->rawColumns(['tenant', 'status_badge', 'token_expires_at'])
+            ->addColumn('action', function ($row) {
+                if ($row->provider == 'meta' && $row->access_token != null) {
+                    $div = '<button class="btn btn-primary btn-sm debug-button" data-integration-id="' . $row->id . '">DEBUGAR TOKEN</button>';
+                } else {
+                    $div = '-';
+                }
+
+                return $div;
+            })
+            ->rawColumns(['tenant', 'status_badge', 'token_expires_at', 'action'])
             ->make(true);
     }
 }
