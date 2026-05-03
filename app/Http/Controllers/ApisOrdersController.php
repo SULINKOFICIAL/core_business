@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\TenantPlanItem;
+use App\Models\AdditionalStorage;
+use App\Models\AdditionalUser;
 use App\Models\Module;
 use App\Models\ModulePricingTier;
 use App\Models\Order;
@@ -131,9 +133,44 @@ class ApisOrdersController extends Controller
             ];
         }
 
+        $plan = $order->plan;
+        $currentUsersLimit = (int) ($plan->users_limit ?? 0);
+        $currentStorageBytes = (int) ($plan->size_storage ?? 0);
+        $currentStorageGb = (int) floor($currentStorageBytes / (1024 * 1024 * 1024));
+
+        $additionalUsers = AdditionalUser::query()
+            ->where('status', true)
+            ->orderBy('quantity')
+            ->get(['quantity', 'price'])
+            ->map(function (AdditionalUser $item) {
+                return [
+                    'quantity' => (int) $item->quantity,
+                    'price' => (float) $item->price,
+                ];
+            })
+            ->values()
+            ->all();
+
+        $additionalStorages = AdditionalStorage::query()
+            ->where('status', true)
+            ->orderBy('quantity')
+            ->get(['quantity', 'price'])
+            ->map(function (AdditionalStorage $item) {
+                return [
+                    'quantity' => (int) $item->quantity,
+                    'price' => (float) $item->price,
+                ];
+            })
+            ->values()
+            ->all();
+
         return response()->json([
             'order_id' => $order->id,
             'modules' => $usageModules,
+            'users_limit' => $currentUsersLimit,
+            'storage_limit_gb' => $currentStorageGb,
+            'additional_users' => $additionalUsers,
+            'additional_storages' => $additionalStorages,
         ], 200);
     }
 
@@ -210,6 +247,7 @@ class ApisOrdersController extends Controller
             'change_package' => $this->changePackage($order, (int) ($data['value'] ?? 0)),
             'change_module' => $this->toggleModule($order, $data['value']),
             'usage' => $this->updateUsage($order, $data['value'] ?? []),
+            'limits' => $this->updateLimits($order, $data['value'] ?? []),
             'step' => $this->updateStep($order, $data['value']),
             default => null,
         };
@@ -438,6 +476,45 @@ class ApisOrdersController extends Controller
         // Retorna status de sucesso para o front.
         return [
             'message' => 'Uso do módulo atualizado com sucesso.',
+            'action' => 'updated',
+        ];
+    }
+
+    /**
+     * Atualiza limites adicionais de usuários e armazenamento do plano em rascunho.
+     */
+    private function updateLimits($order, $value): array
+    {
+        if (!is_array($value)) {
+            return [
+                'message' => 'Parâmetros de limite inválidos.',
+                'action' => 'invalid',
+            ];
+        }
+
+        $plan = $order->plan;
+        if (!$plan) {
+            return [
+                'message' => 'Plano em progresso não encontrado.',
+                'action' => 'not_found',
+            ];
+        }
+
+        $usersLimit = isset($value['users_limit']) ? (int) $value['users_limit'] : null;
+        $storageLimitGb = isset($value['storage_limit_gb']) ? (int) $value['storage_limit_gb'] : null;
+
+        if ($usersLimit !== null && $usersLimit > 0) {
+            $plan->users_limit = $usersLimit;
+        }
+
+        if ($storageLimitGb !== null && $storageLimitGb > 0) {
+            $plan->size_storage = $storageLimitGb * 1024 * 1024 * 1024;
+        }
+
+        $plan->save();
+
+        return [
+            'message' => 'Limites atualizados com sucesso.',
             'action' => 'updated',
         ];
     }
