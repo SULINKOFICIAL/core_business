@@ -143,12 +143,10 @@
                 {{-- @include('pages.tenants._signatures') --}}
             </div>
             <div class="divs-sections div-api-data" style="display: none;">
-                <div class="card">
-                    <div class="card-body" id="api-data-container">
-                        <div class="d-flex align-items-center gap-3 text-muted">
-                            <span class="spinner-border spinner-border-sm d-none" id="api-data-loading" role="status" aria-hidden="true"></span>
-                            <span>Clique em <b>Dados em Tempo Real</b> para consultar a API desta instalação.</span>
-                        </div>
+                <div id="api-data-container">
+                    <div class="d-flex align-items-center gap-3 text-muted">
+                        <span class="spinner-border spinner-border-sm d-none" id="api-data-loading" role="status" aria-hidden="true"></span>
+                        <span>Clique em <b>Dados em Tempo Real</b> para consultar a API desta instalação.</span>
                     </div>
                 </div>
             </div>
