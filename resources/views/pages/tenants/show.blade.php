@@ -3,124 +3,132 @@
 @section('title', $client->name)
 
 @section('content')
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="d-flex align-items-center">
-                <div class="me-12">
-                    <div class="h-150px w-150px">
+    <div class="card mb-5">
+        <div class="card-body py-7">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-6">
+                <div class="d-flex align-items-center gap-5">
+                    <div class="symbol symbol-90px symbol-circle">
                         @if ($client->logo)
-                            <img src="{{ asset('storage/tenants/' . $client->id . '/logo.png') }}" alt="Logo do Cliente" class="img-fluid w-100 object-fit-contain rounded shadow">
+                            <img src="{{ asset('storage/tenants/' . $client->id . '/logo.png') }}" alt="Logo do Cliente" class="object-fit-contain">
                         @else
-                            <img src="{{ asset('assets/media/images/logo.png') }}" alt="Logo do Cliente" class="img-fluid w-100 object-fit-contain rounded shadow">
+                            <img src="{{ asset('assets/media/images/logo.png') }}" alt="Logo do Cliente" class="object-fit-contain">
                         @endif
                     </div>
+                    <div>
+                        <h1 class="mb-1 fw-bolder text-gray-800 text-uppercase fs-2">{{ $client->name }}</h1>
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="badge badge-light-info"><i class="fa-regular fa-calendar me-1"></i>{{ $periodStart }} até {{ $periodEnd }}</span>
+                            <span class="badge badge-light-primary"><i class="fa-solid fa-users me-1"></i>{{ $usersLimit }} usuários</span>
+                            <span class="badge badge-light-success"><i class="fa-solid fa-hard-drive me-1"></i>{{ $storageLimitGb }} GB</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="w-100">
+                <div class="d-flex align-items-center gap-2">
+                    <a href="{{ route('systems.update.database', $client->id) }}" class="btn btn-light-primary btn-sm">
+                        <i class="fa-solid fa-database me-1"></i>Atualizar DB
+                    </a>
+                    <a href="{{ route('tenants.edit', $client->id) }}" class="btn btn-light btn-sm">
+                        <i class="fa-solid fa-gear me-1"></i>Configurações
+                    </a>
+                </div>
+            </div>
+
+            @if (!$actualPlan['name'])
+                <div class="alert alert-danger mt-5 mb-0">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>Nenhum pacote atribuído.
+                </div>
+            @endif
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
                     <div class="d-flex align-items-center justify-content-between mb-2">
-                        <p class="fw-bold text-gray-700 fs-2x mb-0 text-uppercase lh-1">
-                            {{ $client->name }}
-                        </p>
-                        <div class="d-flex gap-4">
-                            <a href="{{ route('systems.update.database', $client->id) }}" class="btn btn-icon btn-sm btn-light-primary">
-                                <i class="fa-solid fa-database" data-bs-toggle="tooltip" title="Atualizar banco de dados"></i>
-                            </a>
-                            <a href="{{ route('tenants.edit', $client->id) }}" class="btn btn-icon btn-sm btn-light-primary">
-                                <i class="fa-solid fa-gear" data-bs-toggle="tooltip" title="Configurações"></i>
-                            </a>
-                        </div>
+                        <span class="text-gray-500 fs-8 fw-semibold text-uppercase">Pacote</span>
+                        <i class="fa-solid fa-money-bill-wave text-success"></i>
                     </div>
-                    <div class="d-flex flex-wrap gap-2 mb-2">
-                        <span class="badge badge-light-info fs-8">Período: {{ $periodStart }} até {{ $periodEnd }}</span>
-                        <span class="badge badge-light-primary fs-8">Usuários: {{ $usersLimit }}</span>
-                        <span class="badge badge-light-success fs-8">Limite: {{ $storageLimitGb }} GB</span>
+                    <div class="fs-2 fw-bolder text-gray-800">R$ {{ number_format($client->current_value, 2, ',', '.') }}</div>
+                    <div class="text-gray-500 fs-7">{{ $actualPlan['name'] ?: 'Sem plano' }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-gray-500 fs-8 fw-semibold text-uppercase">Renovação</span>
+                        <i class="fa-solid fa-rotate text-warning"></i>
                     </div>
-                    @if ($actualPlan['name'])
-                    <p class="fs-6 text-gray-700 fw-bold mb-1">
-                        Valor atual do pacote: <span class="text-success fw-bolder">R$ {{ number_format($client->current_value, 2, ',', '.') }}</span>
-                    </p>
-                    <p class="fs-6 text-gray-700 fw-bold mb-2">
-                        Domínios: 
-                        @foreach ($client->domains as $domain)
-                            <span class="badge badge-light-primary me-2">{{ $domain->domain }}</span>
-                        @endforeach
-                    </p>
-                    <div class="d-flex gap-3">
-                        <div class="alert {{ $client->renovation() <= 5 ? 'alert-danger' : 'alert-success' }} d-flex align-items-center p-2 border-dashed {{ $client->renovation() <= 5 ? 'border-danger' : 'border-success' }} mb-0">
-                            <i class="ki-duotone ki-shield-tick fs-1 {{ $client->renovation() <= 5 ? 'text-danger' : 'text-success' }} me-2">
-                                <span class="path1">
-                                </span><span class="path2">
-                                </span>
-                            </i>
-                            <h6 class="mb-0 {{ $client->renovation() <= 5 ? 'text-danger' : 'text-success' }} fw-normal me-2">
-                                Renovação em: 
-                                <span class="fw-bolder">{{ $client->renovation() ?? 0 }} dias</span></span>
-                            </h4>
-                        </div>
-                        <div class="alert alert-primary d-flex align-items-center p-2 border-dashed border-primary mb-0">
-                            <i class="ki-duotone ki-shield-tick fs-1 text-primary me-2">
-                                <span class="path1">
-                                </span><span class="path2">
-                                </span>
-                            </i>
-                            <h6 class="mb-0 text-primary fw-normal me-2">
-                                Armazenamento:
-                                <span class="fw-bolder">{{ $storageLimitGb }} GB</span></span>
-                            </h6>
-                        </div>
+                    <div class="fs-2 fw-bolder {{ $client->renovation() <= 5 ? 'text-danger' : 'text-success' }}">
+                        {{ $client->renovation() ?? 0 }} dias
                     </div>
-                    @else
-                    <p class="fs-6 text-danger fw-bold mb-0 mt-2">
-                        Nenhum pacote atribuido
-                    </p>
-                    @endif
+                    <div class="text-gray-500 fs-7">Plano #{{ $currentPlanId ?? 'Sem plano' }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-gray-500 fs-8 fw-semibold text-uppercase">Domínios</span>
+                        <i class="fa-solid fa-globe text-primary"></i>
+                    </div>
+                    <div class="fs-2 fw-bolder text-gray-800">{{ $client->domains->count() }}</div>
+                    <div class="d-flex flex-wrap gap-1 mt-2">
+                        @forelse ($client->domains as $domain)
+                            <span class="badge badge-light-primary">{{ $domain->domain }}</span>
+                        @empty
+                            <span class="badge badge-light-danger">Sem domínio</span>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-gray-500 fs-8 fw-semibold text-uppercase">Módulos</span>
+                        <i class="fa-solid fa-puzzle-piece text-info"></i>
+                    </div>
+                    <div class="fs-2 fw-bolder text-gray-800">{{ count($enabledModules) }}</div>
+                    <div class="text-gray-500 fs-7">Itens habilitados no tenant</div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="row">
-        <div class="col-12 col-xl-2">
-            <div class="card mb-4">
-                <div class="card-body p-6">
-                    <p class="fw-bolder text-gray-700 fs-3 text-uppercase">Módulos Habilitados</p>
-                    <p class="text-gray-700 fw-bolder mb-2">
-                        Plano atual do tenant #{{ $currentPlanId ?? 'Sem plano' }}
-                    </p>
-                    @if (count($enabledModules) > 0)
-                        @foreach ($enabledModules as $moduleName)
-                            <div class="mb-1 d-flex align-items-center gap-2">
-                                <i class="fa-solid fa-circle-check text-success"></i>
-                                <p class="text-gray-700 mb-0">{{ $moduleName }}</p>
-                            </div>
-                        @endforeach
-                    @else
-                        <p class="text-muted mb-0">Nenhum item liberado no momento.</p>
-                    @endif
-                </div>
+
+    <div class="card mb-5">
+        <div class="card-body py-5">
+            <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-sm btn-light-primary btn-sections active" data-show="resources">
+                    <i class="fa-solid fa-list-check me-1"></i>Plano Atual
+                </button>
+                <button class="btn btn-sm btn-light btn-sections" data-show="cards">
+                    <i class="fa-regular fa-credit-card me-1"></i>Cartões
+                </button>
+                <button class="btn btn-sm btn-light btn-sections" data-show="signatures">
+                    <i class="fa-solid fa-file-signature me-1"></i>Assinaturas
+                </button>
+                <button class="btn btn-sm btn-light btn-sections" data-show="orders">
+                    <i class="fa-solid fa-clock-rotate-left me-1"></i>Histórico de Compras
+                </button>
+                <button class="btn btn-sm btn-light btn-sections" data-show="api-data" id="btn-api-data">
+                    <i class="fa-solid fa-wave-square me-1"></i>Dados em Tempo Real
+                </button>
             </div>
         </div>
-        <div class="col-12 col-xl-10">
-            <div class="d-flex gap-2">
-                <button class="btn btn-sm w-200px mb-2 btn-danger btn-sections" data-show="resources">
-                    Ver Plano Atual
-                </button>
-                <button class="btn btn-sm w-200px mb-2 btn-warning btn-sections" data-show="cards">
-                    Cartões
-                </button>
-                <button class="btn btn-sm w-200px mb-2 btn-success btn-sections" data-show="signatures">
-                    Assinaturas
-                </button>
-                <button class="btn btn-sm w-200px mb-2 btn-primary btn-sections" data-show="orders">
-                    Histórico de Compras
-                </button>
-                <button class="btn btn-sm w-200px mb-2 btn-info btn-sections" data-show="api-data" id="btn-api-data">
-                    Ver dados em tempo real
-                </button>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="divs-sections div-resources">
+                @include('pages.tenants._resources')
             </div>
             <div class="divs-sections div-cards" style="display: none;">
                 @include('pages.tenants._cards')
-            </div>
-            <div class="divs-sections div-resources">
-                @include('pages.tenants._resources')
             </div>
             <div class="divs-sections div-orders" style="display: none;">
                 @include('pages.tenants._orders')
@@ -133,7 +141,7 @@
                     <div class="card-body" id="api-data-container">
                         <div class="d-flex align-items-center gap-3 text-muted">
                             <span class="spinner-border spinner-border-sm d-none" id="api-data-loading" role="status" aria-hidden="true"></span>
-                            <span>Clique em <b>Ver dados em tempo real</b> para consultar a API desta instalação.</span>
+                            <span>Clique em <b>Dados em Tempo Real</b> para consultar a API desta instalação.</span>
                         </div>
                     </div>
                 </div>
@@ -152,6 +160,8 @@
         let hasLoadedApiData = false;
 
         $(document).on('click', '.btn-sections', function(){
+            $('.btn-sections').removeClass('btn-light-primary active').addClass('btn-light');
+            $(this).removeClass('btn-light').addClass('btn-light-primary active');
 
             var section = $(this).data('show');
             
