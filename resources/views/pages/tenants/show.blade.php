@@ -7,11 +7,11 @@
         <div class="card-body py-7">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-6">
                 <div class="d-flex align-items-center gap-5">
-                    <div class="symbol symbol-90px symbol-circle">
+                    <div class="symbol symbol-90px">
                         @if ($client->logo)
                             <img src="{{ asset('storage/tenants/' . $client->id . '/logo.png') }}" alt="Logo do Cliente" class="object-fit-contain">
                         @else
-                            <img src="{{ asset('assets/media/images/logo.png') }}" alt="Logo do Cliente" class="object-fit-contain">
+                            <img src="{{ asset('assets/media/images/logo_dark.webp') }}" alt="Logo do Cliente" class="object-fit-contain">
                         @endif
                     </div>
                     <div>
@@ -46,8 +46,8 @@
             <div class="card h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center justify-content-between mb-2">
-                        <span class="text-gray-500 fs-8 fw-semibold text-uppercase">Pacote</span>
-                        <i class="fa-solid fa-money-bill-wave text-success"></i>
+                        <span class="text-gray-500 fs-8 fw-semibold text-uppercase">Valor do Pacote</span>
+                        <i class="fa-solid fa-money-bill-wave"></i>
                     </div>
                     <div class="fs-2 fw-bolder text-gray-800">R$ {{ number_format($client->current_value, 2, ',', '.') }}</div>
                     <div class="text-gray-500 fs-7">{{ $actualPlan['name'] ?: 'Sem plano' }}</div>
@@ -58,13 +58,26 @@
             <div class="card h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center justify-content-between mb-2">
-                        <span class="text-gray-500 fs-8 fw-semibold text-uppercase">Renovação</span>
-                        <i class="fa-solid fa-rotate text-warning"></i>
+                        <span class="text-gray-500 fs-8 fw-semibold text-uppercase">Usuário</span>
+                        <i class="fa-solid fa-users"></i>
                     </div>
-                    <div class="fs-2 fw-bolder {{ $client->renovation() <= 5 ? 'text-danger' : 'text-success' }}">
-                        {{ $client->renovation() ?? 0 }} dias
+                    <div class="fs-2 fw-bolder text-gray-800">{{ $usersLimit }}</div>
+                    <div class="text-gray-500 fs-7">Limite no plano atual</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-gray-500 fs-8 fw-semibold text-uppercase">Armazenamento</span>
+                        <i class="fa-solid fa-hard-drive"></i>
                     </div>
-                    <div class="text-gray-500 fs-7">Plano #{{ $currentPlanId ?? 'Sem plano' }}</div>
+                    <div class="fs-2 fw-bolder text-gray-800">{{ $storageLimitGb }} GB</div>
+                    <div class="text-gray-500 fs-7">Limite no plano atual</div>
+                    <div class="progress h-7px">
+                        <div class="progress-bar bg-gray-200 w-75" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -73,53 +86,37 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="text-gray-500 fs-8 fw-semibold text-uppercase">Domínios</span>
-                        <i class="fa-solid fa-globe text-primary"></i>
+                        <i class="fa-solid fa-globe"></i>
                     </div>
                     <div class="fs-2 fw-bolder text-gray-800">{{ $client->domains->count() }}</div>
                     <div class="d-flex flex-wrap gap-1 mt-2">
                         @forelse ($client->domains as $domain)
-                            <span class="badge badge-light-primary">{{ $domain->domain }}</span>
+                            <span class="badge badge-light text-gray-600">{{ $domain->domain }}</span>
                         @empty
-                            <span class="badge badge-light-danger">Sem domínio</span>
+                            <span class="badge badge-light text-gray-600">Sem domínio</span>
                         @endforelse
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <span class="text-gray-500 fs-8 fw-semibold text-uppercase">Módulos</span>
-                        <i class="fa-solid fa-puzzle-piece text-info"></i>
-                    </div>
-                    <div class="fs-2 fw-bolder text-gray-800">{{ count($enabledModules) }}</div>
-                    <div class="text-gray-500 fs-7">Itens habilitados no tenant</div>
-                </div>
-            </div>
-        </div>
     </div>
 
-    <div class="card mb-5">
-        <div class="card-body py-5">
-            <div class="d-flex flex-wrap gap-2">
-                <button class="btn btn-sm btn-light-primary btn-sections active" data-show="resources">
-                    <i class="fa-solid fa-list-check me-1"></i>Plano Atual
-                </button>
-                <button class="btn btn-sm btn-light btn-sections" data-show="cards">
-                    <i class="fa-regular fa-credit-card me-1"></i>Cartões
-                </button>
-                <button class="btn btn-sm btn-light btn-sections" data-show="signatures">
-                    <i class="fa-solid fa-file-signature me-1"></i>Assinaturas
-                </button>
-                <button class="btn btn-sm btn-light btn-sections" data-show="orders">
-                    <i class="fa-solid fa-clock-rotate-left me-1"></i>Histórico de Compras
-                </button>
-                <button class="btn btn-sm btn-light btn-sections" data-show="api-data" id="btn-api-data">
-                    <i class="fa-solid fa-wave-square me-1"></i>Dados em Tempo Real
-                </button>
-            </div>
-        </div>
+    <div class="d-flex flex-wrap gap-2 mb-5">
+        <button class="btn btn-sm btn-light-primary btn-sections active" data-show="resources">
+            <i class="fa-solid fa-list-check me-1"></i>Plano Atual
+        </button>
+        <button class="btn btn-sm btn-light btn-sections" data-show="cards">
+            <i class="fa-regular fa-credit-card me-1"></i>Cartões
+        </button>
+        <button class="btn btn-sm btn-light btn-sections" data-show="signatures">
+            <i class="fa-solid fa-file-signature me-1"></i>Assinaturas
+        </button>
+        <button class="btn btn-sm btn-light btn-sections" data-show="orders">
+            <i class="fa-solid fa-clock-rotate-left me-1"></i>Histórico de Compras
+        </button>
+        <button class="btn btn-sm btn-light btn-sections" data-show="api-data" id="btn-api-data">
+            <i class="fa-solid fa-wave-square me-1"></i>Dados em Tempo Real
+        </button>
     </div>
 
     <div class="row g-4">
@@ -148,7 +145,6 @@
             </div>
         </div>
     </div>
-    @include('pages.tenants._add_free')
 @endsection
 
 @section('custom-footer')

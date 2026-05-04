@@ -11,13 +11,12 @@ body {
 }
 
 [data-bs-theme="light"] body {
-    background: #F4F6FA;
+    background: #e2e2e2;
 }
 
 .card {
     border: 0;
     box-shadow: none;
-    border-radius: 25px;
 }
 
 .bg-dark {
