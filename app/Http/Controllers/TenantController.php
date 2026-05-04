@@ -253,6 +253,9 @@ class TenantController extends Controller
             ->map(fn ($module) => $module['name'])
             ->values()
             ->all();
+        $totalModulesCount = Module::query()
+            ->where('status', true)
+            ->count();
         $currentPlanId = $tenant->plan->id;
 
         // Retorna a página
@@ -267,6 +270,7 @@ class TenantController extends Controller
             'periodStart'        => $periodStart,
             'periodEnd'          => $periodEnd,
             'enabledModules'     => $enabledModules,
+            'totalModulesCount'  => $totalModulesCount,
             'currentPlanId'      => $currentPlanId,
         ]);
 
