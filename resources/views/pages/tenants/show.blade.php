@@ -3,7 +3,7 @@
 @section('title', $client->name)
 
 @section('content')
-    <div class="card mb-5">
+    <div class="card mb-4">
         <div class="card-body py-7">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-6">
                 <div class="d-flex align-items-center gap-6">
@@ -50,7 +50,7 @@
         </div>
     </div>
 
-    <div class="row g-4 mb-5">
+    <div class="row g-4 mb-4">
         <div class="col-12 col-md-6 col-xl-3">
             <div class="card h-100">
                 <div class="card-body">
