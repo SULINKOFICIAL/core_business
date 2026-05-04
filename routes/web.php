@@ -111,6 +111,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/desabilitar/{id}', [TenantController::class, 'destroy'])->name('destroy');       
             Route::get('/dominios',         [TenantDomainController::class, 'index'])->name('domains.index');
             Route::get('/dominios/processar',[TenantDomainProcessingController::class, 'process'])->name('domains.process');
+            Route::post('/dominios/adicionar',[TenantDomainController::class, 'store'])->name('domains.store');
             
 
             /**
