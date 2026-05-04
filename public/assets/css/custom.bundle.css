@@ -4,6 +4,7 @@
     --bs-text-success: #4aa800;
     --bs-success-light: #d5f0c3;
     --bs-success-bg-subtle: #d5f0c3;
+    --bs-light-inverse: var(--bs-text-gray-700);
 }
 
 body {

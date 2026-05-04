@@ -6,20 +6,29 @@
     <div class="card mb-5">
         <div class="card-body py-7">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-6">
-                <div class="d-flex align-items-center gap-5">
-                    <div class="symbol symbol-90px">
+                <div class="d-flex align-items-center gap-6">
+                    <div class="symbol symbol-75px">
                         @if ($client->logo)
                             <img src="{{ asset('storage/tenants/' . $client->id . '/logo.png') }}" alt="Logo do Cliente" class="object-fit-contain">
                         @else
                             <img src="{{ asset('assets/media/images/logo_dark.webp') }}" alt="Logo do Cliente" class="object-fit-contain">
                         @endif
                     </div>
-                    <div>
+                    <div class="d-flex flex-column">
                         <h1 class="mb-1 fw-bolder text-gray-800 text-uppercase fs-2">{{ $client->name }}</h1>
-                        <div class="d-flex flex-wrap gap-2">
-                            <span class="badge badge-light-info"><i class="fa-regular fa-calendar me-1"></i>{{ $periodStart }} até {{ $periodEnd }}</span>
-                            <span class="badge badge-light-primary"><i class="fa-solid fa-users me-1"></i>{{ $usersLimit }} usuários</span>
-                            <span class="badge badge-light-success"><i class="fa-solid fa-hard-drive me-1"></i>{{ $storageLimitGb }} GB</span>
+                        <div class="text-gray-500 fw-semibold fs-7 mb-2">
+                            {{ $client->responsible_name ?? $client->name }} · {{ $client->email ?? ($client->domains->first()->domain ?? '-') }}
+                        </div>
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <span class="badge rounded-pill badge-light-dark text-gray-700">
+                                <i class="fa-solid fa-link me-2 fs-9"></i>Plano #{{ $currentPlanId ?? 'N/A' }}
+                            </span>
+                            <span class="badge rounded-pill badge-light-success">
+                                <i class="fa-solid fa-rotate text-success me-2 fs-9"></i>Renova em {{ $client->renovation() ?? 0 }} dias
+                            </span>
+                            <span class="badge rounded-pill badge-light-secondary text-gray-600">
+                                <i class="fa-solid fa-calendar-check me-2 fs-8"></i>{{ $periodStart }} até {{ $periodEnd }}
+                            </span>
                         </div>
                     </div>
                 </div>
