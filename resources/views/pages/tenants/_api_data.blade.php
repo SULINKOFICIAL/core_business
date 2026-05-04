@@ -11,6 +11,7 @@
         </div>
     </div>
 @else
+
     <div class="row g-4">
         <div class="col-12 col-md-4">
             <div class="card h-100">
@@ -67,11 +68,11 @@
                     <p class="fw-bolder text-gray-700 fs-4 text-uppercase mb-3">Módulos habilitados</p>
                     @if (count($enabledModules ?? []) > 0)
                         <div class="row g-2">
-                            @foreach (($enabledModules ?? []) as $moduleName)
+                            @foreach (($enabledModules ?? []) as $module)
                                 <div class="col-12 col-md-4">
                                     <div class="d-flex align-items-center gap-2">
                                         <i class="fa-solid fa-circle-check text-success"></i>
-                                        <p class="text-gray-700 mb-0">{{ $moduleName }}</p>
+                                        <p class="text-gray-700 mb-0">{{ $module['name'] }}</p>
                                     </div>
                                 </div>
                             @endforeach

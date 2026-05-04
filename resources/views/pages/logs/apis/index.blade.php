@@ -10,7 +10,7 @@
 @endsection
 
 @section('content')
-<div class="card mb-5">
+<div class="card mb-4">
     <div class="card-header">
         <h3 class="card-title align-items-start flex-column">
             <span class="card-label fw-bold text-gray-800">Despachos da API por Dia</span>
