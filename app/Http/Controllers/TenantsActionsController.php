@@ -784,6 +784,8 @@ class TenantsActionsController extends Controller
          */
         foreach ($categories as $category) {
 
+            dd($category);
+
             /**
              * Verifica se veio com pacote ou sem
              */
