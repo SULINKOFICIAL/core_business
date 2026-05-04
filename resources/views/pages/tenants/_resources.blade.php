@@ -9,25 +9,14 @@
             <div>
                 <h3 class="card-title fw-bolder text-gray-800 mb-1">Módulos habilitados</h3>
                 <div class="text-gray-600 fs-6">
-                    <span id="tenant-enabled-modules-counter">{{ $totalEnabledModules }}</span> de {{ $totalModules }} módulos ativos no sistema
+                    <span class="fw-bolder" id="tenant-enabled-modules-counter">{{ $totalEnabledModules }}</span> de {{ $totalModules }} módulos ativos no sistema
                 </div>
             </div>
 
             <div class="d-flex flex-wrap align-items-center gap-2">
-                <div class="position-relative">
-                    <i class="fa-solid fa-magnifying-glass fs-6 text-gray-400 position-absolute top-50 start-0 translate-middle-y ms-4"></i>
-                    <input
-                        type="text"
-                        id="tenant-modules-search"
-                        class="form-control form-control-solid ps-12 w-250px"
-                        placeholder="Buscar módulo..."
-                    >
-                </div>
 
-                <div class="btn-group" role="group" aria-label="Filtro módulos">
-                    <button type="button" class="btn btn-sm btn-light-primary js-modules-filter active" data-filter="all">Todos</button>
-                    <button type="button" class="btn btn-sm btn-light js-modules-filter" data-filter="enabled">Habilitados</button>
-                    <button type="button" class="btn btn-sm btn-light js-modules-filter" data-filter="disabled">Indisponíveis</button>
+                <div class="btn-group" >
+                    <button type="button" class="btn btn-sm btn-light-primary active">Atualizar Plano do Cliente</button>
                 </div>
             </div>
         </div>
@@ -51,10 +40,10 @@
                 <div class="row g-3 tenant-category-grid">
                     @foreach ($categoryModules as $module)
                         <div class="col-12 col-md-6 col-xl-4 col-xxl-3 tenant-module-item" data-status="enabled" data-module-name="{{ strtolower($module->name) }}">
-                            <div class="border border-gray-300 rounded px-3 py-2 h-100 bg-light d-flex align-items-center">
-                                <span class="symbol symbol-28px me-3">
+                            <div class="rounded px-3 py-2 h-100 bg-light d-flex align-items-center">
+                                <span class="symbol symbol-30px me-3">
                                     <span class="symbol-label bg-light-success text-success">
-                                        <i class="fa-solid fa-check fs-7"></i>
+                                        <i class="fa-solid fa-check text-success fs-6"></i>
                                     </span>
                                 </span>
                                 <span class="fw-semibold text-gray-800">{{ $module->name }}</span>
