@@ -35,7 +35,6 @@ class ApisAccountController extends Controller
 
         // Verifica se já existe renovação pendente.
         $existsRenovation = $tenant->orders()
-            ->where('type', 'Renovação')
             ->where('status', 'pending')
             ->exists();
 
@@ -114,7 +113,6 @@ class ApisAccountController extends Controller
             $orderData['date_created'] = $order->created_at;
             $orderData['date_paid'] = $order->paid_at;
             $orderData['date_end'] = $lastCycle?->end_date;
-            $orderData['type'] = $order->type;
             $orderData['amount'] = $order->total_amount;
             $orderData['currency'] = $order->currency;
             $orderData['method'] = $order->method;

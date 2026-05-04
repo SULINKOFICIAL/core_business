@@ -20,7 +20,7 @@
                         </span>
                     </td>
                     <td class="text-center">
-                        <p class="text-gray-700 m-0 text-center">{{ $subscription->package->name }}</p>
+                        <p class="text-gray-700 m-0 text-center">{{ $subscription->order?->plan?->name ?? 'Plano' }}</p>
                     </td>
                     <td>
                         <span class="text-gray-600">

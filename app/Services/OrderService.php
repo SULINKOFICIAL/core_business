@@ -2,12 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\TenantModule;
 use App\Models\TenantPlan;
 use App\Models\Order;
 use App\Models\TenantPlanItemConfiguration;
-use App\Models\TenantSubscription;
-use App\Models\Package;
 use App\Models\Module;
 use App\Models\Subscription;
 use App\Models\OrderTransaction;
@@ -28,7 +25,6 @@ class OrderService
             [
                 'tenant_id'  => $tenant->id,
                 'plan_id'    => $plan->id,
-                'type'       => 'Pacote',
                 'status'     => 'draft',
             ],
         );
@@ -299,83 +295,6 @@ class OrderService
             return $statusMap[$status]['message'];
         }
         
-    }
-
-    public function confirmPaymentOrder($order)
-    {
-
-        // Verifica se o pagamento já foi processado
-        if ($order->status === 'Pago') return 'Esse Pagamento já foi aprovado.';
-
-        // Busca o cliente
-        $tenant = $order->tenant;
-
-        // Busca o pacote a ser renovado
-        $package = Package::find($order->key_id);
-
-        // Obtém a última assinatura
-        $currentSubscription = $tenant->lastSubscription();
-
-        /**
-         * Caso não seja uma renovação, indica que o usuário esta 
-         * trocando o pacote dele ou esta sendo atribuido um novo.
-         */
-        if ($order->type != 'Renovação') {
-
-            // Cancela assinatura atual
-            if ($currentSubscription) {
-                $currentSubscription->update([
-                    'status'   => 'Cancelado',
-                    'end_date' => now(),
-                ]);
-            }
-
-            // Remove módulos antigos
-            TenantModule::where('tenant_id', $tenant->id)->delete();
-
-            // Adiciona novos módulos
-            foreach ($package->modules as $module) {
-                TenantModule::create([
-                    'tenant_id'  => $tenant->id,
-                    'module_id'  => $module->id,
-                ]);
-            }
-
-            // Define a data de inicio da nova assinatura para hoje
-            $startDate = now();
-        } else {
-
-            // Muda o status da assinatura atual para renovada
-            $currentSubscription->update([
-                'status'   => 'Renovada',
-            ]);
-
-            // Extende a data da assinatura a partir da última
-            $startDate = $currentSubscription->end_date;
-        }
-
-        // Verifique se a data final já passou
-        if ($startDate->isPast()) $startDate = now();
-
-        // Separa a data de encerramento
-        $endDate = $startDate->clone();
-
-        // Criar nova assinatura
-        TenantSubscription::create([
-            'tenant_id'  => $tenant->id,
-            'package_id' => $package->id,
-            'order_id'   => $order->id,
-            'start_date' => $startDate,
-            'end_date'   => $endDate->addDays($package->duration_days),
-            'status'     => 'Ativo',
-        ]);
-
-        // Atualiza o pedido
-        $order->status = 'Pago';
-        $order->paid_at = now();
-        $order->save();
-
-        return 'Pacote "' . $package->name . '" ativado com sucesso.';
     }
 
     /**

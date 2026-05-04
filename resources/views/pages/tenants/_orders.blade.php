@@ -44,16 +44,6 @@
                             <span class="badge badge-light-warning">Rascunho</span>
                             @else
                                 <span class="badge badge-light-warning">Pendente</span>
-                                @if ($order->type == 'Renovação')
-                                <a href="{{ route('subscriptions.renew', $order->id) }}" class="text-hover-primary">
-                                    <i class="fa-solid fa-arrow-rotate-right" data-bs-toggle="tooltip" data-bs-html="true" title="Forçar Renovação"></i>
-                                </a>
-                                @endif
-                                @if ($order->type == 'Pacote Trocado')
-                                <a href="{{ route('payments.approve', $order->id) }}" class="text-hover-primary">
-                                    <i class="fa-solid fa-sack-dollar" data-bs-toggle="tooltip" data-bs-html="true" title="Aprovar Pagamento"></i>
-                                </a>
-                                @endif
                             @endif
                         </td>
                     </tr>

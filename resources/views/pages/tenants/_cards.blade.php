@@ -40,14 +40,7 @@
                     </td>
                     <td>
                         @if ($card->tokenization_id)
-                        <a href="{{ route('rede.verify.token', $card->tokenization_id) }}">
                             <i class="fa-solid fa-arrows-left-right-to-line" data-bs-toggle="tooltip" data-bs-html="true" title="<b>tokenizationId:</b><br>{{ $card->tokenization_id }}"></i>
-                        </a>
-                        @endif
-                        @if ($card->tokenization_id)
-                        <a href="{{ route('rede.cryptogram', $card->tokenization_id) }}">
-                            <i class="fa-solid fa-solid fa-robot" data-bs-toggle="tooltip" data-bs-html="true" title="Criptografar"></i>
-                        </a>
                         @endif
                     </td>
                     <td class="text-center">

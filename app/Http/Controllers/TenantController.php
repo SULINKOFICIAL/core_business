@@ -160,7 +160,6 @@ class TenantController extends Controller
             'subscription_id' => $subscription->id,
             'total_amount' => 0,
             'status' => 'Liberado',
-            'type' => 'MIGRAÇÃO',
             'current_step' => 'Pagamento',
             'created_at' => now(),
         ]);

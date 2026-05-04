@@ -9,7 +9,6 @@ use App\Http\Controllers\TenantInstallController;
 use App\Http\Controllers\TenantsActionsController;
 use App\Http\Controllers\CpanelController;
 use App\Http\Controllers\DeveloperController;
-use App\Http\Controllers\ERedeController;
 use App\Http\Controllers\ErrorMiCoreController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\IntegrationSuggestionController;
@@ -404,15 +403,6 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('assinaturas')->group(function () {
         Route::name('subscriptions.')->group(function () {
             Route::get('/', [SubscriptionsController::class, 'index'])->name('index');
-        });
-    });
-
-    /**
-     * Rotas para pagamentos nos sistemas miCores.
-     */
-    Route::prefix('pagamentos')->group(function () {
-        Route::name('payments.')->group(function () {
-            Route::get('/aprovar/{id}', [OrderController::class, 'approve'])->name('approve');
         });
     });
 

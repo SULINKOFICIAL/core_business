@@ -21,7 +21,6 @@ class TenantSubscription extends Model
     
     protected $fillable = [
         'tenant_id',
-        'package_id',
         'order_id',
         'start_date',
         'end_date',
@@ -42,11 +41,6 @@ class TenantSubscription extends Model
     public function tenant(): BelongsTo
     {
        return $this->belongsTo(Tenant::class, 'tenant_id');
-    }
-
-    public function package(): BelongsTo
-    {
-       return $this->belongsTo(Package::class, 'package_id');
     }
 
     public function items(): HasMany

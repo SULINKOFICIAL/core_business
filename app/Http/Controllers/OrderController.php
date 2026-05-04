@@ -56,28 +56,6 @@ class OrderController extends Controller
 
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function approve($id)
-    {
-
-        // Busca o pedido
-        $order = Order::find($id);
-
-        // Aprova o pagamento do cliente
-        $this->orderService->confirmPaymentOrder($order);
-
-        // Redireciona
-        return redirect()
-            ->back()
-            ->with('success', 'Nenhuma assinatura vencida encontrada');
-
-    }
-
     public function reprocessSubscription($id)
     {
 

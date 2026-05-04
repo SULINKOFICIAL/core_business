@@ -189,10 +189,8 @@ class ApisOrdersController extends Controller
         $orderJson['id'] = $order->id;
         $orderJson['date_created'] = $order->created_at;
         $orderJson['date_paid'] = $order->paid_at;
-        $orderJson['type'] = $order->type;
         $orderJson['amount'] = $order->total_amount;
         $orderJson['method'] = $order->method;
-        $orderJson['description'] = $order->description;
         $orderJson['status'] = $order->status;
         $orderJson['packageName'] = $order->plan->name;
 

@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Order extends Model
 {
@@ -30,11 +29,7 @@ class Order extends Model
         'currency',
         'total_amount',
         'pagarme_message',
-        'type',
-        'key_id',
-        'previous_key_id',
         'method',
-        'description',
         'locked_at',
         'paid_at',
         'canceled_at',
@@ -64,10 +59,5 @@ class Order extends Model
     public function plan(): BelongsTo
     {
         return $this->belongsTo(TenantPlan::class, 'plan_id', 'id');
-    }
-
-    public function previousPackage(): BelongsTo
-    {
-        return $this->belongsTo(Package::class, 'previous_key_id');
     }
 }
