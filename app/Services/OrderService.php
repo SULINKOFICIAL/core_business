@@ -97,7 +97,7 @@ class OrderService
         });
     }
 
-    public function createOrderPayment($plan, $orderPayment, $tenant, $clientInfo, $card, $cvv = null, $intervalCycle, $address = null)
+    public function createOrderPayment($plan, $orderPayment, $tenant, $clientInfo, $card, $cvv = null, $intervalCycle)
     {
 
         // Inicia o serviço da PagarMe
@@ -120,7 +120,7 @@ class OrderService
         /**
          * Retorna o cartão na PagarMe 
          */
-        $card = $pagarMeService->findOrCreateCard($tenant->id, $card->id, $cvv ?? null, $address ?? null);
+        $card = $pagarMeService->findOrCreateCard($tenant->id, $card->id, $cvv ?? null, $clientInfo['address']);
 
         /**
          * Retorna a assinatura na PagarMe 

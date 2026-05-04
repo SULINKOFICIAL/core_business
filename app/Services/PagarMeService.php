@@ -140,11 +140,11 @@ class PagarMeService
                 'exp_year'        => $card->expiration_year,
                 'cvv'             => $cvv,
                 'billing_address' => [
-                    'line_1'   => $address['address'] ?? 'teste',
-                    'zip_code' => $address['cep'] ?? '12345678',
-                    'city'     => $address['city'] ?? 'teste',
-                    'state'    => $address['state'] ?? 'teste',
-                    'country'  => $address['country'] ?? 'BR',
+                    'line_1'   => $address['line_1'],
+                    'zip_code' => $address['zip_code'],
+                    'city'     => $address['city'],
+                    'state'    => $address['state'],
+                    'country'  => $address['country'],
                 ]
             ];
 
@@ -195,7 +195,7 @@ class PagarMeService
 
         // Monta o payload para a criação do plano
         $payload = [
-            'name'           => "Assinatura Tenante - {$package->tenant->name} #{$package->tenant->id}",
+            'name'           => "Assinatura Tenant - {$package->tenant->name} #{$package->tenant->id}",
             'description'    => $description,
             'interval'       => $intervalCycle,
             'interval_count' => 1,
@@ -205,7 +205,7 @@ class PagarMeService
             'items'          => $items,
             'customer_id'    => $customerId,
             'payment_method' => 'credit_card',
-            'card_id' => $cardId
+            'card_id'        => $cardId
         ];
 
         // Cria a assinatura na PagarMe

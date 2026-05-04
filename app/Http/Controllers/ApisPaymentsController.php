@@ -20,10 +20,10 @@ class ApisPaymentsController extends Controller
         $data = $request->all();
 
         // Obtem o pacote do cliente
-        $package = $service->getPlanInProgress($data['tenant']);
+        $plan = $service->getPlanInProgress($data['tenant']);
 
         // Busca o pedido em andamento
-        $order = $service->getOrderInProgress($data['tenant'], $package);
+        $order = $service->getOrderInProgress($data['tenant'], $plan);
 
         // Resolve cartão (existente ou novo) com validações de payload.
         $cardResult = $this->resolveCardFromRequest($data);
@@ -38,14 +38,13 @@ class ApisPaymentsController extends Controller
 
         // Processa pagamento junto ao serviço de pedidos.
         $response = $service->createOrderPayment(
-            $package,
+            $plan,
             $order,
             $data['tenant'],
             $data['client_info'],
             $card,
             $this->extractCardCvv($data),
             $data['billing_cycle'],
-            $this->extractCardAddress($data)
         );
 
         return response()->json([
