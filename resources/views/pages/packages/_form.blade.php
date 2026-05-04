@@ -181,7 +181,6 @@
                         <td class="text-end">
                             <label class="form-label fs-8 fw-bold text-gray-700 mb-1 d-block">Preço do pacote</label>
                             <span class="text-primary fw-bolder" id="selected-modules-package-price">R$ 0,00</span>
-                            <input type="hidden" name="value" id="selected-modules-package-price-input" value="{{ old('value', $package->value ?? 0) }}">
                         </td>
                     </tr>
                 </tfoot>
@@ -279,7 +278,6 @@
             const emptySummary = $('#selected-modules-empty');
             const totalCell = $('#selected-modules-total');
             const packagePriceCell = $('#selected-modules-package-price');
-            const packagePriceInput = $('#selected-modules-package-price-input');
             const moduleItemsInputs = $('#module-items-inputs');
             const moduleSelect = $('#package-modules-select');
             const initialFixedPrices = @json($initialFixedPrices);
@@ -354,7 +352,6 @@
 
                 totalCell.text(formatCurrency(moduleTotal));
                 packagePriceCell.text(formatCurrency(packageTotal));
-                packagePriceInput.val(packageTotal.toFixed(2));
             }
 
             function selectedMap() {

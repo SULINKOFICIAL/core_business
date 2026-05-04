@@ -98,7 +98,7 @@ class OrderProcessingController extends Controller
 
             $column = match ($orderThis) {
                 'id' => 'id',
-                'type' => 'type',
+                'method_label' => 'method',
                 'created_at' => 'created_at',
                 'paid_at' => 'paid_at',
                 default => 'created_at',
@@ -129,8 +129,18 @@ class OrderProcessingController extends Controller
                 }
                 return '<a href="' . route('tenants.show', $order->tenant->id) . '" class="text-gray-700 text-hover-primary fw-bold">' . e($order->tenant->name) . '</a>';
             })
-            ->editColumn('type', function ($order) {
-                return '<span class="text-gray-600">' . e($order->type ?? '—') . '</span>';
+            ->addColumn('method_label', function ($order) {
+                $method = strtolower((string) ($order->method ?? ''));
+
+                return match ($method) {
+                    'credit_card' => '<span class="badge badge-light-primary">Cartão de Crédito</span>',
+                    'debit_card' => '<span class="badge badge-light-info">Cartão de Débito</span>',
+                    'pix' => '<span class="badge badge-light-success">PIX</span>',
+                    'boleto' => '<span class="badge badge-light-warning">Boleto</span>',
+                    'liberado' => '<span class="badge badge-light-secondary">Liberado</span>',
+                    '' => '<span class="text-gray-600">—</span>',
+                    default => '<span class="text-gray-600">' . e($order->method) . '</span>',
+                };
             })
             ->addColumn('status_label', function ($order) {
                 $status = strtolower((string) ($order->status ?? ''));
@@ -160,7 +170,7 @@ class OrderProcessingController extends Controller
             ->addColumn('actions', function ($order) {
                 return '<a href="' . route('orders.show', $order->id) . '" class="btn btn-sm btn-primary btn-active-success">Detalhes</a>';
             })
-            ->rawColumns(['order_label', 'tenant_name', 'type', 'status_label', 'items_count', 'total_label', 'created_at', 'paid_at', 'actions'])
+            ->rawColumns(['order_label', 'tenant_name', 'method_label', 'status_label', 'items_count', 'total_label', 'created_at', 'paid_at', 'actions'])
             ->make(true);
     }
 }

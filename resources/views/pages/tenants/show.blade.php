@@ -154,6 +154,70 @@
     </div>
 @endsection
 
+@section('modals')
+@parent
+<div class="modal fade" tabindex="-1" id="modal-plan-manual-update">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <form id="form-plan-manual-update">
+                @csrf
+                @method('PUT')
+                <div class="modal-header">
+                    <h3 class="modal-title">Atualização Manual do Plano</h3>
+                    <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fa-solid fa-xmark"></i>
+                    </div>
+                </div>
+                <div class="modal-body">
+
+                    <div class="row g-4 mb-4">
+                        <div class="col-12 col-md-4">
+                            <label class="form-label fw-semibold required">Início</label>
+                            <input type="date" class="form-control form-control-solid" name="start_date" required>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label fw-semibold required">Fim</label>
+                            <input type="date" class="form-control form-control-solid" name="end_date" required>
+                        </div>
+                        <div class="col-12 col-md-2">
+                            <label class="form-label fw-semibold required">Usuários</label>
+                            <input type="number" min="0" class="form-control form-control-solid" name="users_limit" required>
+                        </div>
+                        <div class="col-12 col-md-2">
+                            <label class="form-label fw-semibold required">Armazenamento (GB)</label>
+                            <input type="number" min="0" step="0.01" class="form-control form-control-solid" name="storage_limit_gb" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <label class="form-label fw-semibold required mb-0">Módulos habilitados</label>
+                            <span class="badge badge-light-primary" id="manual-modules-counter">0 selecionados</span>
+                        </div>
+                        <div class="row g-3" id="manual-modules-list">
+                            <div class="col-12">
+                                <div class="text-muted">Carregando módulos...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold required">Justificativa da alteração manual</label>
+                        <textarea class="form-control form-control-solid" name="manual_change_reason" rows="4" minlength="10" maxlength="2000" required placeholder="Descreva o motivo da alteração manual..."></textarea>
+                    </div>
+
+                    <div id="manual-plan-errors" class="alert alert-danger d-none mb-0"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-manual-plan">Salvar alteração</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endsection
+
 @section('custom-footer')
 <script>
     $(document).ready(function(){
@@ -161,6 +225,124 @@
          * Define se os dados via API já foram carregados uma vez.
          */
         let hasLoadedApiData = false;
+        const manualPlanModal = $('#modal-plan-manual-update');
+        const manualPlanForm = $('#form-plan-manual-update');
+        const manualModulesList = $('#manual-modules-list');
+        const manualModulesCounter = $('#manual-modules-counter');
+        const manualErrors = $('#manual-plan-errors');
+        const manualSubmitButton = $('#btn-submit-manual-plan');
+        let isLoadingManualPlan = false;
+
+        function refreshManualModulesCounter() {
+            const selectedCount = manualModulesList.find('input[name="modules[]"]:checked').length;
+            manualModulesCounter.text(selectedCount + ' selecionados');
+        }
+
+        function renderManualModules(modules) {
+            if (!Array.isArray(modules) || modules.length === 0) {
+                manualModulesList.html(
+                    '<div class="col-12"><div class="alert alert-light-warning mb-0">Nenhum módulo ativo encontrado na central.</div></div>'
+                );
+                refreshManualModulesCounter();
+                return;
+            }
+
+            const html = modules.map(function(module) {
+                const checked = module.enabled ? 'checked' : '';
+                return `
+                    <div class="col-12 col-md-6 col-xl-4">
+                        <label class="d-flex align-items-center p-3 rounded bg-light cursor-pointer mb-0">
+                            <input type="checkbox" class="form-check-input me-3" name="modules[]" value="${module.id}" ${checked}>
+                            <span class="fw-semibold text-gray-800">${module.name}</span>
+                        </label>
+                    </div>
+                `;
+            }).join('');
+
+            manualModulesList.html(html);
+            refreshManualModulesCounter();
+        }
+
+        function showManualPlanError(message) {
+            manualErrors.removeClass('d-none').text(message);
+        }
+
+        function clearManualPlanError() {
+            manualErrors.addClass('d-none').text('');
+        }
+
+        $(document).on('change', '#manual-modules-list input[name="modules[]"]', function () {
+            refreshManualModulesCounter();
+        });
+
+        $(document).on('click', '#btn-open-plan-manual-modal', function() {
+            if (isLoadingManualPlan) {
+                return;
+            }
+
+            isLoadingManualPlan = true;
+            clearManualPlanError();
+            manualModulesList.html('<div class="col-12"><div class="text-muted">Carregando módulos...</div></div>');
+            manualPlanForm.trigger('reset');
+            manualSubmitButton.prop('disabled', true);
+            manualPlanModal.modal('show');
+
+            $.ajax({
+                type: 'GET',
+                url: "{{ route('tenants.plan.manual.edit-data', $client->id) }}",
+                success: function(response) {
+                    if (!response.success) {
+                        showManualPlanError(response.message || 'Não foi possível carregar dados do plano para edição.');
+                        return;
+                    }
+
+                    const data = response.data || {};
+                    manualPlanForm.find('input[name="start_date"]').val(data.start_date || '');
+                    manualPlanForm.find('input[name="end_date"]').val(data.end_date || '');
+                    manualPlanForm.find('input[name="users_limit"]').val(data.users_limit ?? 0);
+                    manualPlanForm.find('input[name="storage_limit_gb"]').val(data.storage_limit_gb ?? 0);
+                    renderManualModules(data.modules || []);
+                },
+                error: function() {
+                    showManualPlanError('Não foi possível carregar dados do plano para edição.');
+                },
+                complete: function() {
+                    isLoadingManualPlan = false;
+                    manualSubmitButton.prop('disabled', false);
+                }
+            });
+        });
+
+        manualPlanForm.on('submit', function(e) {
+            e.preventDefault();
+            clearManualPlanError();
+            manualSubmitButton.prop('disabled', true);
+
+            $.ajax({
+                type: 'POST',
+                url: "{{ route('tenants.plan.manual.apply', $client->id) }}",
+                data: manualPlanForm.serialize() + '&_method=PUT',
+                success: function(response) {
+                    if (!response.success) {
+                        showManualPlanError(response.message || 'Não foi possível aplicar a atualização manual.');
+                        return;
+                    }
+
+                    manualPlanModal.modal('hide');
+                    window.location.reload();
+                },
+                error: function(xhr) {
+                    let message = 'Não foi possível aplicar a atualização manual.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        message = xhr.responseJSON.message;
+                    }
+                    showManualPlanError(message);
+                },
+                complete: function() {
+                    manualSubmitButton.prop('disabled', false);
+                }
+            });
+        });
 
         $(document).on('click', '.btn-sections', function(){
             $('.btn-sections').removeClass('btn-light-primary active').addClass('btn-light');

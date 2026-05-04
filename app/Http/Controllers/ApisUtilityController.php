@@ -125,13 +125,16 @@ class ApisUtilityController extends Controller
             $nonNativeModules = $package->modules->filter(function ($module) {
                 return !(bool) ($module->is_native ?? false);
             })->values();
+            $packagePrice = (float) $package->modules->sum(function ($module) {
+                return (float) ($module->pivot->price ?? $module->value ?? 0);
+            });
 
             $packageJson[] = [
                 'id'            => $package->id,
                 'name'          => $package->name,
                 'description'   => $package->description,
                 'popular'       => (bool) ($package->popular ?? false),
-                'value'         => (float) $package->value,
+                'value'         => $packagePrice,
                 'duration_days' => (int) $package->duration_days,
                 'benefits'      => $package->benefits->map(function ($benefit) {
                     return [

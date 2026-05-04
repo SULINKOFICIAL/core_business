@@ -15,7 +15,9 @@
             </div>
 
             <div class="d-flex flex-wrap align-items-center gap-2">
-                <button type="button" class="btn btn-sm btn-light-primary active">Atualizar Plano do Cliente</button>
+                <button type="button" class="btn btn-sm btn-light-primary active" id="btn-open-plan-manual-modal">
+                    Atualizar Plano do Cliente
+                </button>
             </div>
         </div>
     </div>

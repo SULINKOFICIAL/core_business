@@ -64,7 +64,6 @@ class PackageController extends Controller
 
         // Normaliza campos centrais
         $data['popular'] = (bool) ($data['popular'] ?? false);
-        $data['value'] = toDecimal($data['value']);
         $data['duration_days'] = (int) ($data['duration_days'] ?? 30);
         $data['size_storage'] = (int) ($data['size_storage'] ?? 5368709120);
         $data['resources_list'] = $this->normalizeResourcesList($data['resources_list'] ?? null);
@@ -120,7 +119,6 @@ class PackageController extends Controller
 
         // Normaliza campos centrais
         $data['popular'] = (bool) ($data['popular'] ?? false);
-        $data['value'] = toDecimal($data['value']);
         $data['duration_days'] = (int) ($data['duration_days'] ?? ($package->duration_days ?? 30));
         $data['size_storage'] = (int) ($data['size_storage'] ?? ($package->size_storage ?? 5368709120));
         $data['resources_list'] = $this->normalizeResourcesList($data['resources_list'] ?? null);

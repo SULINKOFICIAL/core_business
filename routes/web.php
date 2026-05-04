@@ -1,6 +1,7 @@
 <?php
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TenantController;
+use App\Http\Controllers\TenantManualPlanController;
 use App\Http\Controllers\TenantDomainController;
 use App\Http\Controllers\TenantDomainProcessingController;
 use App\Http\Controllers\TenantIntegrationController;
@@ -100,18 +101,20 @@ Route::middleware(['auth'])->group(function () {
      */
     Route::prefix('instalacoes')->group(function () {
         Route::name('tenants.')->group(function () {
-            Route::get('/',                 [TenantController::class, 'index'])->name('index');
-            Route::get('/processar',        [TenantProcessingController::class, 'process'])->name('process');
-            Route::get('/adicionar',        [TenantController::class, 'create'])->name('create');
-            Route::post('/adicionar',       [TenantController::class, 'store'])->name('store');
-            Route::get('/visualizar/{id}',  [TenantController::class, 'show'])->name('show');
-            Route::get('/visualizar/dados-api/{id}',  [TenantController::class, 'apiData'])->name('api.data');
-            Route::get('/editar/{id}',      [TenantController::class, 'edit'])->name('edit');
-            Route::put('/editar/{id}',      [TenantController::class, 'update'])->name('update');
-            Route::get('/desabilitar/{id}', [TenantController::class, 'destroy'])->name('destroy');       
-            Route::get('/dominios',         [TenantDomainController::class, 'index'])->name('domains.index');
-            Route::get('/dominios/processar',[TenantDomainProcessingController::class, 'process'])->name('domains.process');
-            Route::post('/dominios/adicionar',[TenantDomainController::class, 'store'])->name('domains.store');
+            Route::get('/',                             [TenantController::class, 'index'])->name('index');
+            Route::get('/processar',                    [TenantProcessingController::class, 'process'])->name('process');
+            Route::get('/adicionar',                    [TenantController::class, 'create'])->name('create');
+            Route::post('/adicionar',                   [TenantController::class, 'store'])->name('store');
+            Route::get('/visualizar/{id}',              [TenantController::class, 'show'])->name('show');
+            Route::get('/visualizar/dados-api/{id}',    [TenantController::class, 'apiData'])->name('api.data');
+            Route::get('/visualizar/plano-manual-dados/{id}', [TenantManualPlanController::class, 'editData'])->name('plan.manual.edit-data');
+            Route::put('/visualizar/plano-manual-aplicar/{id}', [TenantManualPlanController::class, 'apply'])->name('plan.manual.apply');
+            Route::get('/editar/{id}',                  [TenantController::class, 'edit'])->name('edit');
+            Route::put('/editar/{id}',                  [TenantController::class, 'update'])->name('update');
+            Route::get('/desabilitar/{id}',             [TenantController::class, 'destroy'])->name('destroy');       
+            Route::get('/dominios',                     [TenantDomainController::class, 'index'])->name('domains.index');
+            Route::get('/dominios/processar',           [TenantDomainProcessingController::class, 'process'])->name('domains.process');
+            Route::post('/dominios/adicionar',          [TenantDomainController::class, 'store'])->name('domains.store');
             
 
             /**

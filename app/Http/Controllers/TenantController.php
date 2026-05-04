@@ -14,7 +14,6 @@ use App\Models\Package;
 use App\Models\Subscription;
 use App\Models\SubscriptionCycle;
 use App\Services\GuzzleService;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use GuzzleHttp\Client as Guzzle;
@@ -306,14 +305,14 @@ class TenantController extends Controller
         }
 
         $apiGetSubscription = $guzzleService->request('GET', 'sistema/assinatura', $tenant);
-        $apiGetUsers = $guzzleService->request('GET', 'sistema/usuarios', $tenant);
-        $apiGetStorage = $guzzleService->request('GET', 'sistema/armazenamento', $tenant);
+        $apiGetUsers        = $guzzleService->request('GET', 'sistema/usuarios', $tenant);
+        $apiGetStorage      = $guzzleService->request('GET', 'sistema/armazenamento', $tenant);
 
         $allowSubscription = json_decode($apiGetSubscription['data'], true)['subscription'];
-        $totalUsers        = (int) json_decode($apiGetUsers['data'], true)['users'];
-        $limitUsers        = (int) json_decode($apiGetUsers['data'], true)['limit'];
-        $totalStorage      = (float) json_decode($apiGetStorage['data'], true)['used_storage'];
-        $limitStorage      = (float) json_decode($apiGetStorage['data'], true)['allow_storage'];
+        $totalUsers        = json_decode($apiGetUsers['data'], true)['users'];
+        $limitUsers        = json_decode($apiGetUsers['data'], true)['limit'];
+        $totalStorage      = json_decode($apiGetStorage['data'], true)['used_storage'];
+        $limitStorage      = json_decode($apiGetStorage['data'], true)['allow_storage'];
 
         $html = view('pages.tenants._api_data', [
             'apiError'          => false,
