@@ -793,9 +793,9 @@ class TenantsActionsController extends Controller
                  * Cria a categoria no sistema
                  */
                 $moduleCategory = ModuleCategory::updateOrCreate([
-                    'slug' => $category['slug'],
-                ], [
                     'name' => $category['name'],
+                ], [
+                    'slug' => $category['slug'] ?? null, 
                     'status' => true,
                     'created_by' => Auth::id()
                 ]);
@@ -813,9 +813,9 @@ class TenantsActionsController extends Controller
                  * Cria os módulos
                  */
                 $modelModule = Module::updateOrCreate([
-                    'slug' => $key,
-                ], [
                     'name' => $module['name'],
+                ], [
+                    'slug' => $key ?? null,
                     'description' => $module['description'],
                     'module_category_id' => $categoryId,
                     'status' => true,
