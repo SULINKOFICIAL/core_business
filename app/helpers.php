@@ -161,6 +161,8 @@ if (! function_exists('header_menu_items')) {
                 'label' => 'Instalações',
                 'active_routes' => [
                     'tenants.index',
+                    'tenants.domains.index',
+                    'tenants.domains.process',
                     'tickets.index',
                     'suggestions.index',
                     'tenants.integrations.index',
@@ -172,6 +174,12 @@ if (! function_exists('header_menu_items')) {
                         'route' => 'tenants.index',
                         'active_routes' => ['tenants.index'],
                         'icon' => ['class' => 'fa-solid fa-list fs-5'],
+                    ],
+                    [
+                        'label' => 'Domínios',
+                        'route' => 'tenants.domains.index',
+                        'active_routes' => ['tenants.domains.index', 'tenants.domains.process'],
+                        'icon' => ['class' => 'fa-solid fa-globe fs-5'],
                     ],
                     [
                         'label' => 'Tickets',

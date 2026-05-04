@@ -1,6 +1,8 @@
 <?php
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TenantController;
+use App\Http\Controllers\TenantDomainController;
+use App\Http\Controllers\TenantDomainProcessingController;
 use App\Http\Controllers\TenantIntegrationController;
 use App\Http\Controllers\TenantInstallController;
 use App\Http\Controllers\TenantsActionsController;
@@ -107,6 +109,8 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/editar/{id}',      [TenantController::class, 'edit'])->name('edit');
             Route::put('/editar/{id}',      [TenantController::class, 'update'])->name('update');
             Route::get('/desabilitar/{id}', [TenantController::class, 'destroy'])->name('destroy');       
+            Route::get('/dominios',         [TenantDomainController::class, 'index'])->name('domains.index');
+            Route::get('/dominios/processar',[TenantDomainProcessingController::class, 'process'])->name('domains.process');
             
 
             /**

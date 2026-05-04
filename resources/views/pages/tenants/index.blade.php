@@ -11,6 +11,9 @@
                 <input type="text" data-kt-docs-table-filter="search" class="form-control form-control-solid w-250px ps-15" placeholder="Procurar tenants">
             </div>
             <div class="d-flex justify-content-end" data-kt-docs-table-toolbar="base">
+                <a href="{{ route('tenants.domains.index') }}" class="btn btn-light me-3">
+                    <i class="fa-solid fa-globe me-1"></i> Domínios
+                </a>
                 <button type="button" class="btn btn-light-primary me-3" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
                     <i class="ki-duotone ki-filter fs-2"><span class="path1"></span><span class="path2"></span></i>        Filtrar
                 </button>
