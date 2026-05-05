@@ -11,7 +11,7 @@ use App\Models\Order;
 use App\Models\Subscription;
 use App\Models\OrderTransaction;
 use App\Models\SubscriptionCycle;
-use App\Services\ModuleService;
+use App\Services\TenantConfigurationSyncService;
 use App\Services\PagarMeResponseService;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -46,7 +46,10 @@ class PagarMeDispatchRequest implements ShouldQueue
         $this->logApi = LogsApi::find($this->logApiId);
     }
 
-    public function handle(PagarMeResponseService $pagarMeResponseService)
+    public function handle(
+        PagarMeResponseService $pagarMeResponseService,
+        TenantConfigurationSyncService $syncService
+    )
     {
 
         /**
@@ -73,7 +76,7 @@ class PagarMeDispatchRequest implements ShouldQueue
             'charge.paid',
             'invoice.payment_failed',
             'charge.payment_failed',
-            => $this->paymentCreatedOrUpdated($pagarMeDTO),
+            => $this->paymentCreatedOrUpdated($pagarMeDTO, $syncService),
             default => true
         };
     }
@@ -118,7 +121,7 @@ class PagarMeDispatchRequest implements ShouldQueue
         return true;
     }
 
-    public function paymentCreatedOrUpdated($data)
+    public function paymentCreatedOrUpdated($data, TenantConfigurationSyncService $syncService)
     {
         // Obtem a transação do cliente
         $transaction = OrderTransaction::where('pagarme_transaction_id', $data->charge->id)->first();
@@ -242,7 +245,7 @@ class PagarMeDispatchRequest implements ShouldQueue
                     /**
                      * Parte responsável por liberar o MiCore
                      */
-                    $this->releaseModule($transaction->order->tenant, $transaction->order->plan, $data->cycle);
+                    $this->releaseModule($transaction->order->tenant, $transaction->order->plan, $data->cycle, $syncService);
                 }
 
             }
@@ -255,23 +258,19 @@ class PagarMeDispatchRequest implements ShouldQueue
     /**
      * Libera os módulos para o cliente
      */
-    private function releaseModule($tenant, $plan, $cycle)
+    private function releaseModule($tenant, $plan, $cycle, TenantConfigurationSyncService $syncService)
     {
-        // Inicia o serviço de módulos
-        $moduleService = app(ModuleService::class);
-
-        // Realiza solicitação
-        $moduleService->configureModules(
+        /**
+         * Webhook de cobrança aprovada reaplica a configuração consolidada
+         * para garantir consistência do tenant com o plano local.
+         */
+        $syncService->syncFromCurrentPlan(
             $tenant,
-            $plan->modules->pluck('id')->toArray(),
-            true
-        );
-
-        // Cria o tempo da assinatura no MiCore
-        $moduleService->createSubscriptionCore(
-            $tenant,
-            $cycle->billingAt,
-            $cycle->nextBillingAt
+            source: 'order_paid',
+            operatorId: null,
+            reason: 'Webhook PagarMe aprovado',
+            startDate: $cycle->billingAt ?? null,
+            endDate: $cycle->nextBillingAt ?? null,
         );
     }
 }

@@ -11,10 +11,13 @@ use App\Models\OrderTransaction;
 use App\Models\SubscriptionCycle;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
-use App\Services\ModuleService;
+use App\Services\TenantConfigurationSyncService;
 
 class OrderService
 {
+    public function __construct(private TenantConfigurationSyncService $syncService)
+    {
+    }
 
     /**
      * Cria um pedido em rascunho com base nos módulos e configurações.
@@ -300,21 +303,17 @@ class OrderService
                     'next_billing_at'   => $transaction['subscription']['next_billing_at'],
                 ]);
 
-                // Inicia o serviço de módulos
-                $moduleService = app(ModuleService::class);
-
                 /**
-                 * Cria o tempo da assinatura no miCore
+                 * Após pagamento aprovado, propaga ao tenant remoto
+                 * o estado consolidado de módulos, vigência e limites.
                  */
-                $moduleService->createSubscriptionCore($orderPayment->tenant, $transaction['cycle']['start_at'], $transaction['cycle']['end_at']);
-
-                /**
-                 * Envia os modulos com os itens para o Micore
-                 */
-                $moduleService->configureModules(
-                    $plan->tenant,
-                    $plan->modules->pluck('id')->toArray(),
-                    true
+                $this->syncService->syncFromCurrentPlan(
+                    $orderPayment->tenant,
+                    source: 'order_paid',
+                    operatorId: null,
+                    reason: 'Pagamento aprovado',
+                    startDate: $transaction['cycle']['start_at'] ?? null,
+                    endDate: $transaction['cycle']['end_at'] ?? null,
                 );
 
             }
