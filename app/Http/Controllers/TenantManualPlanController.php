@@ -160,20 +160,29 @@ class TenantManualPlanController extends Controller
             }
 
             // Mantém a vigência local alinhada ao período informado no modal.
-            SubscriptionCycle::updateOrCreate(
-                [
-                    'subscription_id' => $subscription->id,
-                    'status' => 'billed',
-                ],
-                [
-                    'pagarme_cycle_id' => null,
-                    'start_date' => Carbon::parse($data['start_date'] ?? now())->startOfDay(),
-                    'end_date' => Carbon::parse($data['end_date'] ?? now())->endOfDay(),
-                    'cycle' => 1,
-                    'billing_at' => Carbon::parse($data['start_date'] ?? now())->startOfDay(),
-                    'next_billing_at' => Carbon::parse($data['end_date'] ?? now())->endOfDay(),
-                ]
-            );
+            // Regra: reutiliza o mesmo pagarme_cycle_id quando já existir ciclo billed.
+            $existingCycle = SubscriptionCycle::query()
+                ->where('subscription_id', $subscription->id)
+                ->where('status', 'billed')
+                ->latest('id')
+                ->first();
+
+            $cyclePayload = [
+                'subscription_id' => $subscription->id,
+                'pagarme_cycle_id' => $existingCycle?->pagarme_cycle_id ?: 'manual-cycle-' . $subscription->id,
+                'start_date' => Carbon::parse($data['start_date'] ?? now())->startOfDay(),
+                'end_date' => Carbon::parse($data['end_date'] ?? now())->endOfDay(),
+                'status' => 'billed',
+                'cycle' => (string) ($existingCycle?->cycle ?: 1),
+                'billing_at' => Carbon::parse($data['start_date'] ?? now())->startOfDay(),
+                'next_billing_at' => Carbon::parse($data['end_date'] ?? now())->endOfDay(),
+            ];
+
+            if ($existingCycle) {
+                $existingCycle->update($cyclePayload);
+            } else {
+                SubscriptionCycle::create($cyclePayload);
+            }
         });
 
         // Serviço responsável pela propagação das alterações ao coresulink.

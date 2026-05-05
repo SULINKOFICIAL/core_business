@@ -219,7 +219,12 @@ class TenantController extends Controller
     {
         // Obtém dados do Tenante
         $tenant   = $this->repository->find($id);
-        $tenant->loadMissing(['plan.items.item.category', 'plan.items.item.resources']);
+        $tenant->loadMissing([
+            'plan.items.item.category',
+            'plan.items.item.resources',
+            'plans.orders',
+            'plans.subscription.cycles',
+        ]);
 
         // Obtém pacotes
         $packages = Package::where('status', true)->get();
@@ -255,6 +260,9 @@ class TenantController extends Controller
             ->where('status', true)
             ->count();
         $currentPlanId = $tenant->plan->id;
+        $plansHistory = $tenant->plans
+            ->sortByDesc('created_at')
+            ->values();
 
         // Retorna a página
         return view('pages.tenants.show')->with([
@@ -270,6 +278,7 @@ class TenantController extends Controller
             'enabledModules'     => $enabledModules,
             'totalModulesCount'  => $totalModulesCount,
             'currentPlanId'      => $currentPlanId,
+            'plansHistory'       => $plansHistory,
         ]);
 
     }

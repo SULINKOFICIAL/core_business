@@ -118,7 +118,7 @@
             <i class="fa-regular fa-credit-card me-1"></i>Cartões
         </button>
         <button class="btn btn-sm btn-light btn-sections" data-show="signatures">
-            <i class="fa-solid fa-file-signature me-1"></i>Assinaturas
+            <i class="fa-solid fa-file-signature me-1"></i>Histórico de Planos
         </button>
         <button class="btn btn-sm btn-light btn-sections" data-show="orders">
             <i class="fa-solid fa-clock-rotate-left me-1"></i>Histórico de Compras
@@ -140,7 +140,7 @@
                 @include('pages.tenants._orders')
             </div>
             <div class="divs-sections div-signatures" style="display: none;">
-                {{-- @include('pages.tenants._signatures') --}}
+                @include('pages.tenants._signatures')
             </div>
             <div class="divs-sections div-api-data" style="display: none;">
                 <div id="api-data-container">
