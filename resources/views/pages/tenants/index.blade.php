@@ -170,7 +170,7 @@
         },
         buttons: false,
         searching: true,
-        order: [[1, 'desc']],
+        order: [[1, 'asc']],
         pageLength: 25,
         columns: [
             { targets: 0, data: "name" },
