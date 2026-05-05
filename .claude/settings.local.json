@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(Select-Object -Last 20)"
+      "Bash(Select-Object -Last 20)",
+      "WebSearch"
     ]
   }
 }

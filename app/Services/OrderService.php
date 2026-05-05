@@ -48,25 +48,53 @@ class OrderService
      */
     public function recalculateOrderTotals(Order $order, ?float $subtotal = null): void
     {
+        // Soma o subtotal dos itens (packages e módulos avulsos) caso não seja informado
+        $itemsSubtotal = $subtotal ?? $this->calculateItemsSubtotal($order);
 
-        // Soma o subtotal atual caso não seja informado
-        $modulesSubtotal = $subtotal ?? (float) (($order->plan?->modules()->sum('value')) ?? 0);
+        // Soma o efeito de preço vindo das configurações dos itens
         $configurationSubtotal = $this->calculatePackageConfigurationSubtotal($order);
-        $itemsSubtotal = $modulesSubtotal + $configurationSubtotal;
 
-        // Calcula desconto do cupom quando existir
-        $couponDiscount = $this->calculateCouponDiscount($order, $itemsSubtotal);
+        // Total bruto antes do desconto
+        $totalSubtotal = $itemsSubtotal + $configurationSubtotal;
+
+        // Calcula o desconto do cupom quando existir
+        $couponDiscount = $this->calculateCouponDiscount($order, $totalSubtotal);
 
         // Calcula o total final do pedido
-        $totalAmount = $itemsSubtotal - $couponDiscount;
-        if ($totalAmount < 0) {
-            $totalAmount = 0.0;
-        }
+        $totalAmount = max(0.0, $totalSubtotal - $couponDiscount);
 
         $order->update([
             'total_amount' => $totalAmount,
             'coupon_discount_amount' => $couponDiscount,
         ]);
+    }
+
+    /**
+     * Calcula o subtotal dos itens do plano, diferenciando pacotes de módulos avulsos.
+     * Itens com package_id: usa o valor do Package (somado uma vez por package único).
+     * Itens sem package_id: usa o valor base do Module.
+     */
+    private function calculateItemsSubtotal(Order $order): float
+    {
+        if (!$order->plan) {
+            return 0.0;
+        }
+
+        // Carrega os itens do plano com os relacionamentos de package e módulo
+        $items = $order->plan->items()->with(['sourcePackage', 'item'])->get();
+
+        // Itens vinculados a um package: soma o valor do package uma vez por package único
+        $packageSubtotal = $items
+            ->whereNotNull('package_id')
+            ->groupBy('package_id')
+            ->sum(fn($group) => (float) ($group->first()->sourcePackage?->value ?? $group->first()->module_value ?? 0));
+
+        // Itens avulsos: soma o valor base de cada módulo
+        $moduleSubtotal = $items
+            ->whereNull('package_id')
+            ->sum(fn($item) => (float) ($item->item?->value ?? $item->module_value ?? 0));
+
+        return $packageSubtotal + $moduleSubtotal;
     }
 
     /**
