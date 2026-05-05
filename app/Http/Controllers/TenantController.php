@@ -143,8 +143,9 @@ class TenantController extends Controller
         $subscription = Subscription::create([
             'tenant_id' => $created->id,
             'plan_id' => $package->id,
-            'pagarme_subscription_id' => '1',
-            'pagarme_card_id' => '1',
+            'provider' => 'micore',
+            'provider_subscription_id' => 'manual-admin-' . $created->id,
+            'provider_card_id' => 'manual-card-' . $created->id,
             'interval' => 'year',
             'payment_method' => 'liberado',
             'currency' => 'BRL',
@@ -171,7 +172,8 @@ class TenantController extends Controller
         // Cria um ciclo de assinatura fictício
         SubscriptionCycle::create([
             'subscription_id' => $subscription->id,
-            'pagarme_cycle_id' => '1',
+            'provider' => 'micore',
+            'provider_cycle_id' => 'manual-cycle-' . $subscription->id,
             'start_date' => now(),
             'end_date' => now()->addDays(30),
             'status' => 'billed',
@@ -185,10 +187,11 @@ class TenantController extends Controller
         OrderTransaction::create([
             'order_id' => $order->id,
             'subscription_id' => $subscription->id,
-            'pagarme_transaction_id' => '1',
+            'provider' => 'micore',
+            'provider_transaction_id' => 'manual-tx-' . $order->id,
             'amount' => 0,
             'status' => 'paid',
-            'method' => 'liberado',
+            'provider_method' => 'liberado',
             'currency' => 'BRL',
             'created_at' => now(),
         ]);
@@ -219,7 +222,12 @@ class TenantController extends Controller
     {
         // Obtém dados do Tenante
         $tenant   = $this->repository->find($id);
-        $tenant->loadMissing(['plan.items.item.category', 'plan.items.item.resources']);
+        $tenant->loadMissing([
+            'plan.items.item.category',
+            'plan.items.item.resources',
+            'plans.orders',
+            'plans.subscription.cycles',
+        ]);
 
         // Obtém pacotes
         $packages = Package::where('status', true)->get();
@@ -255,6 +263,9 @@ class TenantController extends Controller
             ->where('status', true)
             ->count();
         $currentPlanId = $tenant->plan->id;
+        $plansHistory = $tenant->plans
+            ->sortByDesc('created_at')
+            ->values();
 
         // Retorna a página
         return view('pages.tenants.show')->with([
@@ -270,6 +281,7 @@ class TenantController extends Controller
             'enabledModules'     => $enabledModules,
             'totalModulesCount'  => $totalModulesCount,
             'currentPlanId'      => $currentPlanId,
+            'plansHistory'       => $plansHistory,
         ]);
 
     }

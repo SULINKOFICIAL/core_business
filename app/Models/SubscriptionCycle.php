@@ -11,7 +11,8 @@ class SubscriptionCycle extends Model
 
     protected $fillable = [
         'subscription_id',
-        'pagarme_cycle_id',
+        'provider',
+        'provider_cycle_id',
         'start_date',
         'end_date',
         'status',

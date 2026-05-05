@@ -2,15 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\LogsApi;
 use App\Models\Module;
 use App\Models\Subscription;
 use App\Models\SubscriptionCycle;
 use App\Models\Tenant;
 use App\Models\TenantPlan;
 use App\Models\TenantPlanItem;
-use App\Services\GuzzleService;
-use App\Services\ModuleService;
+use App\Services\TenantConfigurationSyncService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,6 +16,10 @@ use Illuminate\Support\Facades\DB;
 
 class TenantManualPlanController extends Controller
 {
+    public function __construct(private TenantConfigurationSyncService $syncService)
+    {
+    }
+
     /**
      * Carrega dados para edição manual administrativa do plano.
      * Fonte de verdade: core_business (plano e ciclo locais).
@@ -25,7 +27,7 @@ class TenantManualPlanController extends Controller
     public function editData($id)
     {
         // Localiza o tenant alvo da edição administrativa.
-        $tenant = Tenant::query()->findOrFail($id);
+        $tenant = Tenant::findOrFail($id);
 
         // Carrega contexto necessário para montar o pré-preenchimento do modal.
         $tenant->loadMissing(['plan.items', 'subscriptions.cycles']);
@@ -77,24 +79,18 @@ class TenantManualPlanController extends Controller
     public function apply(Request $request, $id)
     {
         // Tenant alvo da operação manual.
-        $tenant = Tenant::query()->findOrFail($id);
+        $tenant = Tenant::findOrFail($id);
 
         // Fluxo otimista: recebe payload direto do modal sem validação formal.
         $data = $request->all();
 
         // Conjunto final de módulos que deverão permanecer habilitados.
         $selectedModuleIds = collect($data['modules'] ?? [])->map(fn ($moduleId) => (int) $moduleId)->unique()->values();
-        $selectedModules   = Module::query()->whereIn('id', $selectedModuleIds)->get();
-
-        // Base de módulos ativos para desativação determinística no tenant remoto.
-        $allActiveModules  = Module::query()->where('status', true)->get();
+        $selectedModules   = Module::whereIn('id', $selectedModuleIds)->get();
 
         // Conversões para persistência local.
         $storageLimitBytes = (int) round(((float) ($data['storage_limit_gb'] ?? 0)) * 1024 * 1024 * 1024);
         $planValue         = (float) $selectedModules->sum('value');
-
-        // Snapshot do estado anterior para trilha de auditoria.
-        $before            = $this->snapshotManualPlanState($tenant);
 
         DB::transaction(function () use ($tenant, $selectedModules, $selectedModuleIds, $data, $storageLimitBytes, $planValue) {
             // Garante plano ativo local; cria quando inexistente.
@@ -136,129 +132,73 @@ class TenantManualPlanController extends Controller
             }
 
             // Vincula/atualiza assinatura local ao plano ativo.
-            $subscription = Subscription::query()
-                ->where('tenant_id', $tenant->id)
+            $subscription = Subscription::where('tenant_id', $tenant->id)
                 ->where('plan_id', $activePlan->id)
                 ->latest('id')
                 ->first();
 
             if (!$subscription) {
                 $subscription = Subscription::create([
-                    'tenant_id'               => $tenant->id,
-                    'plan_id'                 => $activePlan->id,
-                    'pagarme_subscription_id' => 'manual-admin-' . $tenant->id,
-                    'payment_method'          => 'manual_admin',
-                    'currency'                => 'BRL',
-                    'installments'            => 1,
-                    'status'                  => 'active',
+                    'tenant_id'                 => $tenant->id,
+                    'plan_id'                   => $activePlan->id,
+                    'provider'                  => 'pagarme',
+                    'provider_subscription_id'  => 'manual-admin-' . $tenant->id,
+                    'payment_method'            => 'manual_admin',
+                    'currency'                  => 'BRL',
+                    'installments'              => 1,
+                    'status'                    => 'active',
                 ]);
             } else {
                 $subscription->update([
+                    'provider' => 'pagarme',
                     'plan_id' => $activePlan->id,
                     'status' => 'active',
                 ]);
             }
 
             // Mantém a vigência local alinhada ao período informado no modal.
-            SubscriptionCycle::updateOrCreate(
-                [
-                    'subscription_id' => $subscription->id,
-                    'status' => 'billed',
-                ],
-                [
-                    'pagarme_cycle_id' => null,
-                    'start_date' => Carbon::parse($data['start_date'] ?? now())->startOfDay(),
-                    'end_date' => Carbon::parse($data['end_date'] ?? now())->endOfDay(),
-                    'cycle' => 1,
-                    'billing_at' => Carbon::parse($data['start_date'] ?? now())->startOfDay(),
-                    'next_billing_at' => Carbon::parse($data['end_date'] ?? now())->endOfDay(),
-                ]
-            );
+            // Regra: reutiliza o mesmo provider_cycle_id quando já existir ciclo billed.
+            $existingCycle = SubscriptionCycle::where('subscription_id', $subscription->id)
+                ->where('status', 'billed')
+                ->latest('id')
+                ->first();
+
+            $cyclePayload = [
+                'subscription_id' => $subscription->id,
+                'provider' => 'pagarme',
+                'provider_cycle_id' => $existingCycle?->provider_cycle_id ?: 'manual-cycle-' . $subscription->id,
+                'start_date' => Carbon::parse($data['start_date'] ?? now())->startOfDay(),
+                'end_date' => Carbon::parse($data['end_date'] ?? now())->endOfDay(),
+                'status' => 'billed',
+                'cycle' => (string) ($existingCycle?->cycle ?: 1),
+                'billing_at' => Carbon::parse($data['start_date'] ?? now())->startOfDay(),
+                'next_billing_at' => Carbon::parse($data['end_date'] ?? now())->endOfDay(),
+            ];
+
+            if ($existingCycle) {
+                $existingCycle->update($cyclePayload);
+            } else {
+                SubscriptionCycle::create($cyclePayload);
+            }
         });
 
-        // Serviço responsável pela propagação das alterações ao coresulink.
-        $moduleService = app(ModuleService::class);
-
         /**
-         * Sincronização determinística:
-         * 1) desabilita todos os módulos ativos conhecidos na central
-         * 2) habilita apenas os selecionados no ajuste manual
+         * Dispara a sincronização consolidada para o tenant remoto
+         * após persistir o estado final do plano local.
          */
-        $syncModulesDisabled = $moduleService->configureModules($tenant, $allActiveModules->pluck('id')->all(), false);
-        $syncModulesEnabled  = $moduleService->configureModules($tenant, $selectedModuleIds->all(), true);
-
-        // Sincroniza período e limites no tenant remoto.
-        $syncSubscription    = $moduleService->createSubscriptionCore($tenant, $data['start_date'] ?? now()->format('Y-m-d'), $data['end_date'] ?? now()->format('Y-m-d'));
-        $syncUsers           = $moduleService->updateUsersLimitsCore($tenant, (int) ($data['users_limit'] ?? 0));
-        $syncStorage         = $moduleService->updateSizeStorageCore($tenant, $storageLimitBytes);
-
-        // Consolida retornos para auditoria operacional.
-        $syncResults = [
-            'modules_enabled'  => $syncModulesEnabled,
-            'modules_disabled' => $syncModulesDisabled,
-            'subscription'     => $syncSubscription,
-            'users_limit'      => $syncUsers,
-            'storage_limit'    => $syncStorage,
-        ];
-
-        // Snapshot pós-operação para comparação em log.
-        $after = $this->snapshotManualPlanState($tenant->fresh(['plan.items.item', 'subscriptions.cycles']));
-
-        // Registra o evento administrativo completo para rastreabilidade.
-        LogsApi::create([
-            'api'       => 'PLAN_MANUAL_ADMIN',
-            'tenant_id' => $tenant->id,
-            'status'    => 'success',
-            'json'      => json_encode([
-                'operator_id' => Auth::id(),
-                'reason'      => $data['manual_change_reason'] ?? '',
-                'payload'     => $data,
-                'before'      => $before,
-                'after'       => $after,
-                'sync'        => $syncResults,
-                'note'        => 'Fluxo administrativo sem cobrança com fonte de verdade no core_business.',
-            ], JSON_UNESCAPED_UNICODE),
-        ]);
+        $syncResults = $this->syncService->syncFromCurrentPlan(
+            $tenant,
+            source: 'manual_admin',
+            operatorId: Auth::id(),
+            reason: $data['manual_change_reason'] ?? null,
+            startDate: $data['start_date'] ?? null,
+            endDate: $data['end_date'] ?? null,
+        );
 
         return response()->json([
-            'success' => true,
+            'success' => (bool) ($syncResults['success'] ?? false),
             'message' => 'Plano do cliente atualizado com sucesso.',
+            'sync' => $syncResults,
         ]);
-    }
-
-    /**
-     * Snapshot simplificado para auditoria da alteração manual.
-     */
-    private function snapshotManualPlanState(Tenant $tenant): array
-    {
-        // Garante que os relacionamentos usados no snapshot estão carregados.
-        $tenant->loadMissing(['plan.items.item', 'subscriptions.cycles']);
-
-        // Estado corrente resumido do plano e assinatura para auditoria.
-        $activePlan = $tenant->plan;
-        $latestSubscription = $tenant->subscriptions()->latest('id')->first();
-        $latestCycle = $latestSubscription?->cycles()->latest('id')->first();
-
-        return [
-            'plan' => [
-                'id'            => $activePlan?->id,
-                'name'          => $activePlan?->name,
-                'value'         => $activePlan?->value,
-                'users_limit'   => $activePlan?->users_limit,
-                'size_storage'  => $activePlan?->size_storage,
-                'modules'       => $activePlan?->items?->map(function (TenantPlanItem $item) {
-                    return [
-                        'module_id' => $item->item_id,
-                        'name'      => $item->module_name,
-                    ];
-                })->values()->all() ?? [],
-            ],
-            'subscription' => [
-                'id'            => $latestSubscription?->id,
-                'status'        => $latestSubscription?->status,
-                'cycle_start'   => $latestCycle?->start_date,
-                'cycle_end'     => $latestCycle?->end_date,
-            ],
-        ];
     }
 }

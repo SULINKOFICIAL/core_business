@@ -20,15 +20,15 @@ class OrderTransaction extends Model
     protected $fillable = [
         'order_id',
         'subscription_id',
-        'pagarme_transaction_id',
+        'provider',
+        'provider_method',
+        'provider_transaction_id',
         'gateway_id',
         'gateway_code',
         'external_transaction_id',
         'status',
         'amount',
         'currency',
-        // Legacy
-        'method',
         'recurrency',
         'brand_tid_at',
         'brand_tid',

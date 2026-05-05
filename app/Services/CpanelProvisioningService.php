@@ -21,7 +21,7 @@ class CpanelProvisioningService
     private string $cpanelPass;
     private string $cpanelPrefix;
 
-    public function __construct(private ModuleService $moduleService)
+    public function __construct(private TenantConfigurationSyncService $syncService)
     {
         $this->cpanelUrl = (string) env('CPANEL_URL');
         $this->cpanelUser = (string) env('CPANEL_USER');
@@ -271,25 +271,18 @@ class CpanelProvisioningService
 
     private function configureModulesForTenant(Tenant $tenant): void
     {
-        $plan = $tenant->plan;
-
-        $this->moduleService->configureModules(
+        /**
+         * Na finalização do provisionamento, aplica no tenant remoto
+         * o pacote consolidado inicial de módulos, vigência e limites.
+         */
+        $this->syncService->syncFromCurrentPlan(
             $tenant,
-            $plan ? $plan->items()->pluck('item_id')->toArray() : [],
-            true
+            source: 'provisioning',
+            operatorId: null,
+            reason: 'Provisionamento inicial do tenant',
+            startDate: now()->toDateString(),
+            endDate: now()->addDays(30)->toDateString(),
         );
-
-        $this->moduleService->createSubscriptionCore(
-            $tenant,
-            now()->toDateString(),
-            now()->addDays(30)->toDateString()
-        );
-
-        $usersLimit = $plan->users_limit;
-        $sizeStorage = $plan->size_storage;
-
-        $this->moduleService->updateUsersLimitsCore($tenant, $usersLimit);
-        $this->moduleService->updateSizeStorageCore($tenant, $sizeStorage);
     }
 
     private function connectTenantDatabase(array $tenantDatabase): void

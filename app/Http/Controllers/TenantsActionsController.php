@@ -10,11 +10,10 @@ use App\Models\Resource;
 use App\Models\ScheduledTaskDispatch;
 use App\Models\ScheduledTaskDispatchItem;
 use App\Services\GuzzleService;
-use App\Services\ModuleService;
+use App\Services\TenantConfigurationSyncService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 use RuntimeException;
 use App\Jobs\RefreshTokenIntegrationsJob;
 
@@ -25,7 +24,12 @@ class TenantsActionsController extends Controller
     private $repository;
     protected $guzzleService;
 
-    public function __construct(Request $request, Tenant $content, GuzzleService $guzzleService)
+    public function __construct(
+        Request $request,
+        Tenant $content,
+        GuzzleService $guzzleService,
+        private TenantConfigurationSyncService $syncService
+    )
     {
         $this->request = $request;
         $this->repository = $content;
@@ -41,171 +45,6 @@ class TenantsActionsController extends Controller
         }
 
         return $runtimeStatus;
-    }
-
-    // Obtém o modulo do usuário
-    public function module(Request $request)
-    {
-        // Obtém dados do formulário
-        $data = $request->all();
-
-        // Encontra o cliente
-        $tenant = $this->repository->find($data['tenant_id']);
-
-        // Converte 'status' para booleano
-        $status = filter_var($data['status'], FILTER_VALIDATE_BOOLEAN);
-
-        // Inicia serviço de módulos
-        $moduleService = app(ModuleService::class);
-
-        // Realiza solicitação
-        $response = $moduleService->configureModules(
-            $tenant,
-            [
-                $data['module_id']
-            ],
-            $status
-        );
-
-        // Retorna resposta
-        return $response;
-    }
-
-    // Obtém permissões do usuário
-    public function feature(Request $request){
-
-        // Obtém dados do formulário
-        $data = $request->all();
-
-        // Encontra o cliente
-        $tenant = $this->repository->find($data['tenant_id']);
-
-        // Converte 'status' para booleano (true ou false)
-        $data['status']  = filter_var($data['status'], FILTER_VALIDATE_BOOLEAN);
-
-        // Inicia serviço de módulos
-        $moduleService = app(ModuleService::class);
-
-        // Realiza solicitação
-        $response = $moduleService->configureFeatureForTenant($tenant, [
-            [
-                'name'   => $data['name'],
-                'module' => $data['module'],
-                'status' => $data['status']
-            ]
-        ]);
-
-        // Retorna resposta
-        return $response;
-
-    }
-
-    // Atualiza a assinatura do cliente
-    public function subscription(Request $request){
-
-        // Obtém dados do formulário
-        $data = $request->all();
-
-        // Encontra o cliente
-        $tenant = $this->repository->find($data['tenant_id']);
-
-        // Inicia serviço de módulos
-        $moduleService = app(ModuleService::class);
-
-        // Verifica se veio as datas
-        if(empty($data['end_date'])){
-            return response()->json([
-                'success' => false,
-                'message' => 'Data final inválida.'
-            ]);
-        }
-
-        // Obtem a data de início
-        $startDate = isset($data['start_date']) && !empty($data['start_date'])
-            ? Carbon::createFromFormat('d/m/Y', $data['start_date'])->format('Y-m-d')
-            : now()->format('Y-m-d');
-
-        // Obtem a data de fim
-        $endDate   = Carbon::createFromFormat('d/m/Y', $data['end_date'])->format('Y-m-d');
-
-        // Cria o tempo da assinatura no MiCore
-        $response = $moduleService->createSubscriptionCore(
-            $tenant,
-            $startDate,
-            $endDate
-        );
-
-        // Retorna resposta
-        return response()->json([
-            'success' => $response['success'],
-            'message' => $response['success'] == true ? json_decode($response['data'], true)['message'] : 'Erro ao atualizar assinatura'
-        ]);
-
-    }
-
-    // Atualiza o limite de usuários do cliente
-    public function usersLimits(Request $request){
-        
-        // Obtém dados do formulário
-        $data = $request->all();
-
-        // Encontra o cliente
-        $tenant = $this->repository->find($data['tenant_id']);
-
-        // Atualiza o limite de usuários no plano atual
-        if ($tenant->plan) {
-            $tenant->plan->update([
-                'users_limit' => $data['users_limit']
-            ]);
-        }
-
-        // Inicia serviço de módulos
-        $moduleService = app(ModuleService::class);
-        
-        // Cria o tempo da assinatura no MiCore
-        $response = $moduleService->updateUsersLimitsCore(
-            $tenant,
-            $data['users_limit']
-        );
-
-        return response()->json([
-            'success' => $response['success'],
-            'message' => $response['success'] == true ? json_decode($response['data'], true)['message'] : 'Erro ao atualizar limite de usuários'
-        ]);
-    }
-
-    // Atualiza o limite de armazenamento do cliente
-    public function updateSizeStorage(Request $request){
-        
-        // Obtém dados do formulário
-        $data = $request->all();
-
-        // Encontra o cliente
-        $tenant = $this->repository->find($data['tenant_id']);
-
-        // Converte para bytes
-        $sizeStorage = $data['storage_limit'] * 1024 * 1024 * 1024;
-
-        // Atualiza limite no plano atual
-        if ($tenant->plan) {
-            $tenant->plan->update([
-                'size_storage' => (int) $sizeStorage,
-            ]);
-        }
-
-        // Inicia serviço de módulos
-        $moduleService = app(ModuleService::class);
-        
-        // Cria o tempo da assinatura no MiCore
-        $response = $moduleService->updateSizeStorageCore(
-            $tenant,
-            $sizeStorage
-        );
-
-        return response()->json([
-            'success' => $response['success'],
-            'message' => $response['success'] == true ? json_decode($response['data'], true)['message'] : 'Erro ao atualizar limite de armazenamento'
-        ]);
     }
 
     // Atualiza todos os bancos de dados via API
@@ -860,62 +699,6 @@ class TenantsActionsController extends Controller
         return redirect()
         ->route('index')
         ->with('message', 'Permissões atualizadas com sucesso! Os recursos foram sincronizados com o sistema.');
-
-    }
-
-    /**
-     * Função responsável por liberar gratis por 30 dias um sistema para um cliente
-     */
-    public function addFree(Request $request, $id)
-    {   
-        // Obtem dados
-        $data = $request->all();
-
-        // Encontra o cliente
-        $tenant = $this->repository->find($id);
-        
-        // Inicia serviço de módulos
-        $moduleService = app(ModuleService::class);
-
-        // Realiza solicitação
-        $moduleService->configureModules(
-            $tenant,
-            $data['modules'],
-            true
-        );
-
-        // Cria o tempo da assinatura no MiCore
-        $moduleService->createSubscriptionCore(
-            $tenant,
-            now()->toDateString(),
-            now()->addDays(30)->toDateString()
-        );
-
-        // Retorna a página
-        return redirect()->route('tenants.show', $tenant->id)->with('message', 'Módulos liberados com sucesso!');
-
-    }
-
-    /**
-     * Função responsável por liberar apenas o periodo de 30 o sistema para um cliente
-     */
-    public function addDate($id)
-    {   
-        // Encontra o cliente
-        $tenant = $this->repository->find($id);
-        
-        // Inicia serviço de módulos
-        $moduleService = app(ModuleService::class);
-
-        // Cria o tempo da assinatura no MiCore
-        $moduleService->createSubscriptionCore(
-            $tenant,
-            now()->toDateString(),
-            now()->addYears(1)->toDateString()
-        );
-
-        // Retorna a página
-        return redirect()->route('tenants.show', $tenant->id)->with('message', 'Data enviada com sucesso!');
 
     }
 
