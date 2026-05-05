@@ -185,10 +185,11 @@ class TenantController extends Controller
         OrderTransaction::create([
             'order_id' => $order->id,
             'subscription_id' => $subscription->id,
-            'pagarme_transaction_id' => '1',
+            'provider' => 'pagarme',
+            'provider_transaction_id' => '1',
             'amount' => 0,
             'status' => 'paid',
-            'method' => 'liberado',
+            'provider_method' => 'liberado',
             'currency' => 'BRL',
             'created_at' => now(),
         ]);

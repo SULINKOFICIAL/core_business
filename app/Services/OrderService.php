@@ -217,13 +217,14 @@ class OrderService
             OrderTransaction::updateOrCreate([
                 'order_id'                => $orderPayment->id,
                 'subscription_id'         => $subscription->id,
-                'pagarme_transaction_id'  => $charge['id'],
+                'provider'                => 'pagarme',
+                'provider_transaction_id' => $charge['id'],
             ], [
                 'status'                  => $charge['status'],
                 'gateway_code'            => $charge['gateway_id'] ?? null,
                 'amount'                  => $charge['paid_amount'] / 100 ?? 0,
                 'currency'                => $charge['currency'] ?? null,
-                'method'                  => $charge['payment_method'] ?? null,
+                'provider_method'         => $charge['payment_method'] ?? null,
                 'recurrency'              => $charge['recurrence_cycle'] ?? null,
                 'response'                => $transaction,
                 'paid_at'                 => $charge['paid_at'] ?? null,
@@ -284,7 +285,7 @@ class OrderService
             if ($status === 'paid') {
                 $orderPayment->update([
                     'paid_at' => $charge['paid_at'],
-                    'method'  => $charge['payment_method'],
+                    'provider_method' => $charge['payment_method'],
                 ]);
 
                 // Extrai resposta

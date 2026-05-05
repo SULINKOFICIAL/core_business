@@ -124,7 +124,9 @@ class PagarMeDispatchRequest implements ShouldQueue
     public function paymentCreatedOrUpdated($data, TenantConfigurationSyncService $syncService)
     {
         // Obtem a transação do cliente
-        $transaction = OrderTransaction::where('pagarme_transaction_id', $data->charge->id)->first();
+        $transaction = OrderTransaction::where('provider_transaction_id', $data->charge->id)
+            ->where('provider', 'pagarme')
+            ->first();
 
         // Verifica se existe uma transação
         if (!$transaction) {
@@ -144,9 +146,10 @@ class PagarMeDispatchRequest implements ShouldQueue
                 'subscription_id' => $subscription->id,
                 'plan_id'         => $lastPackage->id ?? null,
                 'status'          => $data->charge->status,
+                'provider'        => 'pagarme',
+                'provider_method' => $data->invoice->method,
                 'currency'        => $data->charge->currency,
-                'pagarme_message' => isset($data->transaction->acquirer->message) ? $data->transaction->acquirer->message : null,
-                'method'          => $data->invoice->method,
+                'provider_message' => isset($data->transaction->acquirer->message) ? $data->transaction->acquirer->message : null,
                 'total_amount'    => isset($data->charge?->paidAmount) ? $data->charge->paidAmount / 100 : 0,
                 'paid_at'         => isset($data->charge?->paidAt) ? $data->charge->paidAt : null,
             ]);
@@ -155,11 +158,12 @@ class PagarMeDispatchRequest implements ShouldQueue
             $transaction = OrderTransaction::create([
                 'order_id'                => $order->id,
                 'subscription_id'         => $subscription->id,
-                'pagarme_transaction_id'  => $data->charge->id,
+                'provider'                => 'pagarme',
+                'provider_method'         => $data->invoice->method,
+                'provider_transaction_id' => $data->charge->id,
                 'gateway_code'            => isset($data->transaction->gatewayId) ? $data->transaction->gatewayId : null,
                 'status'                  => $data->charge->status,
                 'currency'                => $data->charge->currency,
-                'method'                  => $data->invoice->method,
                 'recurrency'              => $data->charge->recurrency,
                 'amount'                  => isset($data->charge?->paidAmount) ? $data->charge->paidAmount / 100 : 0,
                 'paid_at'                 => isset($data->charge?->paidAt) ? $data->charge->paidAt : null,
@@ -193,8 +197,9 @@ class PagarMeDispatchRequest implements ShouldQueue
             // Atualiza a transação
             $transaction->update([
                 'status'                  => $data->charge->status,
+                'provider'                => 'pagarme',
+                'provider_method'         => $data->invoice->method,
                 'currency'                => $data->charge->currency,
-                'method'                  => $data->invoice->method,
                 'recurrency'              => $data->charge->recurrency,
                 'amount'                  => isset($data->charge?->paidAmount) ? $data->charge->paidAmount / 100 : $transaction->amount,
                 'paid_at'                 => isset($data->charge?->paidAt) ? $data->charge->paidAt : $transaction->paid_at,
@@ -207,8 +212,9 @@ class PagarMeDispatchRequest implements ShouldQueue
                 'status'                  => $data->charge->status,
                 'paid_at'                 => isset($data->charge?->paidAt) ? $data->charge->paidAt : $transaction->order->paid_at,
                 'total_amount'            => isset($data->charge?->paidAmount) ? $data->charge->paidAmount / 100 : $transaction->order->total_amount,
-                'pagarme_message'         => isset($data->transaction->acquirer->message) ? $data->transaction->acquirer->message : $transaction->order->pagarme_message,
-                'method'                  => $data->invoice->method,
+                'provider'                => 'pagarme',
+                'provider_method'         => $data->invoice->method,
+                'provider_message'        => isset($data->transaction->acquirer->message) ? $data->transaction->acquirer->message : $transaction->order->provider_message,
                 'currency'                => $data->charge->currency,
             ]);
 
