@@ -159,9 +159,10 @@ class OrderService
 
             // Atualiza ou cria a assinatura
             $subscription = Subscription::updateOrCreate([
-                'pagarme_subscription_id' => $subscription['id'],
+                'provider'                => 'pagarme',
+                'provider_subscription_id'=> $subscription['id'],
             ], [
-                'pagarme_card_id'         => $subscription['card']['id'],
+                'provider_card_id'        => $subscription['card']['id'],
                 'interval'                => $subscription['interval'],
                 'payment_method'          => $subscription['payment_method'],
                 'currency'                => $subscription['currency'],
@@ -175,13 +176,13 @@ class OrderService
                 ->orderBy('created_at', 'desc')
                 ->first();
 
-            if(isset($lastOrder) && isset($lastOrder->subscription) && $lastOrder->subscription->pagarme_subscription_id) {
+            if(isset($lastOrder) && isset($lastOrder->subscription) && $lastOrder->subscription->provider_subscription_id) {
                 
                 // Obtem a assinatura do ultimo pedido pago
                 $lastSubscription = $lastOrder->subscription;
 
                 // Cancela a assinatura do ultimo pedido pago
-                $pagarMeService->cancelSubscription($lastSubscription->pagarme_subscription_id);
+                $pagarMeService->cancelSubscription($lastSubscription->provider_subscription_id);
 
             }
 
@@ -205,7 +206,7 @@ class OrderService
         $pagarMeService = new PagarMeService;
 
         // Busca o pedido de assinatura
-        $transaction = $pagarMeService->getSubscriptionInvoices($subscription->pagarme_subscription_id);
+        $transaction = $pagarMeService->getSubscriptionInvoices($subscription->provider_subscription_id);
 
         // Se retornar sucesso da requisição
         if (isset($transaction) && isset($transaction['data']) && isset($transaction['data'][0]['charge'])) {
@@ -293,7 +294,8 @@ class OrderService
 
                 // Cria ciclo
                 SubscriptionCycle::updateOrCreate([
-                    'pagarme_cycle_id'  => $transaction['cycle']['id'],
+                    'provider'          => 'pagarme',
+                    'provider_cycle_id' => $transaction['cycle']['id'],
                 ],[
                     'subscription_id'   => $subscription->id,
                     'start_date'        => $transaction['cycle']['start_at'],

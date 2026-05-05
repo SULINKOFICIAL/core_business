@@ -139,23 +139,25 @@ class TenantManualPlanController extends Controller
 
             if (!$subscription) {
                 $subscription = Subscription::create([
-                    'tenant_id'               => $tenant->id,
-                    'plan_id'                 => $activePlan->id,
-                    'pagarme_subscription_id' => 'manual-admin-' . $tenant->id,
-                    'payment_method'          => 'manual_admin',
-                    'currency'                => 'BRL',
-                    'installments'            => 1,
-                    'status'                  => 'active',
+                    'tenant_id'                 => $tenant->id,
+                    'plan_id'                   => $activePlan->id,
+                    'provider'                  => 'pagarme',
+                    'provider_subscription_id'  => 'manual-admin-' . $tenant->id,
+                    'payment_method'            => 'manual_admin',
+                    'currency'                  => 'BRL',
+                    'installments'              => 1,
+                    'status'                    => 'active',
                 ]);
             } else {
                 $subscription->update([
+                    'provider' => 'pagarme',
                     'plan_id' => $activePlan->id,
                     'status' => 'active',
                 ]);
             }
 
             // Mantém a vigência local alinhada ao período informado no modal.
-            // Regra: reutiliza o mesmo pagarme_cycle_id quando já existir ciclo billed.
+            // Regra: reutiliza o mesmo provider_cycle_id quando já existir ciclo billed.
             $existingCycle = SubscriptionCycle::where('subscription_id', $subscription->id)
                 ->where('status', 'billed')
                 ->latest('id')
@@ -163,7 +165,8 @@ class TenantManualPlanController extends Controller
 
             $cyclePayload = [
                 'subscription_id' => $subscription->id,
-                'pagarme_cycle_id' => $existingCycle?->pagarme_cycle_id ?: 'manual-cycle-' . $subscription->id,
+                'provider' => 'pagarme',
+                'provider_cycle_id' => $existingCycle?->provider_cycle_id ?: 'manual-cycle-' . $subscription->id,
                 'start_date' => Carbon::parse($data['start_date'] ?? now())->startOfDay(),
                 'end_date' => Carbon::parse($data['end_date'] ?? now())->endOfDay(),
                 'status' => 'billed',

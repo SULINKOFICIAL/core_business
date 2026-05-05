@@ -536,7 +536,7 @@ class ApisOrdersController extends Controller
                 $pagarme = new PagarMeService();
 
                 // Cancela a assinatura
-                $response = $pagarme->cancelSubscription($order->subscription->pagarme_subscription_id);
+                $response = $pagarme->cancelSubscription($order->subscription->provider_subscription_id);
 
                 // Se a assinatura foi cancelada
                 if ((isset($response['status']) && $response['status'] == 'canceled') || $response['message'] == 'This subscription is canceled.') {

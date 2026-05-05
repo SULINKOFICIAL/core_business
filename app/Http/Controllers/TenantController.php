@@ -143,8 +143,9 @@ class TenantController extends Controller
         $subscription = Subscription::create([
             'tenant_id' => $created->id,
             'plan_id' => $package->id,
-            'pagarme_subscription_id' => '1',
-            'pagarme_card_id' => '1',
+            'provider' => 'micore',
+            'provider_subscription_id' => 'manual-admin-' . $created->id,
+            'provider_card_id' => 'manual-card-' . $created->id,
             'interval' => 'year',
             'payment_method' => 'liberado',
             'currency' => 'BRL',
@@ -171,7 +172,8 @@ class TenantController extends Controller
         // Cria um ciclo de assinatura fictício
         SubscriptionCycle::create([
             'subscription_id' => $subscription->id,
-            'pagarme_cycle_id' => '1',
+            'provider' => 'micore',
+            'provider_cycle_id' => 'manual-cycle-' . $subscription->id,
             'start_date' => now(),
             'end_date' => now()->addDays(30),
             'status' => 'billed',
@@ -185,8 +187,8 @@ class TenantController extends Controller
         OrderTransaction::create([
             'order_id' => $order->id,
             'subscription_id' => $subscription->id,
-            'provider' => 'pagarme',
-            'provider_transaction_id' => '1',
+            'provider' => 'micore',
+            'provider_transaction_id' => 'manual-tx-' . $order->id,
             'amount' => 0,
             'status' => 'paid',
             'provider_method' => 'liberado',
