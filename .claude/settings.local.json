@@ -1,8 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(Select-Object -Last 20)",
-      "WebSearch"
+      "Bash(*)",
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "WebSearch",
+      "WebFetch"
     ]
   }
 }
