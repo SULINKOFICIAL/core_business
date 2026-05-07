@@ -266,9 +266,11 @@
         $('#modal_tenant_run_task').modal('show');
     });
 
-    function buildTenantStatusIcon(isSuccess, title) {
+    function buildTenantStatusIcon(isSuccess, title, isProcessing) {
         const iconClass = isSuccess ? 'fa-circle-check text-success' : 'fa-circle-xmark text-danger';
-        return `<i class="fa-solid ${iconClass}" data-bs-toggle="tooltip" data-bs-placement="top" title="${title}"></i>`;
+        const processingClass = isProcessing ? 'tenant-status-processing' : '';
+
+        return `<i class="fa-solid ${iconClass} ${processingClass}" data-bs-toggle="tooltip" data-bs-placement="top" title="${title}"></i>`;
     }
 
     function columnIndexByActionType(actionType) {
@@ -314,7 +316,7 @@
         });
     }
 
-    function updateTenantStatusCell(rowElement, actionType, isSuccess, title) {
+    function updateTenantStatusCell(rowElement, actionType, isSuccess, title, isProcessing) {
         if (!rowElement || rowElement.length === 0) {
             return;
         }
@@ -326,7 +328,7 @@
         }
 
         const cell = rowElement.find('td').eq(columnIndex);
-        cell.html(buildTenantStatusIcon(isSuccess, title));
+        cell.html(buildTenantStatusIcon(isSuccess, title, isProcessing));
     }
 
     function findRowElementByTenantId(tenantId) {
@@ -356,9 +358,9 @@
         const gitSuccess = status.git_last_version === 1;
         const spSuccess = status.sp_last_version === 1;
 
-        updateTenantStatusCell(rowElement, 'db', dbSuccess, tooltipTitleForAction('db', dbSuccess, status.db_error));
-        updateTenantStatusCell(rowElement, 'git', gitSuccess, tooltipTitleForAction('git', gitSuccess, status.git_error));
-        updateTenantStatusCell(rowElement, 'sp', spSuccess, tooltipTitleForAction('sp', spSuccess, status.sp_error));
+        updateTenantStatusCell(rowElement, 'db', dbSuccess, tooltipTitleForAction('db', dbSuccess, status.db_error), false);
+        updateTenantStatusCell(rowElement, 'git', gitSuccess, tooltipTitleForAction('git', gitSuccess, status.git_error), false);
+        updateTenantStatusCell(rowElement, 'sp', spSuccess, tooltipTitleForAction('sp', spSuccess, status.sp_error), false);
     }
 
     // Executa ações do menu do tenant via AJAX.
@@ -384,7 +386,7 @@
         }
         const processingTitle = 'Processando ação...';
 
-        updateTenantStatusCell(rowElement, actionType, false, processingTitle);
+        updateTenantStatusCell(rowElement, actionType, false, processingTitle, true);
         refreshBootstrapTooltips();
 
         $.ajax({
@@ -402,7 +404,7 @@
             error: function (xhr) {
                 const message = xhr.responseJSON.message;
 
-                updateTenantStatusCell(rowElement, actionType, false, message);
+                updateTenantStatusCell(rowElement, actionType, false, message, false);
                 refreshBootstrapTooltips();
                 toastr.error(message);
             }
