@@ -157,14 +157,45 @@
                 modal.show();
             });
 
-            // Evita disparo sem nenhuma opção marcada.
+            // Evita disparo sem nenhuma opção marcada e dispara atualização em AJAX.
             $(document).on('submit', '#form_update_systems_actions', function (event) {
-                var hasAnyAction = $(this).find('input[name=\"actions[]\"]:checked').length > 0;
+                event.preventDefault();
+
+                var form = $(this);
+                var hasAnyAction = form.find('input[name=\"actions[]\"]:checked').length > 0;
 
                 if (!hasAnyAction) {
-                    event.preventDefault();
                     toastr.warning('Selecione ao menos uma ação para continuar.');
+                    return;
                 }
+
+                window.dispatchEvent(new CustomEvent('systems:update-started'));
+
+                var modalElement = document.getElementById('modal_update_systems_actions');
+                var modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+                modal.hide();
+
+                var submitButton = form.find('button[type=\"submit\"]');
+                submitButton.prop('disabled', true);
+
+                $.ajax({
+                    url: form.attr('action'),
+                    method: 'GET',
+                    data: form.serialize(),
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    },
+                    success: function (response) {
+                        toastr.success(response.message);
+                    },
+                    error: function (xhr) {
+                        toastr.error(xhr.responseJSON.message);
+                    },
+                    complete: function () {
+                        submitButton.prop('disabled', false);
+                    }
+                });
             });
         </script>
         @yield('custom-footer')

@@ -227,6 +227,41 @@
 
     // Renderiza tabela
     const dataTable = table.DataTable(dataTableOptions);
+    let tenantsAutoReloadIntervalId = null;
+    let tenantsAutoReloadTimeoutId = null;
+
+    function stopTenantsAutoReloadCycle() {
+        if (tenantsAutoReloadIntervalId !== null) {
+            clearInterval(tenantsAutoReloadIntervalId);
+            tenantsAutoReloadIntervalId = null;
+        }
+
+        if (tenantsAutoReloadTimeoutId !== null) {
+            clearTimeout(tenantsAutoReloadTimeoutId);
+            tenantsAutoReloadTimeoutId = null;
+        }
+    }
+
+    function startTenantsAutoReloadCycle() {
+        stopTenantsAutoReloadCycle();
+        dataTable.ajax.reload(null, false);
+
+        tenantsAutoReloadIntervalId = setInterval(function () {
+            dataTable.ajax.reload(null, false);
+        }, 10000);
+
+        tenantsAutoReloadTimeoutId = setTimeout(function () {
+            stopTenantsAutoReloadCycle();
+        }, 60000);
+    }
+
+    window.addEventListener('systems:update-started', function () {
+        startTenantsAutoReloadCycle();
+    });
+
+    window.addEventListener('beforeunload', function () {
+        stopTenantsAutoReloadCycle();
+    });
 
     // Inicializa select2 do modal de tarefas.
     $('#scheduled-job-select').select2({

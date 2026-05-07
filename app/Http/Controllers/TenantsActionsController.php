@@ -103,7 +103,7 @@ class TenantsActionsController extends Controller
      * Atualiza todos os sistemas (banco de dados e git)
      * de todos os clientes via API
      */
-    public function updateAllSystems()
+    public function updateAllSystems(Request $request)
     {
         $allowedActions = ['git', 'database', 'supervisor', 'npm_build'];
         $selectedActions = collect((array) $this->request->get('actions', []))
@@ -114,6 +114,13 @@ class TenantsActionsController extends Controller
             ->all();
 
         if (empty($selectedActions)) {
+            if ($this->shouldReturnJson($request)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Selecione ao menos uma ação para atualizar os sistemas.',
+                ], 422);
+            }
+
             return redirect()
                 ->route('tenants.index')
                 ->with('type', 'warning')
@@ -230,10 +237,20 @@ class TenantsActionsController extends Controller
             })
             ->implode(', ');
 
+        $successMessage = 'Processo concluído para: ' . $selectedActionLabels . '.';
+
+        if ($this->shouldReturnJson($request)) {
+            return response()->json([
+                'success' => true,
+                'message' => $successMessage,
+                'selected_actions' => $selectedActions,
+            ]);
+        }
+
         // Redireciona com a mensagem final
         return redirect()
             ->route('tenants.index')
-            ->with('message', 'Processo concluído para: ' . $selectedActionLabels . '.');
+            ->with('message', $successMessage);
     }
 
     // Atualiza o banco de dados do cliente via API
