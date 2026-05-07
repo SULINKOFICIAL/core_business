@@ -12,7 +12,5 @@ class PaymentDataDTO
         public readonly OrderDataDTO $order,
         public readonly TransactionDataDTO $transaction,
         public readonly ?CycleDataDTO $cycle = null,
-    ) {
-    }
+    ) {}
 }
-

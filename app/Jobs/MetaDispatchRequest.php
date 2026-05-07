@@ -6,9 +6,9 @@ use App\Models\Tenant;
 use App\Models\TenantMeta;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use App\Enums\LogApiStatusEnum;
 use App\Models\LogsApi;
 use App\Services\GuzzleService;
-use Illuminate\Support\Facades\Log;
 
 class MetaDispatchRequest implements ShouldQueue
 {
@@ -57,7 +57,7 @@ class MetaDispatchRequest implements ShouldQueue
             // Se não encontrar retorna erro
             if(!$clientMeta){
                 $this->logApi->update([
-                    'status' => 'Erro',
+                    'status' => LogApiStatusEnum::FAILED->value,
                 ]);
                 return;
             }
@@ -71,7 +71,7 @@ class MetaDispatchRequest implements ShouldQueue
             $clientDomains = $clientMeta->tenant->domains;
             if ($clientDomains->isEmpty()) {
                 $this->logApi->update([
-                    'status' => 'Erro',
+                    'status' => LogApiStatusEnum::FAILED->value,
                 ]);
                 return;
             }
@@ -86,7 +86,7 @@ class MetaDispatchRequest implements ShouldQueue
             $tenant = Tenant::find($id);
             if (!$tenant) {
                 $this->logApi->update([
-                    'status' => 'Erro',
+                    'status' => LogApiStatusEnum::FAILED->value,
                 ]);
                 return;
             }
@@ -100,7 +100,7 @@ class MetaDispatchRequest implements ShouldQueue
             $clientDomains = $tenant->domains;
             if ($clientDomains->isEmpty()) {
                 $this->logApi->update([
-                    'status' => 'Erro',
+                    'status' => LogApiStatusEnum::FAILED->value,
                 ]);
                 return;
             }
@@ -115,12 +115,12 @@ class MetaDispatchRequest implements ShouldQueue
         // Se a requisição foi processada atualiza o logs para concluido
         if($response['success'] && isset($response['data']['status']) && $response['data']['status'] == 'Accepted'){
             $this->logApi->update([
-                'status' => 'Processado',
+                'status' => LogApiStatusEnum::PROCESSED->value,
                 'dispatched_at' => now(),
             ]);
         } else {
             $this->logApi->update([
-                'status' => 'Erro',
+                'status' => LogApiStatusEnum::FAILED->value,
             ]);
         }
         
