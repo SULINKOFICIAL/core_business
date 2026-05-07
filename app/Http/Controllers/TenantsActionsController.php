@@ -127,6 +127,47 @@ class TenantsActionsController extends Controller
                 ->with('message', 'Selecione ao menos uma ação para atualizar os sistemas.');
         }
 
+        $selectedActionLabels = $this->selectedActionLabels($selectedActions);
+        $successMessage = 'Processo concluído para: ' . $selectedActionLabels . '.';
+
+        if ($this->shouldReturnJson($request)) {
+            app()->terminating(function () use ($selectedActions) {
+                $this->processAllSystemsUpdate($selectedActions);
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Processo iniciado para: ' . $selectedActionLabels . '.',
+                'selected_actions' => $selectedActions,
+            ]);
+        }
+
+        $this->processAllSystemsUpdate($selectedActions);
+
+        // Redireciona com a mensagem final
+        return redirect()
+            ->route('tenants.index')
+            ->with('message', $successMessage);
+    }
+
+    private function selectedActionLabels(array $selectedActions): string
+    {
+        $actionLabels = [
+            'git' => 'Git pull',
+            'database' => 'banco de dados',
+            'supervisor' => 'reinício de filas',
+            'npm_build' => 'build de Javascript',
+        ];
+
+        return collect($selectedActions)
+            ->map(function ($action) use ($actionLabels) {
+                return $actionLabels[$action] ?? $action;
+            })
+            ->implode(', ');
+    }
+
+    private function processAllSystemsUpdate(array $selectedActions): void
+    {
         $shouldUpdateGit = in_array('git', $selectedActions, true);
         $shouldUpdateDatabase = in_array('database', $selectedActions, true);
         $shouldRestartSupervisor = in_array('supervisor', $selectedActions, true);
@@ -182,7 +223,6 @@ class TenantsActionsController extends Controller
         });
 
         if ($sharedTenant) {
-            
             if ($shouldUpdateGit) {
                 // Verifica se o cliente compartilhado foi atualizado com sucesso.
                 $this->updateGit($sharedTenant->id);
@@ -214,7 +254,6 @@ class TenantsActionsController extends Controller
             if ($shouldBuildJavascript) {
                 $this->runNpmBuild($sharedTenant->id);
             }
-
         }
         
         if ($shouldUpdateDatabase) {
@@ -223,34 +262,6 @@ class TenantsActionsController extends Controller
                 $this->updateDatabase($tenant->id);
             }
         }
-
-        $actionLabels = [
-            'git' => 'Git pull',
-            'database' => 'banco de dados',
-            'supervisor' => 'reinício de filas',
-            'npm_build' => 'build de Javascript',
-        ];
-
-        $selectedActionLabels = collect($selectedActions)
-            ->map(function ($action) use ($actionLabels) {
-                return $actionLabels[$action] ?? $action;
-            })
-            ->implode(', ');
-
-        $successMessage = 'Processo concluído para: ' . $selectedActionLabels . '.';
-
-        if ($this->shouldReturnJson($request)) {
-            return response()->json([
-                'success' => true,
-                'message' => $successMessage,
-                'selected_actions' => $selectedActions,
-            ]);
-        }
-
-        // Redireciona com a mensagem final
-        return redirect()
-            ->route('tenants.index')
-            ->with('message', $successMessage);
     }
 
     // Atualiza o banco de dados do cliente via API
