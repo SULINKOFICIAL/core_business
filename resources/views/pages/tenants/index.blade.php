@@ -287,8 +287,7 @@
         return null;
     }
 
-    function tooltipTitleForAction(actionType, isSuccess, fallbackError) {
-        const errorMessage = fallbackError || 'Falha ao executar ação';
+    function tooltipTitleForAction(actionType, isSuccess, errorMessage) {
 
         if (actionType === 'db') {
             return isSuccess ? 'Banco de dados atualizado' : errorMessage;
@@ -316,6 +315,10 @@
     }
 
     function updateTenantStatusCell(rowElement, actionType, isSuccess, title) {
+        if (!rowElement || rowElement.length === 0) {
+            return;
+        }
+
         const columnIndex = columnIndexByActionType(actionType);
 
         if (columnIndex === null) {
@@ -324,6 +327,24 @@
 
         const cell = rowElement.find('td').eq(columnIndex);
         cell.html(buildTenantStatusIcon(isSuccess, title));
+    }
+
+    function findRowElementByTenantId(tenantId) {
+        if (!tenantId) {
+            return $();
+        }
+
+        let foundRow = $();
+
+        dataTable.rows({ page: 'current' }).every(function () {
+            const rowData = this.data();
+
+            if (String(rowData.id) === String(tenantId)) {
+                foundRow = $(this.node());
+            }
+        });
+
+        return foundRow;
     }
 
     function applyStatusSnapshotToRow(rowElement, status) {
@@ -345,8 +366,8 @@
         e.preventDefault();
 
         const trigger = $(this);
-        const tenantName = trigger.data('tenant-name') || 'tenant';
-        const actionLabel = trigger.data('action-label') || 'executar esta ação';
+        const tenantName = trigger.data('tenant-name');
+        const actionLabel = trigger.data('action-label');
         const actionType = trigger.data('action-type');
         const shouldProceed = window.confirm(`Deseja mesmo ${actionLabel} no tenant ${tenantName}?`);
 
@@ -355,7 +376,12 @@
         }
 
         const url = trigger.attr('href');
-        const rowElement = trigger.closest('tr');
+        let rowElement = trigger.closest('tr');
+        const tenantId = trigger.data('tenant-id');
+
+        if (!rowElement || rowElement.length === 0 || rowElement.find('td').length === 0) {
+            rowElement = findRowElementByTenantId(tenantId);
+        }
         const processingTitle = 'Processando ação...';
 
         updateTenantStatusCell(rowElement, actionType, false, processingTitle);
@@ -369,20 +395,12 @@
                 'Accept': 'application/json',
             },
             success: function (response) {
-                const message = response && response.message ? response.message : 'Ação executada com sucesso.';
-                toastr.success(message);
-
-                if (response && response.status) {
-                    applyStatusSnapshotToRow(rowElement, response.status);
-                    refreshBootstrapTooltips();
-                } else {
-                    dataTable.ajax.reload(null, false);
-                }
+                toastr.success(response.message);
+                applyStatusSnapshotToRow(rowElement, response.status);
+                refreshBootstrapTooltips();
             },
             error: function (xhr) {
-                const message = xhr.responseJSON && xhr.responseJSON.message
-                    ? xhr.responseJSON.message
-                    : 'Não foi possível executar a ação.';
+                const message = xhr.responseJSON.message;
 
                 updateTenantStatusCell(rowElement, actionType, false, message);
                 refreshBootstrapTooltips();
@@ -396,8 +414,8 @@
         e.preventDefault();
 
         const trigger = $(this);
-        const tenantName = trigger.data('tenant-name') || 'tenant';
-        const actionLabel = trigger.data('action-label') || 'alterar status';
+        const tenantName = trigger.data('tenant-name');
+        const actionLabel = trigger.data('action-label');
         const shouldProceed = window.confirm(`Deseja mesmo ${actionLabel} no tenant ${tenantName}?`);
 
         if (!shouldProceed) {
@@ -413,15 +431,11 @@
                 'X-Requested-With': 'XMLHttpRequest',
             },
             success: function (response) {
-                const message = response && response.message ? response.message : 'Status do tenant atualizado com sucesso.';
-                toastr.success(message);
+                toastr.success(response.message);
                 dataTable.ajax.reload(null, false);
             },
             error: function (xhr) {
-                const message = xhr.responseJSON && xhr.responseJSON.message
-                    ? xhr.responseJSON.message
-                    : 'Não foi possível atualizar o status do tenant.';
-                toastr.error(message);
+                toastr.error(xhr.responseJSON.message);
             }
         });
     });
