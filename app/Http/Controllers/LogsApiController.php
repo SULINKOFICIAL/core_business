@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\LogApiStatusEnum;
 use App\Models\LogsApi;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -107,12 +108,12 @@ class LogsApiController extends Controller
 
         // Monta as séries de status por dia para habilitar a legenda clicável.
         $processedSeries = collect(range(1, $daysInMonth))
-            ->map(fn (int $day) => (int) (($statusByDay[$day]['Processado'] ?? 0)))
+            ->map(fn (int $day) => (int) (($statusByDay[$day][LogApiStatusEnum::PROCESSED->value] ?? 0)))
             ->values()
             ->all();
 
         $errorSeries = collect(range(1, $daysInMonth))
-            ->map(fn (int $day) => (int) (($statusByDay[$day]['Erro'] ?? 0)))
+            ->map(fn (int $day) => (int) (($statusByDay[$day][LogApiStatusEnum::FAILED->value] ?? 0)))
             ->values()
             ->all();
 
@@ -134,7 +135,7 @@ class LogsApiController extends Controller
                 'data' => $processedSeries,
             ],
             [
-                'name' => 'Erro',
+                'name' => 'Falhou',
                 'data' => $errorSeries,
             ],
         ];

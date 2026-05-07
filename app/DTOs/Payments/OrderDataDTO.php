@@ -11,7 +11,5 @@ class OrderDataDTO
         public readonly ?string $currency,
         public readonly float $total_amount,
         public readonly ?string $paid_at,
-    ) {
-    }
+    ) {}
 }
-

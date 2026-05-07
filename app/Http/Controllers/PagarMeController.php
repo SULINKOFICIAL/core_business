@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\LogApiStatusEnum;
 use App\Models\LogsApi;
+use App\Support\JobDispatcher;
 use Illuminate\Http\Request;
 use App\Jobs\PagarMeDispatchRequest;
 
@@ -36,8 +38,9 @@ class PagarMeController extends Controller
          * recebido e salvo.
          */
         $logApi = LogsApi::create([
-            'api' => 'PagarMe',
-            'json' => json_encode($data),
+            'api'    => 'PagarMe',
+            'json'   => json_encode($data),
+            'status' => LogApiStatusEnum::RECEIVED->value,
         ]);
 
         // Se for um LogApi que está sendo reprocessado
@@ -46,8 +49,8 @@ class PagarMeController extends Controller
             $logOld->save();
         }
 
-        // Dispara para a função de encontrar o dominio a ser enviado o conteudo
-        PagarMeDispatchRequest::dispatch($data, $logApi->id);
+        // Dispara o job para processar o webhook
+        JobDispatcher::dispatch(PagarMeDispatchRequest::class, [$data], $logApi->id, 'pagarme');
 
     }
 }

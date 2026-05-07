@@ -54,18 +54,6 @@ class PagarMeResponseService
             return false;
         }
 
-        // Pega a chave de duplicidade
-        $key = $pagarMeDTO->getIdempotencyKey();
-
-        /**
-         * Salva em cache por 30 segundos, se encontrar
-         * o mesmo registro dentro desse período, retorna
-         * false para identificar que é duplicata.
-         */
-        if (env('APP_ENV') == 'production' && !Cache::add("pagarme:$key", true, 300)) {
-            return false;
-        }
-
         return $pagarMeDTO;
     }
 
@@ -221,7 +209,7 @@ class PagarMeResponseService
             'subscription.updated' => new CustomerDTO(
                 id: $data['data']['customer']['id'],
                 name: $data['data']['customer']['name'],
-                email: $data['data']['customer']['email'],
+                email: $data['data']['customer']['email'] ?? null,
                 document: $data['data']['customer']['document'],
                 type: $data['data']['customer']['type'],
                 phone: new PhoneDTO(

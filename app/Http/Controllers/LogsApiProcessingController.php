@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\LogApiStatusEnum;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
@@ -197,10 +198,14 @@ class LogsApiProcessingController extends Controller
             })
             ->addColumn('status', function ($row) {
                 return match ((string) $row->status) {
-                    'Processado' => '<span class="badge badge-light-success">Processado</span>',
-                    'Aguardando' => '<span class="badge badge-light-warning">Aguardando</span>',
-                    'Erro' => '<span class="badge badge-light-danger">Erro</span>',
-                    default => '<span class="badge badge-light-info">'.$row->status.'</span>',
+                    LogApiStatusEnum::RECEIVED->value    => '<span class="badge badge-light-info">Recebido</span>',
+                    LogApiStatusEnum::PROCESSED->value   => '<span class="badge badge-light-success">Processado</span>',
+                    LogApiStatusEnum::SENT->value        => '<span class="badge badge-light-primary">Enviado</span>',
+                    LogApiStatusEnum::FAILED->value      => '<span class="badge badge-light-danger">Falhou</span>',
+                    LogApiStatusEnum::REPROCESSED->value => '<span class="badge badge-light-warning">Reprocessado</span>',
+                    LogApiStatusEnum::IGNORED->value     => '<span class="badge badge-light-secondary">Ignorado</span>',
+                    LogApiStatusEnum::DUPLICATED->value  => '<span class="badge badge-light-dark">Duplicado</span>',
+                    default                              => '<span class="badge badge-light">'.$row->status.'</span>',
                 };
             })
             ->addColumn('dispatched_at', function ($row) {

@@ -14,7 +14,5 @@ class TransactionDataDTO
         public readonly float $amount,
         public readonly ?string $paid_at,
         public readonly array $response,
-    ) {
-    }
+    ) {}
 }
-

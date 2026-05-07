@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\LogApiStatusEnum;
 use App\Models\TenantDomain;
 use App\Models\TenantIntegration;
 use App\Models\TenantMeta;
@@ -82,8 +83,9 @@ class MetaApiController extends Controller
          * recebido e salvo.
          */
         $logApi = LogsApi::create([
-            'api' => 'Meta',
-            'json' => json_encode($data),
+            'api'    => 'Meta',
+            'json'   => json_encode($data),
+            'status' => LogApiStatusEnum::RECEIVED->value,
         ]);
 
         // Se for um LogApi que está sendo reprocessado
