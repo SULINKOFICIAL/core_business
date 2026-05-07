@@ -16,11 +16,11 @@ class OrderController extends Controller
     private $repository;
     private $orderService;
 
-    public function __construct(Request $request, Order $content)
+    public function __construct(Request $request, Order $content, OrderService $orderService)
     {
-        $this->request = $request;
-        $this->repository = $content;
-        $this->orderService = new OrderService;
+        $this->request      = $request;
+        $this->repository   = $content;
+        $this->orderService = $orderService;
     }
 
     /**

@@ -64,6 +64,7 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
          */
         Route::prefix('pagamento')->group(function () {
             Route::post('/pagar', [ApisPaymentsController::class, 'orderPayment']);
+            Route::get('/status', [ApisPaymentsController::class, 'paymentStatus']);
         });
 
         /** API que recebe dados dos miCores */

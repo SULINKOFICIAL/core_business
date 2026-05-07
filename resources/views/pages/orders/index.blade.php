@@ -88,7 +88,7 @@
                 data.order_status = $('input[name="order_status"]:checked').val();
             },
         },
-        order: [[6, 'desc']],
+        order: [[0, 'desc']],
         columns: [
             { data: 'order_label', name: 'id' },
             { data: 'tenant_name', orderable: false, searchable: false },

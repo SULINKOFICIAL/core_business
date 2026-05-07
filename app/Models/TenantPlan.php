@@ -12,6 +12,13 @@ class TenantPlan extends Model
 {
     protected $table = 'tenants_plans';
 
+    /**
+     * Progresso:
+     * draft     = Cliente ainda criando o plano
+     * pending   = Aguardando confirmação do pagamento do Gateway
+     * canceled  = Pedido cancelado, ou por sobrescrição de pagamento ou por cancelamento manual
+     * completed = Pago com sucesso
+     */
     protected $fillable = [
         'tenant_id',
         'name',

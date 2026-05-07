@@ -28,6 +28,7 @@ use App\Http\Controllers\AdditionalStorageController;
 use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PagarMeController;
+use App\Http\Controllers\PagHiperController;
 use App\Http\Controllers\SubscriptionsController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\TicketController;
@@ -500,14 +501,15 @@ Route::name('callbacks.')->prefix('callbacks')->group(function () {
  */
 Route::prefix('webhooks')->withoutMiddleware(['web'])->group(function () {
 
-    Route::get('/meta',  [MetaApiController::class, 'authWebhooks']);
-    Route::post('/meta', [MetaApiController::class, 'return'])->name('meta');
+    Route::get('/meta',      [MetaApiController::class, 'authWebhooks']);
+    Route::post('/meta',     [MetaApiController::class, 'return'])->name('meta');
     Route::post('/whatsapp', [WhatsAppApiController::class, 'return'])->name('whatsapp');
 
-    Route::post('/pagarme', [PagarMeController::class, 'return'])->name('pagarme');
+    Route::post('/pagarme',  [PagarMeController::class, 'return'])->name('pagarme');
+    Route::post('/paghiper', [PagHiperController::class, 'return'])->name('paghiper');
 
-    Route::get('/tiktok',  [TikTokApiController::class, 'return']);
-    Route::post('/tiktok', [TikTokApiController::class, 'return']);
+    Route::get('/tiktok',    [TikTokApiController::class, 'return']);
+    Route::post('/tiktok',   [TikTokApiController::class, 'return']);
     
 });
 

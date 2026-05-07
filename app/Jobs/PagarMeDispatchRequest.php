@@ -13,6 +13,7 @@ use App\Services\{
 };
 
 use App\Services\Payments\{
+    ActivePlanService,
     PagarMePayloadService,
     SubscriptionService
 };
@@ -33,19 +34,19 @@ class PagarMeDispatchRequest extends InicializerJob
     protected PagarMeResponseService $pagarMeResponseService;
     protected TenantService          $tenantService;
     protected SubscriptionService    $subscriptionService;
+    protected ActivePlanService      $activePlanService;
     protected PagarMePayloadService  $pagarMePayloadService;
 
     public function __construct(array $data)
     {
         $this->data = $data;
 
-        // Inicia os serviços necessários
         $this->pagarMeResponseService = app(PagarMeResponseService::class);
         $this->tenantService          = app(TenantService::class);
         $this->subscriptionService    = app(SubscriptionService::class);
+        $this->activePlanService      = app(ActivePlanService::class);
         $this->pagarMePayloadService  = app(PagarMePayloadService::class);
 
-        // Processa e normaliza os dados do webhook
         $this->pagarMeDTO = $this->pagarMeResponseService->process($data);
     }
 
@@ -53,15 +54,15 @@ class PagarMeDispatchRequest extends InicializerJob
     {
         return match ($this->pagarMeDTO->type) {
             'subscription.created',
-            'subscription.updated' => $this->subscription($this->pagarMeDTO->subscription),
+            'subscription.updated'        => $this->subscription($this->pagarMeDTO->subscription),
             'invoice.created',
             'charge.created',
             'invoice.paid',
             'charge.antifraud_approved',
             'charge.paid',
             'invoice.payment_failed',
-            'charge.payment_failed' => $this->payment($this->pagarMeDTO),
-            default => null,
+            'charge.payment_failed'       => $this->payment($this->pagarMeDTO),
+            default                       => null,
         };
     }
 
@@ -82,7 +83,7 @@ class PagarMeDispatchRequest extends InicializerJob
         $tenant = $this->tenantService->findTenant($pagarMeDTO->customer->id, 'pagarme');
 
         // Verifica se já existe um plano ativo cadastrado
-        $plan = $this->subscriptionService->findActivePlan($tenant->id);
+        $plan = $this->activePlanService->findActivePlan($tenant->id);
 
         // Resolve a assinatura local, criando caso ainda não exista
         $subscription = $this->subscriptionService->findSubscription($pagarMeDTO->subscription->id, 'pagarme', $pagarMeDTO->subscription);

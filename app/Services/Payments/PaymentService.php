@@ -22,34 +22,37 @@ class PaymentService
     public function __construct(
         private TenantConfigurationSyncService $syncService,
         private TenantService $tenantService
-    ) {}
+    ) {
+    }
 
     /**
+     *
      * Decide entre criar ou atualizar o pagamento com base na existência da transação.
+     *
      */
     public function create(PaymentDataDTO $paymentData): void
     {
-        // Verifica se a transação já existe
         $transaction = OrderTransaction::where('provider_transaction_id', $paymentData->transaction->provider_transaction_id)
             ->where('provider', $paymentData->provider)
             ->first();
 
         if (!$transaction) {
             $this->createPayment($paymentData);
-        } else {
-            $this->updatePayment($transaction, $paymentData);
+            return;
         }
+
+        $this->updatePayment($transaction, $paymentData);
     }
 
     /**
-     * Cria pedido, transação e ciclo inicial registrando o primeiro estado do pagamento.
+     *
+     * Cria pedido e transação do pagamento, com ciclo apenas quando houver assinatura.
+     *
      */
     private function createPayment(PaymentDataDTO $paymentData): void
     {
-        // Obtém o tenant
         $tenant = $this->tenantService->findTenant($paymentData->tenant_id);
 
-        // Cria o pedido
         $order = Order::create([
             'tenant_id'        => $paymentData->tenant_id,
             'subscription_id'  => $paymentData->subscription_id,
@@ -63,7 +66,6 @@ class PaymentService
             'paid_at'          => $paymentData->order->paid_at,
         ]);
 
-        // Cria a transação
         OrderTransaction::create([
             'order_id'                => $order->id,
             'subscription_id'         => $paymentData->subscription_id,
@@ -79,36 +81,36 @@ class PaymentService
             'response'                => $paymentData->transaction->response,
         ]);
 
-        // Sem ciclo não há o que sincronizar (ex: cobranças avulsas)
-        if (!$paymentData->cycle) {
+        if (!$paymentData->cycle || !$paymentData->subscription_id) {
             return;
         }
 
-        // Salva o ciclo e sincroniza os acessos do tenant
         $this->saveCycle($paymentData->subscription_id, $paymentData->cycle, $paymentData->provider);
         $this->syncTenantAccess($tenant, $paymentData->cycle);
     }
 
     /**
-     * Atualiza transação e pedido já existentes, sincronizando o ciclo quando houver novidade.
+     *
+     * Atualiza transação e pedido existentes, sincronizando ciclo somente com assinatura vinculada.
+     *
      */
     private function updatePayment(OrderTransaction $transaction, PaymentDataDTO $paymentData): void
     {
-        // Atualiza a transação
         $transaction->update([
-            'provider'                => $paymentData->provider,
-            'provider_method'         => $paymentData->transaction->provider_method,
-            'status'                  => $paymentData->transaction->status,
-            'currency'                => $paymentData->transaction->currency,
-            'recurrency'              => $paymentData->transaction->recurrency,
-            'amount'                  => $paymentData->transaction->amount,
-            'paid_at'                 => $paymentData->transaction->paid_at ?? $transaction->paid_at,
-            'gateway_code'            => $paymentData->transaction->gateway_code ?? $transaction->gateway_code,
-            'response'                => $paymentData->transaction->response,
+            'provider'        => $paymentData->provider,
+            'provider_method' => $paymentData->transaction->provider_method,
+            'status'          => $paymentData->transaction->status,
+            'currency'        => $paymentData->transaction->currency,
+            'recurrency'      => $paymentData->transaction->recurrency,
+            'amount'          => $paymentData->transaction->amount,
+            'paid_at'         => $paymentData->transaction->paid_at ?? $transaction->paid_at,
+            'gateway_code'    => $paymentData->transaction->gateway_code ?? $transaction->gateway_code,
+            'response'        => $paymentData->transaction->response,
         ]);
 
-        // Atualiza o pedido
         $transaction->order->update([
+            'subscription_id'  => $paymentData->subscription_id ?? $transaction->order->subscription_id,
+            'plan_id'          => $paymentData->plan_id ?? $transaction->order->plan_id,
             'status'           => $paymentData->order->status,
             'provider'         => $paymentData->provider,
             'provider_method'  => $paymentData->order->provider_method,
@@ -118,17 +120,26 @@ class PaymentService
             'paid_at'          => $paymentData->order->paid_at ?? $transaction->order->paid_at,
         ]);
 
-        if (!$paymentData->cycle) {
+        if ($paymentData->subscription_id && !$transaction->subscription_id) {
+            $transaction->update([
+                'subscription_id' => $paymentData->subscription_id,
+            ]);
+        }
+
+        $subscriptionId = $paymentData->subscription_id ?? $transaction->subscription_id;
+
+        if (!$paymentData->cycle || !$subscriptionId) {
             return;
         }
 
-        // Salva o ciclo e sincroniza os acessos do tenant
-        $this->saveCycle($transaction->subscription_id, $paymentData->cycle, $paymentData->provider);
+        $this->saveCycle($subscriptionId, $paymentData->cycle, $paymentData->provider);
         $this->syncTenantAccess($transaction->order->tenant, $paymentData->cycle);
     }
 
     /**
-     * Mantém o ciclo de cobrança atualizado, criando quando ainda não existe e atualizando quando já foi criado.
+     *
+     * Mantém o ciclo de cobrança atualizado por provedor e ciclo externo.
+     *
      */
     private function saveCycle(int $subscriptionId, CycleDataDTO $cycleData, string $provider): void
     {
@@ -136,7 +147,6 @@ class PaymentService
             ->where('provider', $provider)
             ->first();
 
-        // Cria o ciclo caso ainda não exista
         if (!$cycle) {
             SubscriptionCycle::create([
                 'subscription_id'   => $subscriptionId,
@@ -152,7 +162,6 @@ class PaymentService
             return;
         }
 
-        // Atualiza o status e as datas de cobrança do ciclo existente
         $cycle->update([
             'status'          => $cycleData->status,
             'billing_at'      => $cycleData->billing_at,
@@ -161,7 +170,9 @@ class PaymentService
     }
 
     /**
-     * Reaplica os acessos do tenant após confirmação de cobrança.
+     *
+     * Reaplica os acessos do tenant após confirmação de cobrança com ciclo.
+     *
      */
     private function syncTenantAccess(Tenant $tenant, CycleDataDTO $cycle): void
     {

@@ -98,6 +98,7 @@ class OrderProcessingController extends Controller
 
             $column = match ($orderThis) {
                 'id' => 'id',
+                'order_label' => 'id',
                 'method_label' => 'method',
                 'created_at' => 'created_at',
                 'paid_at' => 'paid_at',
