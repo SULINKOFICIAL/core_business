@@ -266,16 +266,129 @@
         $('#modal_tenant_run_task').modal('show');
     });
 
-    // Confirma ações do menu do tenant (exceto "Acessar como sistema")
+    function buildTenantStatusIcon(isSuccess, title) {
+        const iconClass = isSuccess ? 'fa-circle-check text-success' : 'fa-circle-xmark text-danger';
+        return `<i class="fa-solid ${iconClass}" data-bs-toggle="tooltip" data-bs-placement="top" title="${title}"></i>`;
+    }
+
+    function columnIndexByActionType(actionType) {
+        if (actionType === 'db') {
+            return 3;
+        }
+
+        if (actionType === 'git') {
+            return 4;
+        }
+
+        if (actionType === 'sp') {
+            return 5;
+        }
+
+        return null;
+    }
+
+    function tooltipTitleForAction(actionType, isSuccess, fallbackError) {
+        const errorMessage = fallbackError || 'Falha ao executar ação';
+
+        if (actionType === 'db') {
+            return isSuccess ? 'Banco de dados atualizado' : errorMessage;
+        }
+
+        if (actionType === 'git') {
+            return isSuccess ? 'Git atualizado' : errorMessage;
+        }
+
+        if (actionType === 'sp') {
+            return isSuccess ? 'Supervisor atualizado' : errorMessage;
+        }
+
+        return errorMessage;
+    }
+
+    function refreshBootstrapTooltips() {
+        if (!window.bootstrap || !bootstrap.Tooltip) {
+            return;
+        }
+
+        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (element) {
+            bootstrap.Tooltip.getOrCreateInstance(element);
+        });
+    }
+
+    function updateTenantStatusCell(rowElement, actionType, isSuccess, title) {
+        const columnIndex = columnIndexByActionType(actionType);
+
+        if (columnIndex === null) {
+            return;
+        }
+
+        const cell = rowElement.find('td').eq(columnIndex);
+        cell.html(buildTenantStatusIcon(isSuccess, title));
+    }
+
+    function applyStatusSnapshotToRow(rowElement, status) {
+        if (!status) {
+            return;
+        }
+
+        const dbSuccess = status.db_last_version === 1;
+        const gitSuccess = status.git_last_version === 1;
+        const spSuccess = status.sp_last_version === 1;
+
+        updateTenantStatusCell(rowElement, 'db', dbSuccess, tooltipTitleForAction('db', dbSuccess, status.db_error));
+        updateTenantStatusCell(rowElement, 'git', gitSuccess, tooltipTitleForAction('git', gitSuccess, status.git_error));
+        updateTenantStatusCell(rowElement, 'sp', spSuccess, tooltipTitleForAction('sp', spSuccess, status.sp_error));
+    }
+
+    // Executa ações do menu do tenant via AJAX.
     $(document).on('click', '.js-tenant-action-confirm', function (e) {
+        e.preventDefault();
+
         const trigger = $(this);
         const tenantName = trigger.data('tenant-name') || 'tenant';
         const actionLabel = trigger.data('action-label') || 'executar esta ação';
+        const actionType = trigger.data('action-type');
         const shouldProceed = window.confirm(`Deseja mesmo ${actionLabel} no tenant ${tenantName}?`);
 
         if (!shouldProceed) {
-            e.preventDefault();
+            return;
         }
+
+        const url = trigger.attr('href');
+        const rowElement = trigger.closest('tr');
+        const processingTitle = 'Processando ação...';
+
+        updateTenantStatusCell(rowElement, actionType, false, processingTitle);
+        refreshBootstrapTooltips();
+
+        $.ajax({
+            url: url,
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+            success: function (response) {
+                const message = response && response.message ? response.message : 'Ação executada com sucesso.';
+                toastr.success(message);
+
+                if (response && response.status) {
+                    applyStatusSnapshotToRow(rowElement, response.status);
+                    refreshBootstrapTooltips();
+                } else {
+                    dataTable.ajax.reload(null, false);
+                }
+            },
+            error: function (xhr) {
+                const message = xhr.responseJSON && xhr.responseJSON.message
+                    ? xhr.responseJSON.message
+                    : 'Não foi possível executar a ação.';
+
+                updateTenantStatusCell(rowElement, actionType, false, message);
+                refreshBootstrapTooltips();
+                toastr.error(message);
+            }
+        });
     });
 
     // Ativa/desativa tenant via AJAX na listagem

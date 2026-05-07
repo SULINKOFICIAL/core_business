@@ -47,6 +47,23 @@ class TenantsActionsController extends Controller
         return $runtimeStatus;
     }
 
+    private function runtimeStatusSnapshot(TenantRuntimeStatus $runtimeStatus): array
+    {
+        return [
+            'db_last_version'   => $runtimeStatus->db_last_version ? 1 : 0,
+            'db_error'          => $runtimeStatus->db_error,
+            'git_last_version'  => $runtimeStatus->git_last_version ? 1 : 0,
+            'git_error'         => $runtimeStatus->git_error,
+            'sp_last_version'   => $runtimeStatus->sp_last_version ? 1 : 0,
+            'sp_error'          => $runtimeStatus->sp_error,
+        ];
+    }
+
+    private function shouldReturnJson(Request $request): bool
+    {
+        return $request->ajax() || $request->wantsJson();
+    }
+
     // Atualiza todos os bancos de dados via API
     public function updateAllDatabase()
     {
@@ -312,45 +329,63 @@ class TenantsActionsController extends Controller
     }
 
     // Atualiza o banco de dados do cliente via API
-    public function updateDatabaseManual($id){
+    public function updateDatabaseManual(Request $request, $id){
 
         // Encontra o cliente
         $tenant = $this->repository->find($id);
 
         // Realiza solicitação
-        $this->updateDatabase($tenant->id);
+        $updated = $this->updateDatabase($tenant->id);
+        $runtimeStatus = $this->runtimeStatusFor($tenant)->refresh();
+
+        if ($this->shouldReturnJson($request)) {
+            return response()->json([
+                'success' => $updated,
+                'message' => $updated ? 'Migração executada com sucesso' : 'Falha ao atualizar banco de dados',
+                'status' => $this->runtimeStatusSnapshot($runtimeStatus),
+            ], $updated ? 200 : 422);
+        }
 
         // Retorna a página
         return redirect()
                 ->route('tenants.index')
-                ->with('message', 'Migração executada com sucesso');
+                ->with('message', $updated ? 'Migração executada com sucesso' : 'Falha ao atualizar banco de dados');
 
     }
 
     // Atualiza os arquivos do cliente via API
-    public function updateGitManual($id){
+    public function updateGitManual(Request $request, $id){
 
         // Encontra o cliente
         $tenant = $this->repository->find($id);
 
         // Realiza solicitação
-        $this->updateGit($tenant->id);
+        $updated = $this->updateGit($tenant->id);
+        $runtimeStatus = $this->runtimeStatusFor($tenant)->refresh();
+
+        if ($this->shouldReturnJson($request)) {
+            return response()->json([
+                'success' => $updated,
+                'message' => $updated ? 'GIT Pull executado com sucesso' : 'Falha ao atualizar git',
+                'status' => $this->runtimeStatusSnapshot($runtimeStatus),
+            ], $updated ? 200 : 422);
+        }
 
         // Retorna a página
         return redirect()
                 ->route('tenants.index')
-                ->with('message', 'GIT Pull executado com sucesso');
+                ->with('message', $updated ? 'GIT Pull executado com sucesso' : 'Falha ao atualizar git');
 
     }
 
     // Reinicia as filas do cliente via API
-    public function updateSupervisorManual($id){
+    public function updateSupervisorManual(Request $request, $id){
 
         // Encontra o cliente
         $tenant = $this->repository->find($id);
 
         // Realiza solicitação
-        $response = $this->restartSupervisor($tenant->id);
+        $updated = $this->restartSupervisor($tenant->id);
 
         // Mantém o status sincronizado para todos os clientes compartilhados.
         if ($tenant->type_installation === 'shared') {
@@ -365,10 +400,20 @@ class TenantsActionsController extends Controller
             }
         }
 
+        $runtimeStatus = $this->runtimeStatusFor($tenant)->refresh();
+
+        if ($this->shouldReturnJson($request)) {
+            return response()->json([
+                'success' => $updated,
+                'message' => $updated ? 'Filas reiniciadas com sucesso' : 'Falha ao reiniciar as filas',
+                'status' => $this->runtimeStatusSnapshot($runtimeStatus),
+            ], $updated ? 200 : 422);
+        }
+
         // Retorna a página
         return redirect()
                 ->route('tenants.index')
-                ->with('message', $response ? 'Filas reiniciadas com sucesso' : 'Falha ao reiniciar as filas');
+                ->with('message', $updated ? 'Filas reiniciadas com sucesso' : 'Falha ao reiniciar as filas');
 
     }
 
