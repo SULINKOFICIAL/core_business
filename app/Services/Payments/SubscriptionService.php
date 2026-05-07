@@ -7,10 +7,8 @@ use App\Models\Subscription;
 class SubscriptionService
 {
     /**
-     *
      * Busca a assinatura pelo identificador externo e provedor.
      * Caso não encontre, cria uma nova sem atualizar registros existentes.
-     *
      */
     public function findSubscription(string $subscriptionId, string $provider, ?object $subscriptionDTO = null): Subscription
     {
