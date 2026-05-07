@@ -248,11 +248,11 @@
 
         tenantsAutoReloadIntervalId = setInterval(function () {
             dataTable.ajax.reload(null, false);
-        }, 10000);
+        }, 3000);
 
         tenantsAutoReloadTimeoutId = setTimeout(function () {
             stopTenantsAutoReloadCycle();
-        }, 60000);
+        }, 30000);
     }
 
     window.addEventListener('systems:update-started', function () {
