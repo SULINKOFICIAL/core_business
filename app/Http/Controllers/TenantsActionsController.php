@@ -64,36 +64,54 @@ class TenantsActionsController extends Controller
         return $request->ajax() || $request->wantsJson();
     }
 
-    // Atualiza todos os bancos de dados via API
+    /**
+     * Atualiza todos os bancos de dados via API
+     */
     public function updateAllDatabase()
     {
 
-        // Obtém todos os clientes
+        /**
+         * Obtém todos os clientes
+         */
         $clientsId = $this->repository->all();
         
-        // Sinaliza todos como desatualizados
+        /**
+         * Sinaliza todos como desatualizados
+         */
         TenantRuntimeStatus::query()->update(['db_last_version' => false]);
         
-        // Contador de erros
+        /**
+         * Contador de erros
+         */
         $errors = 0;
 
-        // Total de clientes
+        /**
+         * Total de clientes
+         */
         $totalTenants = count($clientsId);
 
-        // Loop para percorrer todos os clientes
+        /**
+         * Loop para percorrer todos os clientes
+         */
         foreach ($clientsId as $tenant) {
-            // Se a atualização retornar false incrementa o contador de erros
+            /**
+             * Se a atualização retornar false incrementa o contador de erros
+             */
             if ($this->updateDatabase($tenant->id)) {
                 $errors++;
             }
         }
 
-        // Define a mensagem final com base no número de erros
+        /**
+         * Define a mensagem final com base no número de erros
+         */
         $message = $errors > 0
         ? "$errors de $totalTenants cliente(s) apresentaram erro(s) durante a atualização."
         : 'Bancos de dados atualizados com sucesso';
 
-        // Redireciona com a mensagem final
+        /**
+         * Redireciona com a mensagem final
+         */
         return redirect()
             ->route('index')
             ->with('message', $message);
@@ -105,6 +123,10 @@ class TenantsActionsController extends Controller
      */
     public function updateAllSystems(Request $request)
     {
+        /**
+         * Define explicitamente quais ações podem ser recebidas da UI.
+         * Qualquer valor fora dessa lista é descartado para manter o fluxo seguro.
+         */
         $allowedActions = ['git', 'database', 'supervisor', 'npm_build'];
         $selectedActions = collect((array) $this->request->get('actions', []))
             ->filter(function ($action) use ($allowedActions) {
@@ -113,6 +135,11 @@ class TenantsActionsController extends Controller
             ->values()
             ->all();
 
+        /**
+         * Se nenhuma ação válida vier no payload:
+         * - responde JSON 422 para chamadas AJAX
+         * - mantém redirect com flash para chamadas web comuns
+         */
         if (empty($selectedActions)) {
             if ($this->shouldReturnJson($request)) {
                 return response()->json([
@@ -130,6 +157,10 @@ class TenantsActionsController extends Controller
         $selectedActionLabels = $this->selectedActionLabels($selectedActions);
         $successMessage = 'Processo concluído para: ' . $selectedActionLabels . '.';
 
+        /**
+         * No fluxo AJAX, devolve resposta imediata e agenda processamento no
+         * ciclo de término da requisição para liberar a UI sem bloqueio.
+         */
         if ($this->shouldReturnJson($request)) {
             app()->terminating(function () use ($selectedActions) {
                 $this->processAllSystemsUpdate($selectedActions);
@@ -142,9 +173,14 @@ class TenantsActionsController extends Controller
             ]);
         }
 
+        /**
+         * No fluxo não-AJAX mantém comportamento síncrono tradicional.
+         */
         $this->processAllSystemsUpdate($selectedActions);
 
-        // Redireciona com a mensagem final
+        /**
+         * Redireciona com a mensagem final
+         */
         return redirect()
             ->route('tenants.index')
             ->with('message', $successMessage);
@@ -152,6 +188,9 @@ class TenantsActionsController extends Controller
 
     private function selectedActionLabels(array $selectedActions): string
     {
+        /**
+         * Tradução de identificadores técnicos para nomes de exibição no retorno.
+         */
         $actionLabels = [
             'git' => 'Git pull',
             'database' => 'banco de dados',
@@ -168,15 +207,23 @@ class TenantsActionsController extends Controller
 
     private function processAllSystemsUpdate(array $selectedActions): void
     {
+        /**
+         * Mapeia as flags de execução para manter o fluxo explícito e legível.
+         */
         $shouldUpdateGit = in_array('git', $selectedActions, true);
         $shouldUpdateDatabase = in_array('database', $selectedActions, true);
         $shouldRestartSupervisor = in_array('supervisor', $selectedActions, true);
         $shouldBuildJavascript = in_array('npm_build', $selectedActions, true);
 
-        // Obtém todos os clientes
+        /**
+         * Obtém todos os clientes
+         */
         $clients = $this->repository->all();
         
-        // Sinaliza como desatualizado apenas o que foi solicitado nesta execução.
+        /**
+         * Sinaliza como desatualizado somente os eixos solicitados para a UI
+         * conseguir refletir progresso gradativo durante o processamento.
+         */
         if ($shouldUpdateDatabase || $shouldUpdateGit || $shouldRestartSupervisor) {
             $updateColumns = [];
 
@@ -197,12 +244,16 @@ class TenantsActionsController extends Controller
             }
         }
 
-        // Obtém todos os clientes com instalações dedicadas
+        /**
+         * Obtém todos os clientes com instalações dedicadas
+         */
         $clientsDedicateds = $clients->filter(function($tenant) {
             return $tenant->type_installation == 'dedicated';
         });
 
-        // Atualiza sistemas das instalações dedicadas.
+        /**
+         * Atualiza sistemas das instalações dedicadas.
+         */
         foreach ($clientsDedicateds as $tenant) {
             if ($shouldUpdateGit) {
                 $this->updateGit($tenant->id);
@@ -217,17 +268,27 @@ class TenantsActionsController extends Controller
             }
         }
 
-        // Busca um cliente compartilhado para aplicar operações compartilhadas.
+        /**
+         * Busca um cliente compartilhado para aplicar operações compartilhadas.
+         */
         $sharedTenant = $clients->first(function($tenant) {
             return $tenant->type_installation == 'shared';
         });
 
+        /**
+         * Para instalação compartilhada executa no tenant base e replica o status
+         * final para os demais compartilhados, mantendo consistência visual.
+         */
         if ($sharedTenant) {
             if ($shouldUpdateGit) {
-                // Verifica se o cliente compartilhado foi atualizado com sucesso.
+                /**
+                 * Verifica se o cliente compartilhado foi atualizado com sucesso.
+                 */
                 $this->updateGit($sharedTenant->id);
 
-                // Atualiza o git de todas as hospedagens compartilhadas.
+                /**
+                 * Atualiza o git de todas as hospedagens compartilhadas.
+                 */
                 $sharedRuntimeStatus = $this->runtimeStatusFor($sharedTenant)->refresh();
                 foreach ($clients->where('type_installation', 'shared') as $tenant) {
                     $this->runtimeStatusFor($tenant)->update([
@@ -238,10 +299,14 @@ class TenantsActionsController extends Controller
             }
 
             if ($shouldRestartSupervisor) {
-                // Verifica se o restart de filas no cliente compartilhado foi concluído.
+                /**
+                 * Verifica se o restart de filas no cliente compartilhado foi concluído.
+                 */
                 $this->restartSupervisor($sharedTenant->id);
 
-                // Atualiza o status do supervisor em todas as hospedagens compartilhadas.
+                /**
+                 * Atualiza o status do supervisor em todas as hospedagens compartilhadas.
+                 */
                 $sharedRuntimeStatus = $this->runtimeStatusFor($sharedTenant)->refresh();
                 foreach ($clients->where('type_installation', 'shared') as $tenant) {
                     $this->runtimeStatusFor($tenant)->update([
@@ -256,56 +321,86 @@ class TenantsActionsController extends Controller
             }
         }
         
+        /**
+         * Atualização de banco segue tenant a tenant por depender do contexto
+         * individual de migrations pendentes.
+         */
         if ($shouldUpdateDatabase) {
-            // Loop para percorrer todos os clientes quando banco foi selecionado.
+            /**
+             * Loop para percorrer todos os clientes quando banco foi selecionado.
+             */
             foreach ($clients as $tenant) {
                 $this->updateDatabase($tenant->id);
             }
         }
     }
 
-    // Atualiza o banco de dados do cliente via API
+    /**
+     * Atualiza o banco de dados do cliente via API
+     */
     public function updateDatabase($id){
 
-        // Encontra o cliente
+        /**
+         * Encontra o cliente
+         */
         $tenant = $this->repository->find($id);
         $runtimeStatus = $this->runtimeStatusFor($tenant);
 
-        // Realiza solicitação
+        /**
+         * Realiza solicitação
+         */
         $response = $this->guzzleService->request('POST', 'sistema/atualizar-banco', $tenant);
 
-        // Verifica a resposta antes de tentar acessar as chaves
+        /**
+         * Verifica a resposta antes de tentar acessar as chaves
+         */
         if (!$response['success']) {
-            // Registra a mensagem de erro
+            /**
+             * Registra a mensagem de erro
+             */
             $runtimeStatus->db_last_version = false;
             $runtimeStatus->db_error = $response['message'] ?? 'Erro desconhecido';
         } else {
-            // Atualiza db_last_version
+            /**
+             * Atualiza db_last_version
+             */
             $runtimeStatus->db_last_version = true;
             $runtimeStatus->db_error = null;
         }
 
-        // Atualiza no banco de dados
+        /**
+         * Atualiza no banco de dados
+         */
         $runtimeStatus->save();
 
-        // Retorna a página
+        /**
+         * Retorna a página
+         */
         return $runtimeStatus->db_last_version;
 
     }
     
-    // Atualiza o Git do cliente via API
+    /**
+     * Atualiza o Git do cliente via API
+     */
     public function updateGit($id){
 
-        // Encontra o cliente
+        /**
+         * Encontra o cliente
+         */
         $tenant = $this->repository->find($id);
         $runtimeStatus = $this->runtimeStatusFor($tenant);
 
-        // Realiza solicitação
+        /**
+         * Realiza solicitação
+         */
         $response = $this->guzzleService->request('POST', 'sistema/atualizar-git', $tenant);
 
         Log::info($response);
 
-        // Verifica a resposta antes de tentar acessar as chaves
+        /**
+         * Verifica a resposta antes de tentar acessar as chaves
+         */
         if (!$response['success']) {
             $runtimeStatus->git_last_version = false;
             $runtimeStatus->git_error = $response['message'] ?? 'Erro desconhecido';
@@ -314,22 +409,32 @@ class TenantsActionsController extends Controller
             $runtimeStatus->git_error = null;
         }
 
-        // Atualiza no banco de dados
+        /**
+         * Atualiza no banco de dados
+         */
         $runtimeStatus->save();
 
-        // Retorna a página
+        /**
+         * Retorna a página
+         */
         return $runtimeStatus->git_last_version;
 
     }
 
-    // Reinicia as filas do cliente via API
+    /**
+     * Reinicia as filas do cliente via API
+     */
     public function restartSupervisor($id){
 
-        // Encontra o cliente
+        /**
+         * Encontra o cliente
+         */
         $tenant = $this->repository->find($id);
         $runtimeStatus = $this->runtimeStatusFor($tenant);
 
-        // Realiza solicitação
+        /**
+         * Realiza solicitação
+         */
         $response = $this->guzzleService->request('POST', 'sistema/supervisor-restart', $tenant);
 
         if (!$response['success']) {
@@ -348,21 +453,31 @@ class TenantsActionsController extends Controller
             }
         }
 
-        // Atualiza no banco de dados
+        /**
+         * Atualiza no banco de dados
+         */
         $runtimeStatus->save();
 
-        // Retorna a página
+        /**
+         * Retorna a página
+         */
         return $runtimeStatus->sp_last_version;
 
     }
 
-    // Atualiza o banco de dados do cliente via API
+    /**
+     * Atualiza o banco de dados do cliente via API
+     */
     public function updateDatabaseManual(Request $request, $id){
 
-        // Encontra o cliente
+        /**
+         * Encontra o cliente
+         */
         $tenant = $this->repository->find($id);
 
-        // Realiza solicitação
+        /**
+         * Realiza solicitação
+         */
         $updated = $this->updateDatabase($tenant->id);
         $runtimeStatus = $this->runtimeStatusFor($tenant)->refresh();
 
@@ -374,20 +489,28 @@ class TenantsActionsController extends Controller
             ], $updated ? 200 : 422);
         }
 
-        // Retorna a página
+        /**
+         * Retorna a página
+         */
         return redirect()
                 ->route('tenants.index')
                 ->with('message', $updated ? 'Migração executada com sucesso' : 'Falha ao atualizar banco de dados');
 
     }
 
-    // Atualiza os arquivos do cliente via API
+    /**
+     * Atualiza os arquivos do cliente via API
+     */
     public function updateGitManual(Request $request, $id){
 
-        // Encontra o cliente
+        /**
+         * Encontra o cliente
+         */
         $tenant = $this->repository->find($id);
 
-        // Realiza solicitação
+        /**
+         * Realiza solicitação
+         */
         $updated = $this->updateGit($tenant->id);
         $runtimeStatus = $this->runtimeStatusFor($tenant)->refresh();
 
@@ -399,23 +522,33 @@ class TenantsActionsController extends Controller
             ], $updated ? 200 : 422);
         }
 
-        // Retorna a página
+        /**
+         * Retorna a página
+         */
         return redirect()
                 ->route('tenants.index')
                 ->with('message', $updated ? 'GIT Pull executado com sucesso' : 'Falha ao atualizar git');
 
     }
 
-    // Reinicia as filas do cliente via API
+    /**
+     * Reinicia as filas do cliente via API
+     */
     public function updateSupervisorManual(Request $request, $id){
 
-        // Encontra o cliente
+        /**
+         * Encontra o cliente
+         */
         $tenant = $this->repository->find($id);
 
-        // Realiza solicitação
+        /**
+         * Realiza solicitação
+         */
         $updated = $this->restartSupervisor($tenant->id);
 
-        // Mantém o status sincronizado para todos os clientes compartilhados.
+        /**
+         * Mantém o status sincronizado para todos os clientes compartilhados.
+         */
         if ($tenant->type_installation === 'shared') {
             $sharedRuntimeStatus = $this->runtimeStatusFor($tenant)->refresh();
             $sharedTenants = $this->repository->where('type_installation', 'shared')->get();
@@ -438,20 +571,28 @@ class TenantsActionsController extends Controller
             ], $updated ? 200 : 422);
         }
 
-        // Retorna a página
+        /**
+         * Retorna a página
+         */
         return redirect()
                 ->route('tenants.index')
                 ->with('message', $updated ? 'Filas reiniciadas com sucesso' : 'Falha ao reiniciar as filas');
 
     }
 
-    // Executa npm build do cliente via API
+    /**
+     * Executa npm build do cliente via API
+     */
     public function runNpmBuild($id)
     {
-        // Encontra o cliente
+        /**
+         * Encontra o cliente
+         */
         $tenant = $this->repository->find($id);
 
-        // Realiza solicitação com timeout maior pois build pode demorar.
+        /**
+         * Realiza solicitação com timeout maior pois build pode demorar.
+         */
         $response = $this->guzzleService->request('POST', 'sistema/npm-build', $tenant, null, [
             'connect_timeout' => 10,
             'timeout' => 1200,
@@ -490,13 +631,19 @@ class TenantsActionsController extends Controller
      */
     public function runScheduledNow(Request $request, $id = null)
     {
-        // Define os jobs que compõem o lote manual.
+        /**
+         * Define os jobs que compõem o lote manual.
+         */
         $jobs = $this->scheduledJobs();
 
-        // Permite executar um job específico quando informado pela tela.
+        /**
+         * Permite executar um job específico quando informado pela tela.
+         */
         $selectedJob = $request->get('job');
 
-        // Restringe a execução ao job solicitado quando ele for válido.
+        /**
+         * Restringe a execução ao job solicitado quando ele for válido.
+         */
         if (!empty($selectedJob) && $selectedJob !== 'all') {
             if (!in_array($selectedJob, $jobs, true)) {
                 return redirect()
@@ -508,14 +655,18 @@ class TenantsActionsController extends Controller
             $jobs = [$selectedJob];
         }
 
-        // Busca um cliente específico ou todos os clientes ativos.
+        /**
+         * Busca um cliente específico ou todos os clientes ativos.
+         */
         if($id !== null){
             $clients = $this->repository->where('id', $id)->where('status', true)->get();
         } else {
             $clients = $this->repository->where('status', true)->get();
         }
 
-        // Cria o registro pai para agrupar todas as execuções do clique manual.
+        /**
+         * Cria o registro pai para agrupar todas as execuções do clique manual.
+         */
         $dispatch = ScheduledTaskDispatch::create([
             'job_name' => 'manual_batch',
             'job_data' => [
@@ -530,11 +681,15 @@ class TenantsActionsController extends Controller
             'started_at' => now(),
         ]);
 
-        // Mantém os totais consolidados do lote para a listagem principal.
+        /**
+         * Mantém os totais consolidados do lote para a listagem principal.
+         */
         $successCount = 0;
         $failureCount = 0;
         
-        // Finaliza o lote vazio quando não existir cliente elegível.
+        /**
+         * Finaliza o lote vazio quando não existir cliente elegível.
+         */
         if ($clients->isEmpty()) {
             $dispatch->update([
                 'finished_at' => now(),
@@ -552,10 +707,14 @@ class TenantsActionsController extends Controller
          */
         foreach ($clients as $tenant) {
             foreach ($jobs as $jobName) {
-                // Marca o início do disparo individual para auditoria.
+                /**
+                 * Marca o início do disparo individual para auditoria.
+                 */
                 $startedAt = now();
 
-                // O tenant sempre responde apenas com o aceite do disparo.
+                /**
+                 * O tenant sempre responde apenas com o aceite do disparo.
+                 */
                 $response = $this->guzzleService->request('post', 'sistema/processar-tarefa', $tenant, [
                     'job' => $jobName,
                     'data' => [],
@@ -563,11 +722,15 @@ class TenantsActionsController extends Controller
                     'timeout' => 5,
                 ]);
 
-                // Converte a resposta para um resumo simples da execução.
+                /**
+                 * Converte a resposta para um resumo simples da execução.
+                 */
                 $success = (bool) ($response['success'] ?? false);
                 $message = $response['message'] ?? ($success ? 'Tarefa aceita para processamento.' : 'Falha ao aceitar tarefa para processamento.');
 
-                // Tenta reaproveitar a mensagem vinda do próprio cliente quando existir.
+                /**
+                 * Tenta reaproveitar a mensagem vinda do próprio cliente quando existir.
+                 */
                 if (!empty($response['data'])) {
                     $decodedResponse = json_decode($response['data'], true);
                     if (json_last_error() === JSON_ERROR_NONE && is_array($decodedResponse) && !empty($decodedResponse['message'])) {
@@ -575,7 +738,9 @@ class TenantsActionsController extends Controller
                     }
                 }
 
-                // Registra o item filho para rastrear esse cliente e job.
+                /**
+                 * Registra o item filho para rastrear esse cliente e job.
+                 */
                 ScheduledTaskDispatchItem::create([
                     'dispatch_id' => $dispatch->id,
                     'tenant_id' => $tenant->id,
@@ -588,7 +753,9 @@ class TenantsActionsController extends Controller
                     'finished_at' => now(),
                 ]);
 
-                // Atualiza os totais consolidados do lote conforme o resultado.
+                /**
+                 * Atualiza os totais consolidados do lote conforme o resultado.
+                 */
                 if ($success) {
                     $successCount++;
                 } else {
@@ -597,14 +764,18 @@ class TenantsActionsController extends Controller
             }
         }
 
-        // Fecha o lote com os totais finais após processar todos os clientes.
+        /**
+         * Fecha o lote com os totais finais após processar todos os clientes.
+         */
         $dispatch->update([
             'success_count' => $successCount,
             'failure_count' => $failureCount,
             'finished_at' => now(),
         ]);
 
-        // Retorna para a tela anterior informando o identificador do lote criado.
+        /**
+         * Retorna para a tela anterior informando o identificador do lote criado.
+         */
         return redirect()
                 ->back()
                 ->with('message', 'Lote #' . $dispatch->id . ' aceito para processamento em ' . $clients->count() . ' cliente(s).');
@@ -622,10 +793,14 @@ class TenantsActionsController extends Controller
                 ->with('message', 'Identificador da integração não informado.'); 
         }
 
-        // Dispara o job de atualizaçao dos tokens de integracao
+        /**
+         * Dispara o job de atualizaçao dos tokens de integracao
+         */
         RefreshTokenIntegrationsJob::dispatch($id);
 
-        // Retorna para a tela anterior informando o identificador do lote criado.
+        /**
+         * Retorna para a tela anterior informando o identificador do lote criado.
+         */
         return redirect()
                 ->back()
                 ->with('message', 'Job de atualizaçao dos tokens de integracao disparado com sucesso.'); 
@@ -638,7 +813,9 @@ class TenantsActionsController extends Controller
      */
     private function scheduledJobs()
     {
-        // Mantém a mesma lista configurada para o scheduler da central.
+        /**
+         * Mantém a mesma lista configurada para o scheduler da central.
+         */
         return [
             'finish_calls_24h',
             'finish_order_access',
@@ -651,29 +828,38 @@ class TenantsActionsController extends Controller
         ];
     }
 
-    // Obtém permissões do usuário
+    /**
+     * Obtém permissões do usuário
+     */
     public function getResources(Request $request)
     {
 
-        // Obtém dados do formulário
+        /**
+         * Obtém dados do formulário
+         */
         $data = $request->all();
 
-        // Encontra o Tenante modelo 1
+        /**
+         * Encontra o Tenante modelo 1
+         */
         $tenant = $this->repository->where('type_installation', 'shared')->first();
 
-        // Realiza solicitação
+        /**
+         * Realiza solicitação
+         */
         $categories = $this->guzzleService->request('post', 'sistema/permissoes-recursos', $tenant, $data);
 
-        // Decodifica a resposta
+        /**
+         * Decodifica a resposta
+         */
         $categories = json_decode($categories['data'], true);
 
         /**
          * Define o status de todos os registros como 0 antes da verificação.
-         * Em seguida, verifica se a permissão recebida das rotas do Core 
+         * Em seguida, verifica se a permissão recebida das rotas do Core
          * corresponde a algum registro existente na tabela de Recursos.
-         * 
          * Se houver correspondência, o status será atualizado para 1.
-         * Se o status permanecer 0, significa que o nome da permissão recebida 
+         * Se o status permanecer 0, significa que o nome da permissão recebida
          * não corresponde a nenhum registro existente em Recursos.
          */
         Resource::where('status', true)->update([
@@ -688,7 +874,9 @@ class TenantsActionsController extends Controller
             'status' => 0,
         ]);
 
-        // Armazena os IDs dos módulos retornados na sincronização atual.
+        /**
+         * Armazena os IDs dos módulos retornados na sincronização atual.
+         */
         $syncedModuleIds = [];
 
         /**
@@ -718,7 +906,9 @@ class TenantsActionsController extends Controller
                 $categoryId = null;
             }
             
-            // Faz looping entre modulos
+            /**
+             * Faz looping entre modulos
+             */
             foreach ($category['modules'] as $key => $module) {
 
                 /**
@@ -736,14 +926,15 @@ class TenantsActionsController extends Controller
 
                 $syncedModuleIds[] = $modelModule->id;
 
-                // Faz looping entre os recursos
+                /**
+                 * Faz looping entre os recursos
+                 */
                 foreach ($module['resources'] as $resource) {
 
                     /**
                      * Busca um registro onde o campo 'name' seja igual a $permission.
-                     * 
                      * Se o registro existir, atualiza o campo 'status' para true.
-                     * Se o registro não existir, cria um novo com 'name' = $permission 
+                     * Se o registro não existir, cria um novo com 'name' = $permission
                      * e 'status' = true.
                      */
                     Resource::updateOrCreate(
@@ -761,14 +952,18 @@ class TenantsActionsController extends Controller
             }
         }
 
-        // Desativa módulos não nativos que não vieram no payload atual da sincronização.
+        /**
+         * Desativa módulos não nativos que não vieram no payload atual da sincronização.
+         */
         Module::where('is_native', false)
             ->whereNotIn('id', array_unique($syncedModuleIds))
             ->update([
                 'status' => false,
             ]);
         
-        // Retorna a página
+        /**
+         * Retorna a página
+         */
         return redirect()
         ->route('index')
         ->with('message', 'Permissões atualizadas com sucesso! Os recursos foram sincronizados com o sistema.');

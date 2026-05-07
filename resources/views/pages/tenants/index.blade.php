@@ -151,10 +151,14 @@
 
 @section('custom-footer')
 <script>
-    // Seleciona a tabela
+    /**
+     * Seleciona a tabela
+     */
     const table = $('#datatables-tenants');
 
-    // Configurações da tabela
+    /**
+     * Configurações da tabela
+     */
     const dataTableOptions = {
         serverSide: true,
         processing: true,
@@ -220,28 +224,47 @@
         ],
         pagingType: 'simple_numbers',
         drawCallback: function () {
-            // Inicializa os menus após cada renderização da tabela
+            /**
+             * Inicializa os menus após cada renderização da tabela
+             */
             KTMenu.createInstances();
         },
     };
 
-    // Renderiza tabela
+    /**
+     * Renderiza tabela
+     */
     const dataTable = table.DataTable(dataTableOptions);
     let tenantsAutoReloadIntervalId = null;
     let tenantsAutoReloadTimeoutId = null;
 
+    /**
+     * Encerra qualquer ciclo de auto-reload ativo da listagem.
+     */
     function stopTenantsAutoReloadCycle() {
+        /**
+         * Limpa intervalo periódico, quando existente.
+         */
         if (tenantsAutoReloadIntervalId !== null) {
             clearInterval(tenantsAutoReloadIntervalId);
             tenantsAutoReloadIntervalId = null;
         }
 
+        /**
+         * Limpa timeout finalizador, quando existente.
+         */
         if (tenantsAutoReloadTimeoutId !== null) {
             clearTimeout(tenantsAutoReloadTimeoutId);
             tenantsAutoReloadTimeoutId = null;
         }
     }
 
+    /**
+     * Inicia ciclo de recarga automática:
+     * - recarrega imediatamente
+     * - recarrega a cada 3 segundos
+     * - encerra após 30 segundos
+     */
     function startTenantsAutoReloadCycle() {
         stopTenantsAutoReloadCycle();
         dataTable.ajax.reload(null, false);
@@ -255,37 +278,53 @@
         }, 30000);
     }
 
+    /**
+     * Escuta início de atualização global para ligar auto-reload local.
+     */
     window.addEventListener('systems:update-started', function () {
         startTenantsAutoReloadCycle();
     });
 
+    /**
+     * Garante limpeza de timers ao sair da página.
+     */
     window.addEventListener('beforeunload', function () {
         stopTenantsAutoReloadCycle();
     });
 
-    // Inicializa select2 do modal de tarefas.
+    /**
+     * Inicializa select2 do modal de tarefas.
+     */
     $('#scheduled-job-select').select2({
         dropdownParent: $('#modal_tenant_run_task'),
         width: '100%',
     });
 
-    // Busca pelo campo no topo
+    /**
+     * Busca pelo campo no topo
+     */
     $('[data-kt-docs-table-filter="search"]').on('keyup', function () {
         dataTable.search($(this).val()).draw();
     });
 
-    // Filtra a tabela
+    /**
+     * Filtra a tabela
+     */
     $('#tenants-filters').on('submit', function(e) {
         e.preventDefault();
         dataTable.ajax.reload();
     });
 
-    // Reseta filtros do menu
+    /**
+     * Reseta filtros do menu
+     */
     $('#tenants-filters').on('reset', function() {
         setTimeout(() => dataTable.ajax.reload(), 0);
     });
 
-    // Abre o modal para escolher qual tarefa executar no tenant.
+    /**
+     * Abre o modal para escolher qual tarefa executar no tenant.
+     */
     $(document).on('click', '.js-tenant-run-task-modal', function (e) {
         e.preventDefault();
 
@@ -293,7 +332,9 @@
         const tenantName = trigger.data('tenant-name') || 'tenant';
         const actionUrl = trigger.attr('href');
 
-        // Atualiza o formulário do modal com o tenant selecionado.
+        /**
+         * Atualiza o formulário do modal com o tenant selecionado.
+         */
         $('#selected-tenant-name').text(tenantName);
         $('#form-tenant-run-task').attr('action', actionUrl);
         $('#scheduled-job-select').val('all').trigger('change');
@@ -309,6 +350,9 @@
     }
 
     function columnIndexByActionType(actionType) {
+        /**
+         * Mapeia tipo de ação para índice de coluna do DataTable.
+         */
         if (actionType === 'db') {
             return 3;
         }
@@ -342,6 +386,9 @@
     }
 
     function refreshBootstrapTooltips() {
+        /**
+         * Sem bootstrap carregado não há tooltips para reinstanciar.
+         */
         if (!window.bootstrap || !bootstrap.Tooltip) {
             return;
         }
@@ -352,12 +399,18 @@
     }
 
     function updateTenantStatusCell(rowElement, actionType, isSuccess, title, isProcessing) {
+        /**
+         * Sem linha de tabela resolvida não existe célula para atualizar.
+         */
         if (!rowElement || rowElement.length === 0) {
             return;
         }
 
         const columnIndex = columnIndexByActionType(actionType);
 
+        /**
+         * Ignora tipos de ação sem mapeamento de coluna.
+         */
         if (columnIndex === null) {
             return;
         }
@@ -367,6 +420,9 @@
     }
 
     function findRowElementByTenantId(tenantId) {
+        /**
+         * Sem tenant id não consegue localizar a linha alvo.
+         */
         if (!tenantId) {
             return $();
         }
@@ -385,6 +441,9 @@
     }
 
     function applyStatusSnapshotToRow(rowElement, status) {
+        /**
+         * Sem snapshot de status não existe payload para refletir na linha.
+         */
         if (!status) {
             return;
         }
@@ -398,7 +457,9 @@
         updateTenantStatusCell(rowElement, 'sp', spSuccess, tooltipTitleForAction('sp', spSuccess, status.sp_error), false);
     }
 
-    // Executa ações do menu do tenant via AJAX.
+    /**
+     * Executa ações do menu do tenant via AJAX.
+     */
     $(document).on('click', '.js-tenant-action-confirm', function (e) {
         e.preventDefault();
 
@@ -408,6 +469,9 @@
         const actionType = trigger.data('action-type');
         const shouldProceed = window.confirm(`Deseja mesmo ${actionLabel} no tenant ${tenantName}?`);
 
+        /**
+         * Usuário cancelou a confirmação, fluxo interrompido.
+         */
         if (!shouldProceed) {
             return;
         }
@@ -416,6 +480,10 @@
         let rowElement = trigger.closest('tr');
         const tenantId = trigger.data('tenant-id');
 
+        /**
+         * Fallback para localizar linha quando o elemento clicado está fora do
+         * contexto direto do <tr> por causa do menu dropdown.
+         */
         if (!rowElement || rowElement.length === 0 || rowElement.find('td').length === 0) {
             rowElement = findRowElementByTenantId(tenantId);
         }
@@ -446,7 +514,9 @@
         });
     });
 
-    // Ativa/desativa tenant via AJAX na listagem
+    /**
+     * Ativa/desativa tenant via AJAX na listagem
+     */
     $(document).on('click', '.js-tenant-toggle-status', function (e) {
         e.preventDefault();
 
@@ -455,6 +525,9 @@
         const actionLabel = trigger.data('action-label');
         const shouldProceed = window.confirm(`Deseja mesmo ${actionLabel} no tenant ${tenantName}?`);
 
+        /**
+         * Usuário cancelou a confirmação, fluxo interrompido.
+         */
         if (!shouldProceed) {
             return;
         }

@@ -94,7 +94,9 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/pt.min.js"></script>
         <script>
 
-            // Configura Toaster
+            /**
+             * Configura Toaster
+             */
             toastr.options = {
                 "closeButton": false,
                 "debug": false,
@@ -113,11 +115,15 @@
                 "hideMethod": "fadeOut"
             };
 
-            // Verifica se existe um alerta a exibir
+            /**
+             * Verifica se existe um alerta a exibir
+             */
 			var message = '{!! session("message") !!}';
             var type = "{!! session('type') !!}";
 
-            // Exibe o alerta
+            /**
+             * Exibe o alerta
+             */
             if(message){
                 switch (type) {
                     case 'success':
@@ -135,7 +141,9 @@
                 }
             }
 
-            // Confirma ações sensíveis do menu superior antes de navegar.
+            /**
+             * Confirma ações sensíveis do menu superior antes de navegar.
+             */
             $(document).on('click', '.js-menu-confirm', function (event) {
                 var confirmMessage = $(this).data('confirm-message') || 'Deseja mesmo continuar?';
                 var shouldProceed = window.confirm(confirmMessage);
@@ -145,7 +153,9 @@
                 }
             });
 
-            // Exibe modal de atualização em massa com seleção das ações desejadas.
+            /**
+             * Exibe modal de atualização em massa e injeta a rota de execução.
+             */
             $(document).on('click', '.js-open-update-systems-modal', function (event) {
                 event.preventDefault();
 
@@ -157,18 +167,30 @@
                 modal.show();
             });
 
-            // Evita disparo sem nenhuma opção marcada e dispara atualização em AJAX.
+            /**
+             * Processa submit do modal de atualização em massa:
+             * - valida seleção mínima
+             * - dispara evento global para telas interessadas no progresso
+             * - envia requisição AJAX assíncrona
+             */
             $(document).on('submit', '#form_update_systems_actions', function (event) {
                 event.preventDefault();
 
                 var form = $(this);
                 var hasAnyAction = form.find('input[name=\"actions[]\"]:checked').length > 0;
 
+                /**
+                 * Sem ação selecionada não faz chamada de rede.
+                 */
                 if (!hasAnyAction) {
                     toastr.warning('Selecione ao menos uma ação para continuar.');
                     return;
                 }
 
+                /**
+                 * Dispara evento imediatamente para a listagem iniciar polling
+                 * sem esperar retorno do backend.
+                 */
                 window.dispatchEvent(new CustomEvent('systems:update-started'));
 
                 var modalElement = document.getElementById('modal_update_systems_actions');
@@ -178,6 +200,10 @@
                 var submitButton = form.find('button[type=\"submit\"]');
                 submitButton.prop('disabled', true);
 
+                /**
+                 * Chamada AJAX fire-and-forget do ponto de vista da tela:
+                 * a UX de recarga já iniciou via evento global.
+                 */
                 $.ajax({
                     url: form.attr('action'),
                     method: 'GET',
