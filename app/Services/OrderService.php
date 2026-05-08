@@ -22,13 +22,25 @@ class OrderService
      */
     public function getOrderInProgress($tenant, $plan): Order
     {
-        return Order::firstOrCreate(
-            [
-                'tenant_id'  => $tenant->id,
-                'plan_id'    => $plan->id,
-                'status'     => 'draft',
-            ],
-        );
+        $order = Order::where('tenant_id', $tenant->id)
+            ->where('status', 'draft')
+            ->orderByDesc('id')
+            ->first();
+
+        if ($order) {
+            if ($order->plan_id != $plan->id) {
+                $order->plan_id = $plan->id;
+                $order->save();
+            }
+
+            return $order;
+        }
+
+        return Order::create([
+            'tenant_id' => $tenant->id,
+            'plan_id' => $plan->id,
+            'status' => 'draft',
+        ]);
     }
 
     /**

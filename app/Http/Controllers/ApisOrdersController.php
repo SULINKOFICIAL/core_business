@@ -102,17 +102,55 @@ class ApisOrdersController extends Controller
         // Extrai dados e cliente já anexado pelo middleware
         $data = $request->all();
         $tenant = $data['tenant'];
+        $orderId = $data['order_id'] ?? null;
 
-        // Busca o rascunho do cliente com itens e configurações
-        $order = Order::where('tenant_id', $tenant->id)
-            ->where('status', 'draft')
-            ->first();
+        /**
+         * Regra: prioriza o order_id recebido do front.
+         * Se não vier, usa o único rascunho do tenant.
+         */
+        $order = null;
+
+        if ($orderId) {
+            $order = Order::where('tenant_id', $tenant->id)
+                ->where('id', $orderId)
+                ->where('status', 'draft')
+                ->first();
+        }
+
+        if (!$order) {
+            $order = Order::where('tenant_id', $tenant->id)
+                ->where('status', 'draft')
+                ->orderByDesc('id')
+                ->first();
+        }
+
+        if (!$order || !$order->plan) {
+            return response()->json([
+                'order_id' => null,
+                'modules' => [],
+                'users_limit' => 0,
+                'storage_limit_gb' => 0,
+                'base_users_limit' => 0,
+                'base_storage_limit_gb' => 0,
+                'additional_users' => [],
+                'additional_storages' => [],
+            ], 200);
+        }
+
+        /**
+         * Garante materialização dos adicionais já no carregamento da etapa de uso.
+         * Assim o resumo lateral reflete usuários/armazenamento sem exigir alteração manual no select.
+         */
+        $this->syncAdditionalItemsFromCurrentLimits($order);
 
         // Inicia lista de módulos que exigem seleção de uso
         $usageModules = [];
 
         // Percorre itens do pedido e filtra apenas módulos com cobrança por uso
         foreach ($order->plan->items as $module) {
+            if (!$module->item) {
+                continue;
+            }
 
             if ($module->item->pricing_type != 'Preço Por Uso') {
                 continue;
@@ -198,6 +236,31 @@ class ApisOrdersController extends Controller
             'additional_users' => $additionalUsers,
             'additional_storages' => $additionalStorages,
         ], 200);
+    }
+
+    /**
+     * Sincroniza itens adicionais com os limites atuais do plano em rascunho.
+     */
+    private function syncAdditionalItemsFromCurrentLimits(Order $order): void
+    {
+        $plan = $order->plan;
+
+        if (!$plan) {
+            return;
+        }
+
+        $usersLimit = intval($plan->users_limit ?? 0);
+        $storageLimitGb = intval(floor((intval($plan->size_storage ?? 0)) / (1024 * 1024 * 1024)));
+
+        if ($usersLimit > 0) {
+            $this->upsertAdditionalUsersItem($plan, $usersLimit);
+        }
+
+        if ($storageLimitGb > 0) {
+            $this->upsertAdditionalStorageItem($plan, $storageLimitGb);
+        }
+
+        $this->orderService->recalculateOrderTotals($order);
     }
 
     public function details(Request $request, $id)
