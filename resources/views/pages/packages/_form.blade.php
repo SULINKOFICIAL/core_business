@@ -168,6 +168,7 @@
                         <th class="min-w-180px">Tier/Faixa</th>
                         <th class="text-end min-w-150px">Preço do módulo</th>
                         <th class="text-end min-w-200px">Preço no pacote</th>
+                        <th class="text-end min-w-130px">% desconto</th>
                     </tr>
                 </thead>
                 <tbody id="selected-modules-summary"></tbody>
@@ -181,6 +182,10 @@
                         <td class="text-end">
                             <label class="form-label fs-8 fw-bold text-gray-700 mb-1 d-block">Preço do pacote</label>
                             <span class="text-primary fw-bolder" id="selected-modules-package-price">R$ 0,00</span>
+                        </td>
+                        <td class="text-end">
+                            <label class="form-label fs-8 fw-bold text-gray-700 mb-1 d-block">Desconto geral (%)</label>
+                            <input type="text" class="form-control form-control-solid text-end" id="global-discount-input" placeholder="0,000" value="0,000">
                         </td>
                     </tr>
                 </tfoot>
@@ -278,6 +283,7 @@
             const emptySummary = $('#selected-modules-empty');
             const totalCell = $('#selected-modules-total');
             const packagePriceCell = $('#selected-modules-package-price');
+            const globalDiscountInput = $('#global-discount-input');
             const moduleItemsInputs = $('#module-items-inputs');
             const moduleSelect = $('#package-modules-select');
             const initialFixedPrices = @json($initialFixedPrices);
@@ -337,6 +343,89 @@
                 }).mask($(selector));
             }
 
+            function formatPercent(value) {
+                return (Number(value) || 0).toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }) + '%';
+            }
+
+            function formatPercentInput(value) {
+                return (Number(value) || 0).toLocaleString('pt-BR', {
+                    minimumFractionDigits: 3,
+                    maximumFractionDigits: 3
+                });
+            }
+
+            function calculateDiscountPercent(modulePrice, packagePrice) {
+                const original = Number(modulePrice) || 0;
+                const packageValue = Number(packagePrice) || 0;
+
+                if (original <= 0) {
+                    return 0;
+                }
+
+                const discount = ((original - packageValue) / original) * 100;
+                return discount > 0 ? discount : 0;
+            }
+
+            function parsePercentValue(rawValue) {
+                const value = String(rawValue || '')
+                    .replace(/\s/g, '')
+                    .replace('%', '')
+                    .replace(',', '.')
+                    .replace(/[^0-9.-]/g, '');
+
+                const parsed = Number(value);
+                if (!Number.isFinite(parsed)) {
+                    return 0;
+                }
+
+                if (parsed < 0) {
+                    return 0;
+                }
+
+                if (parsed > 100) {
+                    return 100;
+                }
+
+                return parsed;
+            }
+
+            function updateDiscountBadges() {
+                summaryBody.find('tr').each(function () {
+                    const row = $(this);
+                    const modulePrice = Number(row.data('current-price') || 0);
+                    const packageInput = row.find('input[name^="prices["], input[name^="tier_prices["]').first();
+                    const rawPackagePrice = parseMoneyValue(packageInput.get(0) || packageInput.val());
+                    const packagePrice = rawPackagePrice > 0 ? rawPackagePrice : modulePrice;
+                    const discountPercent = calculateDiscountPercent(modulePrice, packagePrice);
+                    row.find('.js-discount-value').text(formatPercent(discountPercent));
+                });
+            }
+
+            function applyGlobalDiscount(formatInputValue = false) {
+                const discountPercent = parsePercentValue(globalDiscountInput.val());
+                if (formatInputValue) {
+                    globalDiscountInput.val(formatPercentInput(discountPercent));
+                }
+
+                summaryBody.find('tr').each(function () {
+                    const row = $(this);
+                    const packageInput = row.find('input[name^="prices["], input[name^="tier_prices["]').first();
+
+                    if (!packageInput.length || packageInput.is(':disabled')) {
+                        return;
+                    }
+
+                    const modulePrice = Number(row.data('current-price') || 0);
+                    const packagePrice = modulePrice * (1 - (discountPercent / 100));
+                    packageInput.val(formatCurrency(packagePrice));
+                });
+
+                updateSelectedModulesTotal();
+            }
+
             function updateSelectedModulesTotal() {
                 let moduleTotal = 0;
                 let packageTotal = 0;
@@ -352,6 +441,7 @@
 
                 totalCell.text(formatCurrency(moduleTotal));
                 packagePriceCell.text(formatCurrency(packageTotal));
+                updateDiscountBadges();
             }
 
             function selectedMap() {
@@ -393,6 +483,7 @@
                             '  <td class="text-end">',
                             '    <input type="text" name="prices[' + module.id + ']" value="' + (initialFixedPrices[module.id] ? ('R$ ' + initialFixedPrices[module.id]) : '') + '" class="form-control form-control-solid input-money text-end" placeholder="' + module.value_formatted + '">',
                             '  </td>',
+                            '  <td class="text-end"><span class="badge badge-light-info js-discount-value">0,00%</span></td>',
                             '</tr>'
                         ].join('');
 
@@ -407,6 +498,7 @@
                                 '  <td class="text-gray-700"><span class="badge badge-light-warning">Sem faixas</span></td>',
                                 '  <td class="text-end text-gray-700"><span class="badge badge-light-warning">Sem faixas cadastradas</span></td>',
                                 '  <td class="text-end"><input type="text" value="" class="form-control form-control-solid text-end" placeholder="Sem faixas para atualizar" disabled></td>',
+                                '  <td class="text-end"><span class="badge badge-light-secondary js-discount-value">0,00%</span></td>',
                                 '</tr>'
                             ].join('');
 
@@ -421,6 +513,7 @@
                                     '  <td class="text-end">',
                                     '    <input type="text" name="tier_prices[' + tier.id + ']" value="' + (initialTierPrices[tier.id] ? ('R$ ' + initialTierPrices[tier.id]) : '') + '" class="form-control form-control-solid input-money text-end" placeholder="' + tier.price_formatted + '">',
                                     '  </td>',
+                                    '  <td class="text-end"><span class="badge badge-light-info js-discount-value">0,00%</span></td>',
                                     '</tr>'
                                 ].join('');
 
@@ -517,6 +610,14 @@
 
             $(document).on('input change keyup', '#selected-modules-summary input[name^="prices["], #selected-modules-summary input[name^="tier_prices["]', function () {
                 updateSelectedModulesTotal();
+            });
+
+            globalDiscountInput.on('input change keyup', function () {
+                applyGlobalDiscount(false);
+            });
+
+            globalDiscountInput.on('blur', function () {
+                applyGlobalDiscount(true);
             });
 
             renderSelectedModules();

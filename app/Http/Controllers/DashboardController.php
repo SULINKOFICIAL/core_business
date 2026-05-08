@@ -56,7 +56,7 @@ class DashboardController extends Controller
             ->get();
 
         // Carrega as últimas vendas pagas para o card de vendas recentes.
-        $latestSales = Order::with('client')
+        $latestSales = Order::with('tenant')
             ->whereNotNull('paid_at')
             ->orderByDesc('paid_at')
             ->limit(6)
