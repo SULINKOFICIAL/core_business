@@ -1,10 +1,8 @@
 <?php
 
-use App\Services\TenantConfigurationSyncService;
 use Carbon\Carbon;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
-use RuntimeException;
 
 return new class extends Migration
 {
@@ -52,9 +50,9 @@ return new class extends Migration
 
         $sulinkTenantId = $sulinkTenantIds->first();
 
-        DB::transaction(function () use ($now, $periodStart, $periodEnd, $tenants, $activeModules, $sulinkTenantId) {
-            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
+        try {
             /**
              * Ordem de limpeza por dependência.
              */
@@ -66,11 +64,9 @@ return new class extends Migration
             DB::table('tenants_plans_items')->truncate();
             DB::table('tenants_plans')->truncate();
 
-            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
-
             foreach ($tenants as $tenant) {
-                $usersLimit = (int) $tenant->id === (int) $sulinkTenantId ? 30 : 10;
-                $planValue = (float) $activeModules->sum('value');
+                $usersLimit = intval($tenant->id) === intval($sulinkTenantId) ? 30 : 10;
+                $planValue = 0;
 
                 $planId = DB::table('tenants_plans')->insertGetId([
                     'tenant_id' => $tenant->id,
@@ -94,7 +90,7 @@ return new class extends Migration
                         'package_id' => null,
                         'item_id' => $module->id,
                         'module_name' => $module->name,
-                        'module_value' => (float) $module->value,
+                        'module_value' => floatval($module->value),
                         'billing_type' => $module->pricing_type,
                         'payload' => json_encode($module),
                         'created_at' => $now,
@@ -107,7 +103,7 @@ return new class extends Migration
                 $subscriptionId = DB::table('subscriptions')->insertGetId([
                     'tenant_id' => $tenant->id,
                     'plan_id' => $planId,
-                    'provider' => 'manual_admin',
+                    'provider' => 'micore',
                     'provider_subscription_id' => 'manual-admin-' . $tenant->id,
                     'provider_card_id' => null,
                     'interval' => 'year',
@@ -124,12 +120,12 @@ return new class extends Migration
                     'plan_id' => $planId,
                     'subscription_id' => $subscriptionId,
                     'status' => 'paid',
-                    'provider' => 'manual_admin',
-                    'provider_method' => 'manual_admin',
+                    'provider' => 'micore',
+                    'provider_method' => 'manual',
                     'current_step' => 'Pagamento',
                     'currency' => 'BRL',
                     'total_amount' => $planValue,
-                    'provider_message' => 'Reconstrução global de planos/ciclos 2026',
+                    'provider_message' => 'Reconstrucao global de planos/ciclos 2026',
                     'paid_at' => $now,
                     'locked_at' => $now,
                     'created_at' => $now,
@@ -145,7 +141,7 @@ return new class extends Migration
 
                 DB::table('subscriptions_cycles')->insert([
                     'subscription_id' => $subscriptionId,
-                    'provider' => 'manual_admin',
+                    'provider' => 'micore',
                     'provider_cycle_id' => 'manual-cycle-' . $subscriptionId,
                     'start_date' => $periodStart,
                     'end_date' => $periodEnd,
@@ -160,14 +156,14 @@ return new class extends Migration
                 DB::table('orders_transactions')->insert([
                     'order_id' => $orderId,
                     'subscription_id' => $subscriptionId,
-                    'provider' => 'manual_admin',
-                    'provider_method' => 'manual_admin',
+                    'provider' => 'micore',
+                    'provider_method' => 'manual',
                     'provider_transaction_id' => 'manual-tx-' . $orderId,
                     'gateway_id' => null,
                     'gateway_code' => null,
                     'external_transaction_id' => null,
                     'status' => 'paid',
-                    'amount' => $planValue,
+                    'amount' => 0,
                     'currency' => 'BRL',
                     'recurrency' => null,
                     'brand_tid_at' => null,
@@ -180,25 +176,10 @@ return new class extends Migration
                     'updated_at' => $now,
                 ]);
             }
-        });
-
-        $syncService = app(TenantConfigurationSyncService::class);
-        $syncTenants = \App\Models\Tenant::query()->orderBy('id')->get();
-
-        foreach ($syncTenants as $tenant) {
-            $syncResult = $syncService->syncFromCurrentPlan(
-                $tenant,
-                source: 'manual_admin',
-                operatorId: 1,
-                reason: 'Rebuild global de planos/ciclos 2026',
-                startDate: $periodStart->format('Y-m-d'),
-                endDate: $periodEnd->format('Y-m-d'),
-            );
-
-            if (!($syncResult['success'] ?? false)) {
-                throw new RuntimeException('Falha ao sincronizar tenant #' . $tenant->id . ' após rebuild global.');
-            }
+        } finally {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
         }
+
     }
 
     /**
@@ -208,4 +189,3 @@ return new class extends Migration
     {
     }
 };
-

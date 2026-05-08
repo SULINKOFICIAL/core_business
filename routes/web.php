@@ -94,6 +94,14 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/', [SystemSettingsController::class, 'updateWhatsApp'])->name('update');
             Route::post('/testar', [SystemSettingsController::class, 'sendWhatsAppTest'])->name('test');
         });
+
+        /**
+         * Rotas para sincronização em massa de planos.
+         */
+        Route::prefix('sistema/assinaturas')->name('subscriptions.sync.')->group(function () {
+            Route::get('/', [SystemSettingsController::class, 'editSubscriptionsSync'])->name('edit');
+            Route::post('/sincronizar', [SystemSettingsController::class, 'syncSubscriptionsInBulk'])->name('run');
+        });
     });
 
     /**
@@ -413,6 +421,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('sistemas')->group(function () {
         Route::name('systems.')->group(function () {
             Route::get('/acessar-recursos',                  [TenantsActionsController::class, 'getResources'])->name('get.resources');
+            Route::get('/remover-pacotes/{id}',              [TenantsActionsController::class, 'removePackagesManual'])->name('remove.packages');
             Route::get('/atualizar-banco/{id}',              [TenantsActionsController::class, 'updateDatabaseManual'])->name('update.database');
             Route::get('/atualizar-git/{id}',                [TenantsActionsController::class, 'updateGitManual'])->name('update.git');
             Route::get('/reiniciar-filas/{id}',              [TenantsActionsController::class, 'updateSupervisorManual'])->name('update.supervisor');

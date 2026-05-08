@@ -14,6 +14,7 @@ use App\Services\OrderService;
 use App\Services\PagarMeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class ApisOrdersController extends Controller
 {
@@ -190,7 +191,7 @@ class ApisOrdersController extends Controller
         $orderJson['date_created'] = $order->created_at;
         $orderJson['date_paid'] = $order->paid_at;
         $orderJson['amount'] = $order->total_amount;
-        $orderJson['method'] = $order->method;
+        $orderJson['method'] = $order->provider_method;
         $orderJson['status'] = $order->status;
         $orderJson['packageName'] = $order->plan->name;
 
@@ -224,10 +225,30 @@ class ApisOrdersController extends Controller
     }
 
     /**
+     * Retorna snapshot canônico do catálogo da etapa de módulos.
+     * Fonte de verdade:
+     * - owned_*: plano contratado ativo/concluído.
+     * - draft_*: plano em rascunho em edição.
+     */
+    public function modulesCatalog(Request $request)
+    {
+        $data = $request->all();
+        $tenant = $data['tenant'];
+
+        $draftPlan = $this->orderService->getPlanInProgress($tenant);
+        $snapshot = $this->buildModulesCatalogSnapshot($tenant, $draftPlan);
+
+        return response()->json($snapshot, 200);
+    }
+
+    /**
      * Cria um pedido em rascunho (intenção de compra) com base nos módulos desejados.
      */
     public function update(Request $request)
     {
+        $startedAt = microtime(true);
+        $requestId = (string) Str::uuid();
+
         // Obtém dados
         $data = $request->all();
 
@@ -240,6 +261,8 @@ class ApisOrdersController extends Controller
         // Busca o pedido em andamento
         $order = $this->orderService->getOrderInProgress($tenant, $plan);
 
+        $beforeSnapshot = $this->buildModulesCatalogSnapshot($tenant, $plan);
+
         // Realiza ação desejada
         $action = match ($data['action']) {
             'change_package' => $this->changePackage($order, (int) ($data['value'] ?? 0)),
@@ -250,13 +273,232 @@ class ApisOrdersController extends Controller
             default => null,
         };
 
-        return $action;
+        $afterSnapshot = $this->buildModulesCatalogSnapshot($tenant, $plan->fresh());
+        $durationMs = (int) round((microtime(true) - $startedAt) * 1000);
 
-        // Retorna resposta
-        return response()->json([
-            'message' => $action['message'],
-            'order' => $order
+        Log::info('orders.update.snapshot', [
+            'request_id' => $requestId,
+            'tenant_id' => $tenant->id,
+            'action' => $data['action'] ?? null,
+            'duration_ms' => $durationMs,
+            'before' => [
+                'owned_module_ids' => $beforeSnapshot['owned_module_ids'] ?? [],
+                'draft_module_ids' => $beforeSnapshot['draft_module_ids'] ?? [],
+                'selected_package_ids' => $beforeSnapshot['selected_package_ids'] ?? [],
+            ],
+            'after' => [
+                'owned_module_ids' => $afterSnapshot['owned_module_ids'] ?? [],
+                'draft_module_ids' => $afterSnapshot['draft_module_ids'] ?? [],
+                'selected_package_ids' => $afterSnapshot['selected_package_ids'] ?? [],
+            ],
         ]);
+
+        return response()->json([
+            'success' => true,
+            'request_id' => $requestId,
+            'message' => $action['message'] ?? 'Pedido atualizado com sucesso.',
+            'action' => $action['action'] ?? null,
+            'snapshot' => $afterSnapshot,
+        ]);
+    }
+
+    private function buildModulesCatalogSnapshot($tenant, $draftPlan = null): array
+    {
+        $activePlan = $tenant->plans()
+            ->where('status', true)
+            ->where('progress', 'completed')
+            ->orderByDesc('id')
+            ->with('items')
+            ->first();
+
+        $draftPlan = $draftPlan ?: $this->orderService->getPlanInProgress($tenant);
+        $draftPlan->loadMissing('items');
+
+        $ownedModuleIds = collect($activePlan?->items ?? [])
+            ->pluck('item_id')
+            ->filter()
+            ->map(fn ($itemId) => (int) $itemId)
+            ->unique()
+            ->values()
+            ->all();
+
+        $draftModuleIds = collect($draftPlan->items ?? [])
+            ->pluck('item_id')
+            ->filter()
+            ->map(fn ($itemId) => (int) $itemId)
+            ->unique()
+            ->values()
+            ->all();
+
+        $selectedPackageIds = collect($draftPlan->items ?? [])
+            ->pluck('package_id')
+            ->filter()
+            ->map(fn ($packageId) => (int) $packageId)
+            ->unique()
+            ->values()
+            ->all();
+
+        $modulesCatalog = Module::with(['category', 'pricingTiers', 'benefits', 'resources'])
+            ->where('status', true)
+            ->where('is_native', false)
+            ->get();
+
+        $packagesCatalog = Package::with(['modules', 'benefits'])
+            ->where('status', true)
+            ->orderBy('order')
+            ->get();
+
+        $selectedPackageModuleIds = [];
+        foreach ($packagesCatalog as $packageCatalog) {
+            if (!in_array((int) $packageCatalog->id, $selectedPackageIds, true)) {
+                continue;
+            }
+
+            foreach ($packageCatalog->modules as $packageModule) {
+                if ((int) ($packageModule->is_native ?? false) === 1) {
+                    continue;
+                }
+
+                $selectedPackageModuleIds[] = (int) $packageModule->id;
+            }
+        }
+        $selectedPackageModuleIds = collect($selectedPackageModuleIds)->unique()->values()->all();
+
+        $modules = [];
+        foreach ($modulesCatalog as $module) {
+            $pricingValues = 0;
+            if ($module->pricing_type === 'Preço Por Uso') {
+                $pricingValues = $module->pricingTiers
+                    ->sortBy('usage_limit')
+                    ->values()
+                    ->map(function ($tier) {
+                        return [
+                            'usage_limit' => $tier->usage_limit,
+                            'price' => (float) $tier->price,
+                        ];
+                    })
+                    ->toArray();
+            } else {
+                $pricingValues = (float) $module->value;
+            }
+
+            $isSelected = in_array((int) $module->id, $draftModuleIds, true);
+
+            $modules[] = [
+                'id' => $module->id,
+                'name' => $module->name,
+                'description' => $module->description,
+                'price_label' => is_array($pricingValues) ? 'Sob consulta' : 'R$ ' . number_format((float) $pricingValues, 2, ',', '.'),
+                'price_suffix' => is_array($pricingValues) ? '' : '/mês',
+                'is_selected' => $isSelected,
+                'is_owned' => in_array((int) $module->id, $ownedModuleIds, true),
+                'is_selected_by_package' => in_array((int) $module->id, $selectedPackageModuleIds, true),
+                'benefits' => $module->benefits->map(function ($benefit) {
+                    $labelColor = strtolower($benefit->label_color ?? 'primary');
+                    $allowedColors = ['success', 'primary', 'info', 'warning'];
+                    if (!in_array($labelColor, $allowedColors, true)) {
+                        $labelColor = 'primary';
+                    }
+
+                    $iconValue = $benefit->icon ?? '';
+                    if ($iconValue === '') {
+                        $iconClass = 'fa-solid fa-circle-check';
+                    } elseif (str_contains($iconValue, 'fa-')) {
+                        $iconClass = $iconValue;
+                    } else {
+                        $iconClass = 'fa-solid fa-' . ltrim($iconValue, '-');
+                    }
+
+                    return [
+                        'icon' => $benefit->icon,
+                        'icon_class' => $iconClass,
+                        'title' => $benefit->title,
+                        'label' => $benefit->label,
+                        'label_color' => $benefit->label_color,
+                        'label_color_class' => 'text-' . $labelColor,
+                    ];
+                })->values()->toArray(),
+            ];
+        }
+
+        $packages = [];
+        foreach ($packagesCatalog as $package) {
+            $nonNativeModules = $package->modules->filter(function ($module) {
+                return !(bool) ($module->is_native ?? false);
+            })->values();
+
+            $moduleIds = $nonNativeModules->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values()
+                ->all();
+
+            $isOwned = !empty($moduleIds) && count(array_diff($moduleIds, $ownedModuleIds)) === 0;
+            $isSelected = !empty($moduleIds) && count(array_diff($moduleIds, $draftModuleIds)) === 0;
+
+            $packagePrice = (float) $package->modules->sum(function ($module) {
+                return (float) ($module->pivot->price ?? $module->value ?? 0);
+            });
+
+            $packages[] = [
+                'id' => $package->id,
+                'module_ids' => $moduleIds,
+                'name' => $package->name,
+                'description' => $package->description,
+                'is_popular' => (bool) ($package->popular ?? false),
+                'is_owned' => $isOwned,
+                'is_selected' => $isSelected,
+                'button_class' => $isSelected ? 'btn-light' : 'btn-primary',
+                'price_label' => 'R$ ' . number_format($packagePrice, 2, ',', '.'),
+                'benefits' => $package->benefits->map(function ($benefit) {
+                    $labelColor = strtolower($benefit->label_color ?? 'primary');
+                    $allowedColors = ['success', 'primary', 'info', 'warning'];
+                    if (!in_array($labelColor, $allowedColors, true)) {
+                        $labelColor = 'primary';
+                    }
+
+                    $iconValue = $benefit->icon ?? '';
+                    if ($iconValue === '') {
+                        $iconClass = 'fa-solid fa-circle-check';
+                    } elseif (str_contains($iconValue, 'fa-')) {
+                        $iconClass = $iconValue;
+                    } else {
+                        $iconClass = 'fa-solid fa-' . ltrim($iconValue, '-');
+                    }
+
+                    return [
+                        'icon' => $benefit->icon,
+                        'icon_class' => $iconClass,
+                        'title' => $benefit->title,
+                        'label' => $benefit->label,
+                        'label_color' => $benefit->label_color,
+                        'label_color_class' => 'text-' . $labelColor,
+                    ];
+                })->values()->toArray(),
+                'included_modules' => $nonNativeModules->map(function ($module) use ($draftModuleIds) {
+                    $moduleId = (int) $module->id;
+                    return [
+                        'id' => $moduleId,
+                        'name' => $module->name,
+                        'is_already_enabled' => in_array($moduleId, $draftModuleIds, true),
+                    ];
+                })->values()->toArray(),
+                'included_resources' => collect(preg_split('/\r\n|\r|\n/', $package->resources_list ?? '') ?: [])
+                    ->filter()
+                    ->values()
+                    ->all(),
+            ];
+        }
+
+        return [
+            'owned_module_ids' => $ownedModuleIds,
+            'draft_module_ids' => $draftModuleIds,
+            'selected_package_ids' => $selectedPackageIds,
+            'catalog' => [
+                'modules' => $modules,
+                'packages' => $packages,
+            ],
+        ];
     }
 
     /**

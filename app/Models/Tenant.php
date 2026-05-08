@@ -70,7 +70,9 @@ class Tenant extends Model
     // Plano atual do cliente
     public function plan(): HasOne
     {
-        return $this->hasOne(TenantPlan::class, 'tenant_id', 'id')->where('status', true);
+        return $this->hasOne(TenantPlan::class, 'tenant_id', 'id')
+            ->where('status', true)
+            ->where('progress', 'completed');
     }
 
     // Domínios do cliente
@@ -166,14 +168,31 @@ class Tenant extends Model
                                     ->with(['subscription.cycles', 'items.item'])
                                     ->first();
 
+        if (!$tenantPlan) {
+            return [
+                'name' => null,
+                'users' => 0,
+                'storage' => 0,
+                'cycle' => [
+                    'hasActiveCycle' => false,
+                    'start' => null,
+                    'end' => null,
+                ],
+                'modules' => [],
+            ];
+        }
+
         /**
          * Obtém o último ciclo registrado do cliente
          */
-        $activeCycle = $tenantPlan->subscription->cycles()
-                                ->where('start_date', '<=', now())
-                                ->where('end_date', '>=', now())
-                                ->orderByDesc('end_date')
-                                ->first();
+        $activeCycle = null;
+        if ($tenantPlan->subscription) {
+            $activeCycle = $tenantPlan->subscription->cycles()
+                ->where('start_date', '<=', now())
+                ->where('end_date', '>=', now())
+                ->orderByDesc('end_date')
+                ->first();
+        }
 
         /**
          * Se encontrou o ciclo

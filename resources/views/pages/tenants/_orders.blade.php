@@ -25,9 +25,21 @@
                             <span class="text-gray-700 fw-bold">R$ {{ number_format($order->total_amount, 2, ',', '.') }}</span>
                         </td>
                         <td class="text-center">
-                            @if ($order->method == 'credit_card')
+                            @if ($order->provider_method == 'credit_card')
                                 <span class="fw-bolder text-success">
                                     Cartão de Crédito
+                                </span>
+                            @elseif ($order->provider_method == 'debit_card')
+                                <span class="fw-bolder text-info">
+                                    Cartão de Débito
+                                </span>
+                            @elseif ($order->provider_method == 'pix')
+                                <span class="fw-bolder text-success">
+                                    PIX
+                                </span>
+                            @elseif ($order->provider_method == 'boleto')
+                                <span class="fw-bolder text-warning">
+                                    Boleto
                                 </span>
                             @else
                             <span class="badge badge-light text-muted">Não Pago</span>

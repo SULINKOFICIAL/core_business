@@ -33,6 +33,13 @@
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-2">
+                    @if (app()->environment(['local', 'testing']))
+                        <a href="{{ route('systems.remove.packages', $client->id) }}"
+                           class="btn btn-light-danger btn-sm"
+                           onclick="return confirm('Tem certeza que deseja remover os pacotes liberados desta instalação?');">
+                            <i class="fa-solid fa-box-open me-1"></i>Remover Pacotes
+                        </a>
+                    @endif
                     <a href="{{ route('systems.update.database', $client->id) }}" class="btn btn-light-primary btn-sm">
                         <i class="fa-solid fa-database me-1"></i>Atualizar DB
                     </a>

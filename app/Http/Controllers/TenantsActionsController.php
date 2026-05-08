@@ -13,6 +13,7 @@ use App\Services\GuzzleService;
 use App\Services\TenantConfigurationSyncService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
 use App\Jobs\RefreshTokenIntegrationsJob;
@@ -496,6 +497,64 @@ class TenantsActionsController extends Controller
                 ->route('tenants.index')
                 ->with('message', $updated ? 'Migração executada com sucesso' : 'Falha ao atualizar banco de dados');
 
+    }
+
+    /**
+     * Remove todos os pacotes/liberações do tenant no core_business.
+     * Disponível apenas em ambiente de testes.
+     */
+    public function removePackagesManual(Request $request, $id)
+    {
+        if (!app()->environment(['local', 'testing'])) {
+            abort(403, 'Ação permitida apenas em ambiente de testes.');
+        }
+
+        $tenant = $this->repository->findOrFail($id);
+
+        DB::transaction(function () use ($tenant) {
+            $subscriptionIds = DB::table('subscriptions')
+                ->where('tenant_id', $tenant->id)
+                ->pluck('id')
+                ->all();
+
+            $planIds = DB::table('tenants_plans')
+                ->where('tenant_id', $tenant->id)
+                ->pluck('id')
+                ->all();
+
+            $orderIds = DB::table('orders')
+                ->where('tenant_id', $tenant->id)
+                ->pluck('id')
+                ->all();
+
+            if (!empty($orderIds)) {
+                DB::table('orders_transactions')->whereIn('order_id', $orderIds)->delete();
+            }
+
+            if (!empty($subscriptionIds)) {
+                DB::table('subscriptions_cycles')->whereIn('subscription_id', $subscriptionIds)->delete();
+            }
+
+            DB::table('orders')->where('tenant_id', $tenant->id)->delete();
+            DB::table('subscriptions')->where('tenant_id', $tenant->id)->delete();
+
+            if (!empty($planIds)) {
+                DB::table('tenants_plans_items')->whereIn('plan_id', $planIds)->delete();
+            }
+
+            DB::table('tenants_plans')->where('tenant_id', $tenant->id)->delete();
+        });
+
+        if ($this->shouldReturnJson($request)) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Pacotes removidos com sucesso.',
+            ]);
+        }
+
+        return redirect()
+            ->route('tenants.index')
+            ->with('message', 'Pacotes removidos com sucesso.');
     }
 
     /**

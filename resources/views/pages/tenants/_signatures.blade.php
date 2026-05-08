@@ -19,7 +19,7 @@
                         $lastOrder = $plan->orders->sortByDesc('id')->first();
                         $lastCycle = $plan->subscription?->cycles?->sortByDesc('id')->first();
                         $isActive = (int) $plan->status === 1;
-                        $sourceMethod = $plan->subscription?->payment_method ?? $lastOrder?->method;
+                        $sourceMethod = $plan->subscription?->payment_method ?? $lastOrder?->provider_method;
                         $isManual = $sourceMethod === 'manual_admin';
                     @endphp
                     <tr>
@@ -69,7 +69,14 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="text-center text-muted py-6">Nenhum histórico de plano encontrado.</td>
+                        <td class="text-center text-muted py-6">Nenhum histórico de plano encontrado.</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
                     </tr>
                 @endforelse
             </tbody>

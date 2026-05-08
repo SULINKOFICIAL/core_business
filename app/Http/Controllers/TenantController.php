@@ -236,7 +236,9 @@ class TenantController extends Controller
          * Fonte da seção de recursos:
          * apenas módulos vinculados ao plano atual do tenant.
          */
-        $planModules = collect($tenant->plan->items)
+        $planItems = $tenant->plan?->items ?? collect();
+
+        $planModules = collect($planItems)
             ->map(fn ($planItem) => $planItem->item)
             ->filter()
             ->unique('id')
@@ -262,7 +264,7 @@ class TenantController extends Controller
         $totalModulesCount = Module::query()
             ->where('status', true)
             ->count();
-        $currentPlanId = $tenant->plan->id;
+        $currentPlanId = $tenant->plan?->id;
         $plansHistory = $tenant->plans
             ->sortByDesc('created_at')
             ->values();

@@ -99,7 +99,7 @@ class OrderProcessingController extends Controller
             $column = match ($orderThis) {
                 'id' => 'id',
                 'order_label' => 'id',
-                'method_label' => 'method',
+                'method_label' => 'provider_method',
                 'created_at' => 'created_at',
                 'paid_at' => 'paid_at',
                 default => 'created_at',
@@ -131,7 +131,7 @@ class OrderProcessingController extends Controller
                 return '<a href="' . route('tenants.show', $order->tenant->id) . '" class="text-gray-700 text-hover-primary fw-bold">' . e($order->tenant->name) . '</a>';
             })
             ->addColumn('method_label', function ($order) {
-                $method = strtolower((string) ($order->method ?? ''));
+                $method = strtolower($order->provider_method ?? '');
 
                 return match ($method) {
                     'credit_card' => '<span class="badge badge-light-primary">Cartão de Crédito</span>',
@@ -140,7 +140,7 @@ class OrderProcessingController extends Controller
                     'boleto' => '<span class="badge badge-light-warning">Boleto</span>',
                     'liberado' => '<span class="badge badge-light-secondary">Liberado</span>',
                     '' => '<span class="text-gray-600">—</span>',
-                    default => '<span class="text-gray-600">' . e($order->method) . '</span>',
+                    default => '<span class="text-gray-600">' . e($order->provider_method) . '</span>',
                 };
             })
             ->addColumn('status_label', function ($order) {
