@@ -397,6 +397,12 @@ if (! function_exists('header_menu_items')) {
                         'icon' => ['class' => 'fa-solid fa-gear fs-5'],
                     ],
                     [
+                        'label' => 'Sincronizar Planos',
+                        'route' => 'system.settings.subscriptions.sync.edit',
+                        'active_routes' => ['system.settings.subscriptions.sync.edit'],
+                        'icon' => ['class' => 'fa-solid fa-repeat fs-5'],
+                    ],
+                    [
                         'label' => 'Disparar Tarefas',
                         'route' => 'systems.run.scheduled.now',
                         'active_routes' => ['systems.run.scheduled.now', 'systems.run.scheduled.now.tenant'],

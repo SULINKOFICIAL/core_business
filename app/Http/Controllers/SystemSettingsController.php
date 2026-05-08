@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Mail\SimpleEmailMailable;
+use App\Models\Tenant;
 use App\Services\EmailService;
 use App\Services\MailSettingsService;
 use App\Services\SystemProblemNotificationService;
+use App\Services\TenantConfigurationSyncService;
 use App\Services\WhatsAppSettingsService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -22,6 +24,7 @@ class SystemSettingsController extends Controller
         private readonly WhatsAppSettingsService $whatsAppSettingsService,
         private readonly EmailService $emailService,
         private readonly SystemProblemNotificationService $systemProblemNotificationService,
+        private readonly TenantConfigurationSyncService $tenantConfigurationSyncService,
     ) {
     }
 
@@ -44,6 +47,16 @@ class SystemSettingsController extends Controller
     {
         return view('pages.system.settings-whatsapp', [
             'whatsAppSettings' => $this->whatsAppSettingsService->getFormData(),
+        ]);
+    }
+
+    /**
+     * Exibe a tela de sincronização em massa de planos para os tenants.
+     */
+    public function editSubscriptionsSync(): View
+    {
+        return view('pages.system.settings-subscriptions-sync', [
+            'tenantsCount' => Tenant::query()->count(),
         ]);
     }
 
@@ -193,5 +206,41 @@ class SystemSettingsController extends Controller
             ->with(($result['success'] ?? false) ? 'message' : 'error', ($result['success'] ?? false)
                 ? 'Template de WhatsApp enviado com sucesso.'
                 : 'Falha ao enviar template de WhatsApp: ' . ($result['error'] ?? $result['reason'] ?? 'erro desconhecido'));
+    }
+
+    /**
+     * Sincroniza em massa os planos atuais para todos os tenants.
+     * Exige confirmação explícita na tela antes de executar.
+     */
+    public function syncSubscriptionsInBulk(): \Illuminate\Http\RedirectResponse
+    {
+        $periodStartDate = '2026-01-01';
+        $periodEndDate = '2026-12-31';
+        $syncedCount = 0;
+
+        $tenants = Tenant::query()->orderBy('id')->get();
+
+        foreach ($tenants as $tenant) {
+            $syncResult = $this->tenantConfigurationSyncService->syncFromCurrentPlan(
+                $tenant,
+                source: 'manual_admin',
+                operatorId: 1,
+                reason: 'Sincronização em massa manual após rebuild global',
+                startDate: $periodStartDate,
+                endDate: $periodEndDate,
+            );
+
+            if (!($syncResult['success'] ?? false)) {
+                return redirect()
+                    ->route('system.settings.subscriptions.sync.edit')
+                    ->with('error', 'Falha ao sincronizar o tenant #' . $tenant->id . '. Processo interrompido.');
+            }
+
+            $syncedCount++;
+        }
+
+        return redirect()
+            ->route('system.settings.subscriptions.sync.edit')
+            ->with('message', 'Sincronização concluída com sucesso para ' . $syncedCount . ' tenant(s).');
     }
 }

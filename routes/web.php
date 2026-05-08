@@ -94,6 +94,14 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/', [SystemSettingsController::class, 'updateWhatsApp'])->name('update');
             Route::post('/testar', [SystemSettingsController::class, 'sendWhatsAppTest'])->name('test');
         });
+
+        /**
+         * Rotas para sincronização em massa de planos.
+         */
+        Route::prefix('sistema/assinaturas')->name('subscriptions.sync.')->group(function () {
+            Route::get('/', [SystemSettingsController::class, 'editSubscriptionsSync'])->name('edit');
+            Route::post('/sincronizar', [SystemSettingsController::class, 'syncSubscriptionsInBulk'])->name('run');
+        });
     });
 
     /**
