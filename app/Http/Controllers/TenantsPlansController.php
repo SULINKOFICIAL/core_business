@@ -81,12 +81,18 @@ class TenantsPlansController extends Controller
         }
 
         // Cria item de módulo no pedido
+        $basePrice = (float) $module->value;
         TenantPlanItem::create([
             'plan_id' => $plan->id,
             'package_id' => null,
             'item_id' => $module->id,
+            'item_type' => 'module',
             'module_name' => $module->name,
-            'module_value' => $module->value,
+            'base_price' => $basePrice,
+            'applied_price' => $basePrice,
+            'discount_amount' => 0,
+            'discount_percent' => 0,
+            'pricing_source' => 'manual_admin',
             'billing_type' => $module->pricing_type,
             'payload' => json_encode($module),
         ]);
@@ -106,7 +112,7 @@ class TenantsPlansController extends Controller
     public function recalculatePlanTotal(TenantPlan $plan)
     {
         // Soma o subtotal atual caso não seja informado
-        $itemsSubtotal = $plan->modules()->sum('value');
+        $itemsSubtotal = (float) $plan->items()->sum('applied_price');
 
         // Calcula o total final do pedido
         $totalAmount = $itemsSubtotal;

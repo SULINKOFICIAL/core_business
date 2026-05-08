@@ -120,12 +120,18 @@ class TenantManualPlanController extends Controller
             $activePlan->items()->delete();
 
             foreach ($selectedModules as $module) {
+                $basePrice = (float) $module->value;
                 TenantPlanItem::create([
                     'plan_id'      => $activePlan->id,
                     'package_id'   => null,
                     'item_id'      => $module->id,
+                    'item_type'    => 'module',
                     'module_name'  => $module->name,
-                    'module_value' => (float) $module->value,
+                    'base_price'   => $basePrice,
+                    'applied_price' => $basePrice,
+                    'discount_amount' => 0,
+                    'discount_percent' => 0,
+                    'pricing_source' => 'manual_admin',
                     'billing_type' => $module->pricing_type,
                     'payload'      => $module->toJson(),
                 ]);

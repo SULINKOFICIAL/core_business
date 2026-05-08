@@ -16,7 +16,6 @@ class TenantPlanItem extends Model
         'item_id',
         'item_type',
         'module_name',
-        'module_value',
         'base_price',
         'applied_price',
         'discount_amount',

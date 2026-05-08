@@ -213,7 +213,7 @@
                     <td>{{ $item->module_name }}</td>
                     <td>1</td>
                     <td>{{ $item->billing_type }}</td>
-                    <td>R$ {{ number_format($item->module_value, 2, ',', '.') }}</td>
+                    <td>R$ {{ number_format($item->applied_price ?? 0, 2, ',', '.') }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -251,15 +251,15 @@
                             @endif
                         </td>
                         <td>
-                            @if($transaction->method == 'credit_card')
+                            @if($transaction->provider_method == 'credit_card')
                                 Cartão de Crédito
-                            @elseif($transaction->method == 'debit_card')
+                            @elseif($transaction->provider_method == 'debit_card')
                                 Cartão de Débito
-                            @elseif($transaction->method == 'pix')
+                            @elseif($transaction->provider_method == 'pix')
                                 PIX
-                            @elseif($transaction->method == 'boleto')
+                            @elseif($transaction->provider_method == 'boleto')
                                 Boleto
-                            @elseif($transaction->method == 'liberado')
+                            @elseif($transaction->provider_method == 'liberado')
                                 Liberado à Parte
                             @else
                                 —

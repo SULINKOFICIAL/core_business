@@ -123,12 +123,18 @@ class TenantController extends Controller
             ->get();
 
         $packageItems = $modules->map(function($module) use ($package) {
+            $basePrice = (float) $module->value;
             return [
                 'plan_id' => $package->id,
                 'package_id' => null,
                 'item_id' => $module->id,
+                'item_type' => 'module',
                 'module_name' => $module->name,
-                'module_value' => $module->value,
+                'base_price' => $basePrice,
+                'applied_price' => $basePrice,
+                'discount_amount' => 0,
+                'discount_percent' => 0,
+                'pricing_source' => 'tenant_bootstrap',
                 'billing_type' => $module->pricing_type,
                 'payload' => $module->toJson(),
                 'created_at' => now(),

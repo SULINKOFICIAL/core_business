@@ -87,7 +87,7 @@
                         {{ $transaction->amount }}
                     </td>
                     <td>
-                        @if ($transaction->method == 'credit_card')
+                        @if ($transaction->provider_method == 'credit_card')
                             <span class="fw-bolder text-success">
                                 Cartão de Crédito
                             </span>
