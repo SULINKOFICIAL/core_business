@@ -147,9 +147,6 @@
             </div>
         </div>
 
-        {{-- Mantém campos legados sem exibir no formulário --}}
-        <input type="hidden" name="duration_days" value="{{ old('duration_days', $package->duration_days ?? 30) }}">
-        <input type="hidden" name="size_storage" value="{{ old('size_storage', $package->size_storage ?? 5368709120) }}">
     </div>
 </div>
 

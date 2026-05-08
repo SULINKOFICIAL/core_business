@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Tenant;
 use App\Models\TenantProvisioning;
-use App\Models\Package;
 use Exception;
 use GuzzleHttp\Client as Guzzle;
 use Illuminate\Support\Facades\DB;
@@ -261,7 +260,7 @@ class CpanelProvisioningService
             'option_value' => $tenant->token,
         ]);
 
-        $sizeStorage = (int) optional(Package::find(1))->size_storage;
+        $sizeStorage = $tenant->plan?->size_storage ?? 0;
 
         DB::connection('mysql_cliente')->table('central_configs')->insert([
             'option_name' => 's3StorageAllow',

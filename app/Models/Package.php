@@ -13,8 +13,6 @@ class Package extends Model
         'description',
         'resources_list',
         'popular',
-        'size_storage',
-        'duration_days',
         'order',
         'status',
         'filed_by',

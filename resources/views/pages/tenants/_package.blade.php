@@ -8,7 +8,7 @@
             <p class="fw-bolder mb-0 text-uppercase text-gray-700 lh-1">
                 {{ $package->name }}
             </p>
-            <span class="fw-bolder text-primary">{{ $package->duration_days }}</span> dias - <span class="text-success value-module">R$ {{ number_format($packagePrice, 2, ',', '.') }}</span>
+            <span class="text-success value-module">R$ {{ number_format($packagePrice, 2, ',', '.') }}</span>
         </div>
         <div class="form-check form-check-custom form-check-success form-check-solid">
             <input class="form-check-input" name="package_id" value="{{ $package->id }}" type="radio" id="package-{{ $package->id }}" required/>

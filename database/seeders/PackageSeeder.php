@@ -19,39 +19,31 @@ class PackageSeeder extends Seeder
 
         Package::create([
             'name'          => 'Teste Gratuíto',
-            'size_storage'  => 1073741824 * 1,
             'free'          => true,
             'value'         => 0,
-            'duration_days' => 5,
             'order'         => 1,
             'created_by'    => $userId,
         ]);
         
         Package::create([
             'name'          => 'Começando',
-            'size_storage'  => 1073741824 * 5,
             'value'         => 1,
-            'duration_days' => 5, // 5 dias para testar renovação
             'order'         => 1,
             'created_by'    => $userId,
         ]);
 
         Package::create([
             'name' => 'Avançado',
-            'size_storage'  => 1073741824 * 10,
             'status' => 1,
             'value' => 2,
-            'duration_days' => 30,
             'order' => 1,
             'created_by' => $userId,
         ]);
 
         Package::create([
             'name' => 'Empresas',
-            'size_storage'  => 1073741824 * 15,
             'status' => 1,
             'value' => 3,
-            'duration_days' => 30,
             'order' => 1,
             'created_by' => $userId,
         ]);

@@ -135,7 +135,6 @@ class ApisUtilityController extends Controller
                 'description'   => $package->description,
                 'popular'       => (bool) ($package->popular ?? false),
                 'value'         => $packagePrice,
-                'duration_days' => (int) $package->duration_days,
                 'benefits'      => $package->benefits->map(function ($benefit) {
                     return [
                         'icon'          => $benefit->icon,
