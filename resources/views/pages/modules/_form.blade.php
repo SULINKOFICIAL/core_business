@@ -2,6 +2,8 @@
     // Resolve tipo de cobrança e valores iniciais (old() tem prioridade)
     $pricingType = old('pricing_type', $modules->pricing_type ?? 'Preço Fixo');
     $usageLabel = old('usage_label', $modules->usage_label ?? '');
+    $usageCardTitle = old('usage_card_title', $modules->usage_card_title ?? '');
+    $usageCardSubtitle = old('usage_card_subtitle', $modules->usage_card_subtitle ?? '');
     $tiers = old('tiers');
 
     if (is_array($tiers)) {
@@ -152,6 +154,14 @@
             <div class="col-6 mb-4 pricing-usage">
                 <label class="form-label fs-6 fw-bold text-gray-700 mb-2">Unidade de uso</label>
                 <input type="text" class="form-control form-control-solid" placeholder="Ex: conversas/dia" name="usage_label" value="{{ $usageLabel }}">
+            </div>
+            <div class="col-6 mb-4 pricing-usage">
+                <label class="form-label fs-6 fw-bold text-gray-700 mb-2">Título do card de uso</label>
+                <input type="text" class="form-control form-control-solid" placeholder="Ex: Defina seu volume de atendimento" name="usage_card_title" value="{{ $usageCardTitle }}">
+            </div>
+            <div class="col-12 mb-4 pricing-usage">
+                <label class="form-label fs-6 fw-bold text-gray-700 mb-2">Subtítulo do card de uso</label>
+                <input type="text" class="form-control form-control-solid" placeholder="Ex: Escolha a faixa ideal para o seu momento." name="usage_card_subtitle" value="{{ $usageCardSubtitle }}">
             </div>
             <div class="col-12 mb-4 pricing-usage">
                 <label class="form-label fs-6 fw-bold text-gray-700 mb-2">Faixas de cobrança</label>

@@ -143,6 +143,8 @@ class ApisOrdersController extends Controller
             $usageModules[] = [
                 'module_id' => $module->item->id,
                 'module_name' => $module->item->name,
+                'usage_card_title' => $module->item->usage_card_title ?: $module->item->name,
+                'usage_card_subtitle' => $module->item->usage_card_subtitle ?: 'Escolha a faixa de uso ideal para o seu momento.',
                 'tiers' => $tiers,
                 'selected_usage' => $usageConfig,
             ];

@@ -19,6 +19,8 @@ class Module extends Model
         'value',
         'pricing_type',
         'usage_label',
+        'usage_card_title',
+        'usage_card_subtitle',
         'is_native',
         'status',
         'filed_by',
