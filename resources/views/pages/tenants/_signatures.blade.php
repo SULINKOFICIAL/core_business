@@ -69,7 +69,14 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="text-center text-muted py-6">Nenhum histórico de plano encontrado.</td>
+                        <td class="text-center text-muted py-6">Nenhum histórico de plano encontrado.</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
                     </tr>
                 @endforelse
             </tbody>

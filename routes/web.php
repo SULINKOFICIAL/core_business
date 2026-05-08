@@ -421,6 +421,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('sistemas')->group(function () {
         Route::name('systems.')->group(function () {
             Route::get('/acessar-recursos',                  [TenantsActionsController::class, 'getResources'])->name('get.resources');
+            Route::get('/remover-pacotes/{id}',              [TenantsActionsController::class, 'removePackagesManual'])->name('remove.packages');
             Route::get('/atualizar-banco/{id}',              [TenantsActionsController::class, 'updateDatabaseManual'])->name('update.database');
             Route::get('/atualizar-git/{id}',                [TenantsActionsController::class, 'updateGitManual'])->name('update.git');
             Route::get('/reiniciar-filas/{id}',              [TenantsActionsController::class, 'updateSupervisorManual'])->name('update.supervisor');

@@ -39,8 +39,18 @@
                 @endforeach
             </div>
         @else
-            <div class="alert alert-light-warning mb-0">
-                <i class="fa-solid fa-circle-info me-2"></i>Nenhum módulo habilitado para este cliente.
+            <div class="rounded-3 border border-dashed border-warning bg-light-warning p-6 mb-0">
+                <div class="d-flex align-items-center mb-2">
+                    <span class="symbol symbol-35px me-3">
+                        <span class="symbol-label bg-warning">
+                            <i class="fa-solid fa-circle-info text-white fs-6"></i>
+                        </span>
+                    </span>
+                    <span class="fw-bolder text-gray-800 fs-6">Nenhum módulo habilitado</span>
+                </div>
+                <p class="text-gray-700 fs-7 mb-0">
+                    Este cliente está sem módulos ativos no plano atual. Use o botão <b>Atualizar Plano do Cliente</b> para liberar os módulos desejados.
+                </p>
             </div>
         @endif
     </div>
