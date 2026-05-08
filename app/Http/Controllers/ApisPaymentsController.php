@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\TenantCard;
-use App\Services\Payments\PaymentPlanService;
 use App\Services\OrderService;
+use App\Services\Payments\PaymentPlanService;
 use Illuminate\Http\Request;
 
 class ApisPaymentsController extends Controller
@@ -16,62 +16,53 @@ class ApisPaymentsController extends Controller
      */
     public function orderPayment(Request $request, OrderService $service, PaymentPlanService $paymentPlanService)
     {
-        /**
-         * Payload já normalizado pelo checkout do modal de assinatura.
-         */
+        // Obtém dados enviados pelo front.
         $data = $request->all();
 
-        $paymentType = $data['payment_type'];
-        $billingCycle = $data['billing_cycle'];
-        $clientInfo = $data['client_info'];
-
-        if ($paymentType === 'pix') {
-            /**
-             * No fluxo PIX toda a orquestração fica no PaymentPlanService,
-             * mantendo o controller como camada fina de entrada/saída.
-             */
+        // Se for do tipo pix
+        if (($data['payment_type'] ?? null) === 'pix') {
             $response = $paymentPlanService->processPlanPayment(
                 $data['tenant'],
-                $billingCycle,
-                $clientInfo,
+                $data['billing_cycle'],
+                $data['client_info'],
             );
 
             if (!$response['success']) {
-                return response()->json([
-                    'message' => $response['message'],
-                ], 422);
+                return response()->json(['message' => $response['message']], 422);
             }
 
             return response()->json($response, 200);
         }
 
-        /**
-         * Fluxos não PIX continuam no caminho atual de cartão/boleto.
-         */
+        // Obtem o pacote do cliente
         $plan = $service->getPlanInProgress($data['tenant']);
 
+        // Busca o pedido em andamento
         $order = $service->getOrderInProgress($data['tenant'], $plan);
 
+        // Resolve cartão com validações de payload.
         $cardResult = $this->resolveCardFromRequest($data);
 
+        // Interrompe fluxo quando cartão não for encontrado.
         if ($cardResult['error']) {
-            return response()->json([
-                'message' => $cardResult['error'],
-            ], $cardResult['status']);
+            return response()->json(['message' => $cardResult['error']], $cardResult['status']);
         }
 
+        // Extrai cartão validado para envio ao serviço de pagamento.
         $card = $cardResult['card'];
 
+        // Processa pagamento junto ao serviço de pedidos.
         $response = $service->createOrderPayment(
             $plan,
             $order,
             $data['tenant'],
-            $clientInfo,
+            $data['client_info'],
             $card,
             $this->extractCardCvv($data),
-            $billingCycle,
+            $data['billing_cycle'],
         );
 
+        // Retorna resposta
         return response()->json([
             'message' => $response
         ], 200);
@@ -82,15 +73,18 @@ class ApisPaymentsController extends Controller
      */
     public function paymentStatus(Request $request, PaymentPlanService $paymentPlanService)
     {
-        $data                  = $request->all();
-        $providerTransactionId = $data['transaction_id'];
+        // Obtém dados
+        $data = $request->all();
 
-        $response = $paymentPlanService->getPixStatus($data['tenant'], $providerTransactionId);
+        // Consulta status PIX junto ao service de pagamentos.
+        $response = $paymentPlanService->getPixStatus($data['tenant'], $data['transaction_id']);
 
+        // Interrompe fluxo quando não achar PIX válido.
         if (!$response['success']) {
             return response()->json($response, 404);
         }
 
+        // Retorna resposta
         return response()->json($response, 200);
     }
 
@@ -100,67 +94,57 @@ class ApisPaymentsController extends Controller
      */
     private function resolveCardFromRequest(array &$data): array
     {
+        // Verifica se foi enviado um id de cartão.
         if (isset($data['card_id'])) {
+
+            // Busca cartão existente do próprio cliente.
             $existingCard = TenantCard::where('tenant_id', $data['tenant']->id)
                 ->where('id', $data['card_id'])
                 ->first();
 
+            // Impede uso de cartão inexistente para o cliente.
             if (!$existingCard) {
-                return [
-                    'card'   => null,
-                    'error'  => 'Cartão não encontrado para esse cliente',
-                    'status' => 404,
-                ];
+                return ['card' => null, 'error' => 'Cartão não encontrado para esse cliente', 'status' => 404];
             }
 
-            return [
-                'card'   => $existingCard,
-                'error'  => null,
-                'status' => 200,
-            ];
+            // Retorna cartão existente para uso no pagamento.
+            return ['card' => $existingCard, 'error' => null, 'status' => 200];
         }
 
+        // Rejeita payload parcial de cartão novo.
         if ($this->hasIncompleteCardPayload($data)) {
-            return [
-                'card'   => null,
-                'error'  => 'Parâmetros faltando',
-                'status' => 400,
-            ];
+            return ['card' => null, 'error' => 'Parâmetros faltando', 'status' => 400];
         }
 
+        // Exige cartão quando não for informado card_id.
         if (!$this->hasNewCardPayload($data)) {
-            return [
-                'card'   => null,
-                'error'  => 'Cartão não informado',
-                'status' => 400,
-            ];
+            return ['card' => null, 'error' => 'Cartão não informado', 'status' => 400];
         }
 
-        /**
-         * Número limpo para busca e deduplicação do cartão no tenant.
-         */
+        // Normaliza número para comparação/armazenamento.
         $data['card']['number'] = $this->normalizeCardNumber($data['card']['number']);
 
+        // Reaproveita cartão já salvo para esse cliente.
         $card = TenantCard::where('tenant_id', $data['tenant']->id)
             ->where('number', $data['card']['number'])
             ->first();
 
+        // Cria novo cartão quando ainda não existe.
         if (!$card) {
+
+            // Salva novo cartão no banco.
             $card = TenantCard::create([
-                'tenant_id'        => $data['tenant']->id,
-                'main'             => true,
-                'name'             => $data['card']['name'],
-                'number'           => $data['card']['number'],
+                'tenant_id' => $data['tenant']->id,
+                'main' => true,
+                'name' => $data['card']['name'],
+                'number' => $data['card']['number'],
                 'expiration_month' => substr($data['card']['expiration'], 0, 2),
-                'expiration_year'  => '20' . substr($data['card']['expiration'], -2),
+                'expiration_year' => '20' . substr($data['card']['expiration'], -2),
             ]);
         }
 
-        return [
-            'card'   => $card,
-            'error'  => null,
-            'status' => 200,
-        ];
+        // Retorna cartão para uso no pagamento.
+        return ['card' => $card, 'error' => null, 'status' => 200];
     }
 
     /**
@@ -202,5 +186,4 @@ class ApisPaymentsController extends Controller
     {
         return $data['card']['cvv'] ?? null;
     }
-
 }
