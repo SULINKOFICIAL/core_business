@@ -8,6 +8,7 @@ use App\Models\PackageModule;
 use App\Models\ModulePricingTier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class PackageController extends Controller
 {
@@ -62,6 +63,12 @@ class PackageController extends Controller
         // Obtém dados
         $data = $request->all();
 
+        $moduleItems = $request->input('module_items', []);
+        $overlapMessage = $this->validateModulesExclusiveAcrossPackages($moduleItems, null);
+        if ($overlapMessage !== null) {
+            return redirect()->back()->withInput()->withErrors(['module_items' => $overlapMessage]);
+        }
+
         // Normaliza campos centrais
         $data['popular'] = (bool) ($data['popular'] ?? false);
         $data['duration_days'] = (int) ($data['duration_days'] ?? 30);
@@ -76,7 +83,7 @@ class PackageController extends Controller
 
         $this->syncModules(
             $created,
-            $request->input('module_items', []),
+            $moduleItems,
             (array) $request->input('prices', []),
             (array) $request->input('tier_prices', [])
         );
@@ -112,6 +119,12 @@ class PackageController extends Controller
         // Verifica se existe
         if (!$package = $this->repository->find($id)) return redirect()->back();
 
+        $moduleItems = $request->input('module_items', []);
+        $overlapMessage = $this->validateModulesExclusiveAcrossPackages($moduleItems, (int) $id);
+        if ($overlapMessage !== null) {
+            return redirect()->back()->withInput()->withErrors(['module_items' => $overlapMessage]);
+        }
+
         // Obtém dados
         $data = $request->all();
 
@@ -131,7 +144,7 @@ class PackageController extends Controller
 
         $this->syncModules(
             $package,
-            $request->input('module_items', []),
+            $moduleItems,
             (array) $request->input('prices', []),
             (array) $request->input('tier_prices', [])
         );
@@ -297,5 +310,45 @@ class PackageController extends Controller
         }
 
         return implode(PHP_EOL, $lines);
+    }
+
+    /**
+     * Garante exclusividade de módulo entre pacotes ativos.
+     */
+    private function validateModulesExclusiveAcrossPackages(array $moduleItems, ?int $currentPackageId): ?string
+    {
+        $moduleIds = collect($moduleItems)
+            ->map(fn ($row) => isset($row['module_id']) ? (int) $row['module_id'] : 0)
+            ->filter(fn ($moduleId) => $moduleId > 0)
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($moduleIds)) {
+            return null;
+        }
+
+        $conflicts = DB::table('packages_modules as pm')
+            ->join('packages as p', 'p.id', '=', 'pm.package_id')
+            ->join('modules as m', 'm.id', '=', 'pm.module_id')
+            ->where('p.status', true)
+            ->whereIn('pm.module_id', $moduleIds)
+            ->when($currentPackageId, function ($query) use ($currentPackageId) {
+                $query->where('pm.package_id', '!=', $currentPackageId);
+            })
+            ->select('m.name as module_name', 'p.name as package_name')
+            ->distinct()
+            ->orderBy('m.name')
+            ->get();
+
+        if ($conflicts->isEmpty()) {
+            return null;
+        }
+
+        $samples = $conflicts->take(5)->map(function ($row) {
+            return $row->module_name . ' (já está no pacote ' . $row->package_name . ')';
+        })->implode('; ');
+
+        return 'Não é permitido repetir módulo em mais de um pacote ativo. Conflitos: ' . $samples . '.';
     }
 }

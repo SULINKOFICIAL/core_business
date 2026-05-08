@@ -49,7 +49,7 @@ class ApisOrdersController extends Controller
             ->with(['item:id,name,pricing_type', 'sourcePackage:id,name', 'configurations'])
             ->get()
             ->map(function (TenantPlanItem $planItem) {
-                $moduleName = $planItem->item?->name ?? $planItem->module_name;
+                $moduleName = $planItem->module_name ?? $planItem->item?->name;
                 $moduleBillingType = $planItem->item?->pricing_type ?? $planItem->billing_type;
                 $usageConfig = $planItem->configurations->where('key', 'usage')->first();
                 $usageLimit = $planItem->usage_limit;
@@ -152,6 +152,13 @@ class ApisOrdersController extends Controller
         $currentUsersLimit = (int) ($plan->users_limit ?? 0);
         $currentStorageBytes = (int) ($plan->size_storage ?? 0);
         $currentStorageGb = (int) floor($currentStorageBytes / (1024 * 1024 * 1024));
+        $activePlan = $tenant->plans()
+            ->where('status', true)
+            ->where('progress', 'completed')
+            ->orderByDesc('id')
+            ->first();
+        $baseUsersLimit = (int) ($activePlan?->users_limit ?? 0);
+        $baseStorageGb = (int) floor(((int) ($activePlan?->size_storage ?? 0)) / (1024 * 1024 * 1024));
 
         $additionalUsers = AdditionalUser::query()
             ->where('status', true)
@@ -184,6 +191,8 @@ class ApisOrdersController extends Controller
             'modules' => $usageModules,
             'users_limit' => $currentUsersLimit,
             'storage_limit_gb' => $currentStorageGb,
+            'base_users_limit' => $baseUsersLimit,
+            'base_storage_limit_gb' => $baseStorageGb,
             'additional_users' => $additionalUsers,
             'additional_storages' => $additionalStorages,
         ], 200);
@@ -680,7 +689,23 @@ class ApisOrdersController extends Controller
             ->unique()
             ->values();
 
-        if ($modulesToAdd->isEmpty() && $modulesToRemove->isEmpty()) {
+        $modulesToPromote = collect($value['promote'] ?? [])
+            ->map(function ($entry) {
+                if (!is_array($entry)) {
+                    return null;
+                }
+
+                return [
+                    'module_id' => isset($entry['module_id']) ? (int) $entry['module_id'] : 0,
+                    'package_id' => isset($entry['package_id']) ? (int) $entry['package_id'] : 0,
+                    'tier_id' => isset($entry['tier_id']) ? (int) $entry['tier_id'] : 0,
+                ];
+            })
+            ->filter(fn ($entry) => is_array($entry) && $entry['module_id'] > 0 && $entry['package_id'] > 0)
+            ->unique(fn ($entry) => $entry['module_id'] . '_' . $entry['package_id'] . '_' . $entry['tier_id'])
+            ->values();
+
+        if ($modulesToAdd->isEmpty() && $modulesToRemove->isEmpty() && $modulesToPromote->isEmpty()) {
             return [
                 'message' => 'Nenhuma alteração de módulo para aplicar.',
                 'action' => 'noop',
@@ -705,15 +730,80 @@ class ApisOrdersController extends Controller
             $existingItem->delete();
         }
 
+        foreach ($modulesToPromote as $entry) {
+            $moduleId = $entry['module_id'];
+            $packageId = $entry['package_id'];
+            $requestedTierId = $entry['tier_id'];
+
+            $module = Module::find($moduleId);
+            if (!$module) {
+                continue;
+            }
+
+            $existingItem = $plan->items()->where('item_id', $moduleId)->orderBy('id')->first();
+            if (!$existingItem) {
+                continue;
+            }
+
+            if (!Package::where('status', true)->where('id', $packageId)->exists()) {
+                continue;
+            }
+
+            $pricingContext = $this->resolvePricingContext(
+                module: $module,
+                packageId: $packageId,
+                requestedTierId: $requestedTierId > 0 ? $requestedTierId : null
+            );
+
+            $canonicalPricing = $this->buildCanonicalPricingValues(
+                $pricingContext['base_price'],
+                $pricingContext['applied_price']
+            );
+
+            $existingItem->update([
+                'package_id' => $packageId,
+                'item_type' => 'module',
+                'module_name' => $module->name,
+                'base_price' => $pricingContext['base_price'],
+                'applied_price' => $pricingContext['applied_price'],
+                'discount_amount' => $canonicalPricing['discount_amount'],
+                'discount_percent' => $canonicalPricing['discount_percent'],
+                'pricing_source' => 'package',
+                'module_pricing_tier_id' => $pricingContext['module_pricing_tier_id'],
+                'usage_limit' => $pricingContext['usage_limit'],
+                'billing_type' => $module->pricing_type,
+                'payload' => json_encode($module),
+            ]);
+
+            if ($pricingContext['usage_limit'] === null) {
+                TenantPlanItemConfiguration::where('item_id', $existingItem->id)
+                    ->where('key', 'usage')
+                    ->delete();
+            } else {
+                $this->persistUsageConfiguration(
+                    planItemId: $existingItem->id,
+                    usageLimit: $pricingContext['usage_limit'],
+                    basePrice: $pricingContext['base_price'],
+                    description: 'Configuração de uso aplicada no item.'
+                );
+            }
+
+            $duplicates = $plan->items()
+                ->where('item_id', $moduleId)
+                ->where('id', '!=', $existingItem->id)
+                ->get();
+
+            foreach ($duplicates as $duplicateItem) {
+                TenantPlanItemConfiguration::where('item_id', $duplicateItem->id)->delete();
+                $duplicateItem->delete();
+            }
+        }
+
         foreach ($modulesToAdd as $entry) {
             $moduleId = $entry['module_id'];
             $packageId = $entry['package_id'];
             $requestedTierId = $entry['tier_id'];
             $existingItem = $plan->items()->where('item_id', $moduleId)->first();
-            if ($existingItem) {
-                continue;
-            }
-
             $module = Module::find($moduleId);
             if (!$module) {
                 continue;
@@ -729,6 +819,47 @@ class ApisOrdersController extends Controller
                 packageId: $resolvedPackageId,
                 requestedTierId: $requestedTierId > 0 ? $requestedTierId : null
             );
+
+            /**
+             * Se o módulo já existe como avulso, converte para item de pacote
+             * para evitar duplicidade visual entre "Módulos Avulsos" e "Pacote".
+             */
+            if ($existingItem) {
+                $canonicalPricing = $this->buildCanonicalPricingValues(
+                    $pricingContext['base_price'],
+                    $pricingContext['applied_price']
+                );
+
+                $existingItem->update([
+                    'package_id' => $resolvedPackageId,
+                    'item_type' => 'module',
+                    'module_name' => $module->name,
+                    'base_price' => $pricingContext['base_price'],
+                    'applied_price' => $pricingContext['applied_price'],
+                    'discount_amount' => $canonicalPricing['discount_amount'],
+                    'discount_percent' => $canonicalPricing['discount_percent'],
+                    'pricing_source' => $resolvedPackageId ? 'package' : 'manual',
+                    'module_pricing_tier_id' => $pricingContext['module_pricing_tier_id'],
+                    'usage_limit' => $pricingContext['usage_limit'],
+                    'billing_type' => $module->pricing_type,
+                    'payload' => json_encode($module),
+                ]);
+
+                if ($pricingContext['usage_limit'] === null) {
+                    TenantPlanItemConfiguration::where('item_id', $existingItem->id)
+                        ->where('key', 'usage')
+                        ->delete();
+                } else {
+                    $this->persistUsageConfiguration(
+                        planItemId: $existingItem->id,
+                        usageLimit: $pricingContext['usage_limit'],
+                        basePrice: $pricingContext['base_price'],
+                        description: 'Configuração de uso aplicada no item.'
+                    );
+                }
+
+                continue;
+            }
 
             $createdItem = $this->createCanonicalPlanItem(
                 planId: $plan->id,
@@ -985,18 +1116,139 @@ class ApisOrdersController extends Controller
 
         if ($usersLimit !== null && $usersLimit > 0) {
             $plan->users_limit = $usersLimit;
+            $this->upsertAdditionalUsersItem($plan, $usersLimit);
         }
 
         if ($storageLimitGb !== null && $storageLimitGb > 0) {
             $plan->size_storage = $storageLimitGb * 1024 * 1024 * 1024;
+            $this->upsertAdditionalStorageItem($plan, $storageLimitGb);
         }
 
         $plan->save();
+        $this->orderService->recalculateOrderTotals($order);
 
         return [
             'message' => 'Limites atualizados com sucesso.',
             'action' => 'updated',
         ];
+    }
+
+    /**
+     * Materializa item de usuários adicionais a partir da faixa total selecionada.
+     */
+    private function upsertAdditionalUsersItem($plan, int $usersLimit): void
+    {
+        $additional = AdditionalUser::where('status', true)
+            ->where('quantity', $usersLimit)
+            ->first();
+
+        $existing = $plan->items()->where('item_type', 'additional_user')->first();
+
+        if (!$additional) {
+            if ($existing) {
+                $existing->delete();
+            }
+            return;
+        }
+
+        $price = (float) $additional->price;
+
+        if (!$existing) {
+            TenantPlanItem::create([
+                'plan_id' => $plan->id,
+                'package_id' => null,
+                'item_id' => null,
+                'item_type' => 'additional_user',
+                'module_name' => 'Usuários permitidos: ' . $usersLimit,
+                'base_price' => $price,
+                'applied_price' => $price,
+                'discount_amount' => 0,
+                'discount_percent' => 0,
+                'pricing_source' => 'manual',
+                'module_pricing_tier_id' => null,
+                'usage_limit' => $usersLimit,
+                'billing_type' => 'Adicional',
+                'payload' => json_encode([
+                    'quantity' => $usersLimit,
+                    'price' => $price,
+                ]),
+            ]);
+            return;
+        }
+
+        $existing->update([
+            'module_name' => 'Usuários permitidos: ' . $usersLimit,
+            'base_price' => $price,
+            'applied_price' => $price,
+            'discount_amount' => 0,
+            'discount_percent' => 0,
+            'pricing_source' => 'manual',
+            'usage_limit' => $usersLimit,
+            'billing_type' => 'Adicional',
+            'payload' => json_encode([
+                'quantity' => $usersLimit,
+                'price' => $price,
+            ]),
+        ]);
+    }
+
+    /**
+     * Materializa item de armazenamento adicional a partir da faixa total selecionada.
+     */
+    private function upsertAdditionalStorageItem($plan, int $storageLimitGb): void
+    {
+        $additional = AdditionalStorage::where('status', true)
+            ->where('quantity', $storageLimitGb)
+            ->first();
+
+        $existing = $plan->items()->where('item_type', 'additional_storage')->first();
+
+        if (!$additional) {
+            if ($existing) {
+                $existing->delete();
+            }
+            return;
+        }
+
+        $price = (float) $additional->price;
+
+        if (!$existing) {
+            TenantPlanItem::create([
+                'plan_id' => $plan->id,
+                'package_id' => null,
+                'item_id' => null,
+                'item_type' => 'additional_storage',
+                'module_name' => 'Armazenamento: ' . $storageLimitGb . ' GB',
+                'base_price' => $price,
+                'applied_price' => $price,
+                'discount_amount' => 0,
+                'discount_percent' => 0,
+                'pricing_source' => 'manual',
+                'module_pricing_tier_id' => null,
+                'usage_limit' => $storageLimitGb,
+                'billing_type' => 'Adicional',
+                'payload' => json_encode([
+                    'quantity' => $storageLimitGb,
+                    'price' => $price,
+                ]),
+            ]);
+            return;
+        }
+
+        $existing->update([
+            'module_name' => 'Armazenamento: ' . $storageLimitGb . ' GB',
+            'base_price' => $price,
+            'applied_price' => $price,
+            'discount_amount' => 0,
+            'discount_percent' => 0,
+            'pricing_source' => 'manual',
+            'usage_limit' => $storageLimitGb,
+            'billing_type' => 'Adicional',
+            'payload' => json_encode([
+                'quantity' => $storageLimitGb,
+                'price' => $price,
+            ]),
+        ]);
     }
 
     public function cancel(Request $request)
