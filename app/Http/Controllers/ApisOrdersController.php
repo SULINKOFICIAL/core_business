@@ -46,11 +46,17 @@ class ApisOrdersController extends Controller
 
         // Monta os itens com origem (pacote) para o resumo no front.
         $items = $plan->items()
-            ->with(['item:id,name,pricing_type', 'sourcePackage:id,name'])
+            ->with(['item:id,name,pricing_type', 'sourcePackage:id,name', 'configurations'])
             ->get()
             ->map(function (TenantPlanItem $planItem) {
                 $moduleName = $planItem->item?->name ?? $planItem->module_name;
                 $moduleBillingType = $planItem->item?->pricing_type ?? $planItem->billing_type;
+                $usageConfig = $planItem->configurations->where('key', 'usage')->first();
+                $usageLimit = $planItem->usage_limit;
+
+                if ($usageLimit === null && $usageConfig) {
+                    $usageLimit = $usageConfig->value;
+                }
 
                 return [
                     'id' => $planItem->item_id,
@@ -58,12 +64,21 @@ class ApisOrdersController extends Controller
                     'billing_type' => $moduleBillingType,
                     'package_id' => $planItem->package_id,
                     'package_name' => $planItem->sourcePackage?->name,
+                    'item_type' => $planItem->item_type,
+                    'base_price' => $planItem->base_price,
+                    'applied_price' => $planItem->applied_price,
+                    'discount_amount' => $planItem->discount_amount,
+                    'discount_percent' => $planItem->discount_percent,
+                    'pricing_source' => $planItem->pricing_source,
+                    'module_pricing_tier_id' => $planItem->module_pricing_tier_id,
+                    'module_value' => $planItem->module_value,
+                    'usage_limit' => $usageLimit,
                 ];
             })
             ->values();
 
         // Calcula subtotal e desconto aplicado
-        $subtotalAmount = (float) $plan->modules()->sum('value');
+        $subtotalAmount = (float) $plan->items()->sum('applied_price');
         $discountAmount = (float) ($order->coupon_discount_amount ?? 0);
 
         // Responde com o rascunho e os itens formatados
@@ -559,27 +574,42 @@ class ApisOrdersController extends Controller
 
         foreach ($selectedPackage->modules as $module) {
             $tierId = (int) ($module->pivot->module_pricing_tier_id ?? 0);
-            $moduleValue = (float) $module->value;
+            $usageLimit = null;
+            $basePrice = (float) $module->value;
+
+            if (($module->pricing_type ?? 'Preço Fixo') === 'Preço Por Uso' && $tierId > 0) {
+                $tier = ModulePricingTier::where('id', $tierId)
+                    ->where('module_id', $module->id)
+                    ->first();
+
+                if ($tier) {
+                    $usageLimit = $tier->usage_limit;
+                    $basePrice = (float) $tier->price;
+                }
+            }
+
+            $appliedPrice = (float) ($module->pivot->price ?? $basePrice);
+            $canonicalPricing = $this->buildCanonicalPricingValues($basePrice, $appliedPrice);
 
             $createdItem = TenantPlanItem::create([
                 'plan_id'      => $draftPlan->id,
                 'package_id'   => $selectedPackage->id,
                 'item_id'      => $module->id,
+                'item_type'    => 'module',
                 'module_name'  => $module->name,
-                'module_value' => $moduleValue,
+                'module_value' => $appliedPrice,
+                'base_price'   => $basePrice,
+                'applied_price' => $appliedPrice,
+                'discount_amount' => $canonicalPricing['discount_amount'],
+                'discount_percent' => $canonicalPricing['discount_percent'],
+                'pricing_source' => 'package',
+                'module_pricing_tier_id' => $tierId > 0 ? $tierId : null,
+                'usage_limit' => $usageLimit,
                 'billing_type' => $module->pricing_type,
                 'payload'      => json_encode($module),
             ]);
 
-            if (($module->pricing_type ?? 'Preço Fixo') !== 'Preço Por Uso' || $tierId <= 0) {
-                continue;
-            }
-
-            $tier = ModulePricingTier::where('id', $tierId)
-                ->where('module_id', $module->id)
-                ->first();
-
-            if (!$tier) {
+            if (($module->pricing_type ?? 'Preço Fixo') !== 'Preço Por Uso' || $tierId <= 0 || $usageLimit === null) {
                 continue;
             }
 
@@ -589,10 +619,10 @@ class ApisOrdersController extends Controller
                     'key' => 'usage',
                 ],
                 [
-                    'value' => (string) $tier->usage_limit,
+                    'value' => (string) $usageLimit,
                     'derived_pricing_effect' => [
-                        'usage_limit' => (int) $tier->usage_limit,
-                        'price' => (float) $tier->price,
+                        'usage_limit' => (int) $usageLimit,
+                        'price' => $basePrice,
                     ],
                     'description' => 'Configuração padrão do pacote aplicada automaticamente.',
                 ]
@@ -634,15 +664,55 @@ class ApisOrdersController extends Controller
         }
 
         // Cria item de módulo no pedido
-        TenantPlanItem::create([
+        $basePrice = (float) $module->value;
+        $usageLimit = null;
+        $tierId = null;
+
+        if (($module->pricing_type ?? 'Preço Fixo') === 'Preço Por Uso') {
+            $tier = ModulePricingTier::where('module_id', $module->id)->orderBy('usage_limit')->first();
+            if ($tier) {
+                $basePrice = (float) $tier->price;
+                $usageLimit = $tier->usage_limit;
+                $tierId = $tier->id;
+            }
+        }
+
+        $canonicalPricing = $this->buildCanonicalPricingValues($basePrice, $basePrice);
+
+        $createdItem = TenantPlanItem::create([
             'plan_id'      => $plan->id,
             'package_id'   => null,
             'item_id'      => $module->id,
+            'item_type'    => 'module',
             'module_name'  => $module->name,
-            'module_value' => $module->value,
+            'module_value' => $basePrice,
+            'base_price' => $basePrice,
+            'applied_price' => $basePrice,
+            'discount_amount' => $canonicalPricing['discount_amount'],
+            'discount_percent' => $canonicalPricing['discount_percent'],
+            'pricing_source' => 'manual',
+            'module_pricing_tier_id' => $tierId,
+            'usage_limit' => $usageLimit,
             'billing_type' => $module->pricing_type,
             'payload'      => json_encode($module),
         ]);
+
+        if (($module->pricing_type ?? 'Preço Fixo') === 'Preço Por Uso' && $usageLimit !== null) {
+            TenantPlanItemConfiguration::updateOrCreate(
+                [
+                    'item_id' => $createdItem->id,
+                    'key' => 'usage',
+                ],
+                [
+                    'value' => (string) $usageLimit,
+                    'derived_pricing_effect' => [
+                        'usage_limit' => (int) $usageLimit,
+                        'price' => $basePrice,
+                    ],
+                    'description' => 'Configuração inicial de uso no módulo avulso.',
+                ]
+            );
+        }
 
         // Recalcula os totais
         $this->orderService->recalculateOrderTotals($order);
@@ -663,9 +733,23 @@ class ApisOrdersController extends Controller
         }
 
         $modulesToAdd = collect($value['add'] ?? [])
-            ->map(fn ($moduleId) => (int) $moduleId)
-            ->filter(fn ($moduleId) => $moduleId > 0)
-            ->unique()
+            ->map(function ($entry) {
+                if (is_array($entry)) {
+                    return [
+                        'module_id' => isset($entry['module_id']) ? (int) $entry['module_id'] : 0,
+                        'package_id' => isset($entry['package_id']) ? (int) $entry['package_id'] : 0,
+                        'tier_id' => isset($entry['tier_id']) ? (int) $entry['tier_id'] : 0,
+                    ];
+                }
+
+                return [
+                    'module_id' => (int) $entry,
+                    'package_id' => 0,
+                    'tier_id' => 0,
+                ];
+            })
+            ->filter(fn ($entry) => $entry['module_id'] > 0)
+            ->unique(fn ($entry) => $entry['module_id'] . '_' . $entry['package_id'] . '_' . $entry['tier_id'])
             ->values();
 
         $modulesToRemove = collect($value['remove'] ?? [])
@@ -699,7 +783,10 @@ class ApisOrdersController extends Controller
             $existingItem->delete();
         }
 
-        foreach ($modulesToAdd as $moduleId) {
+        foreach ($modulesToAdd as $entry) {
+            $moduleId = $entry['module_id'];
+            $packageId = $entry['package_id'];
+            $requestedTierId = $entry['tier_id'];
             $existingItem = $plan->items()->where('item_id', $moduleId)->first();
             if ($existingItem) {
                 continue;
@@ -710,15 +797,85 @@ class ApisOrdersController extends Controller
                 continue;
             }
 
-            TenantPlanItem::create([
+            $basePrice = (float) $module->value;
+            $appliedPrice = $basePrice;
+            $resolvedPackageId = null;
+            $resolvedTierId = null;
+            $usageLimit = null;
+
+            if ($packageId > 0) {
+                $package = Package::with(['modules', 'modules.pricingTiers'])->where('status', true)->find($packageId);
+
+                if ($package) {
+                    $moduleInPackage = $package->modules->firstWhere('id', $moduleId);
+
+                    if ($moduleInPackage) {
+                        $resolvedPackageId = $package->id;
+                        $appliedPrice = (float) ($moduleInPackage->pivot->price ?? $module->value ?? 0);
+                    }
+                }
+            }
+
+            if (($module->pricing_type ?? 'Preço Fixo') === 'Preço Por Uso') {
+                if ($requestedTierId > 0) {
+                    $tier = ModulePricingTier::where('id', $requestedTierId)
+                        ->where('module_id', $module->id)
+                        ->first();
+                } elseif ($resolvedPackageId) {
+                    $tier = ModulePricingTier::where('id', (int) ($moduleInPackage->pivot->module_pricing_tier_id ?? 0))
+                        ->where('module_id', $module->id)
+                        ->first();
+                } else {
+                    $tier = ModulePricingTier::where('module_id', $module->id)->orderBy('usage_limit')->first();
+                }
+
+                if ($tier) {
+                    $resolvedTierId = $tier->id;
+                    $usageLimit = $tier->usage_limit;
+                    $basePrice = (float) $tier->price;
+
+                    if (!$resolvedPackageId) {
+                        $appliedPrice = $basePrice;
+                    }
+                }
+            }
+
+            $canonicalPricing = $this->buildCanonicalPricingValues($basePrice, $appliedPrice);
+
+            $createdItem = TenantPlanItem::create([
                 'plan_id'      => $plan->id,
-                'package_id'   => null,
+                'package_id'   => $resolvedPackageId,
                 'item_id'      => $module->id,
+                'item_type'    => 'module',
                 'module_name'  => $module->name,
-                'module_value' => $module->value,
+                'module_value' => $appliedPrice,
+                'base_price' => $basePrice,
+                'applied_price' => $appliedPrice,
+                'discount_amount' => $canonicalPricing['discount_amount'],
+                'discount_percent' => $canonicalPricing['discount_percent'],
+                'pricing_source' => $resolvedPackageId ? 'package' : 'manual',
+                'module_pricing_tier_id' => $resolvedTierId,
+                'usage_limit' => $usageLimit,
                 'billing_type' => $module->pricing_type,
                 'payload'      => json_encode($module),
             ]);
+
+            if (($module->pricing_type ?? 'Preço Fixo') === 'Preço Por Uso' && $usageLimit !== null) {
+                TenantPlanItemConfiguration::updateOrCreate(
+                    [
+                        'item_id' => $createdItem->id,
+                        'key' => 'usage',
+                    ],
+                    [
+                        'value' => (string) $usageLimit,
+                        'derived_pricing_effect' => [
+                            'usage_limit' => (int) $usageLimit,
+                            'price' => $basePrice,
+                        ],
+                        'description' => 'Configuração de uso aplicada no item.',
+                    ]
+                );
+            }
         }
 
         $this->orderService->recalculateOrderTotals($order);
@@ -785,6 +942,29 @@ class ApisOrdersController extends Controller
             ]
         );
 
+        $basePrice = (float) $pricingTier->price;
+        $appliedPrice = $basePrice;
+
+        if ($orderItem->pricing_source === 'package' && $orderItem->package_id) {
+            $package = Package::with('modules')
+                ->where('status', true)
+                ->find($orderItem->package_id);
+
+            $moduleInPackage = $package?->modules->firstWhere('id', $moduleId);
+            if ($moduleInPackage) {
+                $appliedPrice = (float) ($moduleInPackage->pivot->price ?? $basePrice);
+            }
+        }
+
+        $canonicalPricing = $this->buildCanonicalPricingValues($basePrice, $appliedPrice);
+
+        $orderItem->base_price = $basePrice;
+        $orderItem->applied_price = $appliedPrice;
+        $orderItem->module_value = $appliedPrice;
+        $orderItem->discount_amount = $canonicalPricing['discount_amount'];
+        $orderItem->discount_percent = $canonicalPricing['discount_percent'];
+        $orderItem->module_pricing_tier_id = $pricingTier->id;
+        $orderItem->usage_limit = $pricingTier->usage_limit;
         $orderItem->save();
 
         // Recalcula os totais do pedido após alteração de uso.
@@ -794,6 +974,25 @@ class ApisOrdersController extends Controller
         return [
             'message' => 'Uso do módulo atualizado com sucesso.',
             'action' => 'updated',
+        ];
+    }
+
+    private function buildCanonicalPricingValues($basePrice, $appliedPrice): array
+    {
+        $basePriceValue = floatval($basePrice);
+        $appliedPriceValue = floatval($appliedPrice);
+
+        $discountAmount = 0.0;
+        $discountPercent = 0.0;
+
+        if ($basePriceValue > 0 && $appliedPriceValue < $basePriceValue) {
+            $discountAmount = round($basePriceValue - $appliedPriceValue, 2);
+            $discountPercent = round((($basePriceValue - $appliedPriceValue) / $basePriceValue) * 100, 3);
+        }
+
+        return [
+            'discount_amount' => $discountAmount,
+            'discount_percent' => $discountPercent,
         ];
     }
 

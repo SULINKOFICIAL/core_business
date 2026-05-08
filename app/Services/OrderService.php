@@ -4,8 +4,6 @@ namespace App\Services;
 
 use App\Models\TenantPlan;
 use App\Models\Order;
-use App\Models\TenantPlanItemConfiguration;
-use App\Models\Module;
 use App\Models\Subscription;
 use App\Models\OrderTransaction;
 use App\Models\SubscriptionCycle;
@@ -51,20 +49,14 @@ class OrderService
      */
     public function recalculateOrderTotals(Order $order, ?float $subtotal = null): void
     {
-        // Soma o subtotal dos itens (packages e módulos avulsos) caso não seja informado
+        // Soma o subtotal dos itens com base no preço aplicado canônico
         $itemsSubtotal = $subtotal ?? $this->calculateItemsSubtotal($order);
 
-        // Soma o efeito de preço vindo das configurações dos itens
-        $configurationSubtotal = $this->calculatePackageConfigurationSubtotal($order);
-
-        // Total bruto antes do desconto
-        $totalSubtotal = $itemsSubtotal + $configurationSubtotal;
-
         // Calcula o desconto do cupom quando existir
-        $couponDiscount = $this->calculateCouponDiscount($order, $totalSubtotal);
+        $couponDiscount = $this->calculateCouponDiscount($order, $itemsSubtotal);
 
         // Calcula o total final do pedido
-        $totalAmount = max(0.0, $totalSubtotal - $couponDiscount);
+        $totalAmount = max(0.0, $itemsSubtotal - $couponDiscount);
 
         $order->update([
             'total_amount' => $totalAmount,
@@ -73,9 +65,7 @@ class OrderService
     }
 
     /**
-     * Calcula o subtotal dos itens do plano, diferenciando pacotes de módulos avulsos.
-     * Itens com package_id: usa o valor do Package (somado uma vez por package único).
-     * Itens sem package_id: usa o valor base do Module.
+     * Calcula subtotal do rascunho pela soma de applied_price dos itens.
      */
     private function calculateItemsSubtotal(Order $order): float
     {
@@ -83,45 +73,7 @@ class OrderService
             return 0.0;
         }
 
-        // Carrega os itens do plano com os relacionamentos de package e módulo
-        $items = $order->plan->items()->with(['sourcePackage', 'item'])->get();
-
-        // Itens vinculados a um package: soma o valor do package uma vez por package único
-        $packageSubtotal = $items
-            ->whereNotNull('package_id')
-            ->groupBy('package_id')
-            ->sum(fn($group) => (float) ($group->first()->sourcePackage?->value ?? $group->first()->module_value ?? 0));
-
-        // Itens avulsos: soma o valor base de cada módulo
-        $moduleSubtotal = $items
-            ->whereNull('package_id')
-            ->sum(fn($item) => (float) ($item->item?->value ?? $item->module_value ?? 0));
-
-        return $packageSubtotal + $moduleSubtotal;
-    }
-
-    /**
-     * Soma efeitos de preco vindos das configuracoes dos itens do pacote.
-     */
-    private function calculatePackageConfigurationSubtotal(Order $order): float
-    {
-        if (!$order->plan) {
-            return 0.0;
-        }
-
-        $itemIds = $order->plan->items()->pluck('id');
-
-        if ($itemIds->isEmpty()) {
-            return 0.0;
-        }
-
-        $configs = TenantPlanItemConfiguration::whereIn('item_id', $itemIds)
-            ->get(['derived_pricing_effect']);
-
-        return (float) $configs->sum(function (TenantPlanItemConfiguration $config) {
-            $price = data_get($config->derived_pricing_effect, 'price');
-            return is_numeric($price) ? (float) $price : 0.0;
-        });
+        return (float) $order->plan->items()->sum('applied_price');
     }
 
     public function createOrderPayment($plan, $orderPayment, $tenant, $clientInfo, $card, $cvv = null, $intervalCycle)
