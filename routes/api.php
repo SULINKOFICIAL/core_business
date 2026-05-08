@@ -54,6 +54,7 @@ Route::prefix('central')->middleware('auth.bearer')->group(function () {
         Route::prefix('pedidos')->group(function () {
             Route::get('/compra/{id}',       [ApisOrdersController::class, 'details']);
             Route::get('/rascunho',          [ApisOrdersController::class, 'draft']);
+            Route::get('/catalogo-modulos',  [ApisOrdersController::class, 'modulesCatalog']);
             Route::get('/uso',               [ApisOrdersController::class, 'usageOptions']);
             Route::post('/atualizar',        [ApisOrdersController::class, 'update']);
             Route::get('/cancelar',          [ApisOrdersController::class, 'cancel']);

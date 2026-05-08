@@ -70,7 +70,9 @@ class Tenant extends Model
     // Plano atual do cliente
     public function plan(): HasOne
     {
-        return $this->hasOne(TenantPlan::class, 'tenant_id', 'id')->where('status', true);
+        return $this->hasOne(TenantPlan::class, 'tenant_id', 'id')
+            ->where('status', true)
+            ->where('progress', 'completed');
     }
 
     // Domínios do cliente
