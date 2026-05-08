@@ -85,10 +85,10 @@ class TenantProcessingController extends Controller
 
         // Realiza filtro na busca
         if ($searchBy != '') {
-
             // Realiza busca no nome
             $query->where('tenants.name', 'like', "%$searchBy%");
-        
+            // Permite busca direta por ID no mesmo campo
+            $query->orWhere('tenants.id', $searchBy);
         }
 
         // Retorna consulta filtrada
@@ -190,6 +190,9 @@ class TenantProcessingController extends Controller
         );
 
         return DataTables::query($query)
+            ->editColumn('id', function ($row) {
+                return '<span class="text-gray-700 fw-bold">#' . str_pad($row->id, 4, '0', STR_PAD_LEFT) . '</span>';
+            })
             ->addColumn('name', function ($row) {
                 $html = '<a href="' . route('tenants.show', $row->id) . '" class="text-gray-700 text-hover-primary fw-bold">'
                     . e($row->name)
@@ -262,7 +265,9 @@ class TenantProcessingController extends Controller
                 $toggleText = (int) $row->status === 0 ? 'Ativar' : 'Desativar';
 
                 $html = '<div class="d-flex gap-4 align-items-center">';
-                $html .= '<a href="' . route('tenants.show', $row->id) . '" class="btn btn-sm btn-primary btn-active-success fw-bolder text-uppercase py-2">Visualizar</a>';
+                $html .= '<a href="' . route('tenants.show', $row->id) . '" class="btn btn-icon btn-sm btn-primary btn-active-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Visualizar instalação">';
+                $html .= '<i class="fa-solid fa-eye"></i>';
+                $html .= '</a>';
                 if ((int) $row->domains_count > 0 && !empty($row->first_domain) && !empty($row->token)) {
                     $html .= '<a href="https://' . e($row->first_domain) . '/acessar/' . e($row->token) . '" target="_blank" class="btn btn-icon btn-sm btn-light-primary btn-active-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Acessar tenant">';
                     $html .= '<i class="fa-solid fa-globe"></i>';
@@ -283,7 +288,7 @@ class TenantProcessingController extends Controller
                 return $html;
             })
 
-            ->rawColumns(['name', 'type', 'expires_at', 'bank', 'git', 'sp', 'status', 'actions'])
+            ->rawColumns(['id', 'name', 'type', 'expires_at', 'bank', 'git', 'sp', 'status', 'actions'])
             ->make(true);
     }
 }

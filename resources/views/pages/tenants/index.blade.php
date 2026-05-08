@@ -83,6 +83,7 @@
         <table id="datatables-tenants" class="table table-striped table-row-bordered gy-2 gs-7 align-middle">
             <thead class="rounded">
                 <tr class="fw-bold fs-6 text-gray-700 px-7">
+                    <th class="">ID</th>
                     <th class="">Nome do Cliente</th>
                     <th class="">Tipo de Instalação</th>
                     <th class="">Expira em</th>
@@ -174,17 +175,18 @@
         },
         buttons: false,
         searching: true,
-        order: [[1, 'asc']],
+        order: [[2, 'asc']],
         pageLength: 25,
         columns: [
-            { targets: 0, data: "name" },
-            { targets: 1, data: "type" },
-            { targets: 2, data: "expires_at" },
-            { targets: 3, data: "bank" },
-            { targets: 4, data: "git" },
-            { targets: 5, data: "sp" },
-            { targets: 6, data: "status" },
-            { targets: 7, data: "actions", orderable: false },
+            { targets: 0, data: "id" },
+            { targets: 1, data: "name" },
+            { targets: 2, data: "type" },
+            { targets: 3, data: "expires_at" },
+            { targets: 4, data: "bank" },
+            { targets: 5, data: "git" },
+            { targets: 6, data: "sp" },
+            { targets: 7, data: "status" },
+            { targets: 8, data: "actions", orderable: false },
         ],
         language: {
             "search": "Pesquisar:",
@@ -202,10 +204,6 @@
         },
         columnDefs: [
             {   
-                targets: 3,
-                className: 'text-center',
-            },
-            {   
                 targets: 4,
                 className: 'text-center',
             },
@@ -219,6 +217,10 @@
             },
             {   
                 targets: 7,
+                className: 'text-center',
+            },
+            {   
+                targets: 8,
                 className: 'text-end',
             },
         ],
