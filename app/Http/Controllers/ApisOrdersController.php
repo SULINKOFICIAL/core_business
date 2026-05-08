@@ -267,6 +267,7 @@ class ApisOrdersController extends Controller
         $action = match ($data['action']) {
             'change_package' => $this->changePackage($order, (int) ($data['value'] ?? 0)),
             'change_module' => $this->toggleModule($order, $data['value']),
+            'change_modules_bulk' => $this->changeModulesBulk($order, $data['value'] ?? []),
             'usage' => $this->updateUsage($order, $data['value'] ?? []),
             'limits' => $this->updateLimits($order, $data['value'] ?? []),
             'step' => $this->updateStep($order, $data['value']),
@@ -649,6 +650,82 @@ class ApisOrdersController extends Controller
         return [
             'message' => 'Módulo adicionado com sucesso.',
             'action' => 'added',
+        ];
+    }
+
+    private function changeModulesBulk($order, $value): array
+    {
+        if (!is_array($value)) {
+            return [
+                'message' => 'Payload de módulos inválido.',
+                'action' => 'invalid',
+            ];
+        }
+
+        $modulesToAdd = collect($value['add'] ?? [])
+            ->map(fn ($moduleId) => (int) $moduleId)
+            ->filter(fn ($moduleId) => $moduleId > 0)
+            ->unique()
+            ->values();
+
+        $modulesToRemove = collect($value['remove'] ?? [])
+            ->map(fn ($moduleId) => (int) $moduleId)
+            ->filter(fn ($moduleId) => $moduleId > 0)
+            ->unique()
+            ->values();
+
+        if ($modulesToAdd->isEmpty() && $modulesToRemove->isEmpty()) {
+            return [
+                'message' => 'Nenhuma alteração de módulo para aplicar.',
+                'action' => 'noop',
+            ];
+        }
+
+        $plan = $order->plan;
+        if (!$plan) {
+            return [
+                'message' => 'Plano em progresso não encontrado.',
+                'action' => 'not_found',
+            ];
+        }
+
+        foreach ($modulesToRemove as $moduleId) {
+            $existingItem = $plan->items()->where('item_id', $moduleId)->first();
+            if (!$existingItem) {
+                continue;
+            }
+
+            TenantPlanItemConfiguration::where('item_id', $existingItem->id)->delete();
+            $existingItem->delete();
+        }
+
+        foreach ($modulesToAdd as $moduleId) {
+            $existingItem = $plan->items()->where('item_id', $moduleId)->first();
+            if ($existingItem) {
+                continue;
+            }
+
+            $module = Module::find($moduleId);
+            if (!$module) {
+                continue;
+            }
+
+            TenantPlanItem::create([
+                'plan_id'      => $plan->id,
+                'package_id'   => null,
+                'item_id'      => $module->id,
+                'module_name'  => $module->name,
+                'module_value' => $module->value,
+                'billing_type' => $module->pricing_type,
+                'payload'      => json_encode($module),
+            ]);
+        }
+
+        $this->orderService->recalculateOrderTotals($order);
+
+        return [
+            'message' => 'Módulos atualizados com sucesso.',
+            'action' => 'bulk_updated',
         ];
     }
 
