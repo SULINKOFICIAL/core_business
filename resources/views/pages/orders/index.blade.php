@@ -92,7 +92,7 @@
         columns: [
             { data: 'order_label', name: 'id' },
             { data: 'tenant_name', orderable: false, searchable: false },
-            { data: 'method_label', name: 'method' },
+            { data: 'method_label', name: 'provider_method' },
             { data: 'status_label', name: 'status', orderable: false, searchable: false },
             { data: 'total_label', orderable: false, searchable: false },
             { data: 'created_at', name: 'created_at' },

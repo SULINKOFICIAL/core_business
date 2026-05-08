@@ -115,7 +115,7 @@ class ApisAccountController extends Controller
             $orderData['date_end'] = $lastCycle?->end_date;
             $orderData['amount'] = $order->total_amount;
             $orderData['currency'] = $order->currency;
-            $orderData['method'] = $order->method;
+            $orderData['method'] = $order->provider_method;
             $orderData['status'] = $order->status;
             $orderData['packageName'] = $order->plan->name;
             $orderData['transactions'] = $order->transactions->count();

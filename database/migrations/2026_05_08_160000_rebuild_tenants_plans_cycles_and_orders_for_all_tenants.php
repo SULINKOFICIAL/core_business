@@ -66,7 +66,7 @@ return new class extends Migration
 
             foreach ($tenants as $tenant) {
                 $usersLimit = intval($tenant->id) === intval($sulinkTenantId) ? 30 : 10;
-                $planValue = floatval($activeModules->sum('value'));
+                $planValue = 0;
 
                 $planId = DB::table('tenants_plans')->insertGetId([
                     'tenant_id' => $tenant->id,
@@ -103,7 +103,7 @@ return new class extends Migration
                 $subscriptionId = DB::table('subscriptions')->insertGetId([
                     'tenant_id' => $tenant->id,
                     'plan_id' => $planId,
-                    'provider' => 'manual_admin',
+                    'provider' => 'micore',
                     'provider_subscription_id' => 'manual-admin-' . $tenant->id,
                     'provider_card_id' => null,
                     'interval' => 'year',
@@ -120,8 +120,8 @@ return new class extends Migration
                     'plan_id' => $planId,
                     'subscription_id' => $subscriptionId,
                     'status' => 'paid',
-                    'provider' => 'manual_admin',
-                    'provider_method' => 'manual_admin',
+                    'provider' => 'micore',
+                    'provider_method' => 'manual',
                     'current_step' => 'Pagamento',
                     'currency' => 'BRL',
                     'total_amount' => $planValue,
@@ -141,7 +141,7 @@ return new class extends Migration
 
                 DB::table('subscriptions_cycles')->insert([
                     'subscription_id' => $subscriptionId,
-                    'provider' => 'manual_admin',
+                    'provider' => 'micore',
                     'provider_cycle_id' => 'manual-cycle-' . $subscriptionId,
                     'start_date' => $periodStart,
                     'end_date' => $periodEnd,
@@ -156,8 +156,8 @@ return new class extends Migration
                 DB::table('orders_transactions')->insert([
                     'order_id' => $orderId,
                     'subscription_id' => $subscriptionId,
-                    'provider' => 'manual_admin',
-                    'provider_method' => 'manual_admin',
+                    'provider' => 'micore',
+                    'provider_method' => 'manual',
                     'provider_transaction_id' => 'manual-tx-' . $orderId,
                     'gateway_id' => null,
                     'gateway_code' => null,
