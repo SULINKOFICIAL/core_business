@@ -82,8 +82,7 @@ class OrderController extends Controller
         $clearedItems = 0;
 
         DB::transaction(function () use (&$canceledOrders, &$clearedPlans, &$clearedItems) {
-            $draftOrders = Order::query()
-                ->where('status', 'draft')
+            $draftOrders = Order::where('status', 'draft')
                 ->get(['id', 'plan_id']);
 
             if ($draftOrders->isEmpty()) {
@@ -93,10 +92,9 @@ class OrderController extends Controller
             $orderIds = $draftOrders->pluck('id')->all();
             $planIds = $draftOrders->pluck('plan_id')->filter()->unique()->values()->all();
 
-            $canceledOrders = Order::query()
-                ->whereIn('id', $orderIds)
+            $canceledOrders = Order::whereIn('id', $orderIds)
                 ->update([
-                    'status' => 'canceled',
+                    'status' => 'canceled_by_admin',
                     'canceled_at' => now(),
                     'updated_at' => now(),
                 ]);
@@ -105,23 +103,19 @@ class OrderController extends Controller
                 return;
             }
 
-            $itemIds = TenantPlanItem::query()
-                ->whereIn('plan_id', $planIds)
+            $itemIds = TenantPlanItem::whereIn('plan_id', $planIds)
                 ->pluck('id')
                 ->all();
 
             if (!empty($itemIds)) {
-                TenantPlanItemConfiguration::query()
-                    ->whereIn('item_id', $itemIds)
+                TenantPlanItemConfiguration::whereIn('item_id', $itemIds)
                     ->delete();
             }
 
-            $clearedItems = TenantPlanItem::query()
-                ->whereIn('plan_id', $planIds)
+            $clearedItems = TenantPlanItem::whereIn('plan_id', $planIds)
                 ->delete();
 
-            $clearedPlans = TenantPlan::query()
-                ->whereIn('id', $planIds)
+            $clearedPlans = TenantPlan::whereIn('id', $planIds)
                 ->update([
                     'progress' => 'canceled',
                     'updated_at' => now(),

@@ -51,6 +51,12 @@ class OrderProcessingController extends Controller
      */
     public function filters($query, $data)
     {
+        if (!empty($data['order_status']) && $data['order_status'] === 'canceled_all') {
+            $query->whereIn('status', ['canceled', 'canceled_by_admin']);
+
+            return $query;
+        }
+
         if (!empty($data['order_status']) && $data['order_status'] !== 'all') {
             $query->where('status', $data['order_status']);
         }
@@ -144,9 +150,12 @@ class OrderProcessingController extends Controller
                 };
             })
             ->addColumn('status_label', function ($order) {
-                $status = strtolower((string) ($order->status ?? ''));
+                $status = strtolower($order->status ?? '');
                 if (in_array($status, ['paid', 'pago'], true)) {
                     return '<span class="badge badge-light-success">Pago</span>';
+                }
+                if ($status === 'canceled_by_admin') {
+                    return '<span class="badge badge-light-danger">Cancelado pelo ADM</span>';
                 }
                 if (in_array($status, ['canceled', 'cancelado'], true)) {
                     return '<span class="badge badge-light-danger">Cancelado</span>';

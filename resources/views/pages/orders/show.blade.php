@@ -25,14 +25,15 @@
             <div class="col-md-3">
                 <div class="text-muted">Status</div>
                 <div>
-                    @php($status = strtolower($order->status ?? ''))
-                    @if (in_array($status, ['paid', 'pago']))
+                    @if (in_array(strtolower($order->status ?? ''), ['paid', 'pago']))
                         <span class="badge badge-light-success">Pago</span>
-                    @elseif (in_array($status, ['canceled', 'cancelado']))
+                    @elseif (strtolower($order->status ?? '') == 'canceled_by_admin')
+                        <span class="badge badge-light-danger">Cancelado pelo ADM</span>
+                    @elseif (in_array(strtolower($order->status ?? ''), ['canceled', 'cancelado']))
                         <span class="badge badge-light-danger">Cancelado</span>
-                    @elseif (in_array($status, ['draft', 'rascunho']))
+                    @elseif (in_array(strtolower($order->status ?? ''), ['draft', 'rascunho']))
                         <span class="badge badge-light-secondary">Rascunho</span>
-                    @elseif (in_array($status, ['pending_payment', 'pendente']))
+                    @elseif (in_array(strtolower($order->status ?? ''), ['pending_payment', 'pendente']))
                         <span class="badge badge-light-warning">Pendente</span>
                     @else
                         <span class="badge badge-light-info">{{ $order->status ?? '—' }}</span>

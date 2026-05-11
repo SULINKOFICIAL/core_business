@@ -37,8 +37,12 @@
                                         <span class="form-check-label text-gray-600">Pendente</span>
                                     </label>
                                     <label class="form-check form-check-sm form-check-custom form-check-solid mb-3 me-5">
-                                        <input class="form-check-input" type="radio" name="order_status" value="canceled">
+                                        <input class="form-check-input" type="radio" name="order_status" value="canceled_all">
                                         <span class="form-check-label text-gray-600">Cancelado</span>
+                                    </label>
+                                    <label class="form-check form-check-sm form-check-custom form-check-solid mb-3 me-5">
+                                        <input class="form-check-input" type="radio" name="order_status" value="canceled_by_admin">
+                                        <span class="form-check-label text-gray-600">Cancelado pelo ADM</span>
                                     </label>
                                     <label class="form-check form-check-sm form-check-custom form-check-solid mb-3">
                                         <input class="form-check-input" type="radio" name="order_status" value="draft">

@@ -50,6 +50,8 @@
                             <span class="badge badge-light-success">Pago</span>
                             @elseif ($order->status == 'pending')
                             <span class="badge badge-light-warning">Pendente</span>
+                            @elseif ($order->status == 'canceled_by_admin')
+                            <span class="badge badge-light-danger">Cancelado pelo ADM</span>
                             @elseif ($order->status == 'canceled')
                             <span class="badge badge-light-danger">Cancelado</span>
                             @elseif ($order->status == 'draft')
