@@ -8,6 +8,6 @@
  * 
  */
 return [
-    'app_key'                    => '6jihmufppjoqv',
-    'app_secret'                 => '137a8fe184887a8e0fc30002dd48e173b7b48f94',
+    'app_key'                    => env('TIKTOK_APP_KEY'),
+    'app_secret'                 => env('TIKTOK_APP_SECRET'),
 ];
