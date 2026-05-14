@@ -33,6 +33,10 @@ class ProvisioningIntegrityService
 
     private function checkEnvironment(): array
     {
+        /**
+         * Esses valores são os mesmos usados no fluxo real de criação:
+         * API do cPanel, clonagem via SSH e autenticação Central/Tenant.
+         */
         $requiredKeys = [
             'CPANEL_URL',
             'CPANEL_USER',
@@ -74,6 +78,10 @@ class ProvisioningIntegrityService
 
     private function checkPrivateKey(): array
     {
+        /**
+         * A chave privada precisa estar disponível para o PHP, pois a etapa
+         * de banco usa SSH para executar o dump do template no servidor.
+         */
         $keyPath = storage_path('keys/id_rsa');
 
         if (!file_exists($keyPath)) {
@@ -108,6 +116,10 @@ class ProvisioningIntegrityService
     private function checkCpanelDomainsApi(): array
     {
         try {
+            /**
+             * Este endpoint é leve e valida duas coisas críticas:
+             * URL/credenciais do cPanel e permissão para consultar domínios.
+             */
             $response = $this->requestCpanelApi('GET', '/execute/DomainInfo/list_domains');
 
             if (!$this->cpanelResponseSucceeded($response)) {
@@ -155,6 +167,10 @@ class ProvisioningIntegrityService
         $templateDatabase = $cpanelPrefix . '_template';
 
         try {
+            /**
+             * O provisionamento clona esse banco com mysqldump.
+             * Sem ele, a criação do tenant para na etapa database.
+             */
             $response = $this->requestCpanelApi('GET', '/execute/Mysql/list_databases');
 
             if (!$this->cpanelResponseSucceeded($response)) {
@@ -223,6 +239,10 @@ class ProvisioningIntegrityService
         }
 
         try {
+            /**
+             * Usa o mesmo mecanismo do provisionamento real:
+             * chave privada local, passphrase do .env e usuário do cPanel.
+             */
             $ssh = new SSH2($whmIp);
             $privateKey = PublicKeyLoader::loadPrivateKey(file_get_contents($keyPath), $sshPassphrase);
 
@@ -277,6 +297,10 @@ class ProvisioningIntegrityService
             'connect_timeout' => 5,
         ]);
 
+        /**
+         * Mantém o mesmo tipo de autenticação usado no CpanelProvisioningService:
+         * Basic Auth com usuário e senha da conta cPanel.
+         */
         $response = $guzzle->request($method, $cpanelUrl . $endpoint, [
             'auth' => [$cpanelUser, $cpanelPass],
         ]);
@@ -292,13 +316,21 @@ class ProvisioningIntegrityService
 
     private function cpanelResponseSucceeded(array $response): bool
     {
-        $status = data_get($response, 'status');
+        /**
+         * Alguns endpoints retornam status no topo, outros dentro de result.
+         * Aceitamos os dois formatos sem depender de helpers dinâmicos.
+         */
+        $status = $response['status'] ?? null;
 
         if ($status === 1 || $status === '1') {
             return true;
         }
 
-        $resultStatus = data_get($response, 'result.status');
+        $resultStatus = null;
+
+        if (isset($response['result']) && is_array($response['result'])) {
+            $resultStatus = $response['result']['status'] ?? null;
+        }
 
         if ($resultStatus === 1 || $resultStatus === '1') {
             return true;
@@ -309,7 +341,11 @@ class ProvisioningIntegrityService
 
     private function responseContainsDatabase(array $response, string $database): bool
     {
-        $items = data_get($response, 'result.data', []);
+        /**
+         * O cPanel pode devolver a lista em data ou result.data,
+         * dependendo da versão e do endpoint UAPI chamado.
+         */
+        $items = $this->getCpanelDataItems($response);
 
         if (!is_array($items)) {
             return false;
@@ -334,31 +370,57 @@ class ProvisioningIntegrityService
 
     private function extractCpanelError(array $response): string
     {
-        $errors = data_get($response, 'errors');
+        $errors = $response['errors'] ?? null;
 
         if (is_array($errors) && !empty($errors)) {
             return implode(' | ', $errors);
         }
 
-        $resultErrors = data_get($response, 'result.errors');
+        $resultErrors = null;
+
+        if (isset($response['result']) && is_array($response['result'])) {
+            $resultErrors = $response['result']['errors'] ?? null;
+        }
 
         if (is_array($resultErrors) && !empty($resultErrors)) {
             return implode(' | ', $resultErrors);
         }
 
-        $messages = data_get($response, 'messages');
+        $messages = $response['messages'] ?? null;
 
         if (is_array($messages) && !empty($messages)) {
             return implode(' | ', $messages);
         }
 
-        $resultMessage = data_get($response, 'result.message');
+        $resultMessage = null;
+
+        if (isset($response['result']) && is_array($response['result'])) {
+            $resultMessage = $response['result']['message'] ?? null;
+        }
 
         if ($resultMessage !== null && $resultMessage !== '') {
             return $resultMessage;
         }
 
         return 'Sem detalhe retornado pelo cPanel.';
+    }
+
+    private function getCpanelDataItems(array $response): array
+    {
+        if (isset($response['data']) && is_array($response['data'])) {
+            return $response['data'];
+        }
+
+        if (
+            isset($response['result'])
+            && is_array($response['result'])
+            && isset($response['result']['data'])
+            && is_array($response['result']['data'])
+        ) {
+            return $response['result']['data'];
+        }
+
+        return [];
     }
 
     private function buildSummary(array $checks): array
