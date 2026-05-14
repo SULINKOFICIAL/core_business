@@ -102,6 +102,13 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', [SystemSettingsController::class, 'editSubscriptionsSync'])->name('edit');
             Route::post('/sincronizar', [SystemSettingsController::class, 'syncSubscriptionsInBulk'])->name('run');
         });
+
+        /**
+         * Rotas para diagnóstico do provisionamento de tenants.
+         */
+        Route::prefix('sistema/provisionamento')->name('provisioning.')->group(function () {
+            Route::get('/integridade', [SystemSettingsController::class, 'provisioningIntegrity'])->name('integrity');
+        });
     });
 
     /**

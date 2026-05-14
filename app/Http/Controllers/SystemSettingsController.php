@@ -6,6 +6,7 @@ use App\Mail\SimpleEmailMailable;
 use App\Models\Tenant;
 use App\Services\EmailService;
 use App\Services\MailSettingsService;
+use App\Services\ProvisioningIntegrityService;
 use App\Services\SystemProblemNotificationService;
 use App\Services\TenantConfigurationSyncService;
 use App\Services\WhatsAppSettingsService;
@@ -25,6 +26,7 @@ class SystemSettingsController extends Controller
         private readonly EmailService $emailService,
         private readonly SystemProblemNotificationService $systemProblemNotificationService,
         private readonly TenantConfigurationSyncService $tenantConfigurationSyncService,
+        private readonly ProvisioningIntegrityService $provisioningIntegrityService,
     ) {
     }
 
@@ -57,6 +59,16 @@ class SystemSettingsController extends Controller
     {
         return view('pages.system.settings-subscriptions-sync', [
             'tenantsCount' => Tenant::query()->count(),
+        ]);
+    }
+
+    /**
+     * Exibe o diagnóstico dos requisitos para provisionar novos tenants.
+     */
+    public function provisioningIntegrity(): View
+    {
+        return view('pages.system.settings-provisioning-integrity', [
+            'integrity' => $this->provisioningIntegrityService->check(),
         ]);
     }
 

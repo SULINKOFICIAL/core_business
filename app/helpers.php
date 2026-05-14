@@ -371,6 +371,8 @@ if (! function_exists('header_menu_items')) {
                     'users.edit',
                     'system.settings.mail.edit',
                     'system.settings.whatsapp.edit',
+                    'system.settings.subscriptions.sync.edit',
+                    'system.settings.provisioning.integrity',
                     'systems.run.scheduled.now',
                     'systems.run.scheduled.now.tenant',
                     'systems.update.all.systems',
@@ -401,6 +403,12 @@ if (! function_exists('header_menu_items')) {
                         'route' => 'system.settings.subscriptions.sync.edit',
                         'active_routes' => ['system.settings.subscriptions.sync.edit'],
                         'icon' => ['class' => 'fa-solid fa-repeat fs-5'],
+                    ],
+                    [
+                        'label' => 'Integridade',
+                        'route' => 'system.settings.provisioning.integrity',
+                        'active_routes' => ['system.settings.provisioning.integrity'],
+                        'icon' => ['class' => 'fa-solid fa-shield-halved fs-5'],
                     ],
                     [
                         'label' => 'Disparar Tarefas',
