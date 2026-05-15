@@ -157,6 +157,32 @@
                 }
             });
 
+	            function globalAjaxErrorContent(xhr) {
+	                if (xhr.responseText) {
+	                    return xhr.responseText;
+	                }
+
+	                if (xhr.responseJSON && xhr.responseJSON.message) {
+	                    return xhr.responseJSON.message;
+	                }
+
+	                return 'Erro desconhecido';
+	            }
+
+	            function openGlobalErrorTab(title, content) {
+	                var tab = window.open('', '_blank');
+
+	                if (!tab) {
+	                    toastr.error('Não foi possível abrir a aba de erro. Verifique o bloqueador de pop-ups.');
+	                    return;
+	                }
+
+	                tab.document.write('<!doctype html><html lang="pt-BR"><head><title>Erro da Central</title><style>body{font-family:Arial,sans-serif;margin:24px;background:#f5f5f5;color:#1f2937}pre{white-space:pre-wrap;word-break:break-word;background:#fff;border:1px solid #ddd;border-radius:8px;padding:16px}</style></head><body><h1></h1><pre></pre></body></html>');
+	                tab.document.close();
+	                tab.document.querySelector('h1').textContent = title;
+	                tab.document.querySelector('pre').textContent = content;
+	            }
+
             /**
              * Exibe modal de atualização em massa e injeta a rota de execução.
              */
@@ -216,12 +242,12 @@
                         'X-Requested-With': 'XMLHttpRequest',
                         'Accept': 'application/json',
                     },
-                    success: function (response) {
-                        toastr.success(response.message);
-                    },
-                    error: function (xhr) {
-                        toastr.error(xhr.responseJSON.message);
-                    },
+	                    success: function (response) {
+	                        toastr.success(response.message);
+	                    },
+	                    error: function (xhr) {
+	                        openGlobalErrorTab('Erro ao atualizar sistemas', globalAjaxErrorContent(xhr));
+	                    },
                     complete: function () {
                         submitButton.prop('disabled', false);
                     }

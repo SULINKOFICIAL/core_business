@@ -233,7 +233,7 @@ class TenantProcessingController extends Controller
 
             ->addColumn('bank', function ($row) {
                 if ((int) $row->db_last_version === 0) {
-                    return '<i class="fa-solid fa-circle-xmark text-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="' . e($row->db_error ?? 'Banco de dados desatualizado') . '"></i>';
+                    return $this->statusErrorIcon($row->db_error ?? 'Banco de dados desatualizado');
                 }
 
                 return '<i class="fa-solid fa-circle-check text-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Banco de dados atualizado"></i>';
@@ -241,7 +241,7 @@ class TenantProcessingController extends Controller
 
             ->addColumn('git', function ($row) {
                 if ((int) $row->git_last_version === 0) {
-                    return '<i class="fa-solid fa-circle-xmark text-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="' . e($row->git_error ?? 'Git desatualizado') . '"></i>';
+                    return $this->statusErrorIcon($row->git_error ?? 'Git desatualizado');
                 }
 
                 return '<i class="fa-solid fa-circle-check text-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Git atualizado"></i>';
@@ -249,7 +249,7 @@ class TenantProcessingController extends Controller
 
             ->addColumn('sp', function ($row) {
                 if ((int) $row->sp_last_version === 0) {
-                    return '<i class="fa-solid fa-circle-xmark text-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="' . e($row->sp_error ?? 'Supervisor desatualizado') . '"></i>';
+                    return $this->statusErrorIcon($row->sp_error ?? 'Supervisor desatualizado');
                 }
 
                 return '<i class="fa-solid fa-circle-check text-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Supervisor atualizado"></i>';
@@ -257,7 +257,7 @@ class TenantProcessingController extends Controller
 
             ->addColumn('js', function ($row) {
                 if ($row->js_last_version != 1) {
-                    return '<i class="fa-solid fa-circle-xmark text-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="' . e($row->js_error ?? 'Javascript desatualizado') . '"></i>';
+                    return $this->statusErrorIcon($row->js_error ?? 'Javascript desatualizado');
                 }
 
                 return '<i class="fa-solid fa-circle-check text-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Javascript atualizado"></i>';
@@ -304,5 +304,15 @@ class TenantProcessingController extends Controller
 
             ->rawColumns(['id', 'name', 'type', 'expires_at', 'bank', 'git', 'sp', 'js', 'status', 'actions'])
             ->make(true);
+    }
+
+    /**
+     * Monta o ícone de erro com conteúdo clicável para abrir no modal.
+     */
+    private function statusErrorIcon($message): string
+    {
+        $safeMessage = e($message);
+
+        return '<i class="fa-solid fa-circle-xmark text-danger cursor-pointer js-tenant-error-detail" data-bs-toggle="tooltip" data-bs-placement="top" title="' . $safeMessage . '" data-error-content="' . $safeMessage . '"></i>';
     }
 }

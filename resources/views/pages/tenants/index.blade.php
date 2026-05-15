@@ -102,6 +102,22 @@
 @endsection
 
 @section('modals')
+<div class="modal fade" tabindex="-1" id="modal_tenant_status_error">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Erro da ação</h3>
+                <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </div>
+            </div>
+            <div class="modal-body">
+                <pre id="tenant-status-error-content" class="bg-light text-gray-800 rounded p-5 mb-0" style="white-space: pre-wrap; word-break: break-word; max-height: 65vh; overflow: auto;"></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" tabindex="-1" id="modal_tenant_run_task">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -354,8 +370,9 @@
         const iconClass = isSuccess ? 'fa-circle-check text-success' : 'fa-circle-xmark text-danger';
         const processingClass = isProcessing ? 'tenant-status-processing' : '';
         const safeTitle = escapeTenantStatusTitle(title);
+        const errorAttributes = statusErrorAttributes(isSuccess, isProcessing, safeTitle);
 
-        return `<i class="fa-solid ${iconClass} ${processingClass}" data-bs-toggle="tooltip" data-bs-placement="top" title="${safeTitle}"></i>`;
+        return `<i class="fa-solid ${iconClass} ${processingClass}${errorAttributes.className}" data-bs-toggle="tooltip" data-bs-placement="top" title="${safeTitle}"${errorAttributes.content}></i>`;
     }
 
     function escapeTenantStatusTitle(title) {
@@ -364,6 +381,68 @@
          * Converter para texto antes de montar o HTML preserva o tooltip.
          */
         return $('<div>').text(title || 'Erro desconhecido').html();
+    }
+
+    function statusErrorAttributes(isSuccess, isProcessing, safeTitle) {
+        /**
+         * Apenas erro final abre modal; sucesso e processamento mantêm só tooltip.
+         */
+        if (isSuccess || isProcessing) {
+            return {
+                className: '',
+                content: '',
+            };
+        }
+
+        return {
+            className: ' cursor-pointer js-tenant-error-detail',
+            content: ` data-error-content="${safeTitle}"`,
+        };
+    }
+
+    $(document).on('click', '.js-tenant-error-detail', function () {
+        const errorContent = $(this).attr('data-error-content') || $(this).attr('title') || 'Erro desconhecido';
+
+        $('#tenant-status-error-content').text(errorContent);
+
+        const modalElement = document.getElementById('modal_tenant_status_error');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+        modal.show();
+    });
+
+    function ajaxErrorContent(xhr) {
+        /**
+         * Prioriza o corpo bruto para permitir ver exatamente o retorno da central.
+         */
+        if (xhr.responseText) {
+            return xhr.responseText;
+        }
+
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+            return xhr.responseJSON.message;
+        }
+
+        return 'Erro desconhecido';
+    }
+
+    function openCentralErrorTab(title, content) {
+        const tab = window.open('', '_blank');
+
+        /**
+         * Se o navegador bloquear popup, usa o modal local como fallback legível.
+         */
+        if (!tab) {
+            $('#tenant-status-error-content').text(content);
+            const modalElement = document.getElementById('modal_tenant_status_error');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+            modal.show();
+            return;
+        }
+
+        tab.document.write('<!doctype html><html lang="pt-BR"><head><title>Erro da Central</title><style>body{font-family:Arial,sans-serif;margin:24px;background:#f5f5f5;color:#1f2937}pre{white-space:pre-wrap;word-break:break-word;background:#fff;border:1px solid #ddd;border-radius:8px;padding:16px}</style></head><body><h1></h1><pre></pre></body></html>');
+        tab.document.close();
+        tab.document.querySelector('h1').textContent = title;
+        tab.document.querySelector('pre').textContent = content;
     }
 
     function columnIndexByActionType(actionType) {
@@ -533,11 +612,11 @@
                 refreshBootstrapTooltips();
             },
             error: function (xhr) {
-                const message = xhr.responseJSON.message;
+                const message = ajaxErrorContent(xhr);
 
                 updateTenantStatusCell(rowElement, actionType, false, message, false);
                 refreshBootstrapTooltips();
-                toastr.error(message);
+                openCentralErrorTab('Erro ao executar ação no tenant', message);
             }
         });
     });
@@ -573,7 +652,7 @@
                 dataTable.ajax.reload(null, false);
             },
             error: function (xhr) {
-                toastr.error(xhr.responseJSON.message);
+                openCentralErrorTab('Erro ao alterar status do tenant', ajaxErrorContent(xhr));
             }
         });
     });
