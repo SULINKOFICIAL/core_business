@@ -130,6 +130,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/visualizar/dados-api/{id}',             [TenantController::class, 'apiData'])->name('api.data');
             Route::get('/visualizar/plano-manual-dados/{id}',    [TenantManualPlanController::class, 'editData'])->name('plan.manual.edit-data');
             Route::put('/visualizar/plano-manual-aplicar/{id}',  [TenantManualPlanController::class, 'apply'])->name('plan.manual.apply');
+            Route::post('/visualizar/plano-manual-sincronizar/{id}', [TenantManualPlanController::class, 'sync'])->name('plan.manual.sync');
             Route::get('/editar/{id}',                           [TenantController::class, 'edit'])->name('edit');
             Route::put('/editar/{id}',                           [TenantController::class, 'update'])->name('update');
             Route::get('/desabilitar/{id}',                      [TenantController::class, 'destroy'])->name('destroy');

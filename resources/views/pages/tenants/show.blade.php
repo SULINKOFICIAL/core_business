@@ -36,15 +36,15 @@
                     @if (app()->environment(['local', 'testing']))
                         <a href="{{ route('systems.remove.packages', $client->id) }}"
                            class="btn btn-light-danger btn-sm"
-                           onclick="return confirm('Tem certeza que deseja remover os pacotes liberados desta instalação?');">
-                            <i class="fa-solid fa-box-open me-1"></i>Remover Pacotes
+                           onclick="return confirm('Tem certeza que deseja resetar plano, assinaturas e pedidos desta instalação?');">
+                            <i class="fa-solid fa-box-open me-1"></i>Resetar Plano e Histórico
                         </a>
                     @endif
-                    <a href="{{ route('systems.update.database', $client->id) }}" class="btn btn-light-primary btn-sm">
-                        <i class="fa-solid fa-database me-1"></i>Atualizar DB
-                    </a>
                     <button type="button" class="btn btn-light-primary btn-sm" id="btn-open-plan-manual-modal">
                         <i class="fa-solid fa-list-check me-1"></i>Atualizar Plano do Cliente
+                    </button>
+                    <button type="button" class="btn btn-warning btn-sm btn-sync-manual-plan @if (!in_array($client->plan?->tenant_sync_status, ['pending', 'failed'], true)) d-none @endif" id="btn-sync-manual-plan-page">
+                        <i class="fa-solid fa-rotate me-1"></i>Sincronizar novo plano
                     </button>
                     <a href="{{ route('tenants.edit', $client->id) }}" class="btn btn-light btn-sm">
                         <i class="fa-solid fa-gear me-1"></i>Configurações
@@ -57,6 +57,14 @@
                     <i class="fa-solid fa-triangle-exclamation me-2"></i>Nenhum pacote atribuído.
                 </div>
             @endif
+
+            <div id="manual-plan-sync-page-message" class="alert mt-5 mb-0 @if ($client->plan?->tenant_sync_status === 'failed') alert-danger @else alert-warning @endif @if (!in_array($client->plan?->tenant_sync_status, ['pending', 'failed'], true)) d-none @endif">
+                @if ($client->plan?->tenant_sync_status === 'failed')
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>Falha ao sincronizar o novo plano. Revise o retorno e tente novamente.
+                @else
+                    <i class="fa-solid fa-circle-info me-2"></i>Existe uma alteração de plano salva internamente e ainda pendente de sincronização com o tenant.
+                @endif
+            </div>
         </div>
     </div>
 
@@ -217,9 +225,13 @@
                     </div>
 
                     <div id="manual-plan-errors" class="alert alert-danger d-none mb-0"></div>
+                    <div id="manual-plan-info" class="alert alert-warning d-none mb-0"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning d-none btn-sync-manual-plan" id="btn-sync-manual-plan-modal">
+                        <i class="fa-solid fa-rotate me-1"></i>Sincronizar novo plano
+                    </button>
                     <button type="submit" class="btn btn-primary" id="btn-submit-manual-plan">Salvar alteração</button>
                 </div>
             </form>
@@ -240,7 +252,10 @@
         const manualModulesList = $('#manual-modules-list');
         const manualModulesCounter = $('#manual-modules-counter');
         const manualErrors = $('#manual-plan-errors');
+        const manualInfo = $('#manual-plan-info');
         const manualSubmitButton = $('#btn-submit-manual-plan');
+        const manualSyncButtons = $('.btn-sync-manual-plan');
+        const manualPageSyncMessage = $('#manual-plan-sync-page-message');
         let isLoadingManualPlan = false;
 
         function refreshManualModulesCounter() {
@@ -274,11 +289,37 @@
         }
 
         function showManualPlanError(message) {
+            manualInfo.addClass('d-none').text('');
             manualErrors.removeClass('d-none').text(message);
         }
 
         function clearManualPlanError() {
             manualErrors.addClass('d-none').text('');
+        }
+
+        function showManualPlanInfo(message) {
+            manualErrors.addClass('d-none').text('');
+            manualInfo.removeClass('d-none').text(message);
+        }
+
+        function showManualPlanSyncPending(message) {
+            showManualPlanInfo(message);
+            manualSubmitButton.addClass('d-none');
+            $('#btn-sync-manual-plan-modal').removeClass('d-none');
+            manualSyncButtons.removeClass('d-none');
+            manualPageSyncMessage
+                .removeClass('d-none alert-danger')
+                .addClass('alert-warning')
+                .html('<i class="fa-solid fa-circle-info me-2"></i>' + message);
+        }
+
+        function showManualPlanSyncFailure(message) {
+            showManualPlanError(message);
+            manualSyncButtons.removeClass('d-none');
+            manualPageSyncMessage
+                .removeClass('d-none alert-warning')
+                .addClass('alert-danger')
+                .html('<i class="fa-solid fa-triangle-exclamation me-2"></i>' + message);
         }
 
         $(document).on('change', '#manual-modules-list input[name="modules[]"]', function () {
@@ -292,9 +333,11 @@
 
             isLoadingManualPlan = true;
             clearManualPlanError();
+            manualInfo.addClass('d-none').text('');
             manualModulesList.html('<div class="col-12"><div class="text-muted">Carregando módulos...</div></div>');
             manualPlanForm.trigger('reset');
-            manualSubmitButton.prop('disabled', true);
+            manualSubmitButton.removeClass('d-none').prop('disabled', true);
+            $('#btn-sync-manual-plan-modal').addClass('d-none');
             manualPlanModal.modal('show');
 
             $.ajax({
@@ -338,8 +381,7 @@
                         return;
                     }
 
-                    manualPlanModal.modal('hide');
-                    window.location.reload();
+                    showManualPlanSyncPending(response.message || 'Plano salvo internamente. Sincronize o novo plano para aplicar no tenant.');
                 },
                 error: function(xhr) {
                     let message = 'Não foi possível aplicar a atualização manual.';
@@ -350,6 +392,40 @@
                 },
                 complete: function() {
                     manualSubmitButton.prop('disabled', false);
+                }
+            });
+        });
+
+        $(document).on('click', '.btn-sync-manual-plan', function() {
+            clearManualPlanError();
+            manualSyncButtons.prop('disabled', true);
+
+            const syncData = manualPlanForm.serializeArray().filter(function(item) {
+                return item.name !== '_method';
+            });
+
+            $.ajax({
+                type: 'POST',
+                url: "{{ route('tenants.plan.manual.sync', $client->id) }}",
+                data: $.param(syncData),
+                success: function(response) {
+                    if (!response.success) {
+                        showManualPlanSyncFailure(response.message || 'Não foi possível sincronizar o novo plano.');
+                        return;
+                    }
+
+                    manualPlanModal.modal('hide');
+                    window.location.reload();
+                },
+                error: function(xhr) {
+                    let message = 'Não foi possível sincronizar o novo plano.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        message = xhr.responseJSON.message;
+                    }
+                    showManualPlanSyncFailure(message);
+                },
+                complete: function() {
+                    manualSyncButtons.prop('disabled', false);
                 }
             });
         });

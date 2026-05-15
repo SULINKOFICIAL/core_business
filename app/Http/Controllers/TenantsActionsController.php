@@ -610,7 +610,7 @@ class TenantsActionsController extends Controller
     }
 
     /**
-     * Remove todos os pacotes/liberações do tenant no core_business.
+     * Reseta plano, assinaturas, pedidos e transações do tenant no core_business.
      * Disponível apenas em ambiente de testes.
      */
     public function removePackagesManual(Request $request, $id)
@@ -658,13 +658,13 @@ class TenantsActionsController extends Controller
         if ($this->shouldReturnJson($request)) {
             return response()->json([
                 'success' => true,
-                'message' => 'Pacotes removidos com sucesso.',
+                'message' => 'Plano, assinaturas e pedidos resetados com sucesso.',
             ]);
         }
 
         return redirect()
             ->route('tenants.index')
-            ->with('message', 'Pacotes removidos com sucesso.');
+            ->with('message', 'Plano, assinaturas e pedidos resetados com sucesso.');
     }
 
     /**

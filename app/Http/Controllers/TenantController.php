@@ -397,15 +397,70 @@ class TenantController extends Controller
      */
     public function edit($id)
     {
-        // Obtém dados
-        $content = $this->repository->find($id);
+        $content = $this->repository
+            ->with(['provisioning', 'domains'])
+            ->find($id);
 
-        // Verifica se existe
-        if(!$content) return redirect()->back();
+        if (!$content) {
+            return redirect()->back();
+        }
 
-        // Retorna a página
+        $provisioning = $content->provisioning;
+        $provisioningStep = $provisioning?->install;
+        $provisioningCompleted = $provisioning?->installAtLeast(TenantProvisioning::STEP_COMPLETED) ?? false;
+
+        $provisioningLabels = [
+            TenantProvisioning::STEP_SUBDOMAIN => [
+                'label' => 'Aguardando subdomínio',
+                'class' => 'badge-light-warning text-warning',
+                'description' => 'Cria ou confirma o domínio técnico que vai apontar para o MiCore do cliente.',
+                'next' => 'Criar subdomínio no cPanel',
+            ],
+            TenantProvisioning::STEP_DATABASE => [
+                'label' => 'Aguardando banco',
+                'class' => 'badge-light-warning text-warning',
+                'description' => 'Cria o banco do tenant, clona o template e concede acesso ao usuário MySQL.',
+                'next' => 'Clonar banco modelo',
+            ],
+            TenantProvisioning::STEP_USER_TOKEN => [
+                'label' => 'Aguardando usuário inicial',
+                'class' => 'badge-light-warning text-warning',
+                'description' => 'Insere o usuário administrador, colaborador, loja matriz e token da Central no banco do tenant.',
+                'next' => 'Inserir usuário e token',
+            ],
+            TenantProvisioning::STEP_MODULES => [
+                'label' => 'Aguardando módulos',
+                'class' => 'badge-light-warning text-warning',
+                'description' => 'Sincroniza módulos, recursos, vigência e limites do plano atual para o tenant.',
+                'next' => 'Sincronizar módulos do plano',
+            ],
+            TenantProvisioning::STEP_FINALIZING => [
+                'label' => 'Finalizando',
+                'class' => 'badge-light-primary text-primary',
+                'description' => 'Consolida a instalação e marca o provisionamento como concluído.',
+                'next' => 'Finalizar instalação',
+            ],
+            TenantProvisioning::STEP_COMPLETED => [
+                'label' => 'Concluído',
+                'class' => 'badge-light-success text-success',
+                'description' => 'A instalação operacional do MiCore já foi concluída.',
+                'next' => 'Nenhuma etapa pendente',
+            ],
+        ];
+
+        $provisioningStatus = $provisioningLabels[$provisioningStep] ?? [
+            'label' => 'Sem dados técnicos',
+            'class' => 'badge-light-danger text-danger',
+            'description' => 'Este cliente não possui registro técnico de provisionamento para iniciar a instalação.',
+            'next' => 'Provisionamento indisponível',
+        ];
+
         return view('pages.tenants.edit')->with([
-            'content' => $content
+            'content' => $content,
+            'provisioning' => $provisioning,
+            'provisioningStatus' => $provisioningStatus,
+            'provisioningCompleted' => $provisioningCompleted,
+            'primaryDomain' => $content->domains->first()?->domain,
         ]);
     }
 
