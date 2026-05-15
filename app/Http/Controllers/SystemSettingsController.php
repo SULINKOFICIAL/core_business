@@ -256,6 +256,7 @@ class SystemSettingsController extends Controller
         $periodStartDate = '2026-01-01';
         $periodEndDate = '2026-12-31';
         $syncedCount = 0;
+        $failedTenants = [];
 
         $tenants = Tenant::query()->orderBy('id')->get();
 
@@ -270,12 +271,17 @@ class SystemSettingsController extends Controller
             );
 
             if (!($syncResult['success'] ?? false)) {
-                return redirect()
-                    ->route('system.settings.subscriptions.sync.edit')
-                    ->with('error', 'Falha ao sincronizar o tenant #' . $tenant->id . '. Processo interrompido.');
+                $failedTenants[] = $tenant->id;
+                continue;
             }
 
             $syncedCount++;
+        }
+
+        if (!empty($failedTenants)) {
+            return redirect()
+                ->route('system.settings.subscriptions.sync.edit')
+                ->with('error', 'Sincronização concluída parcialmente. Sucesso em ' . $syncedCount . ' tenant(s). Falha em: #' . implode(', #', $failedTenants) . '.');
         }
 
         return redirect()
