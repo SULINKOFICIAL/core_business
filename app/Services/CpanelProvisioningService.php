@@ -22,10 +22,14 @@ class CpanelProvisioningService
 
     public function __construct(private TenantConfigurationSyncService $syncService)
     {
-        $this->cpanelUrl = (string) env('CPANEL_URL');
-        $this->cpanelUser = (string) env('CPANEL_USER');
-        $this->cpanelPass = (string) env('CPANEL_PASS');
-        $this->cpanelPrefix = (string) env('CPANEL_PREFIX');
+        /**
+         * Mantém as credenciais em propriedades para que todas as etapas
+         * usem exatamente a mesma conta cPanel durante o provisionamento.
+         */
+        $this->cpanelUrl = env('CPANEL_URL') ?? '';
+        $this->cpanelUser = env('CPANEL_USER') ?? '';
+        $this->cpanelPass = env('CPANEL_PASS') ?? '';
+        $this->cpanelPrefix = env('CPANEL_PREFIX') ?? '';
     }
 
     /**
@@ -36,22 +40,42 @@ class CpanelProvisioningService
         $tenant = $this->resolveTenant($clientInput);
         $provisioning = $this->getTenantProvisioningOrFail($tenant);
 
+        /**
+         * O campo install é a fonte de verdade do checkpoint.
+         * Cada chamada AJAX executa apenas a próxima etapa pendente.
+         */
         if ($provisioning->install === TenantProvisioning::STEP_SUBDOMAIN) {
             return $this->handleSubdomainStep($tenant, $provisioning);
         }
 
+        /**
+         * Banco só roda depois do subdomínio ser considerado criado
+         * ou já existente no cPanel.
+         */
         if ($provisioning->install === TenantProvisioning::STEP_DATABASE) {
             return $this->handleDatabaseStep($tenant, $provisioning);
         }
 
+        /**
+         * Usuário e token dependem do banco do tenant já existir
+         * e aceitar conexão com as credenciais provisionadas.
+         */
         if ($provisioning->install === TenantProvisioning::STEP_USER_TOKEN) {
             return $this->handleUserTokenStep($tenant, $provisioning);
         }
 
+        /**
+         * Módulos ficam por último porque usam HTTP contra o tenant
+         * e dependem do domínio, banco, token e usuário inicial.
+         */
         if ($provisioning->install === TenantProvisioning::STEP_MODULES) {
             return $this->handleModulesStep($tenant, $provisioning);
         }
 
+        /**
+         * Qualquer estado posterior às etapas conhecidas é tratado como fim.
+         * Isso preserva o fluxo atual sem tentar repetir etapas concluídas.
+         */
         $provisioning->install = TenantProvisioning::STEP_COMPLETED;
         $provisioning->save();
 
@@ -104,6 +128,10 @@ class CpanelProvisioningService
         Log::info('Criando subdomínio do cliente', ['tenant_id' => $tenant->id, 'domain' => $domain]);
         $this->createSubdomain($domain);
 
+        /**
+         * A etapa avança quando o subdomínio foi criado ou quando já existia.
+         * createSubdomain() só retorna nesses dois cenários seguros.
+         */
         $provisioning->install = TenantProvisioning::STEP_DATABASE;
         $provisioning->save();
 
@@ -122,6 +150,10 @@ class CpanelProvisioningService
 
         $this->cloneDatabase($tenant);
 
+        /**
+         * cloneDatabase() também garante usuário MySQL e privilégios.
+         * Se qualquer parte ficar ambígua, ela lança exceção e não avançamos.
+         */
         $provisioning->install = TenantProvisioning::STEP_USER_TOKEN;
         $provisioning->save();
 
@@ -140,6 +172,10 @@ class CpanelProvisioningService
 
         $this->insertTokenAndUser($tenant);
 
+        /**
+         * A etapa é idempotente: se usuário, colaborador, loja e configs
+         * já existirem, os registros são reaproveitados ou atualizados.
+         */
         $provisioning->install = TenantProvisioning::STEP_MODULES;
         $provisioning->save();
 
@@ -156,8 +192,20 @@ class CpanelProvisioningService
             'database' => $provisioning->table,
         ]);
 
-        $this->configureModulesForTenant($tenant);
+        $syncResult = $this->configureModulesForTenant($tenant);
 
+        /**
+         * Não avançamos quando a sincronização remota falha.
+         * Isso permite clicar novamente e repetir apenas a etapa modules.
+         */
+        if (!($syncResult['success'] ?? false)) {
+            throw new RuntimeException('Falha ao configurar módulos do tenant. A etapa será mantida para nova tentativa.');
+        }
+
+        /**
+         * A próxima chamada do fluxo transforma finalizing em completed,
+         * mantendo o comportamento visual já esperado pela tela.
+         */
         $provisioning->install = TenantProvisioning::STEP_FINALIZING;
         $provisioning->save();
 
@@ -169,10 +217,17 @@ class CpanelProvisioningService
 
     private function resolveTenant(Tenant|int $clientInput): Tenant
     {
+        /**
+         * Aceita tanto model já carregado quanto id vindo do controller.
+         * Em ambos os casos precisamos de provisioning e domains para instalar.
+         */
         $tenant = $clientInput instanceof Tenant
             ? $clientInput->loadMissing('provisioning', 'domains')
             : Tenant::with(['provisioning', 'domains'])->find($clientInput);
 
+        /**
+         * Sem tenant central não há como descobrir domínio, banco ou plano.
+         */
         if (!$tenant) {
             throw new RuntimeException('Tenante não encontrado para provisionamento.');
         }
@@ -184,6 +239,10 @@ class CpanelProvisioningService
     {
         $provisioning = $tenant->provisioning;
 
+        /**
+         * O provisioning guarda banco, usuário MySQL, senha e etapa atual.
+         * Criar infraestrutura sem esse registro quebraria a rastreabilidade.
+         */
         if (!$provisioning) {
             throw new RuntimeException("Provisioning não encontrado para o cliente {$tenant->id}.");
         }
@@ -195,6 +254,10 @@ class CpanelProvisioningService
     {
         $domain = $tenant->domains[0]->domain ?? null;
 
+        /**
+         * A integração com cPanel e os POSTs para o tenant usam sempre
+         * o primeiro domínio carregado no relacionamento.
+         */
         if (!$domain) {
             throw new RuntimeException("Domínio principal não encontrado para o cliente {$tenant->id}.");
         }
@@ -214,67 +277,131 @@ class CpanelProvisioningService
 
         $firstUser = $provisioning->first_user;
 
+        /**
+         * A partir daqui todos os writes acontecem dentro do banco do tenant,
+         * não no banco central do core_business.
+         */
         $this->connectTenantDatabase($tenantDatabase);
 
-        DB::connection('mysql_cliente')->table('users')->insert([
-            'name' => $firstUser['short_name'],
-            'password' => Hash::make($firstUser['password']),
-            'full_name' => $firstUser['name'],
-            'email' => $firstUser['email'],
-            'role_id' => 1,
-            'created_by' => 1,
-        ]);
+        /**
+         * O e-mail é a chave natural do usuário inicial.
+         * Se a etapa for rodada de novo, reaproveitamos esse usuário.
+         */
+        $user = DB::connection('mysql_cliente')
+            ->table('users')
+            ->where('email', $firstUser['email'])
+            ->first();
 
-        DB::connection('mysql_cliente')->table('collaborators')->insert([
-            'user_id' => 2,
-            'created_by' => 1,
-        ]);
+        /**
+         * Só insere usuário quando ele ainda não existe.
+         * Isso evita violar unique de email/name em reprocessos.
+         */
+        if (!$user) {
+            DB::connection('mysql_cliente')->table('users')->insert([
+                'name' => $firstUser['short_name'],
+                'password' => Hash::make($firstUser['password']),
+                'full_name' => $firstUser['name'],
+                'email' => $firstUser['email'],
+                'role_id' => 1,
+                'created_by' => 1,
+            ]);
 
-        DB::connection('mysql_cliente')->table('stores')->insert([
-            'public' => 1,
-            'company' => 'Matriz',
-            'abbreviation' => 'MT',
-            'cnpj' => '00000000000000',
-            'name_fantasy' => 'Matrix',
-            'address' => 'Rua Teste',
-            'number' => '123',
-            'neighborhood' => 'Teste',
-            'zip' => '00000000',
-            'email' => 'matrix@micore.com.br',
-            'site' => 'matrix.com.br',
-            'phone1' => '123456789',
-            'status' => 1,
-            'country_id' => 26,
-            'state_id' => 1,
-            'city_id' => 1,
-            'created_by' => 1,
-        ]);
+            /**
+             * Recarrega para obter o id real gerado pelo banco.
+             * O collaborator precisa desse id, não de um valor fixo.
+             */
+            $user = DB::connection('mysql_cliente')
+                ->table('users')
+                ->where('email', $firstUser['email'])
+                ->first();
+        }
 
-        DB::connection('mysql_cliente')->table('central_configs')->insert([
-            'option_name' => 'tenant',
-            'option_value' => $tenant->id,
-        ]);
+        /**
+         * Se o usuário não apareceu depois do insert, a etapa ficou
+         * inconsistente e deve parar antes de criar registros dependentes.
+         */
+        if (!$user) {
+            throw new RuntimeException('Usuário inicial não foi localizado após inserção.');
+        }
 
-        DB::connection('mysql_cliente')->table('central_configs')->insert([
-            'option_name' => 'token',
-            'option_value' => $tenant->token,
-        ]);
+        /**
+         * Collaborator é derivado do usuário. updateOrInsert evita duplicidade
+         * e permite reexecutar a etapa depois de uma falha parcial.
+         */
+        DB::connection('mysql_cliente')
+            ->table('collaborators')
+            ->updateOrInsert(
+                ['user_id' => $user->id],
+                [
+                    'user_id' => $user->id,
+                    'created_by' => 1,
+                ]
+            );
+
+        /**
+         * A loja Matriz é bootstrap operacional do tenant.
+         * O CNPJ fictício é usado como chave estável nesse seed inicial.
+         */
+        DB::connection('mysql_cliente')
+            ->table('stores')
+            ->updateOrInsert(
+                ['cnpj' => '00000000000000'],
+                [
+                    'public' => 1,
+                    'company' => 'Matriz',
+                    'abbreviation' => 'MT',
+                    'cnpj' => '00000000000000',
+                    'name_fantasy' => 'Matrix',
+                    'address' => 'Rua Teste',
+                    'number' => '123',
+                    'neighborhood' => 'Teste',
+                    'zip' => '00000000',
+                    'email' => 'matrix@micore.com.br',
+                    'site' => 'matrix.com.br',
+                    'phone1' => '123456789',
+                    'status' => 1,
+                    'country_id' => 26,
+                    'state_id' => 1,
+                    'city_id' => 1,
+                    'created_by' => 1,
+                ]
+            );
 
         $sizeStorage = $tenant->plan?->size_storage ?? 0;
 
-        DB::connection('mysql_cliente')->table('central_configs')->insert([
-            'option_name' => 's3StorageAllow',
-            'option_value' => $sizeStorage,
-        ]);
+        /**
+         * Essas configs ligam o banco local à Central.
+         * Atualizar por option_name evita duplicar configs em reprocessos.
+         */
+        $this->updateCentralConfig('tenant', $tenant->id);
+        $this->updateCentralConfig('token', $tenant->token);
+        $this->updateCentralConfig('s3StorageAllow', $sizeStorage);
     }
 
-    private function configureModulesForTenant(Tenant $tenant): void
+    private function updateCentralConfig(string $optionName, mixed $optionValue): void
+    {
+        /**
+         * central_configs não possui índice único no schema antigo,
+         * então a idempotência precisa ser garantida pela busca lógica.
+         */
+        DB::connection('mysql_cliente')
+            ->table('central_configs')
+            ->updateOrInsert(
+                ['option_name' => $optionName],
+                [
+                    'option_name' => $optionName,
+                    'option_value' => $optionValue,
+                ]
+            );
+    }
+
+    private function configureModulesForTenant(Tenant $tenant): array
     {
         /**
          * Na finalização do provisionamento, aplica no tenant remoto
          * o pacote consolidado inicial de módulos, vigência e limites.
          */
-        $this->syncService->syncFromCurrentPlan(
+        return $this->syncService->syncFromCurrentPlan(
             $tenant,
             source: 'provisioning',
             operatorId: null,
@@ -286,6 +413,10 @@ class CpanelProvisioningService
 
     private function connectTenantDatabase(array $tenantDatabase): void
     {
+        /**
+         * A conexão mysql_cliente é montada dinamicamente com os dados
+         * recém-provisionados para escrever no banco isolado do tenant.
+         */
         config([
             'database.connections.mysql_cliente' => [
                 'driver' => 'mysql',
@@ -300,6 +431,10 @@ class CpanelProvisioningService
             ],
         ]);
 
+        /**
+         * Remove qualquer conexão anterior para evitar reaproveitar
+         * credenciais de outro tenant no mesmo processo PHP.
+         */
         DB::purge('mysql_cliente');
         DB::disconnect('mysql_cliente');
         DB::reconnect('mysql_cliente');
@@ -307,13 +442,55 @@ class CpanelProvisioningService
 
     private function createSubdomain(string $domain): array
     {
+        /**
+         * Primeira barreira idempotente: se o domínio já existe,
+         * não chamamos addsubdomain novamente.
+         */
+        if ($this->cpanelDomainExists($domain)) {
+            return [
+                'message' => "Subdomínio {$domain} já existe no cPanel.",
+                'domain' => $domain,
+                'idempotent' => true,
+            ];
+        }
+
         $documentRoot = '/home/' . $this->cpanelPrefix . '/public_html';
 
-        return $this->requestCpanelApi('GET', "{$this->cpanelUrl}/execute/SubDomain/addsubdomain", [
+        /**
+         * Subdomínios de tenants apontam para o mesmo public_html.
+         * A aplicação escolhe o banco depois pelo domínio da request.
+         */
+        $response = $this->requestCpanelApi('GET', "{$this->cpanelUrl}/execute/SubDomain/addsubdomain", [
             'domain' => $domain,
             'rootdomain' => 'micore.com.br',
             'dir' => $documentRoot,
         ]);
+
+        /**
+         * Quando o cPanel retorna erro, ainda pode ser um caso idempotente:
+         * timeout ou recurso já criado por uma tentativa anterior.
+         */
+        if (!$this->cpanelResponseSucceeded($response)) {
+            /**
+             * A API pode responder erro quando o recurso já existe.
+             * Antes de falhar, conferimos o estado real no cPanel.
+             */
+            if ($this->cpanelDomainExists($domain)) {
+                return [
+                    'message' => "Subdomínio {$domain} já existia no cPanel.",
+                    'domain' => $domain,
+                    'idempotent' => true,
+                ];
+            }
+
+            /**
+             * Se o domínio não aparece após o erro, não temos estado seguro
+             * para avançar para banco de dados.
+             */
+            throw new RuntimeException('Falha ao criar subdomínio no cPanel: ' . $this->extractCpanelError($response));
+        }
+
+        return $response;
     }
 
     /**
@@ -331,31 +508,87 @@ class CpanelProvisioningService
 
         $templateDatabase = $this->cpanelPrefix . '_template';
 
-        $this->requestCpanelApi('GET', "{$this->cpanelUrl}/execute/Mysql/create_database", [
-            'name' => $database['name'],
-        ]);
+        /**
+         * Antes de criar, olhamos o estado real no cPanel.
+         * Isso permite repetir a etapa sem bater em "database exists".
+         */
+        $databaseExists = $this->cpanelDatabaseExists($database['name']);
 
-        $ssh = new SSH2((string) env('WHM_IP'));
-        $keyPath = storage_path('keys/id_rsa');
-        $privateKey = PublicKeyLoader::loadPrivateKey(file_get_contents($keyPath), env('SSH_PASSPHRASE'));
+        /**
+         * Só chama create_database quando a conta ainda não lista o banco.
+         */
+        if (!$databaseExists) {
+            $createDatabaseResponse = $this->requestCpanelApi('GET', "{$this->cpanelUrl}/execute/Mysql/create_database", [
+                'name' => $database['name'],
+            ]);
 
-        if (!$ssh->login($this->cpanelUser, $privateKey)) {
-            throw new Exception('Falha na autenticação SSH com chave privada');
+            /**
+             * Se a API falhar, conferimos de novo. Pode ter criado o banco
+             * antes de devolver erro para a aplicação.
+             */
+            if (!$this->cpanelResponseSucceeded($createDatabaseResponse) && !$this->cpanelDatabaseExists($database['name'])) {
+                throw new RuntimeException('Falha ao criar banco no cPanel: ' . $this->extractCpanelError($createDatabaseResponse));
+            }
         }
 
-        $cloneCommand = "mysqldump -u {$this->cpanelUser} -p'{$this->cpanelPass}' {$templateDatabase} | mysql -u {$this->cpanelUser} -p'{$this->cpanelPass}' {$database['name']}";
-        $ssh->exec($cloneCommand);
+        /**
+         * A importação do template é feita por SSH porque o fluxo atual
+         * usa mysqldump direto no servidor cPanel.
+         */
+        $ssh = $this->connectSsh();
 
-        $this->requestCpanelApi('GET', "{$this->cpanelUrl}/execute/Mysql/create_user", [
-            'name' => $database['user'],
-            'password' => $database['password'],
-        ]);
+        /**
+         * Só importamos o template em banco vazio.
+         * Banco com tabelas é tratado como estado ambíguo e bloqueante.
+         */
+        if (!$this->databaseIsEmpty($ssh, $database['name'])) {
+            /**
+             * Banco com conteúdo pode ser uma instalação parcial ou um tenant real.
+             * O provisionamento não remove nem sobrescreve dados automaticamente.
+             */
+            throw new RuntimeException("Banco {$database['name']} já possui conteúdo. Revise manualmente antes de continuar o provisionamento.");
+        }
 
-        $this->requestCpanelApi('GET', "{$this->cpanelUrl}/execute/Mysql/set_privileges_on_database", [
+        /**
+         * Neste ponto o banco existe e está vazio, então a clonagem
+         * não sobrescreve dados de uma instalação anterior.
+         */
+        $this->cloneTemplateDatabase($ssh, $templateDatabase, $database['name']);
+
+        /**
+         * Usuário MySQL é criado apenas se ainda não existir na conta cPanel.
+         */
+        if (!$this->cpanelDatabaseUserExists($database['user'])) {
+            $createUserResponse = $this->requestCpanelApi('GET', "{$this->cpanelUrl}/execute/Mysql/create_user", [
+                'name' => $database['user'],
+                'password' => $database['password'],
+            ]);
+
+            /**
+             * Mesmo padrão idempotente: em caso de erro, confirmamos
+             * se o usuário passou a existir antes de bloquear.
+             */
+            if (!$this->cpanelResponseSucceeded($createUserResponse) && !$this->cpanelDatabaseUserExists($database['user'])) {
+                throw new RuntimeException('Falha ao criar usuário do banco no cPanel: ' . $this->extractCpanelError($createUserResponse));
+            }
+        }
+
+        /**
+         * Conceder privilégios é seguro para repetir e corrige casos
+         * em que usuário já existia sem acesso ao banco novo.
+         */
+        $privilegesResponse = $this->requestCpanelApi('GET', "{$this->cpanelUrl}/execute/Mysql/set_privileges_on_database", [
             'user' => $database['user'],
             'database' => $database['name'],
             'privileges' => 'ALL PRIVILEGES',
         ]);
+
+        /**
+         * Sem privilégios, a próxima etapa não consegue conectar no tenant.
+         */
+        if (!$this->cpanelResponseSucceeded($privilegesResponse)) {
+            throw new RuntimeException('Falha ao conceder privilégios no banco: ' . $this->extractCpanelError($privilegesResponse));
+        }
 
         return [
             'message' => "Banco de dados {$database['name']} clonado com sucesso!",
@@ -368,16 +601,291 @@ class CpanelProvisioningService
     {
         $tenant = new Guzzle();
 
+        /**
+         * O cPanel atual usa HTTP Basic com o usuário/senha da conta.
+         */
         $options = [
             'auth' => [$this->cpanelUser, $this->cpanelPass],
         ];
 
+        /**
+         * Endpoints UAPI recebem parâmetros via query string.
+         */
         if ($query !== null) {
             $options['query'] = $query;
         }
 
+        /**
+         * Deixamos exceções HTTP subirem. Falha de transporte não é estado
+         * idempotente seguro para avançar o provisionamento.
+         */
         $response = $tenant->request($method, $url, $options);
 
         return json_decode($response->getBody()->getContents(), true);
+    }
+
+    private function cpanelDomainExists(string $domain): bool
+    {
+        /**
+         * DomainInfo/list_domains retorna grupos de domínios em arrays.
+         * Por isso o loop aceita item array e item string.
+         */
+        $response = $this->requestCpanelApi('GET', "{$this->cpanelUrl}/execute/DomainInfo/list_domains");
+        $items = $this->getCpanelDataItems($response);
+
+        foreach ($items as $item) {
+            /**
+             * Formato observado: cada grupo pode vir como lista simples
+             * de domínios, sem chave associativa.
+             */
+            if (is_array($item) && in_array($domain, $item, true)) {
+                return true;
+            }
+
+            /**
+             * Mantém suporte a respostas achatadas do cPanel.
+             */
+            if ($item === $domain) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function cpanelDatabaseExists(string $database): bool
+    {
+        /**
+         * A lista de bancos é a fonte segura para decidir se podemos
+         * chamar create_database ou tratar como reprocesso.
+         */
+        $response = $this->requestCpanelApi('GET', "{$this->cpanelUrl}/execute/Mysql/list_databases");
+        $items = $this->getCpanelDataItems($response);
+
+        foreach ($items as $item) {
+            /**
+             * Ignora formatos inesperados em vez de quebrar o loop inteiro.
+             */
+            if (!is_array($item)) {
+                continue;
+            }
+
+            /**
+             * Formato UAPI observado no ambiente atual.
+             */
+            if (($item['database'] ?? null) === $database) {
+                return true;
+            }
+
+            /**
+             * Formato alternativo aceito por segurança entre versões.
+             */
+            if (($item['name'] ?? null) === $database) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function cpanelDatabaseUserExists(string $user): bool
+    {
+        /**
+         * Usuários MySQL também são globais dentro da conta cPanel.
+         * Consultar antes evita erro quando a etapa é repetida.
+         */
+        $response = $this->requestCpanelApi('GET', "{$this->cpanelUrl}/execute/Mysql/list_users");
+        $items = $this->getCpanelDataItems($response);
+
+        foreach ($items as $item) {
+            /**
+             * A resposta esperada é associativa: user, shortuser, databases.
+             */
+            if (!is_array($item)) {
+                continue;
+            }
+
+            /**
+             * Compara o usuário completo, incluindo prefixo da conta cPanel.
+             */
+            if (($item['user'] ?? null) === $user) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function connectSsh(): SSH2
+    {
+        /**
+         * A conexão SSH usa a mesma conta cPanel que executa mysqldump.
+         */
+        $ssh = new SSH2(env('WHM_IP'));
+        $keyPath = storage_path('keys/id_rsa');
+        $privateKey = PublicKeyLoader::loadPrivateKey(file_get_contents($keyPath), env('SSH_PASSPHRASE'));
+
+        /**
+         * Sem login SSH não existe caminho seguro para clonar o template.
+         */
+        if (!$ssh->login($this->cpanelUser, $privateKey)) {
+            throw new Exception('Falha na autenticação SSH com chave privada');
+        }
+
+        return $ssh;
+    }
+
+    private function databaseIsEmpty(SSH2 $ssh, string $database): bool
+    {
+        /**
+         * Escapa aspas para usar o nome do banco dentro do SQL remoto.
+         */
+        $databaseName = str_replace("'", "''", $database);
+        $command = 'mysql -u ' . escapeshellarg($this->cpanelUser)
+            . ' -p' . escapeshellarg($this->cpanelPass)
+            . ' -N -B -e '
+            . escapeshellarg("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '{$databaseName}'");
+
+        $output = $ssh->exec($command);
+
+        /**
+         * Se o comando falhar, não presumimos banco vazio.
+         * Avançar nesse caso poderia sobrescrever uma instalação existente.
+         */
+        if ($ssh->getExitStatus() !== 0) {
+            throw new RuntimeException("Falha ao verificar se o banco {$database} está vazio.");
+        }
+
+        /**
+         * A saída esperada é apenas um número por causa de -N -B.
+         */
+        $count = preg_replace('/[^0-9]/', '', $output);
+
+        /**
+         * Saída vazia também é tratada como vazia para tolerar variações
+         * do cliente MySQL quando não encontra tabelas.
+         */
+        return $count === '' || $count === '0';
+    }
+
+    private function cloneTemplateDatabase(SSH2 $ssh, string $templateDatabase, string $targetDatabase): void
+    {
+        /**
+         * escapeshellarg protege os argumentos do comando remoto.
+         */
+        $mysqlUser = escapeshellarg($this->cpanelUser);
+        $mysqlPassword = escapeshellarg($this->cpanelPass);
+        $template = escapeshellarg($templateDatabase);
+        $target = escapeshellarg($targetDatabase);
+
+        /**
+         * O dump sai do banco template e entra direto no banco alvo vazio.
+         */
+        $cloneCommand = "mysqldump -u {$mysqlUser} -p{$mysqlPassword} {$template} | mysql -u {$mysqlUser} -p{$mysqlPassword} {$target}";
+        $ssh->exec($cloneCommand);
+
+        /**
+         * Qualquer erro no pipe deixa a etapa database sem garantia.
+         * Por isso bloqueamos e permitimos nova tentativa depois da análise.
+         */
+        if ($ssh->getExitStatus() !== 0) {
+            throw new RuntimeException("Falha ao clonar o banco template {$templateDatabase} para {$targetDatabase}.");
+        }
+    }
+
+    private function cpanelResponseSucceeded(array $response): bool
+    {
+        /**
+         * Formato UAPI observado: status no topo.
+         */
+        $status = $response['status'] ?? null;
+
+        if ($status === 1 || $status === '1') {
+            return true;
+        }
+
+        $resultStatus = null;
+
+        /**
+         * Formato alternativo: status dentro de result.
+         */
+        if (isset($response['result']) && is_array($response['result'])) {
+            $resultStatus = $response['result']['status'] ?? null;
+        }
+
+        /**
+         * Alguns retornos podem serializar status como string.
+         */
+        if ($resultStatus === 1 || $resultStatus === '1') {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function getCpanelDataItems(array $response): array
+    {
+        /**
+         * Formato UAPI usado pelos endpoints testados no ambiente atual.
+         */
+        if (isset($response['data']) && is_array($response['data'])) {
+            return $response['data'];
+        }
+
+        /**
+         * Formato alternativo usado por alguns endpoints/versões.
+         */
+        if (
+            isset($response['result'])
+            && is_array($response['result'])
+            && isset($response['result']['data'])
+            && is_array($response['result']['data'])
+        ) {
+            return $response['result']['data'];
+        }
+
+        /**
+         * Sem dados conhecidos, o chamador trata como "não encontrado".
+         */
+        return [];
+    }
+
+    private function extractCpanelError(array $response): string
+    {
+        /**
+         * Erros diretos são o formato mais comum da UAPI.
+         */
+        $errors = $response['errors'] ?? null;
+
+        if (is_array($errors) && !empty($errors)) {
+            return implode(' | ', $errors);
+        }
+
+        $resultErrors = null;
+
+        /**
+         * Alguns endpoints aninham erros em result.
+         */
+        if (isset($response['result']) && is_array($response['result'])) {
+            $resultErrors = $response['result']['errors'] ?? null;
+        }
+
+        if (is_array($resultErrors) && !empty($resultErrors)) {
+            return implode(' | ', $resultErrors);
+        }
+
+        $messages = $response['messages'] ?? null;
+
+        /**
+         * Quando não há errors, messages ainda pode trazer o motivo.
+         */
+        if (is_array($messages) && !empty($messages)) {
+            return implode(' | ', $messages);
+        }
+
+        /**
+         * Fallback neutro para não expor payload inteiro com dados sensíveis.
+         */
+        return 'Sem detalhe retornado pelo cPanel.';
     }
 }
