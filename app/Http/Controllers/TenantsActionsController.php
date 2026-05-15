@@ -131,17 +131,28 @@ class TenantsActionsController extends Controller
      */
     public function updateAllSystems(Request $request)
     {
+        $data = $request->all();
+
         /**
          * Define explicitamente quais ações podem ser recebidas da UI.
          * Qualquer valor fora dessa lista é descartado para manter o fluxo seguro.
          */
         $allowedActions = ['git', 'database', 'supervisor', 'npm_build'];
-        $selectedActions = collect((array) $this->request->get('actions', []))
+        $requestedActions = $data['actions'] ?? [];
+
+        if (!is_array($requestedActions)) {
+            $requestedActions = [];
+        }
+
+        $selectedActions = collect($requestedActions)
             ->filter(function ($action) use ($allowedActions) {
                 return in_array($action, $allowedActions, true);
             })
             ->values()
             ->all();
+
+        $updateScope = $data['update_scope'] ?? null;
+        $selectedTenantId = $data['tenant_id'] ?? null;
 
         /**
          * Se nenhuma ação válida vier no payload:
@@ -149,17 +160,46 @@ class TenantsActionsController extends Controller
          * - mantém redirect com flash para chamadas web comuns
          */
         if (empty($selectedActions)) {
-            if ($this->shouldReturnJson($request)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Selecione ao menos uma ação para atualizar os sistemas.',
-                ], 422);
+            return $this->invalidUpdateSystemsRequest(
+                $request,
+                'Selecione ao menos uma ação para atualizar os sistemas.'
+            );
+        }
+
+        /**
+         * O escopo é obrigatório para evitar o comportamento antigo de atualizar
+         * todos os ambientes sem o usuário escolher o alvo.
+         */
+        if (!in_array($updateScope, ['all', 'individual', 'shared'], true)) {
+            return $this->invalidUpdateSystemsRequest(
+                $request,
+                'Selecione qual sistema atualizar.'
+            );
+        }
+
+        /**
+         * Atualização individual só aceita tenant dedicado.
+         */
+        if ($updateScope === 'individual') {
+            if (!$selectedTenantId) {
+                return $this->invalidUpdateSystemsRequest(
+                    $request,
+                    'Selecione o sistema individual.'
+                );
             }
 
-            return redirect()
-                ->route('tenants.index')
-                ->with('type', 'warning')
-                ->with('message', 'Selecione ao menos uma ação para atualizar os sistemas.');
+            $selectedTenant = $this->repository
+                ->where('type_installation', 'dedicated')
+                ->find($selectedTenantId);
+
+            if (!$selectedTenant) {
+                return $this->invalidUpdateSystemsRequest(
+                    $request,
+                    'Sistema individual não encontrado.'
+                );
+            }
+
+            $selectedTenantId = $selectedTenant->id;
         }
 
         $selectedActionLabels = $this->selectedActionLabels($selectedActions);
@@ -170,21 +210,23 @@ class TenantsActionsController extends Controller
          * ciclo de término da requisição para liberar a UI sem bloqueio.
          */
         if ($this->shouldReturnJson($request)) {
-            app()->terminating(function () use ($selectedActions) {
-                $this->processAllSystemsUpdate($selectedActions);
+            app()->terminating(function () use ($selectedActions, $updateScope, $selectedTenantId) {
+                $this->processAllSystemsUpdate($selectedActions, $updateScope, $selectedTenantId);
             });
 
             return response()->json([
                 'success' => true,
                 'message' => 'Processo iniciado para: ' . $selectedActionLabels . '.',
                 'selected_actions' => $selectedActions,
+                'update_scope' => $updateScope,
+                'tenant_id' => $selectedTenantId,
             ]);
         }
 
         /**
          * No fluxo não-AJAX mantém comportamento síncrono tradicional.
          */
-        $this->processAllSystemsUpdate($selectedActions);
+        $this->processAllSystemsUpdate($selectedActions, $updateScope, $selectedTenantId);
 
         /**
          * Redireciona com a mensagem final
@@ -192,6 +234,21 @@ class TenantsActionsController extends Controller
         return redirect()
             ->route('tenants.index')
             ->with('message', $successMessage);
+    }
+
+    private function invalidUpdateSystemsRequest(Request $request, string $message)
+    {
+        if ($this->shouldReturnJson($request)) {
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+            ], 422);
+        }
+
+        return redirect()
+            ->route('tenants.index')
+            ->with('type', 'warning')
+            ->with('message', $message);
     }
 
     private function selectedActionLabels(array $selectedActions): string
@@ -213,7 +270,7 @@ class TenantsActionsController extends Controller
             ->implode(', ');
     }
 
-    private function processAllSystemsUpdate(array $selectedActions): void
+    private function processAllSystemsUpdate(array $selectedActions, string $updateScope, $selectedTenantId = null): void
     {
         /**
          * Mapeia as flags de execução para manter o fluxo explícito e legível.
@@ -227,6 +284,26 @@ class TenantsActionsController extends Controller
          * Obtém todos os clientes
          */
         $clients = $this->repository->all();
+
+        /**
+         * Define os tenants afetados pelo escopo escolhido no modal.
+         * O escopo "all" mantém a coleção completa.
+         */
+        if ($updateScope === 'individual') {
+            $clients = $clients->filter(function($tenant) use ($selectedTenantId) {
+                return $tenant->id == $selectedTenantId && $tenant->type_installation == 'dedicated';
+            });
+        }
+
+        if ($updateScope === 'shared') {
+            $clients = $clients->filter(function($tenant) {
+                return $tenant->type_installation == 'shared';
+            });
+        }
+
+        if ($clients->isEmpty()) {
+            return;
+        }
         
         /**
          * Sinaliza como desatualizado somente os eixos solicitados para a UI
@@ -252,7 +329,13 @@ class TenantsActionsController extends Controller
             }
 
             if (!empty($updateColumns)) {
-                TenantRuntimeStatus::query()->update($updateColumns);
+                $affectedTenantIds = [];
+
+                foreach ($clients as $tenant) {
+                    $affectedTenantIds[] = $tenant->id;
+                }
+
+                TenantRuntimeStatus::whereIn('tenant_id', $affectedTenantIds)->update($updateColumns);
             }
         }
 
@@ -466,7 +549,11 @@ class TenantsActionsController extends Controller
             $runtimeStatus->sp_error = $this->tenantApiRawError($response);
         } else {
             $responseData = json_decode($response['data'] ?? null, true);
-            $apiSuccess = is_array($responseData) ? (bool) ($responseData['success'] ?? true) : true;
+            $apiSuccess = true;
+
+            if (is_array($responseData) && array_key_exists('success', $responseData)) {
+                $apiSuccess = $responseData['success'] === true;
+            }
 
             if (!$apiSuccess) {
                 $runtimeStatus->sp_last_version = false;
@@ -594,6 +681,23 @@ class TenantsActionsController extends Controller
          * Realiza solicitação
          */
         $updated = $this->updateGit($tenant->id);
+
+        /**
+         * Em hospedagem compartilhada o Git é único, então o status precisa
+         * ser refletido em todos os tenants compartilhados.
+         */
+        if ($tenant->type_installation === 'shared') {
+            $sharedRuntimeStatus = $this->runtimeStatusFor($tenant)->refresh();
+            $sharedTenants = $this->repository->where('type_installation', 'shared')->get();
+
+            foreach ($sharedTenants as $sharedTenant) {
+                $this->runtimeStatusFor($sharedTenant)->update([
+                    'git_last_version' => $sharedRuntimeStatus->git_last_version,
+                    'git_error' => $sharedRuntimeStatus->git_error,
+                ]);
+            }
+        }
+
         $runtimeStatus = $this->runtimeStatusFor($tenant)->refresh();
 
         if ($this->shouldReturnJson($request)) {
@@ -601,6 +705,8 @@ class TenantsActionsController extends Controller
                 'success' => $updated,
                 'message' => $updated ? 'GIT Pull executado com sucesso' : 'Falha ao atualizar git',
                 'status' => $this->runtimeStatusSnapshot($runtimeStatus),
+                'shared_status_updated' => $tenant->type_installation === 'shared',
+                'shared_action_type' => $tenant->type_installation === 'shared' ? 'git' : null,
             ], $updated ? 200 : 422);
         }
 
@@ -650,6 +756,8 @@ class TenantsActionsController extends Controller
                 'success' => $updated,
                 'message' => $updated ? 'Filas reiniciadas com sucesso' : 'Falha ao reiniciar as filas',
                 'status' => $this->runtimeStatusSnapshot($runtimeStatus),
+                'shared_status_updated' => $tenant->type_installation === 'shared',
+                'shared_action_type' => $tenant->type_installation === 'shared' ? 'sp' : null,
             ], $updated ? 200 : 422);
         }
 
@@ -761,6 +869,8 @@ class TenantsActionsController extends Controller
                 'success' => $updated,
                 'message' => $updated ? 'Build de Javascript executado com sucesso' : 'Falha ao buildar Javascript',
                 'status' => $this->runtimeStatusSnapshot($runtimeStatus),
+                'shared_status_updated' => $tenant->type_installation === 'shared',
+                'shared_action_type' => $tenant->type_installation === 'shared' ? 'js' : null,
             ], $updated ? 200 : 422);
         }
 
@@ -870,7 +980,7 @@ class TenantsActionsController extends Controller
                 /**
                  * Converte a resposta para um resumo simples da execução.
                  */
-                $success = (bool) ($response['success'] ?? false);
+                $success = ($response['success'] ?? false) === true;
                 $message = $response['message'] ?? ($success ? 'Tarefa aceita para processamento.' : 'Falha ao aceitar tarefa para processamento.');
 
                 /**

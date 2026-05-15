@@ -545,6 +545,69 @@
         return foundRow;
     }
 
+    function isGroupedSharedAction(actionType, installationType) {
+        /**
+         * Banco continua individual porque depende do contexto de cada tenant.
+         */
+        if (installationType !== 'shared') {
+            return false;
+        }
+
+        return actionType === 'git' || actionType === 'sp' || actionType === 'js';
+    }
+
+    function findVisibleSharedRowElements() {
+        const rows = [];
+
+        dataTable.rows({ page: 'current' }).every(function () {
+            const rowElement = $(this.node());
+            const hasSharedAction = rowElement.find('.js-tenant-action-confirm[data-tenant-installation-type="shared"]').length > 0;
+
+            /**
+             * Só atualiza linhas compartilhadas que estão visíveis na página atual.
+             */
+            if (hasSharedAction) {
+                rows.push(this.node());
+            }
+        });
+
+        return $(rows);
+    }
+
+    function updateTenantRowsStatusCell(rowElements, actionType, isSuccess, title, isProcessing) {
+        rowElements.each(function () {
+            updateTenantStatusCell($(this), actionType, isSuccess, title, isProcessing);
+        });
+    }
+
+    function updateTenantRowsActionFromSnapshot(rowElements, actionType, status) {
+        /**
+         * Sem snapshot de status não existe payload para refletir na linha.
+         */
+        if (!status) {
+            return;
+        }
+
+        const successByAction = {
+            db: status.db_last_version === 1,
+            git: status.git_last_version === 1,
+            sp: status.sp_last_version === 1,
+            js: status.js_last_version === 1,
+        };
+
+        const errorByAction = {
+            db: status.db_error,
+            git: status.git_error,
+            sp: status.sp_error,
+            js: status.js_error,
+        };
+
+        const isSuccess = successByAction[actionType] === true;
+        const title = tooltipTitleForAction(actionType, isSuccess, errorByAction[actionType]);
+
+        updateTenantRowsStatusCell(rowElements, actionType, isSuccess, title, false);
+    }
+
     function applyStatusSnapshotToRow(rowElement, status) {
         /**
          * Sem snapshot de status não existe payload para refletir na linha.
@@ -574,6 +637,7 @@
         const tenantName = trigger.data('tenant-name');
         const actionLabel = trigger.data('action-label');
         const actionType = trigger.data('action-type');
+        const installationType = trigger.data('tenant-installation-type');
         const shouldProceed = window.confirm(`Deseja mesmo ${actionLabel} no tenant ${tenantName}?`);
 
         /**
@@ -595,8 +659,10 @@
             rowElement = findRowElementByTenantId(tenantId);
         }
         const processingTitle = 'Processando ação...';
+        const shouldUpdateSharedRows = isGroupedSharedAction(actionType, installationType);
+        const targetRows = shouldUpdateSharedRows ? findVisibleSharedRowElements() : rowElement;
 
-        updateTenantStatusCell(rowElement, actionType, false, processingTitle, true);
+        updateTenantRowsStatusCell(targetRows, actionType, false, processingTitle, true);
         refreshBootstrapTooltips();
 
         $.ajax({
@@ -608,13 +674,20 @@
             },
             success: function (response) {
                 toastr.success(response.message);
+
+                if (response.shared_status_updated && response.shared_action_type === actionType) {
+                    updateTenantRowsActionFromSnapshot(targetRows, actionType, response.status);
+                    refreshBootstrapTooltips();
+                    return;
+                }
+
                 applyStatusSnapshotToRow(rowElement, response.status);
                 refreshBootstrapTooltips();
             },
             error: function (xhr) {
                 const message = ajaxErrorContent(xhr);
 
-                updateTenantStatusCell(rowElement, actionType, false, message, false);
+                updateTenantRowsStatusCell(targetRows, actionType, false, message, false);
                 refreshBootstrapTooltips();
                 openCentralErrorTab('Erro ao executar ação no tenant', message);
             }
