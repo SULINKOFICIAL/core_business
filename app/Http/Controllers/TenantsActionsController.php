@@ -67,6 +67,11 @@ class TenantsActionsController extends Controller
         return $request->ajax() || $request->wantsJson();
     }
 
+    private function tenantApiRawError(array $response): string
+    {
+        return $response['data'] ?? $response['message'] ?? 'Erro desconhecido';
+    }
+
     /**
      * Atualiza todos os bancos de dados via API
      */
@@ -378,7 +383,7 @@ class TenantsActionsController extends Controller
              * Registra a mensagem de erro
              */
             $runtimeStatus->db_last_version = false;
-            $runtimeStatus->db_error = $response['message'] ?? 'Erro desconhecido';
+            $runtimeStatus->db_error = $this->tenantApiRawError($response);
         } else {
             /**
              * Atualiza db_last_version
@@ -422,7 +427,7 @@ class TenantsActionsController extends Controller
          */
         if (!$response['success']) {
             $runtimeStatus->git_last_version = false;
-            $runtimeStatus->git_error = $response['message'] ?? 'Erro desconhecido';
+            $runtimeStatus->git_error = $this->tenantApiRawError($response);
         } else {
             $runtimeStatus->git_last_version = true;
             $runtimeStatus->git_error = null;
@@ -458,14 +463,14 @@ class TenantsActionsController extends Controller
 
         if (!$response['success']) {
             $runtimeStatus->sp_last_version = false;
-            $runtimeStatus->sp_error = $response['message'] ?? 'Erro desconhecido';
+            $runtimeStatus->sp_error = $this->tenantApiRawError($response);
         } else {
             $responseData = json_decode($response['data'] ?? null, true);
             $apiSuccess = is_array($responseData) ? (bool) ($responseData['success'] ?? true) : true;
 
             if (!$apiSuccess) {
                 $runtimeStatus->sp_last_version = false;
-                $runtimeStatus->sp_error = $responseData['error'] ?? $responseData['message'] ?? 'Erro desconhecido';
+                $runtimeStatus->sp_error = $response['data'] ?? 'Erro desconhecido';
             } else {
                 $runtimeStatus->sp_last_version = true;
                 $runtimeStatus->sp_error = null;
@@ -678,13 +683,13 @@ class TenantsActionsController extends Controller
 
         if (!$response['success']) {
             $runtimeStatus->js_last_version = false;
-            $runtimeStatus->js_error = $response['message'] ?? 'Erro desconhecido';
+            $runtimeStatus->js_error = $this->tenantApiRawError($response);
             $runtimeStatus->save();
 
             Log::warning('Falha ao executar npm build no cliente.', [
                 'tenant_id' => $tenant->id,
                 'client_name' => $tenant->name,
-                'message' => $response['message'] ?? 'Erro desconhecido',
+                'message' => $runtimeStatus->js_error,
             ]);
 
             return false;
@@ -703,13 +708,13 @@ class TenantsActionsController extends Controller
 
         if (!$apiSuccess) {
             $runtimeStatus->js_last_version = false;
-            $runtimeStatus->js_error = $responseData['error'] ?? $responseData['message'] ?? 'Erro desconhecido';
+            $runtimeStatus->js_error = $response['data'] ?? 'Erro desconhecido';
             $runtimeStatus->save();
 
             Log::warning('API do tenant retornou erro no npm build.', [
                 'tenant_id' => $tenant->id,
                 'client_name' => $tenant->name,
-                'error' => $responseData['error'] ?? $responseData['message'] ?? 'Erro desconhecido',
+                'error' => $runtimeStatus->js_error,
             ]);
 
             return false;

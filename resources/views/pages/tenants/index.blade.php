@@ -353,8 +353,17 @@
     function buildTenantStatusIcon(isSuccess, title, isProcessing) {
         const iconClass = isSuccess ? 'fa-circle-check text-success' : 'fa-circle-xmark text-danger';
         const processingClass = isProcessing ? 'tenant-status-processing' : '';
+        const safeTitle = escapeTenantStatusTitle(title);
 
-        return `<i class="fa-solid ${iconClass} ${processingClass}" data-bs-toggle="tooltip" data-bs-placement="top" title="${title}"></i>`;
+        return `<i class="fa-solid ${iconClass} ${processingClass}" data-bs-toggle="tooltip" data-bs-placement="top" title="${safeTitle}"></i>`;
+    }
+
+    function escapeTenantStatusTitle(title) {
+        /**
+         * O erro real pode vir com aspas, tags ou saída de terminal.
+         * Converter para texto antes de montar o HTML preserva o tooltip.
+         */
+        return $('<div>').text(title || 'Erro desconhecido').html();
     }
 
     function columnIndexByActionType(actionType) {
