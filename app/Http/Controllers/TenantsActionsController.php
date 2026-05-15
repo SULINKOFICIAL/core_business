@@ -69,7 +69,7 @@ class TenantsActionsController extends Controller
 
     private function tenantApiRawError(array $response): string
     {
-        return $response['data'] ?? $response['message'] ?? 'Erro desconhecido';
+        return $response['data'] ?? $response['message'] ?? $response ?? 'Erro desconhecido';
     }
 
     /**
