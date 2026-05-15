@@ -370,6 +370,13 @@ if (! function_exists('header_menu_items')) {
                 ],
                 'children' => [
                     [
+                        'label' => 'Atualizar Sistemas',
+                        'route' => 'systems.update.all.systems',
+                        'active_routes' => ['systems.update.all.systems'],
+                        'open_modal' => 'update-systems',
+                        'icon' => ['class' => 'fa-solid fa-rotate fs-5'],
+                    ],
+                    [
                         'label' => 'Sincronizar Planos',
                         'route' => 'system.settings.subscriptions.sync.edit',
                         'active_routes' => ['system.settings.subscriptions.sync.edit'],
@@ -393,13 +400,6 @@ if (! function_exists('header_menu_items')) {
                         'active_routes' => ['systems.run.scheduled.now', 'systems.run.scheduled.now.tenant'],
                         'confirm_message' => 'Deseja mesmo disparar as tarefas para os clientes ativos?',
                         'icon' => ['class' => 'fa-solid fa-clock-rotate-left fs-5'],
-                    ],
-                    [
-                        'label' => 'Atualizar Sistemas',
-                        'route' => 'systems.update.all.systems',
-                        'active_routes' => ['systems.update.all.systems'],
-                        'open_modal' => 'update-systems',
-                        'icon' => ['class' => 'fa-solid fa-rotate fs-5'],
                     ],
                 ],
             ],
