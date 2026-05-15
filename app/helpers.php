@@ -439,7 +439,7 @@ if (! function_exists('header_menu_items')) {
                         'label' => 'Atualizar Central',
                         'route' => 'system.settings.core.update',
                         'active_routes' => ['system.settings.core.update'],
-                        'confirm_message' => 'Deseja atualizar o core_business agora? Isso pode executar git pull, composer install e migrations.',
+                        'confirm_message' => 'Deseja atualizar o core_business agora? Isso pode executar git pull e migrations.',
                         'icon' => ['class' => 'fa-solid fa-rotate fs-5'],
                     ],
                 ],

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Artisan;
 use Symfony\Component\Process\Process;
 use Throwable;
 
@@ -20,8 +21,8 @@ class CoreBusinessUpdateService
             $results[] = $result;
 
             /**
-             * Interrompe no primeiro erro para evitar continuar com código,
-             * dependências ou banco em estados parcialmente incompatíveis.
+             * Interrompe no primeiro erro para evitar continuar com código
+             * ou banco em estados parcialmente incompatíveis.
              */
             if (!$result['success']) {
                 return [
@@ -51,18 +52,21 @@ class CoreBusinessUpdateService
                 'timeout' => 300,
             ],
             [
-                'label' => 'Instalar dependências PHP',
-                'command' => ['composer', 'install', '--no-interaction', '--prefer-dist', '--optimize-autoloader'],
-                'timeout' => 900,
-            ],
-            [
                 'label' => 'Rodar migrations',
-                'command' => [PHP_BINARY, 'artisan', 'migrate', '--force'],
+                'artisan' => [
+                    'command' => 'migrate',
+                    'parameters' => [
+                        '--force' => true,
+                    ],
+                ],
                 'timeout' => 600,
             ],
             [
                 'label' => 'Limpar cache da aplicação',
-                'command' => [PHP_BINARY, 'artisan', 'optimize:clear'],
+                'artisan' => [
+                    'command' => 'optimize:clear',
+                    'parameters' => [],
+                ],
                 'timeout' => 300,
             ],
         ];
@@ -74,6 +78,14 @@ class CoreBusinessUpdateService
     private function runStep(array $step): array
     {
         try {
+            /**
+             * Comandos Artisan rodam pelo próprio Laravel, igual ao fluxo dos tenants.
+             * Isso evita chamar php-fpm por engano quando PHP_BINARY vem do FPM.
+             */
+            if (!empty($step['artisan'])) {
+                return $this->runArtisanStep($step);
+            }
+
             $process = new Process($step['command'], base_path());
             $process->setTimeout($step['timeout']);
             $process->run();
@@ -94,6 +106,25 @@ class CoreBusinessUpdateService
                 'error' => $exception->getMessage(),
             ];
         }
+    }
+
+    /**
+     * Executa uma etapa Artisan sem depender do binário PHP do servidor.
+     */
+    private function runArtisanStep(array $step): array
+    {
+        $exitCode = Artisan::call(
+            $step['artisan']['command'],
+            $step['artisan']['parameters']
+        );
+
+        return [
+            'label' => $step['label'],
+            'success' => $exitCode === 0,
+            'exit_code' => $exitCode,
+            'output' => $this->normalizeOutput(Artisan::output()),
+            'error' => '',
+        ];
     }
 
     /**

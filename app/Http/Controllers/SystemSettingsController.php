@@ -301,29 +301,6 @@ class SystemSettingsController extends Controller
 
         return redirect()
             ->route('dashboard')
-            ->with('message', $this->formatCoreBusinessUpdateMessage($result));
-    }
-
-    /**
-     * Resume o resultado para o flash sem expor saída excessiva dos comandos.
-     */
-    private function formatCoreBusinessUpdateMessage(array $result): string
-    {
-        $message = $result['message'];
-        $results = $result['results'] ?? [];
-        $lastResult = end($results);
-
-        /**
-         * Quando a rotina falha, inclui a saída mais útil da etapa final.
-         */
-        if (!$result['success'] && is_array($lastResult)) {
-            $details = $lastResult['error'] ?: $lastResult['output'];
-
-            if (!empty($details)) {
-                $message .= ' Detalhe: ' . $details;
-            }
-        }
-
-        return $message;
+            ->with('message', $result['message']);
     }
 }
