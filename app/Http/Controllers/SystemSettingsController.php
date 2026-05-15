@@ -286,14 +286,22 @@ class SystemSettingsController extends Controller
     /**
      * Atualiza a própria central core_business a partir do menu de configuração.
      */
-    public function updateCoreBusiness(): RedirectResponse
+    public function updateCoreBusiness(): RedirectResponse|View
     {
         $result = $this->coreBusinessUpdateService->run();
-        $flashKey = $result['success'] ? 'message' : 'error';
+
+        /**
+         * Falha operacional precisa abrir em tela própria para exibir saída bruta.
+         */
+        if (!$result['success']) {
+            return view('pages.system.core-update-result', [
+                'result' => $result,
+            ]);
+        }
 
         return redirect()
             ->route('dashboard')
-            ->with($flashKey, $this->formatCoreBusinessUpdateMessage($result));
+            ->with('message', $this->formatCoreBusinessUpdateMessage($result));
     }
 
     /**
