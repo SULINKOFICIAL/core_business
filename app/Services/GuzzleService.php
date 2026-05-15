@@ -42,14 +42,13 @@ class GuzzleService
             $options['json'] = $data;
         }
 
-        // Protocolo SSL
-        $protocol = env('APP_ENV') === 'local' ? 'http' : 'https';
-
         try {
 
             // Monta URL
             if($tenant->domains->count() > 0){
-                $url = "$protocol://{$tenant->domains[0]->domain}/$type/$url";
+                $domain = $tenant->domains[0]->domain;
+                $protocol = $this->protocolForDomain($domain);
+                $url = "$protocol://{$domain}/$type/$url";
             } else {
                 return [
                     'success' => false,
@@ -137,8 +136,6 @@ class GuzzleService
 
     public function pool($method, $url, $tenant, $payloads)
     {
-        $protocol = env('APP_ENV') === 'local' ? 'http' : 'https';
-
         if ($tenant->domains->count() == 0) {
             return [
                 'success' => false,
@@ -146,7 +143,9 @@ class GuzzleService
             ];
         }
 
-        $baseUrl = "$protocol://{$tenant->domains[0]->domain}/api/";
+        $domain = $tenant->domains[0]->domain;
+        $protocol = $this->protocolForDomain($domain);
+        $baseUrl = "$protocol://{$domain}/api/";
 
         $guzzle = new Guzzle([
             'base_uri' => $baseUrl,
@@ -174,5 +173,22 @@ class GuzzleService
         $pool->promise()->wait();
 
         return ['success' => true];
+    }
+
+    /**
+     * Define protocolo por domínio, não pelo ambiente da central.
+     * A central local também pode chamar tenants reais, que precisam de HTTPS.
+     */
+    private function protocolForDomain($domain)
+    {
+        if ($domain === '127.0.0.1' || $domain === 'localhost') {
+            return 'http';
+        }
+
+        if (str_starts_with($domain, '127.')) {
+            return 'http';
+        }
+
+        return 'https';
     }
 }
