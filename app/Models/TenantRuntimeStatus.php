@@ -17,12 +17,15 @@ class TenantRuntimeStatus extends Model
         'git_error',
         'sp_last_version',
         'sp_error',
+        'js_last_version',
+        'js_error',
     ];
 
     protected $casts = [
         'db_last_version' => 'boolean',
         'git_last_version' => 'boolean',
         'sp_last_version' => 'boolean',
+        'js_last_version' => 'boolean',
     ];
 
     public function tenant(): BelongsTo

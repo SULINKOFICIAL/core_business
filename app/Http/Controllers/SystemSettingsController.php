@@ -4,12 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Mail\SimpleEmailMailable;
 use App\Models\Tenant;
+use App\Services\CpanelDomainLookupService;
+use App\Services\CoreBusinessUpdateService;
 use App\Services\EmailService;
 use App\Services\MailSettingsService;
 use App\Services\ProvisioningIntegrityService;
 use App\Services\SystemProblemNotificationService;
 use App\Services\TenantConfigurationSyncService;
 use App\Services\WhatsAppSettingsService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\View\View;
@@ -27,6 +30,8 @@ class SystemSettingsController extends Controller
         private readonly SystemProblemNotificationService $systemProblemNotificationService,
         private readonly TenantConfigurationSyncService $tenantConfigurationSyncService,
         private readonly ProvisioningIntegrityService $provisioningIntegrityService,
+        private readonly CpanelDomainLookupService $cpanelDomainLookupService,
+        private readonly CoreBusinessUpdateService $coreBusinessUpdateService,
     ) {
     }
 
@@ -69,6 +74,28 @@ class SystemSettingsController extends Controller
     {
         return view('pages.system.settings-provisioning-integrity', [
             'integrity' => $this->provisioningIntegrityService->check(),
+        ]);
+    }
+
+    /**
+     * Consulta se um domínio existe na conta cPanel configurada.
+     */
+    public function cpanelDomainLookup(Request $request): View
+    {
+        $lookup = null;
+        $domain = $request->input('domain');
+
+        if ($domain !== null && $domain !== '') {
+            $data = $request->validate([
+                'domain' => ['required', 'string', 'max:255'],
+            ]);
+
+            $lookup = $this->cpanelDomainLookupService->find($data['domain']);
+        }
+
+        return view('pages.system.settings-cpanel-domain-lookup', [
+            'domain' => $domain,
+            'lookup' => $lookup,
         ]);
     }
 
@@ -254,5 +281,41 @@ class SystemSettingsController extends Controller
         return redirect()
             ->route('system.settings.subscriptions.sync.edit')
             ->with('message', 'Sincronização concluída com sucesso para ' . $syncedCount . ' tenant(s).');
+    }
+
+    /**
+     * Atualiza a própria central core_business a partir do menu de configuração.
+     */
+    public function updateCoreBusiness(): RedirectResponse
+    {
+        $result = $this->coreBusinessUpdateService->run();
+        $flashKey = $result['success'] ? 'message' : 'error';
+
+        return redirect()
+            ->route('dashboard')
+            ->with($flashKey, $this->formatCoreBusinessUpdateMessage($result));
+    }
+
+    /**
+     * Resume o resultado para o flash sem expor saída excessiva dos comandos.
+     */
+    private function formatCoreBusinessUpdateMessage(array $result): string
+    {
+        $message = $result['message'];
+        $results = $result['results'] ?? [];
+        $lastResult = end($results);
+
+        /**
+         * Quando a rotina falha, inclui a saída mais útil da etapa final.
+         */
+        if (!$result['success'] && is_array($lastResult)) {
+            $details = $lastResult['error'] ?: $lastResult['output'];
+
+            if (!empty($details)) {
+                $message .= ' Detalhe: ' . $details;
+            }
+        }
+
+        return $message;
     }
 }

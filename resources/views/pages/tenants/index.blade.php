@@ -90,6 +90,7 @@
                     <th class="text-center px-0">DB</th>
                     <th class="text-center px-0">GIT</th>
                     <th class="text-center px-0">SP</th>
+                    <th class="text-center px-0">JS</th>
                     <th class="text-center px-0">Status</th>
                     <th class="text-end pe-12 w-100px">Ações</th>
                 </tr>
@@ -185,8 +186,9 @@
             { targets: 4, data: "bank" },
             { targets: 5, data: "git" },
             { targets: 6, data: "sp" },
-            { targets: 7, data: "status" },
-            { targets: 8, data: "actions", orderable: false },
+            { targets: 7, data: "js" },
+            { targets: 8, data: "status" },
+            { targets: 9, data: "actions", orderable: false },
         ],
         language: {
             "search": "Pesquisar:",
@@ -221,6 +223,10 @@
             },
             {   
                 targets: 8,
+                className: 'text-center',
+            },
+            {   
+                targets: 9,
                 className: 'text-end',
             },
         ],
@@ -353,18 +359,23 @@
 
     function columnIndexByActionType(actionType) {
         /**
-         * Mapeia tipo de ação para índice de coluna do DataTable.
+         * Mapeia cada ação para a coluna visual correspondente.
+         * A tabela começa em ID, por isso DB/GIT/SP/JS ficam nas posições 4/5/6/7.
          */
         if (actionType === 'db') {
-            return 3;
-        }
-
-        if (actionType === 'git') {
             return 4;
         }
 
-        if (actionType === 'sp') {
+        if (actionType === 'git') {
             return 5;
+        }
+
+        if (actionType === 'sp') {
+            return 6;
+        }
+
+        if (actionType === 'js') {
+            return 7;
         }
 
         return null;
@@ -382,6 +393,10 @@
 
         if (actionType === 'sp') {
             return isSuccess ? 'Supervisor atualizado' : errorMessage;
+        }
+
+        if (actionType === 'js') {
+            return isSuccess ? 'Javascript atualizado' : errorMessage;
         }
 
         return errorMessage;
@@ -453,10 +468,12 @@
         const dbSuccess = status.db_last_version === 1;
         const gitSuccess = status.git_last_version === 1;
         const spSuccess = status.sp_last_version === 1;
+        const jsSuccess = status.js_last_version === 1;
 
         updateTenantStatusCell(rowElement, 'db', dbSuccess, tooltipTitleForAction('db', dbSuccess, status.db_error), false);
         updateTenantStatusCell(rowElement, 'git', gitSuccess, tooltipTitleForAction('git', gitSuccess, status.git_error), false);
         updateTenantStatusCell(rowElement, 'sp', spSuccess, tooltipTitleForAction('sp', spSuccess, status.sp_error), false);
+        updateTenantStatusCell(rowElement, 'js', jsSuccess, tooltipTitleForAction('js', jsSuccess, status.js_error), false);
     }
 
     /**

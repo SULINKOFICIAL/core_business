@@ -152,7 +152,7 @@ if (! function_exists('header_menu_items')) {
         return [
             [
                 'type' => 'link',
-                'label' => 'Dashboard',
+                'label' => 'Início',
                 'route' => 'dashboard',
                 'active_routes' => ['dashboard', 'index'],
             ],
@@ -261,25 +261,6 @@ if (! function_exists('header_menu_items')) {
             ],
             [
                 'type' => 'submenu',
-                'label' => 'Notícias',
-                'active_routes' => ['news.index', 'news.categories.index'],
-                'children' => [
-                    [
-                        'label' => 'Notícias cadastradas',
-                        'route' => 'news.index',
-                        'active_routes' => ['news.index'],
-                        'icon' => ['class' => 'fa-solid fa-newspaper fs-5'],
-                    ],
-                    [
-                        'label' => 'Categorias',
-                        'route' => 'news.categories.index',
-                        'active_routes' => ['news.categories.index'],
-                        'icon' => ['class' => 'fa-solid fa-folder-tree fs-5'],
-                    ],
-                ],
-            ],
-            [
-                'type' => 'submenu',
                 'label' => 'Produto',
                 'active_routes' => [
                     'packages.index',
@@ -290,6 +271,8 @@ if (! function_exists('header_menu_items')) {
                     'modules.categories.index',
                     'groups.index',
                     'resources.index',
+                    'news.index',
+                    'news.categories.index',
                 ],
                 'children' => [
                     [
@@ -321,6 +304,18 @@ if (! function_exists('header_menu_items')) {
                         'route' => 'systems.get.resources',
                         'active_routes' => ['systems.get.resources'],
                         'icon' => ['class' => 'fa-solid fa-code-compare fs-5'],
+                    ],
+                    [
+                        'label' => 'Notícias',
+                        'route' => 'news.index',
+                        'active_routes' => ['news.index'],
+                        'icon' => ['class' => 'fa-solid fa-newspaper fs-5'],
+                    ],
+                    [
+                        'label' => 'Categorias de Notícias',
+                        'route' => 'news.categories.index',
+                        'active_routes' => ['news.categories.index'],
+                        'icon' => ['class' => 'fa-solid fa-folder-tree fs-5'],
                     ],
                 ],
             ],
@@ -364,6 +359,52 @@ if (! function_exists('header_menu_items')) {
             ],
             [
                 'type' => 'submenu',
+                'label' => 'Ferramentas',
+                'active_routes' => [
+                    'system.settings.subscriptions.sync.edit',
+                    'system.settings.provisioning.integrity',
+                    'system.settings.provisioning.domain.lookup',
+                    'systems.run.scheduled.now',
+                    'systems.run.scheduled.now.tenant',
+                    'systems.update.all.systems',
+                ],
+                'children' => [
+                    [
+                        'label' => 'Sincronizar Planos',
+                        'route' => 'system.settings.subscriptions.sync.edit',
+                        'active_routes' => ['system.settings.subscriptions.sync.edit'],
+                        'icon' => ['class' => 'fa-solid fa-repeat fs-5'],
+                    ],
+                    [
+                        'label' => 'Integridade',
+                        'route' => 'system.settings.provisioning.integrity',
+                        'active_routes' => ['system.settings.provisioning.integrity'],
+                        'icon' => ['class' => 'fa-solid fa-shield-halved fs-5'],
+                    ],
+                    [
+                        'label' => 'Domínio cPanel',
+                        'route' => 'system.settings.provisioning.domain.lookup',
+                        'active_routes' => ['system.settings.provisioning.domain.lookup'],
+                        'icon' => ['class' => 'fa-solid fa-globe fs-5'],
+                    ],
+                    [
+                        'label' => 'Disparar Tarefas',
+                        'route' => 'systems.run.scheduled.now',
+                        'active_routes' => ['systems.run.scheduled.now', 'systems.run.scheduled.now.tenant'],
+                        'confirm_message' => 'Deseja mesmo disparar as tarefas para os clientes ativos?',
+                        'icon' => ['class' => 'fa-solid fa-clock-rotate-left fs-5'],
+                    ],
+                    [
+                        'label' => 'Atualizar Sistemas',
+                        'route' => 'systems.update.all.systems',
+                        'active_routes' => ['systems.update.all.systems'],
+                        'open_modal' => 'update-systems',
+                        'icon' => ['class' => 'fa-solid fa-rotate fs-5'],
+                    ],
+                ],
+            ],
+            [
+                'type' => 'submenu',
                 'label' => 'Configuração',
                 'active_routes' => [
                     'users.index',
@@ -371,11 +412,7 @@ if (! function_exists('header_menu_items')) {
                     'users.edit',
                     'system.settings.mail.edit',
                     'system.settings.whatsapp.edit',
-                    'system.settings.subscriptions.sync.edit',
-                    'system.settings.provisioning.integrity',
-                    'systems.run.scheduled.now',
-                    'systems.run.scheduled.now.tenant',
-                    'systems.update.all.systems',
+                    'system.settings.core.update',
                 ],
                 'children' => [
                     [
@@ -399,29 +436,10 @@ if (! function_exists('header_menu_items')) {
                         'icon' => ['class' => 'fa-solid fa-gear fs-5'],
                     ],
                     [
-                        'label' => 'Sincronizar Planos',
-                        'route' => 'system.settings.subscriptions.sync.edit',
-                        'active_routes' => ['system.settings.subscriptions.sync.edit'],
-                        'icon' => ['class' => 'fa-solid fa-repeat fs-5'],
-                    ],
-                    [
-                        'label' => 'Integridade',
-                        'route' => 'system.settings.provisioning.integrity',
-                        'active_routes' => ['system.settings.provisioning.integrity'],
-                        'icon' => ['class' => 'fa-solid fa-shield-halved fs-5'],
-                    ],
-                    [
-                        'label' => 'Disparar Tarefas',
-                        'route' => 'systems.run.scheduled.now',
-                        'active_routes' => ['systems.run.scheduled.now', 'systems.run.scheduled.now.tenant'],
-                        'confirm_message' => 'Deseja mesmo disparar as tarefas para os clientes ativos?',
-                        'icon' => ['class' => 'fa-solid fa-clock-rotate-left fs-5'],
-                    ],
-                    [
-                        'label' => 'Atualizar Sistemas',
-                        'route' => 'systems.update.all.systems',
-                        'active_routes' => ['systems.update.all.systems'],
-                        'open_modal' => 'update-systems',
+                        'label' => 'Atualizar Central',
+                        'route' => 'system.settings.core.update',
+                        'active_routes' => ['system.settings.core.update'],
+                        'confirm_message' => 'Deseja atualizar o core_business agora? Isso pode executar git pull, composer install e migrations.',
                         'icon' => ['class' => 'fa-solid fa-rotate fs-5'],
                     ],
                 ],

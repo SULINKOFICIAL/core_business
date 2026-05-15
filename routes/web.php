@@ -80,8 +80,8 @@ Route::middleware(['auth'])->group(function () {
          * Rotas para configuração e teste de SMTP.
          */
         Route::prefix('sistema/smtp')->name('mail.')->group(function () {
-            Route::get('/', [SystemSettingsController::class, 'editMail'])->name('edit');
-            Route::put('/', [SystemSettingsController::class, 'updateMail'])->name('update');
+            Route::get('/',              [SystemSettingsController::class, 'editMail'])->name('edit');
+            Route::put('/',              [SystemSettingsController::class, 'updateMail'])->name('update');
             Route::post('/testar-email', [SystemSettingsController::class, 'sendTest'])->name('test');
             Route::get('/preview-email', [SystemSettingsController::class, 'preview'])->name('preview');
         });
@@ -90,16 +90,16 @@ Route::middleware(['auth'])->group(function () {
          * Rotas para configuração e teste de WhatsApp.
          */
         Route::prefix('sistema/whatsapp')->name('whatsapp.')->group(function () {
-            Route::get('/', [SystemSettingsController::class, 'editWhatsApp'])->name('edit');
-            Route::put('/', [SystemSettingsController::class, 'updateWhatsApp'])->name('update');
-            Route::post('/testar', [SystemSettingsController::class, 'sendWhatsAppTest'])->name('test');
+            Route::get('/',         [SystemSettingsController::class, 'editWhatsApp'])->name('edit');
+            Route::put('/',         [SystemSettingsController::class, 'updateWhatsApp'])->name('update');
+            Route::post('/testar',  [SystemSettingsController::class, 'sendWhatsAppTest'])->name('test');
         });
 
         /**
          * Rotas para sincronização em massa de planos.
          */
         Route::prefix('sistema/assinaturas')->name('subscriptions.sync.')->group(function () {
-            Route::get('/', [SystemSettingsController::class, 'editSubscriptionsSync'])->name('edit');
+            Route::get('/',             [SystemSettingsController::class, 'editSubscriptionsSync'])->name('edit');
             Route::post('/sincronizar', [SystemSettingsController::class, 'syncSubscriptionsInBulk'])->name('run');
         });
 
@@ -107,8 +107,14 @@ Route::middleware(['auth'])->group(function () {
          * Rotas para diagnóstico do provisionamento de tenants.
          */
         Route::prefix('sistema/provisionamento')->name('provisioning.')->group(function () {
-            Route::get('/integridade', [SystemSettingsController::class, 'provisioningIntegrity'])->name('integrity');
+            Route::get('/integridade',       [SystemSettingsController::class, 'provisioningIntegrity'])->name('integrity');
+            Route::get('/consultar-dominio', [SystemSettingsController::class, 'cpanelDomainLookup'])->name('domain.lookup');
         });
+
+        /**
+         * Rota para atualizar a própria central core_business.
+         */
+        Route::get('/sistema/central/atualizar', [SystemSettingsController::class, 'updateCoreBusiness'])->name('core.update');
     });
 
     /**
@@ -116,20 +122,20 @@ Route::middleware(['auth'])->group(function () {
      */
     Route::prefix('instalacoes')->group(function () {
         Route::name('tenants.')->group(function () {
-            Route::get('/',                             [TenantController::class, 'index'])->name('index');
-            Route::get('/processar',                    [TenantProcessingController::class, 'process'])->name('process');
-            Route::get('/adicionar',                    [TenantController::class, 'create'])->name('create');
-            Route::post('/adicionar',                   [TenantController::class, 'store'])->name('store');
-            Route::get('/visualizar/{id}',              [TenantController::class, 'show'])->name('show');
-            Route::get('/visualizar/dados-api/{id}',    [TenantController::class, 'apiData'])->name('api.data');
-            Route::get('/visualizar/plano-manual-dados/{id}', [TenantManualPlanController::class, 'editData'])->name('plan.manual.edit-data');
-            Route::put('/visualizar/plano-manual-aplicar/{id}', [TenantManualPlanController::class, 'apply'])->name('plan.manual.apply');
-            Route::get('/editar/{id}',                  [TenantController::class, 'edit'])->name('edit');
-            Route::put('/editar/{id}',                  [TenantController::class, 'update'])->name('update');
-            Route::get('/desabilitar/{id}',             [TenantController::class, 'destroy'])->name('destroy');       
-            Route::get('/dominios',                     [TenantDomainController::class, 'index'])->name('domains.index');
-            Route::get('/dominios/processar',           [TenantDomainProcessingController::class, 'process'])->name('domains.process');
-            Route::post('/dominios/adicionar',          [TenantDomainController::class, 'store'])->name('domains.store');
+            Route::get('/',                                      [TenantController::class, 'index'])->name('index');
+            Route::get('/processar',                             [TenantProcessingController::class, 'process'])->name('process');
+            Route::get('/adicionar',                             [TenantController::class, 'create'])->name('create');
+            Route::post('/adicionar',                            [TenantController::class, 'store'])->name('store');
+            Route::get('/visualizar/{id}',                       [TenantController::class, 'show'])->name('show');
+            Route::get('/visualizar/dados-api/{id}',             [TenantController::class, 'apiData'])->name('api.data');
+            Route::get('/visualizar/plano-manual-dados/{id}',    [TenantManualPlanController::class, 'editData'])->name('plan.manual.edit-data');
+            Route::put('/visualizar/plano-manual-aplicar/{id}',  [TenantManualPlanController::class, 'apply'])->name('plan.manual.apply');
+            Route::get('/editar/{id}',                           [TenantController::class, 'edit'])->name('edit');
+            Route::put('/editar/{id}',                           [TenantController::class, 'update'])->name('update');
+            Route::get('/desabilitar/{id}',                      [TenantController::class, 'destroy'])->name('destroy');
+            Route::get('/dominios',                              [TenantDomainController::class, 'index'])->name('domains.index');
+            Route::get('/dominios/processar',                    [TenantDomainProcessingController::class, 'process'])->name('domains.process');
+            Route::post('/dominios/adicionar',                   [TenantDomainController::class, 'store'])->name('domains.store');
             
 
             /**
@@ -212,17 +218,17 @@ Route::middleware(['auth'])->group(function () {
      */
     Route::prefix('modulos')->group(function () {
         Route::name('modules.')->group(function () {
-            Route::get('/',                 [ModuleController::class, 'index'])->name('index');
-            Route::get('/importacao-em-massa', [ModuleBulkController::class, 'bulkPage'])->name('bulk.page');
-            Route::get('/modelo-importacao-json', [ModuleBulkController::class, 'bulkTemplate'])->name('bulk.template');
-            Route::post('/importacao-json', [ModuleBulkController::class, 'bulkImport'])->name('bulk.import');
-            Route::get('/atualizar-precos', [ModuleController::class, 'editPrices'])->name('prices.edit');
-            Route::put('/atualizar-precos', [ModuleController::class, 'updatePrices'])->name('prices.update');
-            Route::get('/adicionar',        [ModuleController::class, 'create'])->name('create');
-            Route::post('/adicionar',       [ModuleController::class, 'store'])->name('store');
-            Route::get('/editar/{id}',      [ModuleController::class, 'edit'])->name('edit');
-            Route::put('/editar/{id}',      [ModuleController::class, 'update'])->name('update');
-            Route::get('/desabilitar/{id}', [ModuleController::class, 'destroy'])->name('destroy');
+            Route::get('/',                         [ModuleController::class, 'index'])->name('index');
+            Route::get('/importacao-em-massa',      [ModuleBulkController::class, 'bulkPage'])->name('bulk.page');
+            Route::get('/modelo-importacao-json',   [ModuleBulkController::class, 'bulkTemplate'])->name('bulk.template');
+            Route::post('/importacao-json',         [ModuleBulkController::class, 'bulkImport'])->name('bulk.import');
+            Route::get('/atualizar-precos',         [ModuleController::class, 'editPrices'])->name('prices.edit');
+            Route::put('/atualizar-precos',         [ModuleController::class, 'updatePrices'])->name('prices.update');
+            Route::get('/adicionar',                [ModuleController::class, 'create'])->name('create');
+            Route::post('/adicionar',               [ModuleController::class, 'store'])->name('store');
+            Route::get('/editar/{id}',              [ModuleController::class, 'edit'])->name('edit');
+            Route::put('/editar/{id}',              [ModuleController::class, 'update'])->name('update');
+            Route::get('/desabilitar/{id}',         [ModuleController::class, 'destroy'])->name('destroy');
 
             /**
              * Rotas para gerenciamento das categorias de módulos.
@@ -275,11 +281,11 @@ Route::middleware(['auth'])->group(function () {
      */
     Route::prefix('pedidos')->group(function () {
         Route::name('orders.')->group(function () {
-            Route::get('/',                 [OrderController::class, 'index'])->name('index');
-            Route::get('/processar',        [OrderProcessingController::class, 'process'])->name('process');
-            Route::get('/visualizar/{id}',  [OrderController::class, 'show'])->name('show');
+            Route::get('/',                                     [OrderController::class, 'index'])->name('index');
+            Route::get('/processar',                            [OrderProcessingController::class, 'process'])->name('process');
+            Route::get('/visualizar/{id}',                      [OrderController::class, 'show'])->name('show');
             Route::get('/reprocessar-assinatura-pagarme/{id}',  [OrderController::class, 'reprocessSubscription'])->name('reprocess.subscription');
-            Route::get('/cancelar-em-andamento', [OrderController::class, 'cancelDrafts'])->name('cancel.drafts');
+            Route::get('/cancelar-em-andamento',                [OrderController::class, 'cancelDrafts'])->name('cancel.drafts');
         });
     });
 
@@ -288,12 +294,12 @@ Route::middleware(['auth'])->group(function () {
      */
     Route::prefix('cupons')->group(function () {
         Route::name('coupons.')->group(function () {
-            Route::get('/', [CouponController::class, 'index'])->name('index');
-            Route::get('/processar', [CouponProcessingController::class, 'process'])->name('process');
-            Route::get('/adicionar', [CouponController::class, 'create'])->name('create');
-            Route::post('/adicionar', [CouponController::class, 'store'])->name('store');
-            Route::get('/editar/{id}', [CouponController::class, 'edit'])->name('edit');
-            Route::put('/editar/{id}', [CouponController::class, 'update'])->name('update');
+            Route::get('/',                 [CouponController::class, 'index'])->name('index');
+            Route::get('/processar',        [CouponProcessingController::class, 'process'])->name('process');
+            Route::get('/adicionar',        [CouponController::class, 'create'])->name('create');
+            Route::post('/adicionar',       [CouponController::class, 'store'])->name('store');
+            Route::get('/editar/{id}',      [CouponController::class, 'edit'])->name('edit');
+            Route::put('/editar/{id}',      [CouponController::class, 'update'])->name('update');
             Route::get('/desabilitar/{id}', [CouponController::class, 'destroy'])->name('destroy');
         });
     });
@@ -303,11 +309,11 @@ Route::middleware(['auth'])->group(function () {
      */
     Route::prefix('usuarios-adicionais')->group(function () {
         Route::name('additional.users.')->group(function () {
-            Route::get('/', [AdditionalUserController::class, 'index'])->name('index');
-            Route::get('/adicionar', [AdditionalUserController::class, 'create'])->name('create');
-            Route::post('/adicionar', [AdditionalUserController::class, 'store'])->name('store');
-            Route::get('/editar/{id}', [AdditionalUserController::class, 'edit'])->name('edit');
-            Route::put('/editar/{id}', [AdditionalUserController::class, 'update'])->name('update');
+            Route::get('/',                 [AdditionalUserController::class, 'index'])->name('index');
+            Route::get('/adicionar',        [AdditionalUserController::class, 'create'])->name('create');
+            Route::post('/adicionar',       [AdditionalUserController::class, 'store'])->name('store');
+            Route::get('/editar/{id}',      [AdditionalUserController::class, 'edit'])->name('edit');
+            Route::put('/editar/{id}',      [AdditionalUserController::class, 'update'])->name('update');
             Route::get('/desabilitar/{id}', [AdditionalUserController::class, 'destroy'])->name('destroy');
         });
     });
@@ -317,11 +323,11 @@ Route::middleware(['auth'])->group(function () {
      */
     Route::prefix('armazenamentos-adicionais')->group(function () {
         Route::name('additional.storages.')->group(function () {
-            Route::get('/', [AdditionalStorageController::class, 'index'])->name('index');
-            Route::get('/adicionar', [AdditionalStorageController::class, 'create'])->name('create');
-            Route::post('/adicionar', [AdditionalStorageController::class, 'store'])->name('store');
-            Route::get('/editar/{id}', [AdditionalStorageController::class, 'edit'])->name('edit');
-            Route::put('/editar/{id}', [AdditionalStorageController::class, 'update'])->name('update');
+            Route::get('/',                 [AdditionalStorageController::class, 'index'])->name('index');
+            Route::get('/adicionar',        [AdditionalStorageController::class, 'create'])->name('create');
+            Route::post('/adicionar',       [AdditionalStorageController::class, 'store'])->name('store');
+            Route::get('/editar/{id}',      [AdditionalStorageController::class, 'edit'])->name('edit');
+            Route::put('/editar/{id}',      [AdditionalStorageController::class, 'update'])->name('update');
             Route::get('/desabilitar/{id}', [AdditionalStorageController::class, 'destroy'])->name('destroy');
         });
     });
@@ -432,6 +438,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/atualizar-banco/{id}',              [TenantsActionsController::class, 'updateDatabaseManual'])->name('update.database');
             Route::get('/atualizar-git/{id}',                [TenantsActionsController::class, 'updateGitManual'])->name('update.git');
             Route::get('/reiniciar-filas/{id}',              [TenantsActionsController::class, 'updateSupervisorManual'])->name('update.supervisor');
+            Route::get('/buildar-js/{id}',                    [TenantsActionsController::class, 'runNpmBuildManual'])->name('update.javascript');
             Route::get('/atualizar-em-massa',                [TenantsActionsController::class, 'updateAllDatabase'])->name('update.all.db');
             Route::get('/atualizar-sistemas',                [TenantsActionsController::class, 'updateAllSystems'])->name('update.all.systems');
             Route::get('/disparar-jobs-agendados',           [TenantsActionsController::class, 'runScheduledNow'])->name('run.scheduled.now');

@@ -118,23 +118,27 @@
             /**
              * Verifica se existe um alerta a exibir
              */
-			var message = '{!! session("message") !!}';
-            var type = "{!! session('type') !!}";
+				var message = @json(session('message') ?: session('error'));
+	            var type = @json(session('type'));
+
+	            if (!type && @json(session('error'))) {
+	                type = 'error';
+	            }
 
             /**
              * Exibe o alerta
              */
             if(message){
                 switch (type) {
-                    case 'success':
-                        toastr.success(message);
-                        break;
-                    case 'error':
-                        toastr.success(message);
-                        break;
-                    case 'warning':
-                        toastr.success(message);
-                        break;
+	                    case 'success':
+	                        toastr.success(message);
+	                        break;
+	                    case 'error':
+	                        toastr.error(message);
+	                        break;
+	                    case 'warning':
+	                        toastr.warning(message);
+	                        break;
                     default:
                         toastr.info(message);
                         break;

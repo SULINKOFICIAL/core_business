@@ -57,6 +57,8 @@ class TenantsActionsController extends Controller
             'git_error'         => $runtimeStatus->git_error,
             'sp_last_version'   => $runtimeStatus->sp_last_version ? 1 : 0,
             'sp_error'          => $runtimeStatus->sp_error,
+            'js_last_version'   => $runtimeStatus->js_last_version ? 1 : 0,
+            'js_error'          => $runtimeStatus->js_error,
         ];
     }
 
@@ -225,7 +227,7 @@ class TenantsActionsController extends Controller
          * Sinaliza como desatualizado somente os eixos solicitados para a UI
          * conseguir refletir progresso gradativo durante o processamento.
          */
-        if ($shouldUpdateDatabase || $shouldUpdateGit || $shouldRestartSupervisor) {
+        if ($shouldUpdateDatabase || $shouldUpdateGit || $shouldRestartSupervisor || $shouldBuildJavascript) {
             $updateColumns = [];
 
             if ($shouldUpdateDatabase) {
@@ -238,6 +240,10 @@ class TenantsActionsController extends Controller
 
             if ($shouldRestartSupervisor) {
                 $updateColumns['sp_last_version'] = false;
+            }
+
+            if ($shouldBuildJavascript) {
+                $updateColumns['js_last_version'] = false;
             }
 
             if (!empty($updateColumns)) {
@@ -319,6 +325,18 @@ class TenantsActionsController extends Controller
 
             if ($shouldBuildJavascript) {
                 $this->runNpmBuild($sharedTenant->id);
+
+                /**
+                 * O build em ambiente compartilhado roda uma vez e o resultado
+                 * visual precisa aparecer em todos os tenants compartilhados.
+                 */
+                $sharedRuntimeStatus = $this->runtimeStatusFor($sharedTenant)->refresh();
+                foreach ($clients->where('type_installation', 'shared') as $tenant) {
+                    $this->runtimeStatusFor($tenant)->update([
+                        'js_last_version' => $sharedRuntimeStatus->js_last_version,
+                        'js_error' => $sharedRuntimeStatus->js_error,
+                    ]);
+                }
             }
         }
         
@@ -648,6 +666,7 @@ class TenantsActionsController extends Controller
          * Encontra o cliente
          */
         $tenant = $this->repository->find($id);
+        $runtimeStatus = $this->runtimeStatusFor($tenant);
 
         /**
          * Realiza solicitação com timeout maior pois build pode demorar.
@@ -658,6 +677,10 @@ class TenantsActionsController extends Controller
         ]);
 
         if (!$response['success']) {
+            $runtimeStatus->js_last_version = false;
+            $runtimeStatus->js_error = $response['message'] ?? 'Erro desconhecido';
+            $runtimeStatus->save();
+
             Log::warning('Falha ao executar npm build no cliente.', [
                 'tenant_id' => $tenant->id,
                 'client_name' => $tenant->name,
@@ -668,9 +691,21 @@ class TenantsActionsController extends Controller
         }
 
         $responseData = json_decode($response['data'] ?? null, true);
-        $apiSuccess = is_array($responseData) ? (bool) ($responseData['success'] ?? true) : true;
+        $apiSuccess = true;
+
+        /**
+         * Quando a API do tenant retorna JSON, respeitamos o campo success.
+         * Sem JSON válido, mantemos sucesso porque a chamada HTTP já funcionou.
+         */
+        if (is_array($responseData) && array_key_exists('success', $responseData)) {
+            $apiSuccess = $responseData['success'] == true;
+        }
 
         if (!$apiSuccess) {
+            $runtimeStatus->js_last_version = false;
+            $runtimeStatus->js_error = $responseData['error'] ?? $responseData['message'] ?? 'Erro desconhecido';
+            $runtimeStatus->save();
+
             Log::warning('API do tenant retornou erro no npm build.', [
                 'tenant_id' => $tenant->id,
                 'client_name' => $tenant->name,
@@ -680,7 +715,53 @@ class TenantsActionsController extends Controller
             return false;
         }
 
+        $runtimeStatus->js_last_version = true;
+        $runtimeStatus->js_error = null;
+        $runtimeStatus->save();
+
         return true;
+    }
+
+    /**
+     * Executa npm build manualmente e retorna no mesmo contrato AJAX das demais ações.
+     */
+    public function runNpmBuildManual(Request $request, $id)
+    {
+        /**
+         * Encontra o cliente para executar a ação e atualizar o status visual.
+         */
+        $tenant = $this->repository->find($id);
+        $updated = $this->runNpmBuild($tenant->id);
+
+        /**
+         * Em hospedagem compartilhada o build é único, então replica o resultado
+         * para manter a listagem coerente com Git e Supervisor.
+         */
+        if ($tenant->type_installation === 'shared') {
+            $sharedRuntimeStatus = $this->runtimeStatusFor($tenant)->refresh();
+            $sharedTenants = $this->repository->where('type_installation', 'shared')->get();
+
+            foreach ($sharedTenants as $sharedTenant) {
+                $this->runtimeStatusFor($sharedTenant)->update([
+                    'js_last_version' => $sharedRuntimeStatus->js_last_version,
+                    'js_error' => $sharedRuntimeStatus->js_error,
+                ]);
+            }
+        }
+
+        $runtimeStatus = $this->runtimeStatusFor($tenant)->refresh();
+
+        if ($this->shouldReturnJson($request)) {
+            return response()->json([
+                'success' => $updated,
+                'message' => $updated ? 'Build de Javascript executado com sucesso' : 'Falha ao buildar Javascript',
+                'status' => $this->runtimeStatusSnapshot($runtimeStatus),
+            ], $updated ? 200 : 422);
+        }
+
+        return redirect()
+            ->route('tenants.index')
+            ->with('message', $updated ? 'Build de Javascript executado com sucesso' : 'Falha ao buildar Javascript');
     }
 
     /**

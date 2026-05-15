@@ -159,6 +159,8 @@ class TenantProcessingController extends Controller
             'runtime.git_error         as git_error',
             DB::raw('COALESCE(runtime.sp_last_version, 0) as sp_last_version'),
             'runtime.sp_error          as sp_error',
+            DB::raw('COALESCE(runtime.js_last_version, 0) as js_last_version'),
+            'runtime.js_error          as js_error',
             'tenants.status            as status',
             'tenants.token             as token'
         );
@@ -253,6 +255,14 @@ class TenantProcessingController extends Controller
                 return '<i class="fa-solid fa-circle-check text-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Supervisor atualizado"></i>';
             })
 
+            ->addColumn('js', function ($row) {
+                if ($row->js_last_version != 1) {
+                    return '<i class="fa-solid fa-circle-xmark text-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="' . e($row->js_error ?? 'Javascript desatualizado') . '"></i>';
+                }
+
+                return '<i class="fa-solid fa-circle-check text-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Javascript atualizado"></i>';
+            })
+
             ->addColumn('status', function ($row) {
                 if ((int) $row->status === 0) {
                     return '<span class="badge badge-light-danger">Desabilitado</span>';
@@ -284,6 +294,7 @@ class TenantProcessingController extends Controller
                 $html .= '<div class="menu-item px-3"><a href="' . route('systems.update.database', $row->id) . '" class="menu-link px-3 js-tenant-action-confirm" data-action-type="db" data-tenant-id="' . e($row->id) . '" data-action-label="atualizar banco de dados" data-tenant-name="' . e($row->name) . '"><i class="fa-solid fa-database me-2"></i>Atualiza banco de dados</a></div>';
                 $html .= '<div class="menu-item px-3"><a href="' . route('systems.update.git', $row->id) . '" class="menu-link px-3 js-tenant-action-confirm" data-action-type="git" data-tenant-id="' . e($row->id) . '" data-action-label="atualizar git" data-tenant-name="' . e($row->name) . '"><i class="fa-solid fa-code me-2"></i>Atualiza git</a></div>';
                 $html .= '<div class="menu-item px-3"><a href="' . route('systems.update.supervisor', $row->id) . '" class="menu-link px-3 js-tenant-action-confirm" data-action-type="sp" data-tenant-id="' . e($row->id) . '" data-action-label="reiniciar filas" data-tenant-name="' . e($row->name) . '"><i class="fa-solid fa-arrows-rotate me-2"></i>Reiniciar Filas</a></div>';
+                $html .= '<div class="menu-item px-3"><a href="' . route('systems.update.javascript', $row->id) . '" class="menu-link px-3 js-tenant-action-confirm" data-action-type="js" data-tenant-id="' . e($row->id) . '" data-action-label="buildar Javascript" data-tenant-name="' . e($row->name) . '"><i class="fa-brands fa-js me-2"></i>Buildar JS</a></div>';
                 $html .= '<div class="menu-item px-3"><a href="' . route('tenants.destroy', $row->id) . '" class="menu-link px-3 js-tenant-toggle-status" data-action-label="' . e(mb_strtolower($toggleText)) . '" data-tenant-id="' . e($row->id) . '" data-tenant-name="' . e($row->name) . '"><i class="fa-solid fa-toggle-off me-2"></i>' . $toggleText . '</a></div>';
 
                 $html .= '</div></div>';
@@ -291,7 +302,7 @@ class TenantProcessingController extends Controller
                 return $html;
             })
 
-            ->rawColumns(['id', 'name', 'type', 'expires_at', 'bank', 'git', 'sp', 'status', 'actions'])
+            ->rawColumns(['id', 'name', 'type', 'expires_at', 'bank', 'git', 'sp', 'js', 'status', 'actions'])
             ->make(true);
     }
 }
