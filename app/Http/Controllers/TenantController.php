@@ -226,7 +226,6 @@ class TenantController extends Controller
      */
     public function show($id)
     {
-        // Obtém dados do Tenante
         $tenant   = $this->repository->find($id);
         $tenant->loadMissing([
             'plan.items.item.category',
@@ -235,7 +234,6 @@ class TenantController extends Controller
             'plans.subscription.cycles',
         ]);
 
-        // Obtém pacotes
         $packages = Package::where('status', true)->get();
 
         /**
@@ -250,36 +248,28 @@ class TenantController extends Controller
             ->unique('id')
             ->values();
 
-        $modulesByCategory = $planModules->groupBy(function ($module) {
-            return $module->category->name;
-        });
-
-        // Mantido por compatibilidade da view, agora limitado ao plano atual.
         $modules       = $planModules;
 
-        // Busca assinatura atual
         $actualPlan    = $tenant->actualSubscription();
-        $usersLimit    = (int) $actualPlan['users'];
-        $storageLimitGb = number_format(((int) $actualPlan['storage']) / 1073741824, 2, ',', '.');
+        $usersLimit    = $actualPlan['users'];
+        $storageLimitGb = number_format($actualPlan['storage'] / 1073741824, 2, ',', '.');
         $periodStart   = $actualPlan['cycle']['start'];
         $periodEnd     = $actualPlan['cycle']['end'];
         $enabledModules = collect($actualPlan['modules'])
             ->map(fn ($module) => $module['name'])
             ->values()
             ->all();
-        $totalModulesCount = Module::query()
-            ->where('status', true)
+        $enabledModulesTotal = collect($enabledModules)->count();
+        $totalModulesCount = Module::where('status', true)
             ->count();
         $currentPlanId = $tenant->plan?->id;
         $plansHistory = $tenant->plans
             ->sortByDesc('created_at')
             ->values();
 
-        // Retorna a página
         return view('pages.tenants.show')->with([
             'client'             => $tenant,
             'modules'            => $modules,
-            'modulesByCategory'  => $modulesByCategory,
             'packages'           => $packages,
             'actualPlan'         => $actualPlan,
             'usersLimit'         => $usersLimit,
@@ -287,6 +277,7 @@ class TenantController extends Controller
             'periodStart'        => $periodStart,
             'periodEnd'          => $periodEnd,
             'enabledModules'     => $enabledModules,
+            'enabledModulesTotal' => $enabledModulesTotal,
             'totalModulesCount'  => $totalModulesCount,
             'currentPlanId'      => $currentPlanId,
             'plansHistory'       => $plansHistory,

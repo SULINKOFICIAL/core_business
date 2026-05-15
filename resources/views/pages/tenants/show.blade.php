@@ -43,6 +43,9 @@
                     <a href="{{ route('systems.update.database', $client->id) }}" class="btn btn-light-primary btn-sm">
                         <i class="fa-solid fa-database me-1"></i>Atualizar DB
                     </a>
+                    <button type="button" class="btn btn-light-primary btn-sm" id="btn-open-plan-manual-modal">
+                        <i class="fa-solid fa-list-check me-1"></i>Atualizar Plano do Cliente
+                    </button>
                     <a href="{{ route('tenants.edit', $client->id) }}" class="btn btn-light btn-sm">
                         <i class="fa-solid fa-gear me-1"></i>Configurações
                     </a>

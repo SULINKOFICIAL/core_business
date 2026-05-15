@@ -1,23 +1,11 @@
-@php
-    $totalEnabledModules = collect($enabledModules)->count();
-    $totalModules        = (int) ($totalModulesCount ?? $totalEnabledModules);
-    $modules             = collect($modulesByCategory)->flatten(1)->unique('id')->values();
-@endphp
-
 <div class="card mb-4" id="tenant-enabled-modules-card">
     <div class="card-header border-bottom border-gray-200 py-5">
         <div class="d-flex flex-wrap align-items-center justify-content-between w-100 gap-3">
             <div>
                 <h3 class="card-title fw-bolder text-gray-800 mb-1">Módulos habilitados</h3>
                 <div class="text-gray-600 fs-6">
-                    <span class="fw-bolder" id="tenant-enabled-modules-counter">{{ $totalEnabledModules }}</span> de {{ $totalModules }} módulos ativos no sistema
+                    <span class="fw-bolder" id="tenant-enabled-modules-counter">{{ $enabledModulesTotal }}</span> de {{ $totalModulesCount }} módulos ativos no sistema
                 </div>
-            </div>
-
-            <div class="d-flex flex-wrap align-items-center gap-2">
-                <button type="button" class="btn btn-sm btn-light-primary active" id="btn-open-plan-manual-modal">
-                    Atualizar Plano do Cliente
-                </button>
             </div>
         </div>
     </div>
