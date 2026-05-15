@@ -33,13 +33,6 @@
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                    @if (app()->environment(['local', 'testing']))
-                        <a href="{{ route('systems.remove.packages', $client->id) }}"
-                           class="btn btn-light-danger btn-sm"
-                           onclick="return confirm('Tem certeza que deseja resetar plano, assinaturas e pedidos desta instalação?');">
-                            <i class="fa-solid fa-box-open me-1"></i>Resetar Plano e Histórico
-                        </a>
-                    @endif
                     <button type="button" class="btn btn-light-primary btn-sm" id="btn-open-plan-manual-modal">
                         <i class="fa-solid fa-list-check me-1"></i>Atualizar Plano do Cliente
                     </button>

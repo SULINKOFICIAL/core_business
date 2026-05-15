@@ -43,3 +43,28 @@
         @endif
     </div>
 </div>
+
+@if (app()->environment(['local', 'testing']))
+    <div class="card mb-4">
+        <div class="card-header border-bottom border-gray-200 py-5">
+            <div class="d-flex flex-wrap align-items-center justify-content-between w-100 gap-3">
+                <div>
+                    <h3 class="card-title fw-bolder text-gray-800 mb-1">Manutenção técnica</h3>
+                    <div class="text-gray-600 fs-6">
+                        Ações destrutivas para reset operacional em ambiente local ou de testes.
+                    </div>
+                </div>
+                <a href="{{ route('systems.remove.packages', $client->id) }}"
+                   class="btn btn-sm btn-light-danger"
+                   onclick="return confirm('Tem certeza que deseja resetar plano, assinaturas e pedidos desta instalação?');">
+                    <i class="fa-solid fa-box-open me-1"></i>Resetar Plano e Histórico
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-light-danger mb-0">
+                Esta ação remove planos, assinaturas, ciclos, pedidos e transações do cliente no core_business.
+            </div>
+        </div>
+    </div>
+@endif
